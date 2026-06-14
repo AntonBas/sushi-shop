@@ -1,24 +1,34 @@
 package com.sushishop.domain;
 
 import com.sushishop.domain.enums.UserRole;
-import jakarta.persistence.Entity;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@EqualsAndHashCode(callSuper = true)
 public class User extends BaseEntity {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
     private String email;
 
-    private String firstName;
-    private String lastName;
+    private String phone;
 
-    private Long phoneNumber;
+    @Column(nullable = false)
     private String password;
 
-    private UserRole userRole = UserRole.ROLE_USER;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserRole userRole = UserRole.CUSTOMER;
 }
