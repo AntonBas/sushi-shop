@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(callSuper = true)
+@Table(name = "users")
 public class User extends BaseEntity {
 
     @Id
