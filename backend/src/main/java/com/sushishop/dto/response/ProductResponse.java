@@ -25,6 +25,6 @@ public record ProductResponse(
         String imageUrl,
 
         @Schema(description = "Is product available", example = "true")
-        boolean isAvailable
+        boolean available
 ) {
 }

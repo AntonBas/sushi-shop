@@ -35,5 +35,5 @@ public class Product extends BaseEntity {
     private String imageUrl;
 
     @Builder.Default
-    private boolean isAvailable = true;
+    private boolean available = true;
 }
