@@ -13,9 +13,7 @@ public record ChangePasswordRequest(
         @Schema(description = "New password (min 8 chars, must contain letter and number)", example = "NewPass123")
         @NotBlank(message = "New password is required")
         @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters")
-        @Pattern(
-                regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
-                message = "Password must contain at least one letter and one number"
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "Password must contain at least one letter and one number"
         )
         String newPassword
 ) {

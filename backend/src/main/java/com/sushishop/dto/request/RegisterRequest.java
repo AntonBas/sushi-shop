@@ -17,17 +17,12 @@ public record RegisterRequest(
 
         @Schema(description = "Password (min 6 characters)", example = "password123")
         @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters")
-        @Pattern(
-                regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
-                message = "Password must contain at least one letter and one number"
-        ) @NotBlank(message = "Password is required")
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "Password must contain at least one letter and one number")
+        @NotBlank(message = "Password is required")
         String password,
 
         @Schema(description = "Phone number", example = "+380961791111")
-        @Pattern(
-                regexp = "^\\+?[0-9]{10,15}$",
-                message = "Phone must be 10-15 digits"
-        )
+        @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone must be 10-15 digits")
         @NotBlank(message = "Phone number is required")
         String phone,
 
