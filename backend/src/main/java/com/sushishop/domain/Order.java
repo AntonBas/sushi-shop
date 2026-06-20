@@ -1,5 +1,6 @@
 package com.sushishop.domain;
 
+import com.sushishop.domain.enums.DeliveryMethod;
 import com.sushishop.domain.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,12 +29,27 @@ public class Order extends BaseEntity {
     private String phone;
 
     @Column(nullable = false)
-    private String address;
+    private String city;
+
+    @Column(nullable = false)
+    private String street;
+
+    @Column(nullable = false)
+    private String house;
+
+    private String apartment;
+
+    @Column(name = "address_comment")
+    private String addressComment;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
     private OrderStatus status = OrderStatus.NEW;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DeliveryMethod deliveryMethod;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

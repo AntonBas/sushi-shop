@@ -27,7 +27,15 @@ public class User extends BaseEntity {
     private String phone;
 
     @Column(nullable = false)
-    private String address;
+    private String city;
+
+    @Column(nullable = false)
+    private String street;
+
+    @Column(nullable = false)
+    private String house;
+
+    private String apartment;
 
     @Column(nullable = false)
     private String password;
