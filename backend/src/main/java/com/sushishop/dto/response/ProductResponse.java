@@ -1,4 +1,4 @@
-package com.sushishop.dto;
+package com.sushishop.dto.response;
 
 import java.math.BigDecimal;
 

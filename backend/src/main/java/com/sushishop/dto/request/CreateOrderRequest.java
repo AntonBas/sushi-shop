@@ -1,10 +1,7 @@
-package com.sushishop.dto;
+package com.sushishop.dto.request;
 
-import com.sushishop.domain.Order;
-import com.sushishop.domain.Product;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 

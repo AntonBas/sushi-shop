@@ -1,6 +1,4 @@
-package com.sushishop.dto;
-
-import com.sushishop.domain.OrderItem;
+package com.sushishop.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
