@@ -19,10 +19,10 @@ public class Product extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(length = 500)
+    @Column(length = 250)
     private String description;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -32,6 +32,7 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Category category;
 
+    @Column(length = 500)
     private String imageUrl;
 
     @Builder.Default

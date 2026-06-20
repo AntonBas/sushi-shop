@@ -22,24 +22,25 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String customerName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 15)
     private String phone;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String city;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String street;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private String house;
 
+    @Column(length = 10)
     private String apartment;
 
-    @Column(name = "address_comment")
+    @Column(name = "address_comment", length = 200)
     private String addressComment;
 
     @Enumerated(EnumType.STRING)

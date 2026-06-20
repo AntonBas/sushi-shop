@@ -17,24 +17,25 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 15)
     private String phone;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String city;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String street;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 10)
     private String house;
 
+    @Column(length = 10)
     private String apartment;
 
     @Column(nullable = false)
