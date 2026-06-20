@@ -1,18 +1,38 @@
 package com.sushishop.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 
+@Schema(description = "Registration data")
 public record RegisterRequest(
+        @Schema(description = "Full name", example = "Anton Bas")
         @NotBlank(message = "Name is required")
         String name,
-        @NotBlank(message = "Email is required") @Email
+
+        @Schema(description = "Email address", example = "user@example.com")
+        @Email(message = "Invalid email format")
+        @NotBlank(message = "Email is required")
         String email,
-        @NotBlank(message = "Password is required") @Size(min = 6)
+
+        @Schema(description = "Password (min 6 characters)", example = "password123")
+        @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters")
+        @Pattern(
+                regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$",
+                message = "Password must contain at least one letter and one number"
+        ) @NotBlank(message = "Password is required")
         String password,
+
+        @Schema(description = "Phone number", example = "+380961791111")
+        @Pattern(
+                regexp = "^\\+?[0-9]{10,15}$",
+                message = "Phone must be 10-15 digits"
+        )
         @NotBlank(message = "Phone number is required")
-        String phone
+        String phone,
+
+        @Schema(description = "Default delivery address")
+        @Valid
+        AddressRequest address
 ) {
 }
