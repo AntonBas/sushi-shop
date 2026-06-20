@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.util.List;
 
@@ -13,10 +15,13 @@ import java.util.List;
 public record CreateOrderRequest(
         @Schema(description = "Recipient name", example = "Anton")
         @NotBlank(message = "Customer name is required")
+        @Size(max = 50, message = "Name must be less than 50 characters")
         String customerName,
 
         @Schema(description = "Contact phone", example = "+380961791111")
         @NotBlank(message = "Phone number is required")
+        @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone must be 10-15 digits")
+        @Size(max = 15, message = "Phone must be less than 15 characters")
         String phone,
 
         @Schema(description = "Delivery method", example = "DELIVERY")

@@ -8,11 +8,13 @@ import jakarta.validation.constraints.*;
 public record RegisterRequest(
         @Schema(description = "Full name", example = "Anton Bas")
         @NotBlank(message = "Name is required")
+        @Size(max = 50, message = "Name must be less than 50 characters")
         String name,
 
         @Schema(description = "Email address", example = "user@example.com")
         @Email(message = "Invalid email format")
         @NotBlank(message = "Email is required")
+        @Size(max = 100, message = "Email must be less than 100 characters")
         String email,
 
         @Schema(description = "Password (min 6 characters)", example = "password123")

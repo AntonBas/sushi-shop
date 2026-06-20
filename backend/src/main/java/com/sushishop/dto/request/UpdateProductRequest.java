@@ -3,16 +3,18 @@ package com.sushishop.dto.request;
 import com.sushishop.domain.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 
 @Schema(description = "Request to update an existing product")
 public record UpdateProductRequest(
-
         @Schema(description = "Product name", example = "Maki")
+        @Size(max = 50, message = "Name must be less than 50 characters")
         String name,
 
         @Schema(description = "Product description", example = "Updated description")
+        @Size(max = 250, message = "Description must be less than 250 characters")
         String description,
 
         @Schema(description = "Product price", example = "280.00")
@@ -23,6 +25,7 @@ public record UpdateProductRequest(
         Category category,
 
         @Schema(description = "Image URL", example = "https://example.com/new-image.jpg")
+        @Size(max = 500, message = "Image URL must be less than 500 characters")
         String imageUrl,
 
         @Schema(description = "Product availability")

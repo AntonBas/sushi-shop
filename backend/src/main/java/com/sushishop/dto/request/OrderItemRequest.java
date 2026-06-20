@@ -1,6 +1,7 @@
 package com.sushishop.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -12,6 +13,7 @@ public record OrderItemRequest(
 
         @Schema(description = "Quantity must be greater than 0")
         @Positive(message = "Quantity must be greater than 0")
+        @Max(value = 99, message = "Quantity must be less than 100")
         Integer quantity
 ) {
 }
