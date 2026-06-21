@@ -1,4 +1,4 @@
-package com.sushishop.security;
+package com.sushishop.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
