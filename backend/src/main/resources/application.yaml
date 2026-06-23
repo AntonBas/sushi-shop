@@ -37,6 +37,11 @@ spring:
     upload:
       dir: uploads
 
+  cache:
+    type: redis
+    redis:
+      time-to-live: 30m
+
 server:
   port: 8080
 
