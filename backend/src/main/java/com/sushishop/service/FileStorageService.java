@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -18,6 +19,7 @@ public class FileStorageService {
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
+    private static final List<String> ALLOWED_TYPES = List.of("image/jpeg", "image/png", "image/webp");
 
     @PostConstruct
     public void init() {
@@ -31,6 +33,10 @@ public class FileStorageService {
     public String store(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             return null;
+        }
+
+        if (!ALLOWED_TYPES.contains(file.getContentType())) {
+            throw new RuntimeException("File type not allowed: " + file.getContentType());
         }
 
         try {
