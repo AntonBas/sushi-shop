@@ -27,10 +27,6 @@ public record CreateProductRequest(
 
         @Schema(description = "Product category", example = "ROLL")
         @NotNull(message = "Category is required")
-        Category category,
-
-        @Schema(description = "Image URL", example = "https://example.com/image.jpg")
-        @Size(max = 500, message = "Image URL must be less than 500 characters")
-        String imageUrl
+        Category category
 ) {
 }

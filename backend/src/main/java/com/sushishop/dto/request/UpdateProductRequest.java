@@ -24,10 +24,6 @@ public record UpdateProductRequest(
         @Schema(description = "Product category", example = "ROLL")
         Category category,
 
-        @Schema(description = "Image URL", example = "https://example.com/new-image.jpg")
-        @Size(max = 500, message = "Image URL must be less than 500 characters")
-        String imageUrl,
-
         @Schema(description = "Product availability")
         Boolean isAvailable
 ) {

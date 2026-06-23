@@ -18,8 +18,8 @@ public record ProductListResponse(
         @Schema(description = "Product category", example = "ROLL")
         String category,
 
-        @Schema(description = "Image URL", example = "https://example.com/image.jpg")
-        String imageUrl,
+        @Schema(description = "Main product image", example = "/api/files/abc.jpg")
+        String mainImage,
 
         @Schema(description = "Is product available", example = "true")
         boolean available
