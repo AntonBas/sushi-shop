@@ -26,17 +26,7 @@ public class UserService {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists!");
         }
-        User user = User.builder()
-                .name(request.name())
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .phone(request.phone())
-                .city(request.address() != null ? request.address().city() : null)
-                .street(request.address() != null ? request.address().street() : null)
-                .house(request.address() != null ? request.address().house() : null)
-                .apartment(request.address() != null ? request.address().apartment() : null)
-                .userRole(UserRole.CUSTOMER)
-                .build();
+        var user = toEntity(request);
 
         User saved = userRepository.save(user);
         log.info("User created: {}", saved.getEmail());
@@ -49,5 +39,19 @@ public class UserService {
 
     public UserResponse getByEmail(String email) {
         return userRepository.findByEmail(email).map(userMapper::toResponse).orElseThrow(() -> new NotFoundException("User not found: " + email));
+    }
+
+    private User toEntity(RegisterRequest request) {
+        return User.builder()
+                .name(request.name())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .phone(request.phone())
+                .city(request.address() != null ? request.address().city() : null)
+                .street(request.address() != null ? request.address().street() : null)
+                .house(request.address() != null ? request.address().house() : null)
+                .apartment(request.address() != null ? request.address().apartment() : null)
+                .userRole(UserRole.CUSTOMER)
+                .build();
     }
 }
