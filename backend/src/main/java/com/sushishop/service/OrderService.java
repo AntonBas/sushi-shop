@@ -42,10 +42,12 @@ public class OrderService {
     }
 
     public List<OrderResponse> getAll() {
+        log.info("Getting all orders");
         return orderRepository.findAll().stream().map(orderMapper::toResponse).toList();
     }
 
     public OrderResponse getById(Long id) {
+        log.info("Getting order by id: {}", id);
         return orderRepository.findById(id).map(orderMapper::toResponse).orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 

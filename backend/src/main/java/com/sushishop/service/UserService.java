@@ -33,11 +33,8 @@ public class UserService {
         return userMapper.toResponse(saved);
     }
 
-    public UserResponse getById(Long id) {
-        return userRepository.findById(id).map(userMapper::toResponse).orElseThrow(() -> new NotFoundException("User not found: " + id));
-    }
-
     public UserResponse getByEmail(String email) {
+        log.info("Getting user by email: {}", email);
         return userRepository.findByEmail(email).map(userMapper::toResponse).orElseThrow(() -> new NotFoundException("User not found: " + email));
     }
 

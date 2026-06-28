@@ -50,6 +50,7 @@ public class ProductService {
 
     @Cacheable("products")
     public Page<ProductListResponse> getAll(Pageable pageable) {
+        log.info("Getting all products, page: {}", pageable.getPageNumber());
         return productRepository.findAll(pageable).map(productMapper::toListResponse);
     }
 
