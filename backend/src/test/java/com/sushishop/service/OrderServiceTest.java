@@ -10,6 +10,7 @@ import com.sushishop.dto.request.CreateOrderRequest;
 import com.sushishop.dto.request.OrderItemRequest;
 import com.sushishop.dto.response.AddressResponse;
 import com.sushishop.dto.response.OrderResponse;
+import com.sushishop.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.OrderMapper;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -44,6 +46,9 @@ public class OrderServiceTest {
 
     @InjectMocks
     private OrderService orderService;
+
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
 
     @Test
     void shouldCreateOrder() {
@@ -109,5 +114,6 @@ public class OrderServiceTest {
         var result = orderService.updateStatus(1L, OrderStatus.COOKING);
 
         assertThat(result.status()).isEqualTo("COOKING");
+        verify(messagingTemplate).convertAndSend(eq("/topic/orders/1"), any(OrderStatusUpdateResponse.class));
     }
 }
