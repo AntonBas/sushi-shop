@@ -22,7 +22,7 @@ public record OrderResponse(
         AddressResponse address,
 
         @Schema(description = "Delivery method", example = "DELIVERY")
-        DeliveryMethod deliveryMethod,
+        String deliveryMethod,
 
         @Schema(description = "Order status", example = "NEW")
         String status,

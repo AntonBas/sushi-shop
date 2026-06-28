@@ -12,7 +12,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
-    @Mapping(target = "deliveryMethod", source = "deliveryMethod")
+    @Mapping(target = "deliveryMethod", expression = "java(order.getDeliveryMethod().name())")
     @Mapping(target = "status", expression = "java(order.getStatus().name())")
     @Mapping(target = "address", ignore = true)
     @Mapping(target = "items", source = "items")
