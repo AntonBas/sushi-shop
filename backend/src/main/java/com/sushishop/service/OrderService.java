@@ -7,6 +7,7 @@ import com.sushishop.domain.enums.OrderStatus;
 import com.sushishop.dto.request.CreateOrderRequest;
 import com.sushishop.dto.request.OrderItemRequest;
 import com.sushishop.dto.response.OrderResponse;
+import com.sushishop.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.OrderMapper;
@@ -14,6 +15,7 @@ import com.sushishop.repository.OrderRepository;
 import com.sushishop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +30,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
@@ -55,6 +58,9 @@ public class OrderService {
         var order = orderRepository.findById(id).orElseThrow(() -> new NotFoundException("Order not found: " + id));
         order.setStatus(status);
         var updated = orderRepository.save(order);
+
+        messagingTemplate.convertAndSend("/topic/orders/" + id, new OrderStatusUpdateResponse(updated.getId(), updated.getStatus().name()));
+
         log.info("Order {} status updated to {}", id, status);
         return orderMapper.toResponse(updated);
     }
