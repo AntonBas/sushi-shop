@@ -15,6 +15,15 @@ public record ProductListResponse(
         @Schema(description = "Product price", example = "250.00")
         BigDecimal price,
 
+        @Schema(description = "Discounted price", example = "200.00")
+        BigDecimal discountedPrice,
+
+        @Schema(description = "Discount percentage", example = "20")
+        BigDecimal discountPercent,
+
+        @Schema(description = "Active promotion title", example = "Weekend Sale")
+        String promotionTitle,
+
         @Schema(description = "Product category", example = "ROLL")
         String category,
 

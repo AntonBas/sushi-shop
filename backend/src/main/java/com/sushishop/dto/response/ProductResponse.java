@@ -19,10 +19,19 @@ public record ProductResponse(
         @Schema(description = "Product price", example = "250.00")
         BigDecimal price,
 
+        @Schema(description = "Discounted price", example = "200.00")
+        BigDecimal discountedPrice,
+
+        @Schema(description = "Discount percentage", example = "20")
+        BigDecimal discountPercent,
+
+        @Schema(description = "Active promotion title", example = "Weekend Sale")
+        String promotionTitle,
+
         @Schema(description = "Product category", example = "ROLL")
         String category,
 
-        @Schema(description = "Product images", example = "[\"/api/files/abc.jpg\", \"/api/files/def.jpg\"]")
+        @Schema(description = "Product images", example = "[\"/api/files/abc.jpg\"]")
         List<String> images,
 
         @Schema(description = "Is product available", example = "true")

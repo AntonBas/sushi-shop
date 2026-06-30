@@ -21,10 +21,16 @@ public interface ProductMapper {
 
     @Mapping(target = "category", expression = "java(product.getCategory().name())")
     @Mapping(target = "images", expression = "java(mapImages(product.getProductImages()))")
+    @Mapping(target = "discountedPrice", ignore = true)
+    @Mapping(target = "discountPercent", ignore = true)
+    @Mapping(target = "promotionTitle", ignore = true)
     ProductResponse toResponse(Product product);
 
     @Mapping(target = "category", expression = "java(product.getCategory().name())")
     @Mapping(target = "mainImage", expression = "java(getMainImage(product.getProductImages()))")
+    @Mapping(target = "discountedPrice", ignore = true)
+    @Mapping(target = "discountPercent", ignore = true)
+    @Mapping(target = "promotionTitle", ignore = true)
     ProductListResponse toListResponse(Product product);
 
     default List<String> mapImages(List<ProductImage> images) {

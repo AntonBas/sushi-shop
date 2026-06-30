@@ -28,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ProductControllerTest {
+class ProductControllerTest {
 
     private MockMvc mockMvc;
 
@@ -45,7 +45,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetAllProducts() throws Exception {
-        var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), "ROLL", null, true);
+        var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), null, null, null, "ROLL", null, true);
         Page<ProductListResponse> page = new PageImpl<>(List.of(response));
 
         when(productService.getAll(any(Pageable.class))).thenReturn(page);
@@ -57,7 +57,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), "ROLL", List.of(), true);
+        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), true);
 
         when(productService.getById(1L)).thenReturn(response);
 

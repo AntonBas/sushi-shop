@@ -38,6 +38,10 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<ProductImage> productImages = new ArrayList<>();
 
+    @ManyToMany(mappedBy = "products")
+    @Builder.Default
+    private List<Promotion> promotions = new ArrayList<>();
+
     @Builder.Default
     private boolean available = true;
 }
