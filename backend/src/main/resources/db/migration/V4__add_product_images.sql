@@ -7,3 +7,4 @@ CREATE TABLE IF NOT EXISTS product_images (
     );
 
 ALTER TABLE products DROP COLUMN IF EXISTS image_url;
+ALTER TABLE products RENAME COLUMN is_available TO available;
