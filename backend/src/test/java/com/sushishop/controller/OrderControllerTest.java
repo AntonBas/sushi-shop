@@ -12,6 +12,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -81,12 +84,13 @@ public class OrderControllerTest {
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAllOrders() throws Exception {
         var response = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "NEW", BigDecimal.ZERO, null, List.of());
+        Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
-        when(orderService.getAll()).thenReturn(List.of(response));
+        when(orderService.getAll(any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/orders"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].customerName").value("Anton"));
+                .andExpect(jsonPath("$.content[0].customerName").value("Anton"));
     }
 
     @Test

@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -39,8 +41,8 @@ public class PromotionService {
     }
 
     @Cacheable("promotions")
-    public List<PromotionResponse> getAll() {
-        return toResponseList(promotionRepository.findAll());
+    public Page<PromotionResponse> getAll(Pageable pageable) {
+        return promotionRepository.findAll(pageable).map(promotionMapper::toResponse);
     }
 
     @CacheEvict(value = "promotions", allEntries = true)

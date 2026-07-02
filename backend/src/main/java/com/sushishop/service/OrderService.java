@@ -15,6 +15,8 @@ import com.sushishop.repository.OrderRepository;
 import com.sushishop.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,9 +46,9 @@ public class OrderService {
         return orderMapper.toResponse(saved);
     }
 
-    public List<OrderResponse> getAll() {
+    public Page<OrderResponse> getAll(Pageable pageable) {
         log.info("Getting all orders");
-        return orderRepository.findAll().stream().map(orderMapper::toResponse).toList();
+        return orderRepository.findAll(pageable).map(orderMapper::toResponse);
     }
 
     public OrderResponse getById(Long id) {
