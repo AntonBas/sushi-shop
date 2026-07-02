@@ -19,7 +19,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -48,7 +48,7 @@ public class ProductControllerTest {
         var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), null, null, "ROLL", null, true);
         Page<ProductListResponse> page = new PageImpl<>(List.of(response));
 
-        when(productService.getAll(any(Pageable.class))).thenReturn(page);
+        when(productService.getAll(any(Pageable.class), isNull(), isNull(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())

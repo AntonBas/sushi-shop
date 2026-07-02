@@ -4,6 +4,7 @@ import com.sushishop.domain.Product;
 import com.sushishop.domain.ProductImage;
 import com.sushishop.domain.Promotion;
 import com.sushishop.domain.Review;
+import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductListResponse;
@@ -13,6 +14,7 @@ import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
 import com.sushishop.mapper.ReviewMapper;
 import com.sushishop.repository.ProductRepository;
+import com.sushishop.repository.ProductSpecs;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -21,6 +23,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,9 +55,10 @@ public class ProductService {
     }
 
     @Cacheable("products")
-    public Page<ProductListResponse> getAll(Pageable pageable) {
+    public Page<ProductListResponse> getAll(Pageable pageable, String search, Category category, Boolean available) {
+        var spec = Specification.where(ProductSpecs.hasSearch(search)).and(ProductSpecs.hasCategory(category)).and(ProductSpecs.isAvailable(available));
         log.info("Getting all products, page: {}", pageable.getPageNumber());
-        return productRepository.findAll(pageable).map(this::enrichListResponse);
+        return productRepository.findAll(spec, pageable).map(this::enrichListResponse);
     }
 
     @Cacheable(value = "products", key = "#id")

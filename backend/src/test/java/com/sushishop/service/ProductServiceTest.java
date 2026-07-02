@@ -1,12 +1,10 @@
 package com.sushishop.service;
 
 import com.sushishop.domain.Product;
-import com.sushishop.domain.Review;
 import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductResponse;
-import com.sushishop.dto.response.ReviewResponse;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
 import com.sushishop.mapper.ReviewMapper;

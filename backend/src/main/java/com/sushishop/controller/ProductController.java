@@ -1,5 +1,6 @@
 package com.sushishop.controller;
 
+import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductListResponse;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -49,9 +51,9 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "Get all products")
-    public ResponseEntity<Page<ProductListResponse>> getAll(Pageable pageable) {
-        log.info("GET /api/products");
-        return ResponseEntity.ok(productService.getAll(pageable));
+    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = "name") Pageable pageable, @RequestParam(required = false) String search, @RequestParam(required = false) Category category, @RequestParam(required = false) Boolean available) {
+        log.info("GET /api/products - search: {}, category: {}, page: {}", search, category, pageable.getPageNumber());
+        return ResponseEntity.ok(productService.getAll(pageable, search, category, available));
     }
 
     @GetMapping("/{id}")
