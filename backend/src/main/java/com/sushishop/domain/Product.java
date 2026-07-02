@@ -42,6 +42,10 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<Promotion> promotions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Review> reviews = new ArrayList<>();
+
     @Builder.Default
     private boolean available = true;
 }

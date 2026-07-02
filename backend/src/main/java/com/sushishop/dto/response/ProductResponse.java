@@ -34,6 +34,9 @@ public record ProductResponse(
         @Schema(description = "Product images", example = "[\"/api/files/abc.jpg\"]")
         List<String> images,
 
+        @Schema(description = "Product reviews")
+        List<ReviewResponse> reviews,
+
         @Schema(description = "Is product available", example = "true")
         boolean available
 ) {

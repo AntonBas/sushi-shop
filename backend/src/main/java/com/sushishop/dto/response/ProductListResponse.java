@@ -18,11 +18,8 @@ public record ProductListResponse(
         @Schema(description = "Discounted price", example = "200.00")
         BigDecimal discountedPrice,
 
-        @Schema(description = "Discount percentage", example = "20")
-        BigDecimal discountPercent,
-
-        @Schema(description = "Active promotion title", example = "Weekend Sale")
-        String promotionTitle,
+        @Schema(description = "Average rating", example = "4.5")
+        Double averageRating,
 
         @Schema(description = "Product category", example = "ROLL")
         String category,
