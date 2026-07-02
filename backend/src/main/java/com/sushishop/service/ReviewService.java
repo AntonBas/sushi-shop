@@ -12,6 +12,8 @@ import com.sushishop.repository.ReviewRepository;
 import com.sushishop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -44,6 +46,10 @@ public class ReviewService {
         var saved = reviewRepository.save(review);
         log.info("Review created: {}", saved.getId());
         return reviewMapper.toResponse(saved);
+    }
+
+    public Page<ReviewResponse> getByProduct(Long productId, Pageable pageable) {
+        return reviewRepository.findByProductId(productId, pageable).map(reviewMapper::toResponse);
     }
 
     public void delete(Long reviewId, String email) {

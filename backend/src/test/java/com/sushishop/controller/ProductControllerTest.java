@@ -57,7 +57,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
+        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
 
         when(productService.getById(1L)).thenReturn(response);
 

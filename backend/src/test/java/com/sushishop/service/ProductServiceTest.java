@@ -49,7 +49,7 @@ public class ProductServiceTest {
         product.setPromotions(new ArrayList<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
 
         when(productMapper.toEntity(request)).thenReturn(product);
         when(productRepository.save(product)).thenReturn(product);
@@ -67,7 +67,7 @@ public class ProductServiceTest {
         product.setPromotions(new ArrayList<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(expected);
@@ -92,7 +92,7 @@ public class ProductServiceTest {
         product.setPromotions(new ArrayList<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
+        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);

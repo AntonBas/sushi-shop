@@ -9,10 +9,8 @@ import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductListResponse;
 import com.sushishop.dto.response.ProductResponse;
-import com.sushishop.dto.response.ReviewResponse;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
-import com.sushishop.mapper.ReviewMapper;
 import com.sushishop.repository.ProductRepository;
 import com.sushishop.repository.ProductSpecs;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +39,6 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
-    private final ReviewMapper reviewMapper;
     private final FileStorageService fileStorageService;
 
     @CacheEvict(value = "products", allEntries = true)
@@ -180,13 +177,15 @@ public class ProductService {
                 .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
                 .map(ProductImage::getUrl).toList();
 
-        List<ReviewResponse> reviews = product.getReviews().stream()
-                .map(reviewMapper::toResponse).toList();
+        int reviewCount = product.getReviews().size();
+        Double averageRating = product.getReviews().stream()
+                .mapToInt(Review::getRating).average().orElse(0.0);
+        if (product.getReviews().isEmpty()) averageRating = null;
 
         return new ProductResponse(
                 response.id(), response.name(), response.description(),
                 response.price(), discountedPrice, discountPercent, promotionTitle,
-                response.category(), images, reviews, response.available()
+                response.category(), images, reviewCount, averageRating, response.available()
         );
     }
 }

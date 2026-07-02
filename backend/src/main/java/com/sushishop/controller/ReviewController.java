@@ -10,6 +10,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,6 +36,15 @@ public class ReviewController {
     public ResponseEntity<ReviewResponse> create(@Valid @RequestBody CreateReviewRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         log.info("POST /api/reviews - product: {}", request.productId());
         return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.create(request, userDetails.getUsername()));
+    }
+
+    @GetMapping("/product/{productId}")
+    @Operation(summary = "Get reviews by product")
+    public ResponseEntity<Page<ReviewResponse>> getByProduct(
+            @PathVariable Long productId,
+            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        log.info("GET /api/reviews/product/{}", productId);
+        return ResponseEntity.ok(reviewService.getByProduct(productId, pageable));
     }
 
     @DeleteMapping("/{id}")

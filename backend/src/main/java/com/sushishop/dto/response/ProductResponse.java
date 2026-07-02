@@ -34,8 +34,11 @@ public record ProductResponse(
         @Schema(description = "Product images", example = "[\"/api/files/abc.jpg\"]")
         List<String> images,
 
-        @Schema(description = "Product reviews")
-        List<ReviewResponse> reviews,
+        @Schema(description = "Number of reviews", example = "21")
+        Integer reviewCount,
+
+        @Schema(description = "Average rating", example = "4.5")
+        Double averageRating,
 
         @Schema(description = "Is product available", example = "true")
         boolean available

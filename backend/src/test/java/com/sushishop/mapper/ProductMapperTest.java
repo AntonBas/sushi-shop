@@ -1,7 +1,6 @@
 package com.sushishop.mapper;
 
 import com.sushishop.domain.Product;
-import com.sushishop.domain.ProductImage;
 import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.response.ProductListResponse;
 import com.sushishop.dto.response.ProductResponse;
@@ -11,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,7 +40,8 @@ public class ProductMapperTest {
         assertThat(response.category()).isEqualTo("ROLL");
         assertThat(response.available()).isTrue();
         assertThat(response.images()).isNull();
-        assertThat(response.reviews()).isNull();
+        assertThat(response.reviewCount()).isNull();
+        assertThat(response.averageRating()).isNull();
         assertThat(response.discountedPrice()).isNull();
     }
 

@@ -33,7 +33,8 @@ public interface ProductMapper {
     @Mapping(target = "discountedPrice", ignore = true)
     @Mapping(target = "discountPercent", ignore = true)
     @Mapping(target = "promotionTitle", ignore = true)
-    @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "reviewCount", ignore = true)
+    @Mapping(target = "averageRating", ignore = true)
     ProductResponse toResponse(Product product);
 
     @Mapping(target = "category", expression = "java(product.getCategory().name())")
