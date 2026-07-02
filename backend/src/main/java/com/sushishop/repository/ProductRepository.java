@@ -11,11 +11,11 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @EntityGraph(attributePaths = {"promotions"})
+    @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Nonnull
     Page<Product> findAll(@Nonnull Pageable pageable);
 
-    @EntityGraph(attributePaths = {"promotions"})
+    @EntityGraph(attributePaths = {"promotions", "productImages", "reviews"})
     @Nonnull
     Optional<Product> findById(@Nonnull Long id);
 }

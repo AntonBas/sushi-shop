@@ -1,12 +1,15 @@
 package com.sushishop.service;
 
 import com.sushishop.domain.Product;
+import com.sushishop.domain.Review;
 import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductResponse;
+import com.sushishop.dto.response.ReviewResponse;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
+import com.sushishop.mapper.ReviewMapper;
 import com.sushishop.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +27,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ProductServiceTest {
+public class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
 
     @Mock
     private ProductMapper productMapper;
+
+    @Mock
+    private ReviewMapper reviewMapper;
 
     @Mock
     private FileStorageService fileStorageService;
@@ -43,7 +49,9 @@ class ProductServiceTest {
         var request = new CreateProductRequest("Maki", "Desc", new BigDecimal("250.00"), Category.ROLL);
         var product = new Product();
         product.setPromotions(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), true);
+        product.setReviews(new ArrayList<>());
+        product.setProductImages(new ArrayList<>());
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
 
         when(productMapper.toEntity(request)).thenReturn(product);
         when(productRepository.save(product)).thenReturn(product);
@@ -59,7 +67,9 @@ class ProductServiceTest {
     void shouldGetById() {
         var product = new Product();
         product.setPromotions(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), true);
+        product.setReviews(new ArrayList<>());
+        product.setProductImages(new ArrayList<>());
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(expected);
@@ -82,7 +92,9 @@ class ProductServiceTest {
         var request = new UpdateProductRequest("Updated", null, null, null, null);
         var product = new Product();
         product.setPromotions(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), true);
+        product.setReviews(new ArrayList<>());
+        product.setProductImages(new ArrayList<>());
+        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), List.of(), true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);

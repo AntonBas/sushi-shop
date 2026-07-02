@@ -24,18 +24,12 @@ public class ProductMapperTest {
 
     @Test
     void shouldMapToResponse() {
-        var images = List.of(
-                ProductImage.builder().url("/api/files/abc.jpg").sortOrder(0).build(),
-                ProductImage.builder().url("/api/files/def.jpg").sortOrder(1).build()
-        );
-
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
                 .description("Salmon roll")
                 .price(new BigDecimal("250.00"))
                 .category(Category.ROLL)
-                .productImages(images)
                 .available(true)
                 .build();
 
@@ -46,23 +40,19 @@ public class ProductMapperTest {
         assertThat(response.description()).isEqualTo("Salmon roll");
         assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
         assertThat(response.category()).isEqualTo("ROLL");
-        assertThat(response.images()).hasSize(2);
-        assertThat(response.images().getFirst()).isEqualTo("/api/files/abc.jpg");
         assertThat(response.available()).isTrue();
+        assertThat(response.images()).isNull();
+        assertThat(response.reviews()).isNull();
+        assertThat(response.discountedPrice()).isNull();
     }
 
     @Test
     void shouldMapToListResponse() {
-        var images = List.of(
-                ProductImage.builder().url("/api/files/main.jpg").sortOrder(0).build()
-        );
-
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
                 .price(new BigDecimal("250.00"))
                 .category(Category.ROLL)
-                .productImages(images)
                 .available(true)
                 .build();
 
@@ -72,7 +62,9 @@ public class ProductMapperTest {
         assertThat(response.name()).isEqualTo("Maki");
         assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
         assertThat(response.category()).isEqualTo("ROLL");
-        assertThat(response.mainImage()).isEqualTo("/api/files/main.jpg");
         assertThat(response.available()).isTrue();
+        assertThat(response.mainImage()).isNull();
+        assertThat(response.averageRating()).isNull();
+        assertThat(response.discountedPrice()).isNull();
     }
 }
