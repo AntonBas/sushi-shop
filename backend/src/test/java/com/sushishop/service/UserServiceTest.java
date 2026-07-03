@@ -31,13 +31,16 @@ public class UserServiceTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private MailService mailService;
+
     @InjectMocks
     private UserService userService;
 
     @Test
     void shouldCreateUser() {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var user = new User();
+        var user = User.builder().email("anton@example.com").build();
         var expected = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
 
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
@@ -49,6 +52,7 @@ public class UserServiceTest {
 
         assertThat(result.email()).isEqualTo("anton@example.com");
         verify(userRepository).save(any());
+        verify(mailService).sendVerificationEmail(eq("anton@example.com"), any());
     }
 
     @Test

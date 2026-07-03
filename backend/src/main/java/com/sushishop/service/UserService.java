@@ -15,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,6 +25,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final MailService mailService;
 
     public UserResponse create(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -32,7 +35,9 @@ public class UserService {
             throw new BadRequestException("Passwords don't match!");
         }
         var user = toEntity(request);
-        User saved = userRepository.save(user);
+        user.setVerificationToken(UUID.randomUUID().toString());
+        var saved = userRepository.save(user);
+        mailService.sendVerificationEmail(saved.getEmail(), saved.getVerificationToken());
         log.info("User created: {}", saved.getEmail());
         return userMapper.toResponse(saved);
     }
@@ -60,16 +65,6 @@ public class UserService {
     }
 
     private User toEntity(RegisterRequest request) {
-        return User.builder()
-                .name(request.name())
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .phone(request.phone())
-                .city(request.address() != null ? request.address().city() : null)
-                .street(request.address() != null ? request.address().street() : null)
-                .house(request.address() != null ? request.address().house() : null)
-                .apartment(request.address() != null ? request.address().apartment() : null)
-                .userRole(UserRole.CUSTOMER)
-                .build();
+        return User.builder().name(request.name()).email(request.email()).password(passwordEncoder.encode(request.password())).phone(request.phone()).city(request.address() != null ? request.address().city() : null).street(request.address() != null ? request.address().street() : null).house(request.address() != null ? request.address().house() : null).apartment(request.address() != null ? request.address().apartment() : null).userRole(UserRole.CUSTOMER).build();
     }
 }

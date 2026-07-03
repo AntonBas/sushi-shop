@@ -29,3 +29,4 @@ app:
   jwt:
     secret: test_secret_key_for_testing_1234567890
     expiration: 86400000
+  base-url: http://localhost:8080

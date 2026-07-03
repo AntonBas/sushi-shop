@@ -14,10 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
@@ -30,11 +27,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "Register new user")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User registered successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input data"),
-            @ApiResponse(responseCode = "409", description = "Email already registered")
-    })
+    @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "User registered successfully"), @ApiResponse(responseCode = "400", description = "Invalid input data"), @ApiResponse(responseCode = "409", description = "Email already registered")})
     @SecurityRequirements()
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.info("POST /api/auth/register - email: {}", request.email());
@@ -43,12 +36,16 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "User login")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Login successful"),
-            @ApiResponse(responseCode = "401", description = "Invalid email or password")
-    })
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Login successful"), @ApiResponse(responseCode = "401", description = "Invalid email or password")})
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("POST /api/auth/login - email: {}", request.email());
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @GetMapping("/verify")
+    @Operation(summary = "Verify email")
+    public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseEntity.ok().build();
     }
 }

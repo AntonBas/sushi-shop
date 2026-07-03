@@ -1,8 +1,10 @@
 package com.sushishop.service;
 
+import com.sushishop.domain.User;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
+import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,9 +17,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +41,9 @@ public class AuthServiceTest {
 
     @InjectMocks
     private AuthService authService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Test
     void shouldLogin() {
@@ -68,5 +75,18 @@ public class AuthServiceTest {
 
         assertThat(result.token()).isEqualTo("jwt-token");
         assertThat(result.user().role()).isEqualTo("CUSTOMER");
+    }
+
+    @Test
+    void shouldVerifyEmail() {
+        var user = User.builder().email("anton@example.com").emailVerified(false).verificationToken("token123").build();
+
+        when(userRepository.findByVerificationToken("token123")).thenReturn(Optional.of(user));
+
+        authService.verifyEmail("token123");
+
+        assertThat(user.isEmailVerified()).isTrue();
+        assertThat(user.getVerificationToken()).isNull();
+        verify(userRepository).save(user);
     }
 }
