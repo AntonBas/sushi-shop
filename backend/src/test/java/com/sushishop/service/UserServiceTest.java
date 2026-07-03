@@ -3,6 +3,7 @@ package com.sushishop.service;
 import com.sushishop.domain.User;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
+import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.ConflictException;
 import com.sushishop.mapper.UserMapper;
 import com.sushishop.repository.UserRepository;
@@ -35,7 +36,7 @@ public class UserServiceTest {
 
     @Test
     void shouldCreateUser() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "+380961791111", null);
+        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var user = new User();
         var expected = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
 
@@ -52,11 +53,21 @@ public class UserServiceTest {
 
     @Test
     void shouldThrowWhenEmailExists() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "+380961791111", null);
+        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
 
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.create(request))
                 .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void shouldThrowWhenPasswordsDoNotMatch() {
+        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "different", "+380961791111", null);
+
+        when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.create(request))
+                .isInstanceOf(BadRequestException.class);
     }
 }

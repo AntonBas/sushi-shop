@@ -43,7 +43,7 @@ public class AuthControllerTest {
 
     @Test
     void shouldRegister() throws Exception {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "+380961791111", null);
+        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
         var authResponse = new AuthResponse("jwt-token", userResponse);
 
@@ -59,7 +59,7 @@ public class AuthControllerTest {
 
     @Test
     void shouldReturn400WhenInvalidRegister() throws Exception {
-        var request = new RegisterRequest("", "invalid", "123", "", null);
+        var request = new RegisterRequest("", "invalid", "123", "123", "", null);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

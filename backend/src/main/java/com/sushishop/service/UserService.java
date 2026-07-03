@@ -3,7 +3,9 @@ package com.sushishop.service;
 import com.sushishop.domain.User;
 import com.sushishop.domain.enums.UserRole;
 import com.sushishop.dto.request.RegisterRequest;
+import com.sushishop.dto.request.UpdateUserRequest;
 import com.sushishop.dto.response.UserResponse;
+import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.ConflictException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.UserMapper;
@@ -26,8 +28,10 @@ public class UserService {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists!");
         }
+        if (!request.password().equals(request.confirmPassword())) {
+            throw new BadRequestException("Passwords don't match!");
+        }
         var user = toEntity(request);
-
         User saved = userRepository.save(user);
         log.info("User created: {}", saved.getEmail());
         return userMapper.toResponse(saved);
@@ -36,6 +40,23 @@ public class UserService {
     public UserResponse getByEmail(String email) {
         log.info("Getting user by email: {}", email);
         return userRepository.findByEmail(email).map(userMapper::toResponse).orElseThrow(() -> new NotFoundException("User not found: " + email));
+    }
+
+    public UserResponse update(String email, UpdateUserRequest request) {
+        var user = userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found: " + email));
+
+        if (request.name() != null) user.setName(request.name());
+        if (request.phone() != null) user.setPhone(request.phone());
+        if (request.address() != null) {
+            user.setCity(request.address().city());
+            user.setStreet(request.address().street());
+            user.setHouse(request.address().house());
+            user.setApartment(request.address().apartment());
+        }
+
+        var saved = userRepository.save(user);
+        log.info("User updated: {}", saved.getEmail());
+        return userMapper.toResponse(saved);
     }
 
     private User toEntity(RegisterRequest request) {

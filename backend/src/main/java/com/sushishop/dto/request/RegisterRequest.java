@@ -23,6 +23,10 @@ public record RegisterRequest(
         @NotBlank(message = "Password is required")
         String password,
 
+        @Schema(description = "Confirm password", example = "password123")
+        @NotBlank(message = "Password confirmation is required")
+        String confirmPassword,
+
         @Schema(description = "Phone number", example = "+380961791111")
         @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone must be 10-15 digits")
         @NotBlank(message = "Phone number is required")

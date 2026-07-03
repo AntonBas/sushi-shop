@@ -58,7 +58,7 @@ public class AuthServiceTest {
 
     @Test
     void shouldRegister() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "+380961791111", null);
+        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
 
         when(userService.create(request)).thenReturn(userResponse);
