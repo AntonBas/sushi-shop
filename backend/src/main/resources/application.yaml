@@ -74,6 +74,9 @@ app:
   upload:
     dir: uploads
   base-url: ${APP_BASE_URL}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET}
 
 logging:
   level:
