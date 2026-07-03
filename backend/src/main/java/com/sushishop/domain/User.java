@@ -38,6 +38,11 @@ public class User extends BaseEntity {
     @Column(length = 10)
     private String apartment;
 
+    @Builder.Default
+    private boolean emailVerified = false;
+
+    private String verificationToken;
+
     private String password;
 
     @Enumerated(EnumType.STRING)
