@@ -17,6 +17,13 @@ spring:
     enabled: false
   cache:
     type: none
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test
+            client-secret: test
 
 app:
   jwt:
