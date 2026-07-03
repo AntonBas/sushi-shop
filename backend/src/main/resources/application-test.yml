@@ -29,4 +29,7 @@ app:
   jwt:
     secret: test_secret_key_for_testing_1234567890
     expiration: 86400000
+  stripe:
+    secret-key: sk_test_test
+    webhook-secret: whsec_test
   base-url: http://localhost:8080

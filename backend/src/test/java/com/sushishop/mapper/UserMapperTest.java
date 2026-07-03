@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class UserMapperTest {
+public class UserMapperTest {
 
     @Autowired
     private UserMapper userMapper;
@@ -39,6 +39,6 @@ class UserMapperTest {
         assertThat(response.email()).isEqualTo("anton@example.com");
         assertThat(response.phone()).isEqualTo("+380961791111");
         assertThat(response.role()).isEqualTo("CUSTOMER");
-        assertThat(response.address()).isNull(); // ignore = true
+        assertThat(response.address()).isNull();
     }
 }
