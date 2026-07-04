@@ -2,6 +2,7 @@ package com.sushishop.service;
 
 import com.sushishop.domain.User;
 import com.sushishop.domain.enums.UserRole;
+import com.sushishop.dto.request.ChangePasswordRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.request.UpdateUserRequest;
 import com.sushishop.dto.response.UserResponse;
@@ -62,6 +63,16 @@ public class UserService {
         var saved = userRepository.save(user);
         log.info("User updated: {}", saved.getEmail());
         return userMapper.toResponse(saved);
+    }
+
+    public void changePassword(String email, ChangePasswordRequest request) {
+        var user = userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found: " + email));
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
+            throw new BadRequestException("Current password does not match!");
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+        log.info("Password changed for {}", email);
     }
 
     private User toEntity(RegisterRequest request) {

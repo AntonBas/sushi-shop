@@ -1,5 +1,6 @@
 package com.sushishop.controller;
 
+import com.sushishop.dto.request.ChangePasswordRequest;
 import com.sushishop.dto.request.UpdateUserRequest;
 import com.sushishop.dto.response.UserResponse;
 import com.sushishop.service.UserService;
@@ -11,7 +12,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,5 +44,14 @@ public class UserController {
     public ResponseEntity<UserResponse> update(@Valid @RequestBody UpdateUserRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         log.info("PUT /api/users/me - {}", userDetails.getUsername());
         return ResponseEntity.ok(userService.update(userDetails.getUsername(), request));
+    }
+
+    @PutMapping("/me/password")
+    @Operation(summary = "Change password")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("PUT /api/users/me/password - {}", userDetails.getUsername());
+        userService.changePassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
     }
 }
