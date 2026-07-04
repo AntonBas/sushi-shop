@@ -71,6 +71,9 @@ server:
   port: 8080
 
 app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000
   upload:
     dir: uploads
   base-url: ${APP_BASE_URL}
