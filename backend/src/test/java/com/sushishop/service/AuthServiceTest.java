@@ -15,14 +15,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -39,11 +39,17 @@ public class AuthServiceTest {
     @Mock
     private Authentication authentication;
 
-    @InjectMocks
-    private AuthService authService;
-
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private MailService mailService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private AuthService authService;
 
     @Test
     void shouldLogin() {
@@ -86,6 +92,33 @@ public class AuthServiceTest {
         authService.verifyEmail("token123");
 
         assertThat(user.isEmailVerified()).isTrue();
+        assertThat(user.getVerificationToken()).isNull();
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldForgotPassword() {
+        var user = User.builder().email("anton@example.com").build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        authService.forgotPassword("anton@example.com");
+
+        assertThat(user.getVerificationToken()).isNotNull();
+        verify(userRepository).save(user);
+        verify(mailService).sendPasswordResetEmail(eq("anton@example.com"), any());
+    }
+
+    @Test
+    void shouldResetPassword() {
+        var user = User.builder().email("anton@example.com").verificationToken("token123").build();
+
+        when(userRepository.findByVerificationToken("token123")).thenReturn(Optional.of(user));
+        when(passwordEncoder.encode("newPass123")).thenReturn("hashed");
+
+        authService.resetPassword("token123", "newPass123");
+
+        assertThat(user.getPassword()).isEqualTo("hashed");
         assertThat(user.getVerificationToken()).isNull();
         verify(userRepository).save(user);
     }

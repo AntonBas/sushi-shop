@@ -1,8 +1,10 @@
 package com.sushishop.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sushishop.dto.request.ForgotPasswordRequest;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
+import com.sushishop.dto.request.ResetPasswordRequest;
 import com.sushishop.dto.response.AuthResponse;
 import com.sushishop.dto.response.UserResponse;
 import com.sushishop.service.AuthService;
@@ -99,6 +101,26 @@ public class AuthControllerTest {
     void shouldVerifyEmail() throws Exception {
         mockMvc.perform(get("/api/auth/verify")
                         .param("token", "token123"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldForgotPassword() throws Exception {
+        var request = new ForgotPasswordRequest("anton@example.com");
+
+        mockMvc.perform(post("/api/auth/password/forgot")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldResetPassword() throws Exception {
+        var request = new ResetPasswordRequest("token123", "NewPass123");
+
+        mockMvc.perform(post("/api/auth/password/reset")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
     }
 }

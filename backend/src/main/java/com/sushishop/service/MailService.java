@@ -25,4 +25,13 @@ public class MailService {
         mailSender.send(message);
         log.info("Verification email sent to {}", to);
     }
+
+    public void sendPasswordResetEmail(String to, String token) {
+        var message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("Password Reset Email");
+        message.setText("Click to reset your password: " + baseUrl + "/api/auth/reset?token=" + token);
+        mailSender.send(message);
+        log.info("Password reset email sent to {}", to);
+    }
 }

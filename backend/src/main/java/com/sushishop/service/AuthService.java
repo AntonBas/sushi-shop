@@ -4,13 +4,17 @@ import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.AuthResponse;
 import com.sushishop.exception.core.BadRequestException;
+import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -21,6 +25,8 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final MailService mailService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.email());
@@ -52,5 +58,21 @@ public class AuthService {
         user.setVerificationToken(null);
         userRepository.save(user);
         log.info("Email verified for {}", user.getEmail());
+    }
+
+    public void forgotPassword(String email) {
+        var user = userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found: " + email));
+        user.setVerificationToken(UUID.randomUUID().toString());
+        userRepository.save(user);
+        mailService.sendPasswordResetEmail(user.getEmail(), user.getVerificationToken());
+        log.info("Password reset email sent to {}", email);
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        var user = userRepository.findByVerificationToken(token).orElseThrow(() -> new BadRequestException("Invalid or expired token"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setVerificationToken(null);
+        userRepository.save(user);
+        log.info("Password reset for {}", user.getEmail());
     }
 }

@@ -1,9 +1,12 @@
 package com.sushishop.controller;
 
+import com.sushishop.dto.request.ForgotPasswordRequest;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
+import com.sushishop.dto.request.ResetPasswordRequest;
 import com.sushishop.dto.response.AuthResponse;
 import com.sushishop.service.AuthService;
+import com.sushishop.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -46,6 +49,24 @@ public class AuthController {
     @Operation(summary = "Verify email")
     public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password/forgot")
+    @Operation(summary = "Request password reset")
+    @SecurityRequirements()
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        log.info("POST /api/auth/password/forgot - {}", request.email());
+        authService.forgotPassword(request.email());
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/password/reset")
+    @Operation(summary = "Reset password")
+    @SecurityRequirements()
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        log.info("POST /api/auth/password/reset");
+        authService.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok().build();
     }
 }
