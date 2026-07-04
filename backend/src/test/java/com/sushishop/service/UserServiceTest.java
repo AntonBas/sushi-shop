@@ -1,6 +1,7 @@
 package com.sushishop.service;
 
 import com.sushishop.domain.User;
+import com.sushishop.dto.request.ChangePasswordRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
 import com.sushishop.exception.core.BadRequestException;
@@ -13,6 +14,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -72,6 +75,33 @@ public class UserServiceTest {
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.create(request))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void shouldChangePassword() {
+        var request = new ChangePasswordRequest("oldPass", "newPass123");
+        var user = User.builder().email("anton@example.com").password("hashedOld").build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPass", "hashedOld")).thenReturn(true);
+        when(passwordEncoder.encode("newPass123")).thenReturn("hashedNew");
+
+        userService.changePassword("anton@example.com", request);
+
+        assertThat(user.getPassword()).isEqualTo("hashedNew");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldThrowWhenOldPasswordIncorrect() {
+        var request = new ChangePasswordRequest("wrongOld", "newPass123");
+        var user = User.builder().email("anton@example.com").password("hashedOld").build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrongOld", "hashedOld")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.changePassword("anton@example.com", request))
                 .isInstanceOf(BadRequestException.class);
     }
 }
