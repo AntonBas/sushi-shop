@@ -1,6 +1,7 @@
 package com.sushishop.controller;
 
 import com.sushishop.domain.AuditLog;
+import com.sushishop.dto.response.AuditLogResponse;
 import com.sushishop.service.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,7 +30,7 @@ public class AuditLogController {
 
     @GetMapping
     @Operation(summary = "Get audit logs")
-    public ResponseEntity<Page<AuditLog>> getAll(@PageableDefault(size = 20, sort = "performedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Page<AuditLogResponse>> getAll(@PageableDefault(size = 20, sort = "performedAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(auditLogService.getAll(pageable));
     }
 }

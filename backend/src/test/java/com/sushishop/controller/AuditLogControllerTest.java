@@ -1,6 +1,6 @@
 package com.sushishop.controller;
 
-import com.sushishop.domain.AuditLog;
+import com.sushishop.dto.response.AuditLogResponse;
 import com.sushishop.service.AuditLogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,16 +44,8 @@ public class AuditLogControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAuditLogs() throws Exception {
-        var log = AuditLog.builder()
-                .id(1L)
-                .action("CREATE")
-                .entityName("Product")
-                .entityId(1L)
-                .details("Product created")
-                .performedBy("admin@example.com")
-                .performedAt(LocalDateTime.now())
-                .build();
-        Page<AuditLog> page = new PageImpl<>(List.of(log));
+        var log = new AuditLogResponse(1L, "CREATE", "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
+        Page<AuditLogResponse> page = new PageImpl<>(List.of(log));
 
         when(auditLogService.getAll(any(Pageable.class))).thenReturn(page);
 
