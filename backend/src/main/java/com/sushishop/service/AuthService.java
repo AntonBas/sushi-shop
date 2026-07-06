@@ -31,15 +31,21 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.email());
 
+        var user = userRepository.findByEmail(request.email()).orElseThrow(() -> new BadRequestException("Invalid email or password"));
+
+        if (!user.isEmailVerified()) {
+            throw new BadRequestException("Please verify your email before login");
+        }
+
         var authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
         var authority = authentication.getAuthorities().iterator().next().getAuthority();
         String role = authority != null ? authority.replace("ROLE_", "") : "CUSTOMER";
         String token = jwtUtil.generateToken(request.email(), role);
 
-        var user = userService.getByEmail(request.email());
+        var userResponse = userService.getByEmail(request.email());
         log.info("Login successful for email: {}", request.email());
-        return new AuthResponse(token, user);
+        return new AuthResponse(token, userResponse);
     }
 
     public AuthResponse register(RegisterRequest request) {

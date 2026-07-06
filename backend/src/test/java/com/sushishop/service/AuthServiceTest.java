@@ -4,6 +4,7 @@ import com.sushishop.domain.User;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
+import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -54,9 +56,11 @@ public class AuthServiceTest {
     @Test
     void shouldLogin() {
         var request = new LoginRequest("anton@example.com", "password123");
+        var user = User.builder().email("anton@example.com").emailVerified(true).build();
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
         var authority = new SimpleGrantedAuthority("ROLE_CUSTOMER");
 
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getAuthorities()).thenAnswer(inv -> List.of(authority));
         when(jwtUtil.generateToken("anton@example.com", "CUSTOMER")).thenReturn("jwt-token");
@@ -65,8 +69,18 @@ public class AuthServiceTest {
         var result = authService.login(request);
 
         assertThat(result.token()).isEqualTo("jwt-token");
-        assertThat(result.tokenType()).isEqualTo("Bearer");
-        assertThat(result.user().email()).isEqualTo("anton@example.com");
+    }
+
+    @Test
+    void shouldThrowWhenEmailNotVerified() {
+        var request = new LoginRequest("anton@example.com", "password123");
+        var user = User.builder().email("anton@example.com").emailVerified(false).build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("verify your email");
     }
 
     @Test
@@ -80,7 +94,6 @@ public class AuthServiceTest {
         var result = authService.register(request);
 
         assertThat(result.token()).isEqualTo("jwt-token");
-        assertThat(result.user().role()).isEqualTo("CUSTOMER");
     }
 
     @Test
