@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchedRef = useRef(false)
 
   const token = localStorage.getItem('token')
-  const isAuthenticated = !!token
+  const isAuthenticated = !!user
   const isAdmin = user?.role === 'ADMIN'
 
   useEffect(() => {
@@ -35,20 +35,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null)
         })
         .finally(() => setLoading(false))
-    } else if (!token) {
+    } else {
       setLoading(false)
     }
-  }, [token])
+  }, [])
 
   const login = async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials)
     localStorage.setItem('token', response.token)
+    fetchedRef.current = true
     setUser(response.user)
   }
 
   const register = async (userData: RegisterRequest) => {
     const response = await authApi.register(userData)
     localStorage.setItem('token', response.token)
+    fetchedRef.current = true
     setUser(response.user)
     return response.user
   }
@@ -57,6 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('token')
     setUser(null)
     fetchedRef.current = false
+    window.location.href = '/login'
   }
 
   const refreshUser = async () => {
