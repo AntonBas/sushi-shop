@@ -1,0 +1,15 @@
+.container { display: flex; flex-direction: column; gap: 4px; }
+.label { font-size: 14px; color: var(--color-text-secondary); }
+.input {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input:focus { border-color: var(--color-primary); }
+.error { border-color: var(--color-error); }
+.errorMessage { font-size: 13px; color: var(--color-error); }
