@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useApi } from './useApi'
+import { useApi } from './common/useApi'
 import * as reviewsApi from '../api/reviews'
 import type { ReviewResponse, CreateReviewRequest } from '../types'
 import type { Page } from '../types/common'

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useApi } from './useApi'
+import { useApi } from './common/useApi'
 import * as promotionsApi from '../api/promotions'
 import type { PromotionResponse } from '../types'
 

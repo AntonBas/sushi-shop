@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useApi } from './useApi'
+import { useApi } from './common/useApi'
 import * as productsApi from '../api/products'
 import type { ProductListResponse, ProductResponse, Category } from '../types'
 import type { Page } from '../types/common'
