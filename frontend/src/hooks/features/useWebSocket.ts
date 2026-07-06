@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Client } from '@stomp/stompjs'
-import type { OrderStatusUpdate } from '../types'
+import type { OrderStatusUpdate } from '../../types'
 
 export function useOrderTracking(orderId: number | null) {
   const [status, setStatus] = useState<string | null>(null)

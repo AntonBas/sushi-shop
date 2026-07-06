@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
-import { useApi } from './common/useApi'
-import * as promotionsApi from '../api/promotions'
-import type { PromotionResponse } from '../types'
+import { useApi } from '.././common/useApi'
+import * as promotionsApi from '../../api/promotions'
+import type { PromotionResponse } from '../../types'
 
 export function usePromotions() {
   const { data, loading, error, execute } = useApi<PromotionResponse[]>()

@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
-import { useApi } from './common/useApi'
-import * as reviewsApi from '../api/reviews'
-import type { ReviewResponse, CreateReviewRequest } from '../types'
-import type { Page } from '../types/common'
+import { useApi } from '.././common/useApi'
+import * as reviewsApi from '../../api/reviews'
+import type { ReviewResponse, CreateReviewRequest } from '../../types'
+import type { Page } from '../../types/common'
 
 export function useReviews() {
   const listApi = useApi<Page<ReviewResponse>>()

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import type { OrderItemRequest } from '../types'
+import type { OrderItemRequest } from '../../types'
 
 interface CartItem extends OrderItemRequest {
   name: string

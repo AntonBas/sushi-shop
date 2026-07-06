@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { useApi } from './common/useApi'
-import * as productsApi from '../api/products'
-import type { ProductListResponse, ProductResponse, Category } from '../types'
-import type { Page } from '../types/common'
+import { useApi } from '.././common/useApi'
+import * as productsApi from '../../api/products'
+import type { ProductListResponse, ProductResponse, Category } from '../../types'
+import type { Page } from '../../types/common'
 
 export function useProducts() {
   const listApi = useApi<Page<ProductListResponse>>()
