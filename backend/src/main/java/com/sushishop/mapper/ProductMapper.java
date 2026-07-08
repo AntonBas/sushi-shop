@@ -22,6 +22,7 @@ public interface ProductMapper {
     @Mapping(target = "productImages", ignore = true)
     @Mapping(target = "promotions", ignore = true)
     @Mapping(target = "reviews", ignore = true)
+    @Mapping(target = "available", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
