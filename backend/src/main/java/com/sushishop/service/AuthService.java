@@ -6,6 +6,7 @@ import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.AuthResponse;
 import com.sushishop.exception.core.BadRequestException;
+import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.repository.TokenRepository;
 import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
@@ -42,7 +43,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadRequestException("Invalid email or password"));
 
         if (!user.isEmailVerified()) {
-            throw new BadRequestException("Invalid email or password");
+            throw new BadRequestException("Please verify your email before login");
         }
 
         var authentication = authenticationManager.authenticate(
@@ -83,14 +84,12 @@ public class AuthService {
     }
 
     public void forgotPassword(String email) {
-        var userOptional = userRepository.findByEmail(email);
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
-        if (userOptional.isEmpty() || !userOptional.get().isEmailVerified()) {
-            log.warn("Forgot password attempt for non-existent or unverified email");
-            return;
+        if (!user.isEmailVerified()) {
+            throw new BadRequestException("Please verify your email first");
         }
-
-        var user = userOptional.get();
 
         tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.PASSWORD_RESET);
 

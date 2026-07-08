@@ -61,15 +61,15 @@ public class UserService {
     }
 
     public UserResponse getByEmail(String email) {
-        log.info("Getting user by email");
+        log.info("Getting user by email: {}", email);
         return userRepository.findByEmail(email)
                 .map(userMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
     }
 
     public UserResponse update(String email, UpdateUserRequest request) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
         if (request.name() != null) user.setName(request.name());
         if (request.phone() != null) user.setPhone(request.phone());
@@ -88,7 +88,7 @@ public class UserService {
     @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
             throw new BadRequestException("Current password does not match!");
