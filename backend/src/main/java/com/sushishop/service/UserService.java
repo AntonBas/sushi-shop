@@ -18,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -26,12 +28,15 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final int TOKEN_EXPIRATION_HOURS = 1;
+
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final MailService mailService;
 
+    @Transactional
     public UserResponse create(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists!");
@@ -46,6 +51,7 @@ public class UserService {
                 .token(UUID.randomUUID().toString())
                 .tokenType(TokenType.EMAIL_VERIFICATION)
                 .user(saved)
+                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
                 .build();
         tokenRepository.save(token);
 
@@ -55,15 +61,15 @@ public class UserService {
     }
 
     public UserResponse getByEmail(String email) {
-        log.info("Getting user by email: {}", email);
+        log.info("Getting user by email");
         return userRepository.findByEmail(email)
                 .map(userMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+                .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
     public UserResponse update(String email, UpdateUserRequest request) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+                .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (request.name() != null) user.setName(request.name());
         if (request.phone() != null) user.setPhone(request.phone());
@@ -79,13 +85,21 @@ public class UserService {
         return userMapper.toResponse(saved);
     }
 
+    @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
             throw new BadRequestException("Current password does not match!");
         }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            throw new BadRequestException("New password must be different from old password");
+        }
+
         user.setPassword(passwordEncoder.encode(request.newPassword()));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
         log.info("Password changed for {}", email);
     }

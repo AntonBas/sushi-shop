@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private static final int TOKEN_EXPIRATION_HOURS = 24;
+    private static final int TOKEN_EXPIRATION_HOURS = 1;
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;

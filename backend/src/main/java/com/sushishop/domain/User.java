@@ -41,6 +41,7 @@ public class User extends BaseEntity {
     @Builder.Default
     private boolean emailVerified = false;
 
+    @Builder.Default
     @Column(nullable = false)
     private Integer tokenVersion = 0;
 
