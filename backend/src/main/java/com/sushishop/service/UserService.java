@@ -1,6 +1,8 @@
 package com.sushishop.service;
 
+import com.sushishop.domain.Token;
 import com.sushishop.domain.User;
+import com.sushishop.domain.enums.TokenType;
 import com.sushishop.domain.enums.UserRole;
 import com.sushishop.dto.request.ChangePasswordRequest;
 import com.sushishop.dto.request.RegisterRequest;
@@ -10,6 +12,7 @@ import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.ConflictException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.UserMapper;
+import com.sushishop.repository.TokenRepository;
 import com.sushishop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import java.util.UUID;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
     private final MailService mailService;
@@ -36,20 +40,30 @@ public class UserService {
             throw new BadRequestException("Passwords don't match!");
         }
         var user = toEntity(request);
-        user.setVerificationToken(UUID.randomUUID().toString());
         var saved = userRepository.save(user);
-        mailService.sendVerificationEmail(saved.getEmail(), saved.getVerificationToken());
+
+        var token = Token.builder()
+                .token(UUID.randomUUID().toString())
+                .tokenType(TokenType.EMAIL_VERIFICATION)
+                .user(saved)
+                .build();
+        tokenRepository.save(token);
+
+        mailService.sendVerificationEmail(saved.getEmail(), token.getToken());
         log.info("User created: {}", saved.getEmail());
         return userMapper.toResponse(saved);
     }
 
     public UserResponse getByEmail(String email) {
         log.info("Getting user by email: {}", email);
-        return userRepository.findByEmail(email).map(userMapper::toResponse).orElseThrow(() -> new NotFoundException("User not found: " + email));
+        return userRepository.findByEmail(email)
+                .map(userMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
     }
 
     public UserResponse update(String email, UpdateUserRequest request) {
-        var user = userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found: " + email));
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
         if (request.name() != null) user.setName(request.name());
         if (request.phone() != null) user.setPhone(request.phone());
@@ -66,7 +80,8 @@ public class UserService {
     }
 
     public void changePassword(String email, ChangePasswordRequest request) {
-        var user = userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found: " + email));
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
         if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
             throw new BadRequestException("Current password does not match!");
         }
@@ -76,6 +91,16 @@ public class UserService {
     }
 
     private User toEntity(RegisterRequest request) {
-        return User.builder().name(request.name()).email(request.email()).password(passwordEncoder.encode(request.password())).phone(request.phone()).city(request.address() != null ? request.address().city() : null).street(request.address() != null ? request.address().street() : null).house(request.address() != null ? request.address().house() : null).apartment(request.address() != null ? request.address().apartment() : null).userRole(UserRole.CUSTOMER).build();
+        return User.builder()
+                .name(request.name())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .phone(request.phone())
+                .city(request.address() != null ? request.address().city() : null)
+                .street(request.address() != null ? request.address().street() : null)
+                .house(request.address() != null ? request.address().house() : null)
+                .apartment(request.address() != null ? request.address().apartment() : null)
+                .userRole(UserRole.CUSTOMER)
+                .build();
     }
 }

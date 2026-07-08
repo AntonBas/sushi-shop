@@ -7,6 +7,7 @@ import com.sushishop.dto.response.UserResponse;
 import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.ConflictException;
 import com.sushishop.mapper.UserMapper;
+import com.sushishop.repository.TokenRepository;
 import com.sushishop.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,9 @@ public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private TokenRepository tokenRepository;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -55,6 +59,7 @@ public class UserServiceTest {
 
         assertThat(result.email()).isEqualTo("anton@example.com");
         verify(userRepository).save(any());
+        verify(tokenRepository).save(any());
         verify(mailService).sendVerificationEmail(eq("anton@example.com"), any());
     }
 

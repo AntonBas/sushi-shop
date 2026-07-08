@@ -41,8 +41,6 @@ public class User extends BaseEntity {
     @Builder.Default
     private boolean emailVerified = false;
 
-    private String verificationToken;
-
     private String password;
 
     @Enumerated(EnumType.STRING)

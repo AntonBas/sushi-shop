@@ -116,8 +116,7 @@ public class AuthControllerTest {
 
     @Test
     void shouldResetPassword() throws Exception {
-        var request = new ResetPasswordRequest("token123", "NewPass123");
-
+        var request = new ResetPasswordRequest("token123", "NewPass123", "NewPass123");
         mockMvc.perform(post("/api/auth/password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

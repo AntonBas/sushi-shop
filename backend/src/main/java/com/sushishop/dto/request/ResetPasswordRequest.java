@@ -13,6 +13,10 @@ public record ResetPasswordRequest(
         @NotBlank(message = "New password is required")
         @Size(min = 8, max = 32, message = "Password must be between 8 and 64 characters")
         @Schema(description = "New password", example = "NewPassword123")
-        String newPassword
+        String newPassword,
+
+        @NotBlank(message = "Password confirmation is required")
+        @Schema(description = "Confirm new password", example = "NewPassword123")
+        String confirmPassword
 ) {
 }

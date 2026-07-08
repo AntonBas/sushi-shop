@@ -1,10 +1,13 @@
 package com.sushishop.service;
 
+import com.sushishop.domain.Token;
 import com.sushishop.domain.User;
+import com.sushishop.domain.enums.TokenType;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
 import com.sushishop.exception.core.BadRequestException;
+import com.sushishop.repository.TokenRepository;
 import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
 import org.junit.jupiter.api.Test;
@@ -43,6 +46,9 @@ public class AuthServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private TokenRepository tokenRepository;
 
     @Mock
     private MailService mailService;
@@ -98,41 +104,43 @@ public class AuthServiceTest {
 
     @Test
     void shouldVerifyEmail() {
-        var user = User.builder().email("anton@example.com").emailVerified(false).verificationToken("token123").build();
+        var token = Token.builder().token("token123").tokenType(TokenType.EMAIL_VERIFICATION).used(false)
+                .user(User.builder().email("anton@example.com").emailVerified(false).build()).build();
 
-        when(userRepository.findByVerificationToken("token123")).thenReturn(Optional.of(user));
+        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
 
         authService.verifyEmail("token123");
 
-        assertThat(user.isEmailVerified()).isTrue();
-        assertThat(user.getVerificationToken()).isNull();
-        verify(userRepository).save(user);
+        assertThat(token.getUser().isEmailVerified()).isTrue();
+        assertThat(token.isUsed()).isTrue();
+        verify(tokenRepository).save(token);
     }
 
     @Test
     void shouldForgotPassword() {
-        var user = User.builder().email("anton@example.com").build();
+        var user = User.builder().email("anton@example.com").emailVerified(true).build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
 
         authService.forgotPassword("anton@example.com");
 
-        assertThat(user.getVerificationToken()).isNotNull();
-        verify(userRepository).save(user);
+        verify(tokenRepository).save(any());
         verify(mailService).sendPasswordResetEmail(eq("anton@example.com"), any());
     }
 
     @Test
     void shouldResetPassword() {
-        var user = User.builder().email("anton@example.com").verificationToken("token123").build();
+        var user = User.builder().email("anton@example.com").password("oldHashed").build();
+        var token = Token.builder().token("token123").tokenType(TokenType.PASSWORD_RESET).used(false).user(user).build();
 
-        when(userRepository.findByVerificationToken("token123")).thenReturn(Optional.of(user));
+        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
+        when(passwordEncoder.matches("newPass123", "oldHashed")).thenReturn(false);
         when(passwordEncoder.encode("newPass123")).thenReturn("hashed");
 
         authService.resetPassword("token123", "newPass123");
 
         assertThat(user.getPassword()).isEqualTo("hashed");
-        assertThat(user.getVerificationToken()).isNull();
-        verify(userRepository).save(user);
+        assertThat(token.isUsed()).isTrue();
+        verify(tokenRepository).save(token);
     }
 }
