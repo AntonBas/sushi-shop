@@ -6,7 +6,6 @@ import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.request.ResetPasswordRequest;
 import com.sushishop.dto.response.AuthResponse;
 import com.sushishop.service.AuthService;
-import com.sushishop.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -66,7 +65,7 @@ public class AuthController {
     @SecurityRequirements()
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         log.info("POST /api/auth/password/reset");
-        authService.resetPassword(request.token(), request.newPassword());
+        authService.resetPassword(request.token(), request.newPassword(), request.confirmPassword());
         return ResponseEntity.ok().build();
     }
 }

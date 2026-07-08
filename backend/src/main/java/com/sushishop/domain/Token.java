@@ -4,6 +4,8 @@ import com.sushishop.domain.enums.TokenType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Data
 @NoArgsConstructor
@@ -26,6 +28,9 @@ public class Token extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Column(nullable = false)
+    private LocalDateTime expiryDate;
 
     private boolean used = false;
 }

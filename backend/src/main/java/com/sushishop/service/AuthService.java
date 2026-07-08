@@ -6,7 +6,6 @@ import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.AuthResponse;
 import com.sushishop.exception.core.BadRequestException;
-import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.repository.TokenRepository;
 import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
@@ -16,13 +15,17 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    private static final int TOKEN_EXPIRATION_HOURS = 24;
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -39,7 +42,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadRequestException("Invalid email or password"));
 
         if (!user.isEmailVerified()) {
-            throw new BadRequestException("Please verify your email before login");
+            throw new BadRequestException("Invalid email or password");
         }
 
         var authentication = authenticationManager.authenticate(
@@ -47,30 +50,28 @@ public class AuthService {
 
         var authority = authentication.getAuthorities().iterator().next().getAuthority();
         String role = authority != null ? authority.replace("ROLE_", "") : "CUSTOMER";
-        String token = jwtUtil.generateToken(request.email(), role);
+        String jwt = jwtUtil.generateToken(request.email(), role, user.getTokenVersion());
 
         var userResponse = userService.getByEmail(request.email());
         log.info("Login successful for email: {}", request.email());
-        return new AuthResponse(token, userResponse);
+        return new AuthResponse(jwt, userResponse);
     }
 
     public AuthResponse register(RegisterRequest request) {
         log.info("Register attempt for email: {}", request.email());
 
-        var user = userService.create(request);
-        String token = jwtUtil.generateToken(user.email(), user.role());
+        var userResponse = userService.create(request);
+        var user = userRepository.findByEmail(userResponse.email())
+                .orElseThrow(() -> new BadRequestException("User not found after registration"));
+        String jwt = jwtUtil.generateToken(user.getEmail(), user.getUserRole().name(), user.getTokenVersion());
 
         log.info("Register successful for email: {}", request.email());
-        return new AuthResponse(token, user);
+        return new AuthResponse(jwt, userResponse);
     }
 
-    public void verifyEmail(String token) {
-        var tokenEntity = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new BadRequestException("Invalid or expired verification token"));
-
-        if (tokenEntity.isUsed()) {
-            throw new BadRequestException("Token already used");
-        }
+    @Transactional
+    public void verifyEmail(String verificationToken) {
+        var tokenEntity = validateAndGetToken(verificationToken, TokenType.EMAIL_VERIFICATION);
 
         var user = tokenEntity.getUser();
         user.setEmailVerified(true);
@@ -82,32 +83,36 @@ public class AuthService {
     }
 
     public void forgotPassword(String email) {
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+        var userOptional = userRepository.findByEmail(email);
 
-        if (!user.isEmailVerified()) {
-            throw new BadRequestException("Please verify your email first");
+        if (userOptional.isEmpty() || !userOptional.get().isEmailVerified()) {
+            log.warn("Forgot password attempt for non-existent or unverified email");
+            return;
         }
 
-        var token = Token.builder()
+        var user = userOptional.get();
+
+        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.PASSWORD_RESET);
+
+        var resetToken = Token.builder()
                 .token(UUID.randomUUID().toString())
                 .tokenType(TokenType.PASSWORD_RESET)
                 .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
                 .build();
 
-        tokenRepository.save(token);
-        mailService.sendPasswordResetEmail(user.getEmail(), token.getToken());
+        tokenRepository.save(resetToken);
+        mailService.sendPasswordResetEmail(user.getEmail(), resetToken.getToken());
         log.info("Password reset email sent to {}", email);
     }
 
-    public void resetPassword(String token, String newPassword) {
-        var tokenEntity = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new BadRequestException("Invalid or expired reset token"));
-
-        if (tokenEntity.isUsed()) {
-            throw new BadRequestException("Token already used");
+    @Transactional
+    public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BadRequestException("Passwords don't match!");
         }
 
+        var tokenEntity = validateAndGetToken(resetToken, TokenType.PASSWORD_RESET);
         var user = tokenEntity.getUser();
 
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
@@ -115,10 +120,29 @@ public class AuthService {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
 
-        tokenEntity.setUsed(true);
-        tokenRepository.save(tokenEntity);
+        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.PASSWORD_RESET);
         log.info("Password reset for {}", user.getEmail());
+    }
+
+    private Token validateAndGetToken(String tokenValue, TokenType expectedType) {
+        var tokenEntity = tokenRepository.findByToken(tokenValue)
+                .orElseThrow(() -> new BadRequestException("Invalid or expired token"));
+
+        if (tokenEntity.isUsed()) {
+            throw new BadRequestException("Token already used");
+        }
+
+        if (tokenEntity.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new BadRequestException("Token expired");
+        }
+
+        if (tokenEntity.getTokenType() != expectedType) {
+            throw new BadRequestException("Invalid token type");
+        }
+
+        return tokenEntity;
     }
 }
