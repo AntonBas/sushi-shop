@@ -2,31 +2,45 @@ package com.sushishop.controller;
 
 import com.sushishop.service.PaymentService;
 import com.sushishop.service.StripeService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
+@Tag(name = "Payments", description = "Payment endpoints")
 public class PaymentController {
 
     private final StripeService stripeService;
     private final PaymentService paymentService;
 
     @PostMapping("/order/{orderId}")
-    public ResponseEntity<Map<String, String>> createCheckout(@PathVariable Long orderId) throws Exception {
-        var url = stripeService.createCheckoutSession(orderId, 50000L, "customer@example.com");
-        paymentService.create(orderId, url, null);
+    @Operation(summary = "Create Stripe checkout session for order")
+    public ResponseEntity<Map<String, String>> createCheckout(@PathVariable Long orderId,
+                                                              @RequestParam Long amountInCents,
+                                                              @RequestParam String email) {
+        var url = stripeService.createCheckoutSession(orderId, amountInCents, email);
+        paymentService.create(orderId, url, BigDecimal.valueOf(amountInCents, 2));
+        log.info("Checkout session created for order: {}", orderId);
         return ResponseEntity.ok(Map.of("url", url));
     }
 
     @PostMapping("/webhook")
+    @Operation(summary = "Stripe webhook endpoint")
     public ResponseEntity<Void> handleWebhook(@RequestBody String payload,
                                               @RequestHeader("Stripe-Signature") String sigHeader) {
-        paymentService.confirmPayment("test");
+        var sessionId = stripeService.getSessionIdFromWebhook(payload, sigHeader);
+        if (sessionId != null) {
+            paymentService.confirmPayment(sessionId);
+        }
         return ResponseEntity.ok().build();
     }
 }
