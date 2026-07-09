@@ -1,5 +1,7 @@
 package com.sushishop.service;
 
+import com.sushishop.exception.core.BadRequestException;
+import com.sushishop.exception.core.InternalServerException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -19,14 +21,22 @@ public class FileStorageService {
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
-    private static final List<String> ALLOWED_TYPES = List.of("image/jpeg", "image/png", "image/webp");
+
+    @Value("${app.upload.allowed-types:image/jpeg,image/png,image/webp}")
+    private Set<String> allowedTypes;
+
+    @Value("${app.upload.max-size:5242880}")
+    private long maxFileSize;
+
+    @Value("${app.upload.url-prefix:/api/files/}")
+    private String urlPrefix;
 
     @PostConstruct
     public void init() {
         try {
             Files.createDirectories(Paths.get(uploadDir));
         } catch (IOException e) {
-            throw new RuntimeException("Could not create upload directory: " + uploadDir, e);
+            throw new InternalServerException("Could not create upload directory: " + uploadDir, e);
         }
     }
 
@@ -35,23 +45,33 @@ public class FileStorageService {
             return null;
         }
 
-        if (!ALLOWED_TYPES.contains(file.getContentType())) {
-            throw new RuntimeException("File type not allowed: " + file.getContentType());
+        if (file.getSize() > maxFileSize) {
+            throw new BadRequestException("File size exceeds maximum allowed size");
+        }
+
+        String contentType = file.getContentType();
+        if (contentType == null || !allowedTypes.contains(contentType)) {
+            throw new BadRequestException("File type not allowed: " + contentType);
         }
 
         try {
-            String originalName = file.getOriginalFilename();
-            String extension = originalName != null && originalName.contains(".")
-                    ? originalName.substring(originalName.lastIndexOf("."))
-                    : ".jpg";
+            String extension = getExtension(file.getOriginalFilename());
             String fileName = UUID.randomUUID() + extension;
             Path filePath = Paths.get(uploadDir, fileName);
             Files.write(filePath, file.getBytes());
 
             log.info("File stored: {}", fileName);
-            return "/api/files/" + fileName;
+            return urlPrefix + fileName;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            throw new InternalServerException("Failed to store file", e);
         }
+    }
+
+    private String getExtension(String originalFilename) {
+        if (originalFilename == null || !originalFilename.contains(".")) {
+            return ".jpg";
+        }
+        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        return extension.isBlank() ? ".jpg" : extension;
     }
 }

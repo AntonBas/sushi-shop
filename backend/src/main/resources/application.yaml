@@ -77,6 +77,9 @@ app:
     expiration: 86400000
   upload:
     dir: uploads
+    allowed-types: image/jpeg,image/png,image/webp
+    max-size: 5242880
+    url-prefix: /api/files/
   base-url: ${APP_BASE_URL}
   stripe:
     secret-key: ${STRIPE_SECRET_KEY}
