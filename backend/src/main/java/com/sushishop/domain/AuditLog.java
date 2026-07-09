@@ -1,20 +1,18 @@
 package com.sushishop.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "audit_logs")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AuditLog {
+@EqualsAndHashCode(callSuper = true)
+@Table(name = "audit_logs")
+public class AuditLog extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,4 +34,11 @@ public class AuditLog {
 
     @Column(nullable = false)
     private LocalDateTime performedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (performedAt == null) {
+            performedAt = LocalDateTime.now();
+        }
+    }
 }
