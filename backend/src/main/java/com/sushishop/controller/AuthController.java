@@ -1,5 +1,6 @@
 package com.sushishop.controller;
 
+import com.sushishop.config.ratelimit.RateLimit;
 import com.sushishop.dto.request.ForgotPasswordRequest;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
@@ -27,6 +28,7 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @RateLimit(value = 3)
     @PostMapping("/register")
     @Operation(summary = "Register new user")
     @ApiResponses(value = {@ApiResponse(responseCode = "201", description = "User registered successfully"), @ApiResponse(responseCode = "400", description = "Invalid input data"), @ApiResponse(responseCode = "409", description = "Email already registered")})
@@ -36,6 +38,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 
+    @RateLimit
     @PostMapping("/login")
     @Operation(summary = "User login")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Login successful"), @ApiResponse(responseCode = "401", description = "Invalid email or password")})
@@ -44,6 +47,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @RateLimit(value = 10)
     @GetMapping("/verify")
     @Operation(summary = "Verify email")
     public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
@@ -51,6 +55,7 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @RateLimit(duration = 900)
     @PostMapping("/password/forgot")
     @Operation(summary = "Request password reset")
     @SecurityRequirements()
@@ -60,6 +65,7 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @RateLimit
     @PostMapping("/password/reset")
     @Operation(summary = "Reset password")
     @SecurityRequirements()
