@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     List<Promotion> findByActiveTrueAndEndDateAfter(LocalDateTime now);
+
+    List<Promotion> findByStartDateBeforeAndEndDateAfter(LocalDateTime start, LocalDateTime end);
 }
