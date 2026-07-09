@@ -67,6 +67,22 @@ public class FileStorageService {
         }
     }
 
+    public void delete(String fileUrl) {
+        if (fileUrl == null || !fileUrl.startsWith(urlPrefix)) {
+            log.warn("Invalid file URL for deletion: {}", fileUrl);
+            return;
+        }
+        String fileName = fileUrl.substring(urlPrefix.length());
+        Path filePath = Paths.get(uploadDir, fileName);
+
+        try {
+            Files.deleteIfExists(filePath);
+            log.info("File deleted: {}", fileName);
+        } catch (IOException e) {
+            log.error("Failed to delete file: {}", fileName, e);
+        }
+    }
+
     private String getExtension(String originalFilename) {
         if (originalFilename == null || !originalFilename.contains(".")) {
             return ".jpg";

@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
@@ -84,5 +85,32 @@ public class FileStorageServiceTest {
         assertThatThrownBy(() -> fileStorageService.store(file))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("File size exceeds maximum allowed size");
+    }
+
+    @Test
+    void shouldDeleteFile() throws Exception {
+        var fileName = "test-delete.jpg";
+        var filePath = tempDir.resolve(fileName);
+        Files.write(filePath, "test".getBytes());
+
+        fileStorageService.delete("/api/files/" + fileName);
+
+        assertThat(Files.exists(filePath)).isFalse();
+    }
+
+    @Test
+    void shouldNotThrowWhenDeleteNonExistentFile() {
+        fileStorageService.delete("/api/files/nonexistent.jpg");
+    }
+
+    @Test
+    void shouldNotDeleteWithInvalidUrl() throws Exception {
+        var fileName = "test-invalid.jpg";
+        var filePath = tempDir.resolve(fileName);
+        Files.write(filePath, "test".getBytes());
+
+        fileStorageService.delete("invalid-url");
+
+        assertThat(Files.exists(filePath)).isTrue();
     }
 }
