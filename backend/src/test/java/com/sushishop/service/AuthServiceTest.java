@@ -7,6 +7,7 @@ import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
 import com.sushishop.exception.core.BadRequestException;
+import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.repository.TokenRepository;
 import com.sushishop.repository.UserRepository;
 import com.sushishop.security.jwt.JwtUtil;
@@ -87,7 +88,7 @@ public class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Invalid email or password");
+                .hasMessageContaining("Please verify your email before login");
     }
 
     @Test
@@ -172,25 +173,23 @@ public class AuthServiceTest {
     }
 
     @Test
-    void shouldNotRevealWhenForgotPasswordForUnverifiedUser() {
+    void shouldThrowWhenForgotPasswordForUnverifiedUser() {
         var user = User.builder().email("anton@example.com").emailVerified(false).build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
 
-        authService.forgotPassword("anton@example.com");
-
-        verify(tokenRepository, never()).save(any());
-        verify(mailService, never()).sendPasswordResetEmail(any(), any());
+        assertThatThrownBy(() -> authService.forgotPassword("anton@example.com"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Please verify your email first");
     }
 
     @Test
-    void shouldNotRevealWhenForgotPasswordForNonExistentUser() {
+    void shouldThrowWhenForgotPasswordForNonExistentUser() {
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.empty());
 
-        authService.forgotPassword("anton@example.com");
-
-        verify(tokenRepository, never()).save(any());
-        verify(mailService, never()).sendPasswordResetEmail(any(), any());
+        assertThatThrownBy(() -> authService.forgotPassword("anton@example.com"))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("User not found");
     }
 
     @Test

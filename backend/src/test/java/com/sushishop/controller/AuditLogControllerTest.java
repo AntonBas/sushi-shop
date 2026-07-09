@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -43,13 +45,31 @@ public class AuditLogControllerTest {
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
-    void shouldGetAuditLogs() throws Exception {
+    void shouldGetAllAuditLogs() throws Exception {
         var log = new AuditLogResponse(1L, "CREATE", "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
         Page<AuditLogResponse> page = new PageImpl<>(List.of(log));
 
-        when(auditLogService.getAll(any(Pageable.class))).thenReturn(page);
+        when(auditLogService.getAll(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(page);
 
         mockMvc.perform(get("/api/admin/audit"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = {"ADMIN"})
+    void shouldGetAuditLogsWithFilters() throws Exception {
+        var log = new AuditLogResponse(1L, "CREATE", "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
+        Page<AuditLogResponse> page = new PageImpl<>(List.of(log));
+
+        when(auditLogService.getAll(eq("CREATE"), eq("Product"), eq(1L), eq("admin@example.com"), any(), any(), any(Pageable.class)))
+                .thenReturn(page);
+
+        mockMvc.perform(get("/api/admin/audit")
+                        .param("action", "CREATE")
+                        .param("entityName", "Product")
+                        .param("entityId", "1")
+                        .param("performedBy", "admin@example.com"))
                 .andExpect(status().isOk());
     }
 }

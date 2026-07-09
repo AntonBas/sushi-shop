@@ -6,13 +6,16 @@ import com.sushishop.mapper.AuditLogMapper;
 import com.sushishop.repository.AuditLogRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentMatchers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,15 +41,48 @@ public class AuditLogServiceTest {
     }
 
     @Test
-    void shouldGetAll() {
+    void shouldNotLogWhenActionIsNull() {
+        auditLogService.log(null, "Product", 1L, "details", "admin@example.com");
+        verify(auditLogRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldNotLogWhenActionIsBlank() {
+        auditLogService.log("   ", "Product", 1L, "details", "admin@example.com");
+        verify(auditLogRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldUseSystemAsDefaultPerformedBy() {
+        auditLogService.log("CREATE", "Product", 1L, "details", null);
+        verify(auditLogRepository).save(any());
+    }
+
+    @Test
+    void shouldGetAllWithNoFilters() {
         var log = new AuditLog();
-        var response = new AuditLogResponse(1L, "CREATE", "Product", 5L, "details", "admin@example.com", null);
+        var response = new AuditLogResponse(1L, "CREATE", "Product", 5L, "details", "admin@example.com", LocalDateTime.now());
         Page<AuditLog> page = new PageImpl<>(List.of(log));
 
-        when(auditLogRepository.findAll(any(Pageable.class))).thenReturn(page);
+        when(auditLogRepository.findAll(ArgumentMatchers.<Specification<AuditLog>>any(), any(Pageable.class))).thenReturn(page);
         when(auditLogMapper.toResponse(log)).thenReturn(response);
 
-        var result = auditLogService.getAll(Pageable.unpaged());
+        var result = auditLogService.getAll(null, null, null, null, null, null, Pageable.unpaged());
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    void shouldGetAllWithFilters() {
+        var log = new AuditLog();
+        var response = new AuditLogResponse(1L, "CREATE", "Product", 5L, "details", "admin@example.com", LocalDateTime.now());
+        Page<AuditLog> page = new PageImpl<>(List.of(log));
+
+        when(auditLogRepository.findAll(ArgumentMatchers.<Specification<AuditLog>>any(), any(Pageable.class))).thenReturn(page);
+        when(auditLogMapper.toResponse(log)).thenReturn(response);
+
+        var result = auditLogService.getAll("CREATE", "Product", 5L, "admin@example.com",
+                LocalDateTime.now().minusDays(1), LocalDateTime.now(), Pageable.unpaged());
 
         assertThat(result.getContent()).hasSize(1);
     }
