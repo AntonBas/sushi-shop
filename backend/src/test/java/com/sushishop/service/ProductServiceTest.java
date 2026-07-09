@@ -1,13 +1,13 @@
 package com.sushishop.service;
 
 import com.sushishop.domain.Product;
+import com.sushishop.domain.ProductImage;
 import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductResponse;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
-import com.sushishop.mapper.ReviewMapper;
 import com.sushishop.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,9 +34,6 @@ public class ProductServiceTest {
     private ProductMapper productMapper;
 
     @Mock
-    private ReviewMapper reviewMapper;
-
-    @Mock
     private FileStorageService fileStorageService;
 
     @InjectMocks
@@ -49,7 +46,7 @@ public class ProductServiceTest {
         product.setPromotions(new ArrayList<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), 0, null, true);
 
         when(productMapper.toEntity(request)).thenReturn(product);
         when(productRepository.save(product)).thenReturn(product);
@@ -67,7 +64,7 @@ public class ProductServiceTest {
         product.setPromotions(new ArrayList<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), 0, null, true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(expected);
@@ -92,7 +89,7 @@ public class ProductServiceTest {
         product.setPromotions(new ArrayList<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
+        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), 0, null, true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);
@@ -106,21 +103,68 @@ public class ProductServiceTest {
 
     @Test
     void shouldDeleteProduct() {
-        when(productRepository.existsById(1L)).thenReturn(true);
+        var product = new Product();
+        product.setProductImages(new ArrayList<>());
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         productService.delete(1L);
 
-        verify(productRepository).deleteById(1L);
+        verify(productRepository).delete(product);
+    }
+
+    @Test
+    void shouldDeleteProductWithImages() {
+        var product = new Product();
+        var image = new ProductImage();
+        image.setUrl("/api/files/test.jpg");
+        product.setProductImages(new ArrayList<>(List.of(image)));
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.delete(1L);
+
+        verify(fileStorageService).delete("/api/files/test.jpg");
+        verify(productRepository).delete(product);
+    }
+
+    @Test
+    void shouldDeleteImage() {
+        var product = new Product();
+        var image = new ProductImage();
+        image.setId(10L);
+        image.setUrl("/api/files/test.jpg");
+        product.setProductImages(new ArrayList<>(List.of(image)));
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.deleteImage(1L, 10L);
+
+        verify(fileStorageService).delete("/api/files/test.jpg");
+        verify(productRepository).save(product);
+    }
+
+    @Test
+    void shouldThrowWhenDeleteImageNotFound() {
+        var product = new Product();
+        product.setProductImages(new ArrayList<>());
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> productService.deleteImage(1L, 99L))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test
     void shouldToggleAvailability() {
-        var product = Product.builder().available(true).build();
+        var product = new Product();
+        product.setAvailable(true);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
         productService.toggleAvailability(1L);
 
+        assertThat(product.isAvailable()).isFalse();
         verify(productRepository).save(product);
     }
 }

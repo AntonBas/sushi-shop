@@ -82,6 +82,10 @@ public class ProductService {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
         String url = fileStorageService.store(file);
+        if (url == null) {
+            log.warn("Skipping empty image for product: {}", productId);
+            return;
+        }
         int nextOrder = product.getProductImages().stream()
                 .mapToInt(ProductImage::getSortOrder).max().orElse(-1) + 1;
         product.getProductImages().add(ProductImage.builder()
@@ -94,7 +98,12 @@ public class ProductService {
     public void deleteImage(Long productId, Long imageId) {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
-        product.getProductImages().removeIf(img -> img.getId().equals(imageId));
+        var image = product.getProductImages().stream()
+                .filter(img -> img.getId().equals(imageId))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
+        fileStorageService.delete(image.getUrl());
+        product.getProductImages().remove(image);
         productRepository.save(product);
         log.info("Image {} deleted from product: {}", imageId, productId);
     }
@@ -112,10 +121,10 @@ public class ProductService {
             @CacheEvict(value = "products", allEntries = true)})
     public void delete(Long id) {
         log.info("Delete product with ID: {}", id);
-        if (!productRepository.existsById(id)) {
-            throw new NotFoundException("Product not found: " + id);
-        }
-        productRepository.deleteById(id);
+        var product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
+        product.getProductImages().forEach(img -> fileStorageService.delete(img.getUrl()));
+        productRepository.delete(product);
         log.debug("Deleted product with ID: {}", id);
     }
 
@@ -124,21 +133,33 @@ public class ProductService {
         List<ProductImage> productImages = new ArrayList<>();
         for (int i = 0; i < images.size(); i++) {
             String url = fileStorageService.store(images.get(i));
-            productImages.add(ProductImage.builder().url(url).sortOrder(i).product(product).build());
+            if (url != null) {
+                productImages.add(ProductImage.builder().url(url).sortOrder(i).product(product).build());
+            }
         }
         product.setProductImages(productImages);
     }
 
+    private Promotion getBestPromo(Product product) {
+        return product.getPromotions().stream()
+                .filter(p -> p.isActive() && p.getEndDate().isAfter(LocalDateTime.now()))
+                .max(Comparator.comparing(Promotion::getDiscountPercent))
+                .orElse(null);
+    }
+
+    private Double getAverageRating(Product product) {
+        if (product.getReviews().isEmpty()) return null;
+        return product.getReviews().stream()
+                .mapToInt(Review::getRating).average().orElse(0.0);
+    }
+
     private ProductListResponse enrichListResponse(Product product) {
         var response = productMapper.toListResponse(product);
-        var bestPromo = product.getPromotions().stream()
-                .filter(p -> p.isActive() && p.getEndDate().isAfter(LocalDateTime.now()))
-                .max(Comparator.comparing(Promotion::getDiscountPercent));
+        var bestPromo = getBestPromo(product);
 
         BigDecimal discountedPrice = null;
-        if (bestPromo.isPresent()) {
-            var promo = bestPromo.get();
-            var discount = promo.getDiscountPercent().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        if (bestPromo != null) {
+            var discount = bestPromo.getDiscountPercent().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             discountedPrice = product.getPrice().multiply(BigDecimal.ONE.subtract(discount));
         }
 
@@ -146,29 +167,22 @@ public class ProductService {
                 .min(Comparator.comparingInt(ProductImage::getSortOrder))
                 .map(ProductImage::getUrl).orElse(null);
 
-        Double averageRating = product.getReviews().stream()
-                .mapToInt(Review::getRating).average().orElse(0.0);
-        if (product.getReviews().isEmpty()) averageRating = null;
-
         return new ProductListResponse(
                 response.id(), response.name(), response.price(), discountedPrice,
-                averageRating, response.category(), mainImage, response.available()
+                getAverageRating(product), response.category(), mainImage, response.available()
         );
     }
 
     private ProductResponse enrichProductResponse(Product product) {
         var response = productMapper.toResponse(product);
-        var bestPromo = product.getPromotions().stream()
-                .filter(p -> p.isActive() && p.getEndDate().isAfter(LocalDateTime.now()))
-                .max(Comparator.comparing(Promotion::getDiscountPercent));
+        var bestPromo = getBestPromo(product);
 
         BigDecimal discountedPrice = null;
         BigDecimal discountPercent = null;
         String promotionTitle = null;
-        if (bestPromo.isPresent()) {
-            var promo = bestPromo.get();
-            discountPercent = promo.getDiscountPercent();
-            promotionTitle = promo.getTitle();
+        if (bestPromo != null) {
+            discountPercent = bestPromo.getDiscountPercent();
+            promotionTitle = bestPromo.getTitle();
             var discount = discountPercent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
             discountedPrice = product.getPrice().multiply(BigDecimal.ONE.subtract(discount));
         }
@@ -178,14 +192,11 @@ public class ProductService {
                 .map(ProductImage::getUrl).toList();
 
         int reviewCount = product.getReviews().size();
-        Double averageRating = product.getReviews().stream()
-                .mapToInt(Review::getRating).average().orElse(0.0);
-        if (product.getReviews().isEmpty()) averageRating = null;
 
         return new ProductResponse(
                 response.id(), response.name(), response.description(),
                 response.price(), discountedPrice, discountPercent, promotionTitle,
-                response.category(), images, reviewCount, averageRating, response.available()
+                response.category(), images, reviewCount, getAverageRating(product), response.available()
         );
     }
 }
