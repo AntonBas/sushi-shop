@@ -42,7 +42,7 @@ public class OrderService {
         var order = buildOrder(request, items, totalAmount);
         items.forEach(i -> i.setOrder(order));
         var saved = orderRepository.save(order);
-        log.info("Order created: {}", saved);
+        log.info("Order created: {}", saved.getId());
         return orderMapper.toResponse(saved);
     }
 
@@ -53,18 +53,49 @@ public class OrderService {
 
     public OrderResponse getById(Long id) {
         log.info("Getting order by id: {}", id);
-        return orderRepository.findById(id).map(orderMapper::toResponse).orElseThrow(() -> new NotFoundException("Order not found: " + id));
+        return orderRepository.findById(id)
+                .map(orderMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
-    public OrderResponse updateStatus(Long id, OrderStatus status) {
-        var order = orderRepository.findById(id).orElseThrow(() -> new NotFoundException("Order not found: " + id));
-        order.setStatus(status);
+    @Transactional
+    public OrderResponse updateStatus(Long id, OrderStatus newStatus) {
+        var order = orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found: " + id));
+
+        validateStatusTransition(order, newStatus);
+        order.setStatus(newStatus);
         var updated = orderRepository.save(order);
 
-        messagingTemplate.convertAndSend("/topic/orders/" + id, new OrderStatusUpdateResponse(updated.getId(), updated.getStatus().name()));
+        messagingTemplate.convertAndSend("/topic/orders/" + id,
+                new OrderStatusUpdateResponse(updated.getId(), updated.getStatus().name()));
 
-        log.info("Order {} status updated to {}", id, status);
+        log.info("Order {} status updated to {}", id, newStatus);
         return orderMapper.toResponse(updated);
+    }
+
+    private void validateStatusTransition(Order order, OrderStatus newStatus) {
+        OrderStatus current = order.getStatus();
+
+        if (current == newStatus) {
+            throw new BadRequestException("Order already has status: " + current);
+        }
+
+        if (newStatus == OrderStatus.CANCELLED && current != OrderStatus.NEW) {
+            throw new BadRequestException("Cannot cancel order with status: " + current);
+        }
+
+        if (newStatus == OrderStatus.DELIVERING && order.getDeliveryMethod() == DeliveryMethod.PICKUP) {
+            throw new BadRequestException("Cannot set DELIVERING for PICKUP order");
+        }
+
+        if (newStatus == OrderStatus.READY && order.getDeliveryMethod() == DeliveryMethod.DELIVERY) {
+            throw new BadRequestException("Cannot set READY for DELIVERY order");
+        }
+
+        if (newStatus == OrderStatus.DELIVERED && order.getDeliveryMethod() != DeliveryMethod.DELIVERY) {
+            throw new BadRequestException("Cannot set DELIVERED for PICKUP order");
+        }
     }
 
     private void validateDelivery(CreateOrderRequest request) {
@@ -75,17 +106,31 @@ public class OrderService {
 
     private List<OrderItem> createOrderItems(List<OrderItemRequest> items) {
         return items.stream().map(item -> {
-            var product = productRepository.findById(item.productId()).orElseThrow(() -> new NotFoundException("Product not found: " + item.productId()));
-            return OrderItem.builder().product(product).quantity(item.quantity()).price(product.getPrice()).build();
+            if (item.quantity() == null || item.quantity() <= 0) {
+                throw new BadRequestException("Quantity must be positive for product: " + item.productId());
+            }
+            var product = productRepository.findById(item.productId())
+                    .orElseThrow(() -> new NotFoundException("Product not found: " + item.productId()));
+            if (!product.isAvailable()) {
+                throw new BadRequestException("Product is not available: " + product.getName());
+            }
+            return OrderItem.builder()
+                    .product(product)
+                    .quantity(item.quantity())
+                    .price(product.getPrice())
+                    .build();
         }).toList();
     }
 
     private BigDecimal calculateTotalPrice(List<OrderItem> items) {
-        return items.stream().map(i -> i.getPrice().multiply(BigDecimal.valueOf(i.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        return items.stream()
+                .map(i -> i.getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     private Order buildOrder(CreateOrderRequest request, List<OrderItem> items, BigDecimal totalPrice) {
-        return Order.builder().customerName(request.customerName())
+        return Order.builder()
+                .customerName(request.customerName())
                 .phone(request.phone())
                 .city(request.address() != null ? request.address().city() : null)
                 .street(request.address() != null ? request.address().street() : null)

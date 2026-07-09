@@ -44,11 +44,11 @@ public class OrderServiceTest {
     @Mock
     private OrderMapper orderMapper;
 
-    @InjectMocks
-    private OrderService orderService;
-
     @Mock
     private SimpMessagingTemplate messagingTemplate;
+
+    @InjectMocks
+    private OrderService orderService;
 
     @Test
     void shouldCreateOrder() {
@@ -56,7 +56,7 @@ public class OrderServiceTest {
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.DELIVERY, address, List.of(itemRequest));
 
-        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).build();
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
         var order = new Order();
         var expectedResponse = new OrderResponse(1L, "Anton", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
@@ -71,6 +71,30 @@ public class OrderServiceTest {
         assertThat(result.customerName()).isEqualTo("Anton");
         assertThat(result.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         verify(orderRepository).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenProductNotAvailable() {
+        var itemRequest = new OrderItemRequest(1L, 2);
+        var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.PICKUP, null, List.of(itemRequest));
+
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).available(false).build();
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        assertThatThrownBy(() -> orderService.create(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Product is not available");
+    }
+
+    @Test
+    void shouldThrowWhenQuantityNotPositive() {
+        var itemRequest = new OrderItemRequest(1L, 0);
+        var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.PICKUP, null, List.of(itemRequest));
+
+        assertThatThrownBy(() -> orderService.create(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Quantity must be positive");
     }
 
     @Test
@@ -103,17 +127,86 @@ public class OrderServiceTest {
     }
 
     @Test
-    void shouldUpdateStatus() {
-        var order = new Order();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "COOKING", BigDecimal.ZERO, null, List.of());
+    void shouldUpdateStatusForDelivery() {
+        var order = Order.builder().id(1L).status(OrderStatus.NEW).deliveryMethod(DeliveryMethod.DELIVERY).build();
+        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, "DELIVERY", "CONFIRMED", BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
         when(orderMapper.toResponse(order)).thenReturn(expected);
 
-        var result = orderService.updateStatus(1L, OrderStatus.COOKING);
+        var result = orderService.updateStatus(1L, OrderStatus.CONFIRMED);
 
-        assertThat(result.status()).isEqualTo("COOKING");
+        assertThat(result.status()).isEqualTo("CONFIRMED");
         verify(messagingTemplate).convertAndSend(eq("/topic/orders/1"), any(OrderStatusUpdateResponse.class));
+    }
+
+    @Test
+    void shouldUpdateStatusToReadyForPickup() {
+        var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.PICKUP).build();
+        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "READY", BigDecimal.ZERO, null, List.of());
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(expected);
+
+        var result = orderService.updateStatus(1L, OrderStatus.READY);
+
+        assertThat(result.status()).isEqualTo("READY");
+    }
+
+    @Test
+    void shouldThrowWhenDeliveringForPickup() {
+        var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.PICKUP).build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.DELIVERING))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Cannot set DELIVERING for PICKUP order");
+    }
+
+    @Test
+    void shouldThrowWhenReadyForDelivery() {
+        var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.DELIVERY).build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.READY))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Cannot set READY for DELIVERY order");
+    }
+
+    @Test
+    void shouldThrowWhenDeliveredForPickup() {
+        var order = Order.builder().id(1L).status(OrderStatus.DELIVERING).deliveryMethod(DeliveryMethod.PICKUP).build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.DELIVERED))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Cannot set DELIVERED for PICKUP order");
+    }
+
+    @Test
+    void shouldThrowWhenSameStatus() {
+        var order = Order.builder().id(1L).status(OrderStatus.NEW).deliveryMethod(DeliveryMethod.PICKUP).build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.NEW))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Order already has status");
+    }
+
+    @Test
+    void shouldThrowWhenCancelNonNewOrder() {
+        var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.DELIVERY).build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.CANCELLED))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Cannot cancel order with status");
     }
 }
