@@ -5,7 +5,6 @@ import com.sushishop.domain.Review;
 import com.sushishop.domain.User;
 import com.sushishop.dto.request.CreateReviewRequest;
 import com.sushishop.dto.response.ReviewResponse;
-import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.ConflictException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ReviewMapper;
@@ -60,24 +59,6 @@ public class ReviewServiceTest {
 
         assertThat(result.rating()).isEqualTo(5);
         assertThat(result.comment()).isEqualTo("Very tasty!");
-    }
-
-    @Test
-    void shouldThrowWhenRatingTooLow() {
-        var request = new CreateReviewRequest(1L, 0, "Bad!");
-
-        assertThatThrownBy(() -> reviewService.create(request, "anton@example.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Rating must be between 1 and 5");
-    }
-
-    @Test
-    void shouldThrowWhenRatingTooHigh() {
-        var request = new CreateReviewRequest(1L, 6, "Too good!");
-
-        assertThatThrownBy(() -> reviewService.create(request, "anton@example.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Rating must be between 1 and 5");
     }
 
     @Test

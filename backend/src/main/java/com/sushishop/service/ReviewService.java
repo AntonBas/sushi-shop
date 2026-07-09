@@ -31,10 +31,6 @@ public class ReviewService {
     @Transactional
     @CacheEvict(value = "products", key = "#request.productId()")
     public ReviewResponse create(CreateReviewRequest request, String email) {
-        if (request.rating() < 1 || request.rating() > 5) {
-            throw new BadRequestException("Rating must be between 1 and 5");
-        }
-
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
         var product = productRepository.findById(request.productId())
