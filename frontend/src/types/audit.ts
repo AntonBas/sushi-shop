@@ -7,3 +7,12 @@ export interface AuditLogResponse {
   performedBy: string
   performedAt: string
 }
+
+export interface AuditLogFilters {
+  action?: string
+  entityName?: string
+  entityId?: number
+  performedBy?: string
+  start?: string
+  end?: string
+}
