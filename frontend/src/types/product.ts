@@ -40,3 +40,9 @@ export interface UpdateProductRequest {
   category?: Category
   isAvailable?: boolean
 }
+
+export interface ProductFilters {
+  search?: string
+  category?: Category
+  available?: boolean
+}

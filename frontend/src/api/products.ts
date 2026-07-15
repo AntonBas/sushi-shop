@@ -1,15 +1,14 @@
 import api from './client'
-import type { CreateProductRequest, UpdateProductRequest, ProductListResponse, ProductResponse, Category } from '../types'
+import type { CreateProductRequest, UpdateProductRequest, ProductListResponse, ProductResponse } from '../types'
+import type { ProductFilters } from '../types/product'
 import type { Page } from '../types/common'
 
-export const getProducts = async (params: {
-  page?: number
-  size?: number
-  search?: string
-  category?: Category
-  available?: boolean
-}): Promise<Page<ProductListResponse>> => {
-  const { data } = await api.get('/products', { params })
+export const getProducts = async (
+  page = 0,
+  size = 12,
+  filters?: ProductFilters
+): Promise<Page<ProductListResponse>> => {
+  const { data } = await api.get('/products', { params: { page, size, ...filters } })
   return data
 }
 
