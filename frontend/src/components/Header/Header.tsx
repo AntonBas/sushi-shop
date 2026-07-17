@@ -102,7 +102,7 @@ export default function Header() {
             <>
               <Link to="/profile" onClick={() => setIsMobileOpen(false)}>My Profile</Link>
               <Link to="/profile/orders" onClick={() => setIsMobileOpen(false)}>My Orders</Link>
-              {isAdmin && <Link to="/admin" onClick={() => setIsMobileOpen(false)}>Admin Panel</Link>}
+              {isAdmin && <Link to="/admin/products" onClick={() => setIsMobileOpen(false)}>Admin Panel</Link>}
               <button onClick={handleLogout}>Logout</button>
             </>
           ) : (
