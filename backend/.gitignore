@@ -48,3 +48,6 @@ docker-compose.override.yml
 src/main/resources/application-local.yml
 *.log
 logs/
+
+### Uploads ###
+uploads/
