@@ -1,5 +1,5 @@
 import api from './client'
-import type { CreateOrderRequest, OrderResponse } from '../types'
+import type { CreateOrderRequest, OrderResponse, OrderStatus } from '../types'
 import type { Page } from '../types/common'
 
 export const createOrder = async (data: CreateOrderRequest): Promise<OrderResponse> => {
@@ -17,7 +17,7 @@ export const getOrder = async (id: number): Promise<OrderResponse> => {
   return data
 }
 
-export const updateOrderStatus = async (id: number, status: string): Promise<OrderResponse> => {
+export const updateOrderStatus = async (id: number, status: OrderStatus): Promise<OrderResponse> => {
   const { data } = await api.patch(`/orders/${id}/status`, null, { params: { status } })
   return data
 }
