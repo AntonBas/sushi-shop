@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { AxiosError } from 'axios'
 import { CheckCircle2 } from 'lucide-react'
 import * as authApi from '../../../api/auth'
 import Button from '../../../components/ui/Button/Button'
@@ -18,15 +19,16 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       await authApi.resetPassword({ token: token!, newPassword, confirmPassword })
       setShowSuccess(true)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong')
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>
+      setError(error.response?.data?.message || 'Something went wrong')
     } finally {
       setLoading(false)
     }

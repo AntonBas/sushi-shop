@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/AuthContext'
 import Button from '../../../components/ui/Button/Button'
 import Input from '../../../components/ui/Input/Input'
@@ -13,15 +14,16 @@ export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
       await login({ email, password })
       navigate('/')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password')
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>
+      setError(error.response?.data?.message || 'Invalid email or password')
     } finally {
       setLoading(false)
     }

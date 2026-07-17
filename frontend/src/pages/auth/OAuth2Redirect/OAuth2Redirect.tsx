@@ -5,7 +5,7 @@ import styles from './OAuth2Redirect.module.css'
 
 export default function OAuth2Redirect() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { refreshUser } = useAuth()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -14,11 +14,11 @@ export default function OAuth2Redirect() {
 
     if (token && email) {
       localStorage.setItem('token', token)
-      navigate('/')
+      refreshUser().then(() => navigate('/')).catch(() => navigate('/login?error=oauth2_failed'))
     } else {
       navigate('/login?error=oauth2_failed')
     }
-  }, [navigate, login])
+  }, [navigate, refreshUser])
 
   return (
     <div className={styles.container}>

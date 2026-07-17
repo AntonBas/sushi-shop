@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/AuthContext'
 import Button from '../../../components/ui/Button/Button'
 import Input from '../../../components/ui/Input/Input'
@@ -34,8 +35,9 @@ export default function Register() {
         address: city ? { city, street, house, apartment: apartment || undefined } : undefined
       })
       setShowSuccess(true)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed')
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>
+      setError(error.response?.data?.message || 'Registration failed')
     } finally {
       setLoading(false)
     }

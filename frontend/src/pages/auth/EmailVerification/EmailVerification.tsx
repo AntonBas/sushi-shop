@@ -22,7 +22,7 @@ export default function EmailVerification() {
       .then(() => { if (!cancelled) setStatus('success') })
       .catch(() => { if (!cancelled) setStatus('error') })
     return () => { cancelled = true }
-  }, [])
+  }, [token])
 
   if (status === 'loading') {
     return (
