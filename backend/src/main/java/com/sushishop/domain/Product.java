@@ -6,7 +6,9 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Data
@@ -40,7 +42,7 @@ public class Product extends BaseEntity {
 
     @ManyToMany(mappedBy = "products")
     @Builder.Default
-    private List<Promotion> promotions = new ArrayList<>();
+    private Set<Promotion> promotions = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

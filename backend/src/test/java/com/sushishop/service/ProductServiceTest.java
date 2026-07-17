@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,7 +44,7 @@ public class ProductServiceTest {
     void shouldCreateProduct() {
         var request = new CreateProductRequest("Maki", "Desc", new BigDecimal("250.00"), Category.ROLL);
         var product = new Product();
-        product.setPromotions(new ArrayList<>());
+        product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
         var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true);
@@ -61,7 +62,7 @@ public class ProductServiceTest {
     @Test
     void shouldGetById() {
         var product = new Product();
-        product.setPromotions(new ArrayList<>());
+        product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
         var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true);
@@ -86,7 +87,7 @@ public class ProductServiceTest {
     void shouldUpdateProduct() {
         var request = new UpdateProductRequest("Updated", null, null, null, null);
         var product = new Product();
-        product.setPromotions(new ArrayList<>());
+        product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
         var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true);

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 
 @Slf4j
@@ -39,7 +40,7 @@ public class PromotionService {
         validateDates(request.startDate(), request.endDate());
         validateProductsExist(request.productIds());
 
-        var products = productRepository.findAllById(request.productIds());
+        var products = new HashSet<>(productRepository.findAllById(request.productIds()));
 
         var promotion = Promotion.builder()
                 .title(request.title())
