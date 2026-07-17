@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { AxiosError } from 'axios'
 import { useNotification } from '../../context/NotificationContext'
+import { useDelayedLoading } from './useDelayedLoading'
 
 interface ApiState<T> {
   data: T | null
@@ -15,6 +16,7 @@ export function useApi<T>() {
     error: null
   })
   const { showNotification } = useNotification()
+  const loading = useDelayedLoading(state.loading)
 
   const execute = useCallback(async (apiCall: () => Promise<T>, successMessage?: string) => {
     setState({ data: null, loading: true, error: null })
@@ -32,5 +34,5 @@ export function useApi<T>() {
     }
   }, [showNotification])
 
-  return { ...state, execute }
+  return { ...state, loading, execute }
 }
