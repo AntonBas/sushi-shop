@@ -10,8 +10,8 @@ import EmailVerification from './pages/auth/EmailVerification/EmailVerification'
 import OAuth2Redirect from './pages/auth/OAuth2Redirect/OAuth2Redirect'
 import ForgotPassword from './pages/auth/ForgotPassword/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword/ResetPassword'
-import AdminProductsPage from './pages/admin/products/AdminProductsPage'
-import AdminProductForm from './pages/admin/products/AdminProductForm'
+import AdminProductsPage from './pages/admin/products/AdminProductsPage/AdminProductsPage'
+import AdminProductForm from './pages/admin/products/AdminProductForm/AdminProductForm'
 
 function App() {
   const { loading } = useAuth()
