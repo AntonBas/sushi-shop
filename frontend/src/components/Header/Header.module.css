@@ -155,6 +155,7 @@
   text-decoration: none;
   cursor: pointer;
   transition: all 0.15s;
+  box-sizing: border-box;
 }
 
 .dropdownMenu a:hover,

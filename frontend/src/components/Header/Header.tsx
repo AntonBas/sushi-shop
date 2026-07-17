@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../hooks/common/useTheme'
 import { useCart } from '../../hooks/features/useCart'
-import { ShoppingCart, Sun, Moon, User, LogOut, ChevronDown, Menu as MenuIcon } from 'lucide-react'
+import { ShoppingCart, Sun, Moon, User, LogOut, ChevronDown, Menu as MenuIcon, Shield } from 'lucide-react'
 import styles from './Header.module.css'
 
 export default function Header() {
@@ -75,7 +75,9 @@ export default function Header() {
                     <ShoppingCart size={14} /> My Orders
                   </Link>
                   {isAdmin && (
-                    <Link to="/admin" onClick={() => setIsDropdownOpen(false)}>Admin Panel</Link>
+                    <Link to="/admin" onClick={() => setIsDropdownOpen(false)}>
+                      <Shield size={14} /> Admin Panel
+                    </Link>
                   )}
                   <hr />
                   <button onClick={handleLogout}>
