@@ -15,6 +15,7 @@ import AdminProductForm from './pages/admin/products/AdminProductForm/AdminProdu
 import AdminOrdersPage from './pages/admin/orders/AdminOrdersPage'
 import AdminPromotionsPage from './pages/admin/promotions/AdminPromotionsPage/AdminPromotionsPage'
 import AdminPromotionForm from './pages/admin/promotions/AdminPromotionForm/AdminPromotionForm'
+import AdminAuditPage from './pages/admin/audit/AdminAuditPage'
 
 function App() {
   const { loading } = useAuth()
@@ -40,6 +41,7 @@ function App() {
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="promotions" element={<AdminPromotionsPage />} />
         <Route path="promotions/new" element={<AdminPromotionForm />} />
+        <Route path="audit" element={<AdminAuditPage />} />
       </Route>
     </Routes>
   )
