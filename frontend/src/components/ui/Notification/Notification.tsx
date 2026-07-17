@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react'
+import clsx from 'clsx'
 import type { NotificationType } from '../../../context/NotificationContext'
+import styles from './Notification.module.css'
 
 interface Props {
   id: string
@@ -28,27 +30,18 @@ export default function Notification({ id, message, type, isVisible, onClose, du
     info: <Info size={20} />
   }
 
-  const colors = {
-    success: 'bg-green-900 text-green-200',
-    error: 'bg-red-900 text-red-200',
-    warning: 'bg-yellow-900 text-yellow-200',
-    info: 'bg-blue-900 text-blue-200'
-  }
-
   const content = (
     <div
-      className={`fixed top-4 right-4 min-w-[300px] max-w-[400px] rounded-lg p-3 shadow-lg transition-all duration-300 z-[10000]
-        ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-        ${colors[type]}`}
-      style={{ top: `${20 + position * 80}px` }}
+      className={clsx(styles.notification, styles[type], isVisible && styles.show)}
+      style={{ '--offset': `${position * 100}%` } as React.CSSProperties}
     >
-      <div className="flex items-center gap-3">
-        {icons[type]}
-        <span className="flex-1 text-sm">{message}</span>
-        <button onClick={() => onClose(id)} className="opacity-70 hover:opacity-100">✕</button>
+      <div className={styles.content}>
+        <span className={styles.icon}>{icons[type]}</span>
+        <span className={styles.message}>{message}</span>
+        <button className={styles.close} onClick={() => onClose(id)}>×</button>
       </div>
-      <div className="h-1 bg-white/20 mt-2 rounded">
-        <div className="h-full bg-white/40 rounded animate-[shrink_5s_linear]" />
+      <div className={styles.progress}>
+        <div className={styles.progressBar} style={{ animationDuration: `${duration}ms` }} />
       </div>
     </div>
   )
