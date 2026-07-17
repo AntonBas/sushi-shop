@@ -1,5 +1,6 @@
 package com.sushishop.service;
 
+import com.sushishop.annotation.Auditable;
 import com.sushishop.domain.Product;
 import com.sushishop.domain.ProductImage;
 import com.sushishop.domain.Promotion;
@@ -41,6 +42,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final FileStorageService fileStorageService;
 
+    @Auditable(action = "CREATE", entity = "Product")
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse create(CreateProductRequest request, List<MultipartFile> images) {
         log.info("Creating product with {} images: {}", images != null ? images.size() : 0, request.name());
@@ -66,6 +68,7 @@ public class ProductService {
         return enrichProductResponse(product);
     }
 
+    @Auditable(action = "UPDATE", entity = "Product")
     @CachePut(value = "products", key = "#id")
     public ProductResponse update(Long id, UpdateProductRequest request) {
         log.info("Update product : {}", request.name());
@@ -108,6 +111,7 @@ public class ProductService {
         log.info("Image {} deleted from product: {}", imageId, productId);
     }
 
+    @Auditable(action = "TOGGLE", entity = "Product")
     @CacheEvict(value = "products", key = "#id")
     public void toggleAvailability(Long id) {
         var product = productRepository.findById(id)
@@ -117,6 +121,7 @@ public class ProductService {
         log.info("Product {} is now {}", id, product.isAvailable() ? "available" : "unavailable");
     }
 
+    @Auditable(action = "DELETE", entity = "Product")
     @Caching(evict = {@CacheEvict(value = "products", key = "#id"),
             @CacheEvict(value = "products", allEntries = true)})
     public void delete(Long id) {

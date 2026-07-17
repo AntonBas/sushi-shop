@@ -1,5 +1,6 @@
 package com.sushishop.service;
 
+import com.sushishop.annotation.Auditable;
 import com.sushishop.domain.Order;
 import com.sushishop.domain.OrderItem;
 import com.sushishop.domain.enums.DeliveryMethod;
@@ -34,6 +35,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
 
+    @Auditable(action = "CREATE", entity = "Order")
     @Transactional
     public OrderResponse create(CreateOrderRequest request) {
         validateDelivery(request);
@@ -58,6 +60,7 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
+    @Auditable(action = "UPDATE_STATUS", entity = "Order")
     @Transactional
     public OrderResponse updateStatus(Long id, OrderStatus newStatus) {
         var order = orderRepository.findById(id)

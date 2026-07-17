@@ -1,5 +1,6 @@
 package com.sushishop.service;
 
+import com.sushishop.annotation.Auditable;
 import com.sushishop.domain.Review;
 import com.sushishop.dto.request.CreateReviewRequest;
 import com.sushishop.dto.response.ReviewResponse;
@@ -28,6 +29,7 @@ public class ReviewService {
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
 
+    @Auditable(action = "CREATE", entity = "Review")
     @Transactional
     @CacheEvict(value = "products", key = "#request.productId()")
     public ReviewResponse create(CreateReviewRequest request, String email) {
@@ -56,6 +58,7 @@ public class ReviewService {
         return reviewRepository.findByProductId(productId, pageable).map(reviewMapper::toResponse);
     }
 
+    @Auditable(action = "DELETE", entity = "Review")
     @Transactional
     @CacheEvict(value = "products", key = "#review.product.id")
     public void delete(Long reviewId, String email) {

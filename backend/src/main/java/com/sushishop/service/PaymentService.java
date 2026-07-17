@@ -1,5 +1,6 @@
 package com.sushishop.service;
 
+import com.sushishop.annotation.Auditable;
 import com.sushishop.domain.Payment;
 import com.sushishop.domain.enums.OrderStatus;
 import com.sushishop.domain.enums.PaymentStatus;
@@ -22,6 +23,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
 
+    @Auditable(action = "CREATE", entity = "Payment")
     @Transactional
     public Payment create(Long orderId, String stripeSessionId, BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -43,6 +45,7 @@ public class PaymentService {
         return saved;
     }
 
+    @Auditable(action = "CONFIRM", entity = "Payment")
     @Transactional
     public void confirmPayment(String stripeSessionId) {
         if (stripeSessionId == null || stripeSessionId.isBlank()) {

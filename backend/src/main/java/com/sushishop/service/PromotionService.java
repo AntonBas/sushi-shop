@@ -1,5 +1,6 @@
 package com.sushishop.service;
 
+import com.sushishop.annotation.Auditable;
 import com.sushishop.domain.Promotion;
 import com.sushishop.dto.request.CreatePromotionRequest;
 import com.sushishop.dto.response.PromotionResponse;
@@ -31,6 +32,7 @@ public class PromotionService {
     private final ProductRepository productRepository;
     private final PromotionMapper promotionMapper;
 
+    @Auditable(action = "CREATE", entity = "Promotion")
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "promotions", allEntries = true),
@@ -69,6 +71,7 @@ public class PromotionService {
         return promotionRepository.findAll(pageable).map(promotionMapper::toResponse);
     }
 
+    @Auditable(action = "DELETE", entity = "Promotion")
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "promotions", allEntries = true),
