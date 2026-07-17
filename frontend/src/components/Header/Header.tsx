@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../hooks/common/useTheme'
 import { useCart } from '../../hooks/features/useCart'
-import { Menu, ShoppingCart, Sun, Moon, User, LogOut, ChevronDown } from 'lucide-react'
+import { ShoppingCart, Sun, Moon, User, LogOut, ChevronDown, Menu as MenuIcon } from 'lucide-react'
 import styles from './Header.module.css'
 
 export default function Header() {
@@ -42,7 +42,7 @@ export default function Header() {
 
         <nav className={styles.nav}>
           <Link to="/" className={`${styles.link} ${isActive('/') ? styles.active : ''}`}>
-            <Menu size={18} /> Menu
+            <MenuIcon size={18} /> Menu
           </Link>
           <Link to="/cart" className={`${styles.link} ${isActive('/cart') ? styles.active : ''}`}>
             <ShoppingCart size={18} />
@@ -89,7 +89,7 @@ export default function Header() {
           )}
 
           <button onClick={() => setIsMobileOpen(!isMobileOpen)} className={styles.mobileBtn}>
-            <Menu size={24} />
+            <MenuIcon size={24} />
           </button>
         </nav>
       </div>

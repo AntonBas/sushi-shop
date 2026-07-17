@@ -188,7 +188,6 @@
 }
 
 .mobileMenu {
-  display: none;
   position: fixed;
   top: 64px;
   left: 0;
