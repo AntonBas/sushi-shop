@@ -1,5 +1,20 @@
 import type { Category } from "./enums"
 
+export interface CreateProductRequest {
+  name: string
+  description?: string
+  price: number
+  category: Category
+}
+
+export interface UpdateProductRequest {
+  name?: string
+  description?: string
+  price?: number
+  category?: Category
+  isAvailable?: boolean
+}
+
 export interface ProductListResponse {
   id: number
   name: string
@@ -24,21 +39,6 @@ export interface ProductResponse {
   reviewCount: number
   averageRating?: number | null
   available: boolean
-}
-
-export interface CreateProductRequest {
-  name: string
-  description?: string
-  price: number
-  category: Category
-}
-
-export interface UpdateProductRequest {
-  name?: string
-  description?: string
-  price?: number
-  category?: Category
-  isAvailable?: boolean
 }
 
 export interface ProductFilters {

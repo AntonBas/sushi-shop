@@ -19,7 +19,7 @@ export interface OrderResponse {
   customerName: string
   phone: string
   address?: AddressResponse
-  deliveryMethod: string
+  deliveryMethod: DeliveryMethod
   status: OrderStatus
   totalAmount: number
   createdAt: string
@@ -30,10 +30,10 @@ export interface OrderItemResponse {
   productId: number
   productName: string
   quantity: number
-  price: number
+  unitPrice: number
 }
 
-export interface OrderStatusUpdate {
+export interface OrderStatusUpdateResponse {
   orderId: number
-  status: string
+  status: OrderStatus
 }
