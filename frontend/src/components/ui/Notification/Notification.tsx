@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react'
 import clsx from 'clsx'
@@ -16,6 +16,14 @@ interface Props {
 }
 
 export default function Notification({ id, message, type, isVisible, onClose, duration = 5000, position = 0 }: Props) {
+  const [isHiding, setIsHiding] = useState(false)
+
+  useEffect(() => {
+    if (!isVisible && !isHiding) {
+      setIsHiding(true)
+    }
+  }, [isVisible])
+
   useEffect(() => {
     if (isVisible && duration > 0) {
       const timer = setTimeout(() => onClose(id), duration)
@@ -32,8 +40,16 @@ export default function Notification({ id, message, type, isVisible, onClose, du
 
   const content = (
     <div
-      className={clsx(styles.notification, styles[type], isVisible && styles.show)}
+      className={clsx(
+        styles.notification,
+        styles[type],
+        (isVisible || isHiding) && styles.show,
+        isHiding && styles.hide
+      )}
       style={{ '--offset': `${position * 100}%` } as React.CSSProperties}
+      onAnimationEnd={() => {
+        if (isHiding) onClose(id)
+      }}
     >
       <div className={styles.content}>
         <span className={styles.icon}>{icons[type]}</span>
