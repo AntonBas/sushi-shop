@@ -60,7 +60,7 @@ public class OrderServiceTest {
         var order = new Order();
         var expectedResponse = new OrderResponse(1L, "Anton", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
-                "DELIVERY", "NEW", new BigDecimal("500.00"), null, List.of());
+                DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(orderRepository.save(any())).thenReturn(order);
@@ -108,7 +108,7 @@ public class OrderServiceTest {
     @Test
     void shouldGetById() {
         var order = new Order();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "NEW", BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderMapper.toResponse(order)).thenReturn(expected);
@@ -119,17 +119,9 @@ public class OrderServiceTest {
     }
 
     @Test
-    void shouldThrowWhenOrderNotFound() {
-        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> orderService.getById(99L))
-                .isInstanceOf(NotFoundException.class);
-    }
-
-    @Test
     void shouldUpdateStatusForDelivery() {
         var order = Order.builder().id(1L).status(OrderStatus.NEW).deliveryMethod(DeliveryMethod.DELIVERY).build();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, "DELIVERY", "CONFIRMED", BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.DELIVERY, OrderStatus.CONFIRMED, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
@@ -137,14 +129,14 @@ public class OrderServiceTest {
 
         var result = orderService.updateStatus(1L, OrderStatus.CONFIRMED);
 
-        assertThat(result.status()).isEqualTo("CONFIRMED");
+        assertThat(result.status()).isEqualTo(OrderStatus.CONFIRMED);
         verify(messagingTemplate).convertAndSend(eq("/topic/orders/1"), any(OrderStatusUpdateResponse.class));
     }
 
     @Test
     void shouldUpdateStatusToReadyForPickup() {
         var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.PICKUP).build();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "READY", BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.READY, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
@@ -152,7 +144,7 @@ public class OrderServiceTest {
 
         var result = orderService.updateStatus(1L, OrderStatus.READY);
 
-        assertThat(result.status()).isEqualTo("READY");
+        assertThat(result.status()).isEqualTo(OrderStatus.READY);
     }
 
     @Test

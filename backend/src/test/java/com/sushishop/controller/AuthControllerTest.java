@@ -1,6 +1,7 @@
 package com.sushishop.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sushishop.domain.enums.UserRole;
 import com.sushishop.dto.request.ForgotPasswordRequest;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
@@ -47,7 +48,7 @@ public class AuthControllerTest {
     @Test
     void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var authResponse = new AuthResponse("jwt-token", userResponse);
 
         when(authService.register(any())).thenReturn(authResponse);
@@ -73,7 +74,7 @@ public class AuthControllerTest {
     @Test
     void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var authResponse = new AuthResponse("jwt-token", userResponse);
 
         when(authService.login(any())).thenReturn(authResponse);

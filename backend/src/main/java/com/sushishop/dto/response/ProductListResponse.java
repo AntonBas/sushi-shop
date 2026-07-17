@@ -1,5 +1,6 @@
 package com.sushishop.dto.response;
 
+import com.sushishop.domain.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -22,7 +23,7 @@ public record ProductListResponse(
         Double averageRating,
 
         @Schema(description = "Product category", example = "ROLL")
-        String category,
+        Category category,
 
         @Schema(description = "Main product image", example = "/api/files/abc.jpg")
         String mainImage,

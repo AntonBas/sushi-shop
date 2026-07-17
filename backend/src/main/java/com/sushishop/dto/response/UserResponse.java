@@ -1,5 +1,6 @@
 package com.sushishop.dto.response;
 
+import com.sushishop.domain.enums.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "User response")
@@ -17,7 +18,7 @@ public record UserResponse(
         String phone,
 
         @Schema(description = "User role", example = "CUSTOMER")
-        String role,
+        UserRole userRole,
 
         @Schema(description = "Default delivery address")
         AddressResponse address

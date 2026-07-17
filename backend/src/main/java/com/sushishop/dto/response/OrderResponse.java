@@ -1,6 +1,7 @@
 package com.sushishop.dto.response;
 
 import com.sushishop.domain.enums.DeliveryMethod;
+import com.sushishop.domain.enums.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -22,10 +23,10 @@ public record OrderResponse(
         AddressResponse address,
 
         @Schema(description = "Delivery method", example = "DELIVERY")
-        String deliveryMethod,
+        DeliveryMethod deliveryMethod,
 
         @Schema(description = "Order status", example = "NEW")
-        String status,
+        OrderStatus status,
 
         @Schema(description = "Total amount", example = "750.00")
         BigDecimal totalAmount,

@@ -2,6 +2,7 @@ package com.sushishop.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sushishop.domain.enums.DeliveryMethod;
+import com.sushishop.domain.enums.OrderStatus;
 import com.sushishop.dto.request.AddressRequest;
 import com.sushishop.dto.request.CreateOrderRequest;
 import com.sushishop.dto.request.OrderItemRequest;
@@ -59,7 +60,7 @@ public class OrderControllerTest {
 
         var response = new OrderResponse(1L, "Anton", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
-                "DELIVERY", "NEW", new BigDecimal("500.00"), null, List.of());
+                DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
         when(orderService.create(any())).thenReturn(response);
 
@@ -83,7 +84,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAllOrders() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "NEW", BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
         Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getAll(any(Pageable.class))).thenReturn(page);
@@ -95,7 +96,7 @@ public class OrderControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "NEW", BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
         when(orderService.getById(1L)).thenReturn(response);
 
@@ -107,7 +108,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldUpdateStatus() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, "PICKUP", "COOKING", BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.COOKING, BigDecimal.ZERO, null, List.of());
 
         when(orderService.updateStatus(eq(1L), any())).thenReturn(response);
 

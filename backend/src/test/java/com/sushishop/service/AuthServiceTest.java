@@ -3,6 +3,7 @@ package com.sushishop.service;
 import com.sushishop.domain.Token;
 import com.sushishop.domain.User;
 import com.sushishop.domain.enums.TokenType;
+import com.sushishop.domain.enums.UserRole;
 import com.sushishop.dto.request.LoginRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
@@ -65,7 +66,7 @@ public class AuthServiceTest {
     void shouldLogin() {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder().email("anton@example.com").emailVerified(true).tokenVersion(0).build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var authority = new SimpleGrantedAuthority("ROLE_CUSTOMER");
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -94,7 +95,7 @@ public class AuthServiceTest {
     @Test
     void shouldRegister() {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var user = User.builder().email("anton@example.com").tokenVersion(0).build();
 
         when(userService.create(request)).thenReturn(userResponse);

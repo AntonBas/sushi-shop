@@ -1,5 +1,6 @@
 package com.sushishop.controller;
 
+import com.sushishop.domain.enums.UserRole;
 import com.sushishop.dto.response.UserResponse;
 import com.sushishop.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +41,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
     void shouldGetCurrentUser() throws Exception {
-        var response = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
+        var response = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
 

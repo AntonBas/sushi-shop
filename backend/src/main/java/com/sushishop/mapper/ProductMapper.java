@@ -29,7 +29,6 @@ public interface ProductMapper {
     @Mapping(target = "updatedBy", ignore = true)
     void updateEntity(UpdateProductRequest request, @MappingTarget Product entity);
 
-    @Mapping(target = "category", expression = "java(product.getCategory().name())")
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "discountedPrice", ignore = true)
     @Mapping(target = "discountPercent", ignore = true)
@@ -38,7 +37,6 @@ public interface ProductMapper {
     @Mapping(target = "averageRating", ignore = true)
     ProductResponse toResponse(Product product);
 
-    @Mapping(target = "category", expression = "java(product.getCategory().name())")
     @Mapping(target = "mainImage", ignore = true)
     @Mapping(target = "discountedPrice", ignore = true)
     @Mapping(target = "averageRating", ignore = true)

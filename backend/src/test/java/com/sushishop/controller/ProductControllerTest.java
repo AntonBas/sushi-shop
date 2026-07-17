@@ -1,5 +1,6 @@
 package com.sushishop.controller;
 
+import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.response.ProductListResponse;
 import com.sushishop.dto.response.ProductResponse;
 import com.sushishop.service.ProductService;
@@ -45,7 +46,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetAllProducts() throws Exception {
-        var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), null, null, "ROLL", null, true);
+        var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), null, null, Category.ROLL, null, true);
         Page<ProductListResponse> page = new PageImpl<>(List.of(response));
 
         when(productService.getAll(any(Pageable.class), isNull(), isNull(), isNull())).thenReturn(page);
@@ -57,7 +58,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, "ROLL", List.of(), null, null, true);
+        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), null, null, true);
 
         when(productService.getById(1L)).thenReturn(response);
 

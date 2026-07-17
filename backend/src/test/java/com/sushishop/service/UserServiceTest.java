@@ -1,6 +1,7 @@
 package com.sushishop.service;
 
 import com.sushishop.domain.User;
+import com.sushishop.domain.enums.UserRole;
 import com.sushishop.dto.request.ChangePasswordRequest;
 import com.sushishop.dto.request.RegisterRequest;
 import com.sushishop.dto.response.UserResponse;
@@ -48,7 +49,7 @@ public class UserServiceTest {
     void shouldCreateUser() {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var user = User.builder().email("anton@example.com").build();
-        var expected = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", "CUSTOMER", null);
+        var expected = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
 
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
         when(passwordEncoder.encode("password123")).thenReturn("hashed");

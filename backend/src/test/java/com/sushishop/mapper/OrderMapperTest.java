@@ -60,8 +60,8 @@ public class OrderMapperTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.customerName()).isEqualTo("Anton");
         assertThat(response.phone()).isEqualTo("+380961791111");
-        assertThat(response.deliveryMethod()).isEqualTo("DELIVERY");
-        assertThat(response.status()).isEqualTo("NEW");
+        assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
+        assertThat(response.status()).isEqualTo(OrderStatus.NEW);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         assertThat(response.address()).isNull();
         assertThat(response.items()).hasSize(1);

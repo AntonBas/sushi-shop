@@ -37,7 +37,7 @@ public class ProductMapperTest {
         assertThat(response.name()).isEqualTo("Maki");
         assertThat(response.description()).isEqualTo("Salmon roll");
         assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
-        assertThat(response.category()).isEqualTo("ROLL");
+        assertThat(response.category()).isEqualTo(Category.ROLL);
         assertThat(response.available()).isTrue();
         assertThat(response.images()).isNull();
         assertThat(response.reviewCount()).isNull();
@@ -60,7 +60,7 @@ public class ProductMapperTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.name()).isEqualTo("Maki");
         assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
-        assertThat(response.category()).isEqualTo("ROLL");
+        assertThat(response.category()).isEqualTo(Category.ROLL);
         assertThat(response.available()).isTrue();
         assertThat(response.mainImage()).isNull();
         assertThat(response.averageRating()).isNull();
