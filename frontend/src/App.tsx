@@ -12,6 +12,9 @@ import ForgotPassword from './pages/auth/ForgotPassword/ForgotPassword'
 import ResetPassword from './pages/auth/ResetPassword/ResetPassword'
 import AdminProductsPage from './pages/admin/products/AdminProductsPage/AdminProductsPage'
 import AdminProductForm from './pages/admin/products/AdminProductForm/AdminProductForm'
+import AdminOrdersPage from './pages/admin/orders/AdminOrdersPage'
+import AdminPromotionsPage from './pages/admin/promotions/AdminPromotionsPage/AdminPromotionsPage'
+import AdminPromotionForm from './pages/admin/promotions/AdminPromotionForm/AdminPromotionForm'
 
 function App() {
   const { loading } = useAuth()
@@ -34,6 +37,9 @@ function App() {
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="products/new" element={<AdminProductForm />} />
         <Route path="products/:id/edit" element={<AdminProductForm />} />
+        <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="promotions" element={<AdminPromotionsPage />} />
+        <Route path="promotions/new" element={<AdminPromotionForm />} />
       </Route>
     </Routes>
   )
