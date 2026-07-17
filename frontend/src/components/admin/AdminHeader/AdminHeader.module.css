@@ -4,13 +4,12 @@
   justify-content: space-between;
   padding: 0 32px;
   height: 70px;
-  background: rgba(15, 23, 42, 0.95);
+  background: var(--color-bg-secondary);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .leftSection {
@@ -20,7 +19,7 @@
 }
 
 .menuButton {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-bg-tertiary);
   border: 1px solid var(--color-border);
   width: 44px;
   height: 44px;
@@ -29,12 +28,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s;
 }
 
 .menuButton:hover {
-  background: rgba(var(--color-primary-rgb), 0.15);
-  border-color: rgba(var(--color-primary-rgb), 0.3);
+  background: var(--color-border);
   transform: scale(1.05);
 }
 
@@ -52,7 +50,7 @@
   height: 2px;
   background: var(--color-text);
   border-radius: 1px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s;
   transform-origin: center;
 }
 
@@ -87,6 +85,26 @@
 .rightSection {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.themeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.themeBtn:hover {
+  background: var(--color-border);
+  color: var(--color-text);
 }
 
 .userInfo {
@@ -94,9 +112,9 @@
   align-items: center;
   gap: 16px;
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-bg-tertiary);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--color-border);
 }
 
 .userDetails {

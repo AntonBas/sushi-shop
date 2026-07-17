@@ -1,4 +1,6 @@
 import { useAuth } from '../../../context/AuthContext'
+import { useTheme } from '../../../hooks/common/useTheme'
+import { Sun, Moon } from 'lucide-react'
 import styles from './AdminHeader.module.css'
 
 interface AdminHeaderProps {
@@ -8,6 +10,7 @@ interface AdminHeaderProps {
 
 export default function AdminHeader({ onToggleSidebar, isSidebarOpen }: AdminHeaderProps) {
   const { user } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <header className={styles.header}>
@@ -27,6 +30,10 @@ export default function AdminHeader({ onToggleSidebar, isSidebarOpen }: AdminHea
       </div>
 
       <div className={styles.rightSection}>
+        <button onClick={toggleTheme} className={styles.themeBtn}>
+          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+
         <div className={styles.userInfo}>
           <div className={styles.userDetails}>
             <span className={styles.userName}>{user?.name || 'Admin'}</span>
