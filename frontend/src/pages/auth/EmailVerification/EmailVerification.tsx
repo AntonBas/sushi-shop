@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { CheckCircle2, XCircle } from 'lucide-react'
 import Button from '../../../components/ui/Button/Button'
+import Loading from '../../../components/ui/Loading/Loading'
 import * as authApi from '../../../api/auth'
 import styles from './EmailVerification.module.css'
 
@@ -25,12 +26,7 @@ export default function EmailVerification() {
   }, [token])
 
   if (status === 'loading') {
-    return (
-      <div className={styles.container}>
-        <div className={styles.spinner} />
-        <p>Verifying your email...</p>
-      </div>
-    )
+    return <Loading text="Verifying your email..." />
   }
 
   if (status === 'error') {

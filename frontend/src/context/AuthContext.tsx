@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import * as authApi from '../api/auth'
 import * as usersApi from '../api/user'
+import { useDelayedLoading } from '../hooks/common/useDelayedLoading'
 import type { UserResponse, LoginRequest, RegisterRequest } from '../types'
 
 interface AuthContextType {
@@ -18,8 +19,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserResponse | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const fetchedRef = useRef(false)
+  const loading = useDelayedLoading(initialLoading)
 
   const token = localStorage.getItem('token')
   const isAuthenticated = !!user
@@ -34,9 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.removeItem('token')
           setUser(null)
         })
-        .finally(() => setLoading(false))
+        .finally(() => setInitialLoading(false))
     } else {
-      setLoading(false)
+      setInitialLoading(false)
     }
   }, [])
 

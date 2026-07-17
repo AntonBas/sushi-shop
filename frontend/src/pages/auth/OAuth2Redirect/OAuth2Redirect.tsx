@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
-import styles from './OAuth2Redirect.module.css'
+import Loading from '../../../components/ui/Loading/Loading'
 
 export default function OAuth2Redirect() {
   const navigate = useNavigate()
@@ -20,10 +20,5 @@ export default function OAuth2Redirect() {
     }
   }, [navigate, refreshUser])
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.spinner} />
-      <p>Completing login...</p>
-    </div>
-  )
+  return <Loading text="Completing login..." />
 }
