@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const token = localStorage.getItem('token')
   const isAuthenticated = !!user
-  const isAdmin = user?.role === 'ADMIN'
+  const isAdmin = user?.userRole === 'ADMIN'
 
   useEffect(() => {
     if (token && !fetchedRef.current) {
