@@ -14,8 +14,9 @@
 
 .notification:not(.static) {
   position: fixed;
-  top: 20px;
+  top: 84px;
   right: 20px;
+  z-index: 1001;
   transform: translateX(400px) translateY(0);
 }
 
@@ -26,7 +27,7 @@
 
 .notification.static {
   position: static;
-  transform: none !important;
+  transform: none;
   width: 100%;
   margin-bottom: var(--space-4);
   border: 1px solid;
