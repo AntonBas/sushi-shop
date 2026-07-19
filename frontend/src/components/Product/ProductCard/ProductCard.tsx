@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Star } from 'lucide-react'
-import type { ProductListResponse } from '../../types'
+import type { ProductListResponse } from '../../../types'
 import styles from './ProductCard.module.css'
 
 interface Props {
@@ -16,7 +16,11 @@ export default function ProductCard({ product }: Props) {
       </div>
       <div className={styles.info}>
         <h3>{product.name}</h3>
-        <span className={styles.category}>{product.category}</span>
+        <div className={styles.meta}>
+          <span className={styles.category}>{product.category}</span>
+          {product.weight && <span className={styles.weight}>{product.weight}</span>}
+          {product.pieces && <span className={styles.pieces}>{product.pieces} pcs</span>}
+        </div>
         <div className={styles.priceRow}>
           {product.discountedPrice ? (
             <>
