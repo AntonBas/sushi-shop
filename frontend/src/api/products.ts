@@ -51,3 +51,8 @@ export const addProductImage = async (id: number, image: File): Promise<void> =>
 export const deleteProductImage = async (productId: number, imageId: number): Promise<void> => {
   await api.delete(`/products/${productId}/images/${imageId}`)
 }
+
+export const getPopularProducts = async (): Promise<ProductListResponse[]> => {
+  const { data } = await api.get('/products/popular')
+  return data
+}
