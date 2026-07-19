@@ -11,6 +11,7 @@ import EmailVerification from './pages/Auth/EmailVerification/EmailVerification'
 import OAuth2Redirect from './pages/Auth/OAuth2Redirect/OAuth2Redirect'
 import ForgotPassword from './pages/Auth/ForgotPassword/ForgotPassword'
 import ResetPassword from './pages/Auth/ResetPassword/ResetPassword'
+import CartPage from './pages/Cart/CartPage'
 import ProfilePage from './pages/Profile/ProfilePage/ProfilePage'
 import MyOrdersPage from './pages/Profile/MyOrdersPage/MyOrdersPage'
 import AdminProductsPage from './pages/Admin/Products/AdminProductsPage/AdminProductsPage'
@@ -29,6 +30,7 @@ function App() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/cart" element={<CartPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

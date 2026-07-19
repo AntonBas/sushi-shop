@@ -1,0 +1,135 @@
+.page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.title {
+  color: var(--color-text);
+  font-size: 24px;
+  margin-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.clearBtn {
+  background: none;
+  border: none;
+  color: var(--color-error);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.clearBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--color-text-muted);
+}
+
+.emptyIcon {
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+.empty h2 {
+  color: var(--color-text);
+  margin: 0 0 8px 0;
+}
+
+.empty p {
+  margin: 0 0 20px 0;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.itemInfo h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: var(--color-text);
+}
+
+.itemPrice {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.itemActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.quantity {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.itemTotal {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.removeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.removeBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  color: var(--color-text);
+}
+
+.totalPrice {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
