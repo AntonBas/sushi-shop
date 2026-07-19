@@ -1,0 +1,2 @@
+ALTER TABLE products ADD COLUMN weight VARCHAR(20);
+ALTER TABLE products ADD COLUMN pieces INTEGER;

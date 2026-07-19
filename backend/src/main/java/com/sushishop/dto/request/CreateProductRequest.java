@@ -27,6 +27,14 @@ public record CreateProductRequest(
 
         @Schema(description = "Product category", example = "ROLL")
         @NotNull(message = "Category is required")
-        Category category
+        Category category,
+
+        @Schema(description = "Product weight", example = "250g")
+        @Size(max = 20)
+        String weight,
+
+        @Schema(description = "Pieces for sets", example = "8")
+        @Positive(message = "Pieces must be greater than 0")
+        Integer pieces
 ) {
 }

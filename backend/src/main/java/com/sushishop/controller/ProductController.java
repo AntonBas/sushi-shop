@@ -67,6 +67,15 @@ public class ProductController {
         return ResponseEntity.ok(productService.getById(id));
     }
 
+    @GetMapping("/popular")
+    @Operation(summary = "Get popular products", description = "Returns top 10 products sorted by rating and review count")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of popular products")
+    })
+    public ResponseEntity<List<ProductListResponse>> getPopular() {
+        return ResponseEntity.ok(productService.getPopular());
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update product")

@@ -10,6 +10,7 @@ import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductListResponse;
 import com.sushishop.dto.response.ProductResponse;
+import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
 import com.sushishop.repository.ProductRepository;
@@ -48,6 +49,11 @@ public class ProductService {
         log.info("Creating product with {} images: {}", images != null ? images.size() : 0, request.name());
         var product = productMapper.toEntity(request);
         addImagesToProduct(product, images);
+
+        if (request.category() == Category.SET && request.pieces() == null) {
+            throw new BadRequestException("Pieces is required for sets");
+        }
+
         var saved = productRepository.save(product);
         log.info("Created product with ID: {}", saved.getId());
         return enrichProductResponse(saved);
@@ -66,6 +72,14 @@ public class ProductService {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         return enrichProductResponse(product);
+    }
+
+    @Cacheable(value = "products", key = "popular")
+    public List<ProductListResponse> getPopular() {
+        return productRepository.findPopular(Pageable.ofSize(10))
+                .stream()
+                .map(this::enrichListResponse)
+                .toList();
     }
 
     @Auditable(action = "UPDATE", entity = "Product")
@@ -174,7 +188,8 @@ public class ProductService {
 
         return new ProductListResponse(
                 response.id(), response.name(), response.price(), discountedPrice,
-                getAverageRating(product), response.category(), mainImage, response.available()
+                getAverageRating(product), response.category(), mainImage, response.available(),
+                product.getWeight(), product.getPieces()
         );
     }
 
@@ -201,7 +216,8 @@ public class ProductService {
         return new ProductResponse(
                 response.id(), response.name(), response.description(),
                 response.price(), discountedPrice, discountPercent, promotionTitle,
-                response.category(), images, reviewCount, getAverageRating(product), response.available()
+                response.category(), images, reviewCount, getAverageRating(product), response.available(),
+                product.getWeight(), product.getPieces()
         );
     }
 }

@@ -42,12 +42,12 @@ public class ProductServiceTest {
 
     @Test
     void shouldCreateProduct() {
-        var request = new CreateProductRequest("Maki", "Desc", new BigDecimal("250.00"), Category.ROLL);
+        var request = new CreateProductRequest("Maki", "Desc", new BigDecimal("250.00"), Category.ROLL, "250g", 8);
         var product = new Product();
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true);
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, "250g", 8);
 
         when(productMapper.toEntity(request)).thenReturn(product);
         when(productRepository.save(product)).thenReturn(product);
@@ -65,7 +65,7 @@ public class ProductServiceTest {
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true);
+        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, "250g", 8);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(expected);
@@ -85,12 +85,12 @@ public class ProductServiceTest {
 
     @Test
     void shouldUpdateProduct() {
-        var request = new UpdateProductRequest("Updated", null, null, null, null);
+        var request = new UpdateProductRequest("Updated", null, null, null, null, null, null);
         var product = new Product();
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true);
+        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, null, null);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.save(product)).thenReturn(product);

@@ -36,6 +36,12 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Category category;
 
+    @Column(length = 20)
+    private String weight;
+
+    @Column
+    private Integer pieces;
+
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductImage> productImages = new ArrayList<>();

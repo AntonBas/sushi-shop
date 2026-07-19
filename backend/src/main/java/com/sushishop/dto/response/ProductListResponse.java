@@ -29,6 +29,12 @@ public record ProductListResponse(
         String mainImage,
 
         @Schema(description = "Is product available", example = "true")
-        boolean available
+        boolean available,
+
+        @Schema(description = "Product weight", example = "250g")
+        String weight,
+
+        @Schema(description = "Pieces for sets", example = "8")
+        Integer pieces
 ) {
 }
