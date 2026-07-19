@@ -18,7 +18,7 @@ export default function ProductCard({ product }: Props) {
         <h3>{product.name}</h3>
         <div className={styles.meta}>
           <span className={styles.category}>{product.category}</span>
-          {product.weight && <span className={styles.weight}>{product.weight}</span>}
+          {product.weight && <span className={styles.weight}>{product.weight}g</span>}
           {product.pieces && <span className={styles.pieces}>{product.pieces} pcs</span>}
         </div>
         <div className={styles.priceRow}>
