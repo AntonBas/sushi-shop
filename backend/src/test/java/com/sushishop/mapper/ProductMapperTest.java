@@ -29,7 +29,7 @@ public class ProductMapperTest {
                 .price(new BigDecimal("250.00"))
                 .category(Category.ROLL)
                 .available(true)
-                .weight("250g")
+                .weight(250)
                 .pieces(8)
                 .build();
 
@@ -41,7 +41,7 @@ public class ProductMapperTest {
         assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
         assertThat(response.category()).isEqualTo(Category.ROLL);
         assertThat(response.available()).isTrue();
-        assertThat(response.weight()).isEqualTo("250g");
+        assertThat(response.weight()).isEqualTo(250);
         assertThat(response.pieces()).isEqualTo(8);
         assertThat(response.images()).isNull();
         assertThat(response.reviewCount()).isNull();
@@ -57,7 +57,7 @@ public class ProductMapperTest {
                 .price(new BigDecimal("250.00"))
                 .category(Category.ROLL)
                 .available(true)
-                .weight("250g")
+                .weight(250)
                 .pieces(8)
                 .build();
 
@@ -68,7 +68,7 @@ public class ProductMapperTest {
         assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
         assertThat(response.category()).isEqualTo(Category.ROLL);
         assertThat(response.available()).isTrue();
-        assertThat(response.weight()).isEqualTo("250g");
+        assertThat(response.weight()).isEqualTo(250);
         assertThat(response.pieces()).isEqualTo(8);
         assertThat(response.mainImage()).isNull();
         assertThat(response.averageRating()).isNull();

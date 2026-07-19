@@ -44,8 +44,8 @@ public record ProductResponse(
         @Schema(description = "Is product available", example = "true")
         boolean available,
 
-        @Schema(description = "Product weight", example = "250g")
-        String weight,
+        @Schema(description = "Product weight", example = "250")
+        Integer weight,
 
         @Schema(description = "Pieces for sets", example = "8")
         Integer pieces

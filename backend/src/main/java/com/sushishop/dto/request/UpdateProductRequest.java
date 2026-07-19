@@ -27,9 +27,9 @@ public record UpdateProductRequest(
         @Schema(description = "Product availability")
         Boolean isAvailable,
 
-        @Schema(description = "Product weight", example = "250g")
-        @Size(max = 20)
-        String weight,
+        @Schema(description = "Product weight", example = "250")
+        @Positive(message = "Weight must be greater than 0")
+        Integer weight,
 
         @Schema(description = "Pieces for sets", example = "8")
         @Positive(message = "Pieces must be greater than 0")

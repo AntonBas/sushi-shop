@@ -32,7 +32,7 @@ public record ProductListResponse(
         boolean available,
 
         @Schema(description = "Product weight", example = "250g")
-        String weight,
+        Integer weight,
 
         @Schema(description = "Pieces for sets", example = "8")
         Integer pieces

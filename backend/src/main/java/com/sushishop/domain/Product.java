@@ -36,8 +36,8 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Category category;
 
-    @Column(length = 20)
-    private String weight;
+    @Column
+    private Integer weight;
 
     @Column
     private Integer pieces;
