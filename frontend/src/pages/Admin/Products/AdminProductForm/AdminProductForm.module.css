@@ -120,6 +120,12 @@
   gap: 16px;
 }
 
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .fieldGroup {
   display: flex;
   flex-direction: column;
@@ -167,6 +173,10 @@
 
 @media (max-width: 768px) {
   .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .row {
     grid-template-columns: 1fr;
   }
 }

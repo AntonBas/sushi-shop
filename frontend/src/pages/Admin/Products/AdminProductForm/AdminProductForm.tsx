@@ -22,6 +22,8 @@ export default function AdminProductForm() {
   const [description, setDescription] = useState('')
   const [price, setPrice] = useState('')
   const [category, setCategory] = useState<Category>('ROLL')
+  const [weight, setWeight] = useState('')
+  const [pieces, setPieces] = useState('')
   const [images, setImages] = useState<File[]>([])
   const [existingImages, setExistingImages] = useState<{ id: number; url: string }[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,6 +40,8 @@ export default function AdminProductForm() {
       setDescription(product.description || '')
       setPrice(product.price.toString())
       setCategory(product.category as Category)
+      setWeight(product.weight?.toString() || '')
+      setPieces(product.pieces?.toString() || '')
       setExistingImages(product.images.map((url, index) => ({ id: index, url })))
     }
   }, [isEdit, product])
@@ -78,6 +82,8 @@ export default function AdminProductForm() {
           description: description || undefined,
           price: price ? Number(price) : undefined,
           category: category || undefined,
+          weight: weight ? Number(weight) : undefined,
+          pieces: pieces ? Number(pieces) : undefined,
         })
         if (images.length > 0) {
           for (const image of images) {
@@ -92,6 +98,8 @@ export default function AdminProductForm() {
             description: description || undefined,
             price: Number(price),
             category,
+            weight: weight ? Number(weight) : undefined,
+            pieces: pieces ? Number(pieces) : undefined,
           },
           images.length > 0 ? images : undefined
         )
@@ -167,6 +175,11 @@ export default function AdminProductForm() {
                 placeholder="Product description"
                 maxLength={250}
               />
+            </div>
+
+            <div className={styles.row}>
+              <Input label="Weight (g)" value={weight} onChange={setWeight} placeholder="250" type="number" />
+              <Input label="Pieces" value={pieces} onChange={setPieces} placeholder="8" type="number" />
             </div>
 
             <Input label="Price (₴)" value={price} onChange={setPrice} placeholder="250.00" type="number" />
