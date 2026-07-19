@@ -1,0 +1,172 @@
+.notification {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 16px;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transition: all 0.3s ease;
+  margin-bottom: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.notification:not(.static) {
+  position: fixed;
+  top: 84px;
+  right: 20px;
+  z-index: 1001;
+  transform: translateX(400px);
+}
+
+.notification:not(.static).show {
+  transform: translateX(0) translateY(var(--offset, 0));
+  opacity: 1;
+}
+
+.notification.static {
+  position: static;
+  transform: none;
+  width: 100%;
+  margin-bottom: 16px;
+  max-width: none;
+}
+
+.notification.static.show {
+  opacity: 1;
+}
+
+.content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message {
+  color: var(--color-text);
+  flex: 1;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.close {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.close:hover {
+  color: var(--color-text);
+  background: var(--color-bg-tertiary);
+}
+
+.progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  background: currentColor;
+  animation: progress linear;
+  transform-origin: left;
+  opacity: 0.7;
+}
+
+.success {
+  border-color: rgba(34, 197, 94, 0.5);
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.error {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.warning {
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #f59e0b;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.info {
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.notification.static .progress {
+  display: none;
+}
+
+.hide {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .notification:not(.static) {
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .notification.static {
+    min-width: auto;
+    max-width: none;
+  }
+
+  .content {
+    gap: 8px;
+  }
+
+  .message {
+    font-size: 13px;
+  }
+}
