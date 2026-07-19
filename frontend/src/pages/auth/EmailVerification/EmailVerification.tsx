@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { CheckCircle2, XCircle } from 'lucide-react'
-import Button from '../../../components/ui/Button/Button'
-import Loading from '../../../components/ui/Loading/Loading'
+import Button from '../../../components/UI/Button/Button'
+import Loading from '../../../components/UI/Loading/Loading'
 import * as authApi from '../../../api/auth'
 import styles from './EmailVerification.module.css'
 

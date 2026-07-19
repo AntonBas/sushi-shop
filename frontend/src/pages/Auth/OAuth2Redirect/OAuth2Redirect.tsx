@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../context/AuthContext'
-import Loading from '../../../components/ui/Loading/Loading'
+import Loading from '../../../components/UI/Loading/Loading'
 
 export default function OAuth2Redirect() {
   const navigate = useNavigate()

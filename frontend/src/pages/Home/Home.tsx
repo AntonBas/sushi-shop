@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useProducts } from '../../hooks/features/useProducts'
 import ProductCard from '../../components/ProductCard/ProductCard'
-import Pagination from '../../components/ui/Pagination/Pagination'
-import Button from '../../components/ui/Button/Button'
+import Pagination from '../../components/UI/Pagination/Pagination'
+import Button from '../../components/UI/Button/Button'
 import { Search } from 'lucide-react'
 import styles from './Home.module.css'
 

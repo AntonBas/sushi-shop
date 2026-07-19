@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/AuthContext'
-import Button from '../../../components/ui/Button/Button'
-import Input from '../../../components/ui/Input/Input'
+import Button from '../../../components/UI/Button/Button'
+import Input from '../../../components/UI/Input/Input'
 import styles from './Login.module.css'
 
 export default function Login() {

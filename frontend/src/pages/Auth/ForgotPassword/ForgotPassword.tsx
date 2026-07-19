@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { Mail } from 'lucide-react'
 import * as authApi from '../../../api/auth'
-import Button from '../../../components/ui/Button/Button'
-import Input from '../../../components/ui/Input/Input'
-import Modal from '../../../components/ui/Modal/Modal'
+import Button from '../../../components/UI/Button/Button'
+import Input from '../../../components/UI/Input/Input'
+import Modal from '../../../components/UI/Modal/Modal'
 import styles from './ForgotPassword.module.css'
 
 export default function ForgotPassword() {
