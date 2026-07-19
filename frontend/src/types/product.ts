@@ -5,7 +5,7 @@ export interface CreateProductRequest {
   description?: string
   price: number
   category: Category
-  weight?: string
+  weight?: number
   pieces?: number
 }
 
@@ -15,7 +15,7 @@ export interface UpdateProductRequest {
   price?: number
   category?: Category
   isAvailable?: boolean
-  weight?: string
+  weight?: number
   pieces?: number
 }
 
@@ -28,7 +28,7 @@ export interface ProductListResponse {
   category: Category
   mainImage?: string | null
   available: boolean
-  weight?: string | null
+  weight?: number | null
   pieces?: number | null
 }
 
@@ -45,7 +45,7 @@ export interface ProductResponse {
   reviewCount: number
   averageRating?: number | null
   available: boolean
-  weight?: string | null
+  weight?: number | null
   pieces?: number | null
 }
 
