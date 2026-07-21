@@ -5,6 +5,7 @@ import com.sushishop.domain.ProductImage;
 import com.sushishop.domain.enums.Category;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
+import com.sushishop.dto.response.ProductListResponse;
 import com.sushishop.dto.response.ProductResponse;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.ProductMapper;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -167,5 +169,30 @@ public class ProductServiceTest {
 
         assertThat(product.isAvailable()).isFalse();
         verify(productRepository).save(product);
+    }
+
+    @Test
+    void shouldGetRelatedProducts() {
+        var product = new Product();
+        product.setId(1L);
+        product.setCategory(Category.ROLL);
+        product.setPromotions(new HashSet<>());
+        product.setReviews(new ArrayList<>());
+        product.setProductImages(new ArrayList<>());
+
+        var relatedProduct = new Product();
+        relatedProduct.setPromotions(new HashSet<>());
+        relatedProduct.setReviews(new ArrayList<>());
+        relatedProduct.setProductImages(new ArrayList<>());
+
+        var listResponse = new ProductListResponse(2L, "Related", BigDecimal.TEN, null, null, Category.ROLL, null, true, null, null);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findRelated(Category.ROLL, 1L, Pageable.ofSize(4))).thenReturn(List.of(relatedProduct));
+        when(productMapper.toListResponse(relatedProduct)).thenReturn(listResponse);
+
+        var result = productService.getRelated(1L);
+
+        assertThat(result).hasSize(1);
     }
 }

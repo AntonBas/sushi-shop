@@ -91,4 +91,15 @@ public class ProductControllerTest {
         mockMvc.perform(delete("/api/products/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    void shouldGetRelated() throws Exception {
+        var response = new ProductListResponse(2L, "Related", new BigDecimal("200.00"), null, null, Category.ROLL, null, true, null, null);
+
+        when(productService.getRelated(1L)).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/api/products/1/related"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Related"));
+    }
 }

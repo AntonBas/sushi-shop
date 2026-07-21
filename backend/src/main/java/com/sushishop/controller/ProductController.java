@@ -76,6 +76,15 @@ public class ProductController {
         return ResponseEntity.ok(productService.getPopular());
     }
 
+    @GetMapping("/{id}/related")
+    @Operation(summary = "Get related products", description = "Returns products from the same category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of related products")
+    })
+    public ResponseEntity<List<ProductListResponse>> getRelated(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getRelated(id));
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Update product")

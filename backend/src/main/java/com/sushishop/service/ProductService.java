@@ -82,6 +82,16 @@ public class ProductService {
                 .toList();
     }
 
+    @Cacheable(value = "products", key = "'related-' + #id")
+    public List<ProductListResponse> getRelated(Long id) {
+        var product = productRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
+        return productRepository.findRelated(product.getCategory(), id, Pageable.ofSize(4))
+                .stream()
+                .map(this::enrichListResponse)
+                .toList();
+    }
+
     @Auditable(action = "UPDATE", entity = "Product")
     @CachePut(value = "products", key = "#id")
     public ProductResponse update(Long id, UpdateProductRequest request) {
