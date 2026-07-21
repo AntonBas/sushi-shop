@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Star, ShoppingCart, ChevronLeft } from 'lucide-react'
+import { Star, ShoppingCart } from 'lucide-react'
 import { useProducts } from '../../hooks/features/useProducts'
 import { useCart } from '../../hooks/features/useCart'
 import Loading from '../../components/UI/Loading/Loading'
 import Button from '../../components/UI/Button/Button'
 import ReviewSection from '../../components/Product/ReviewSection/ReviewSection'
+import RelatedProducts from '../../components/Product/RelatedProducts/RelatedProducts'
 import styles from './ProductPage.module.css'
 
 export default function ProductPage() {
@@ -35,9 +36,13 @@ export default function ProductPage() {
 
   return (
     <div className={styles.page}>
-      <Link to="/" className={styles.back}>
-        <ChevronLeft size={20} /> Back to Menu
-      </Link>
+      <div className={styles.breadcrumbs}>
+        <Link to="/" className={styles.breadcrumbLink}>Menu</Link>
+        <span className={styles.separator}>/</span>
+        <span className={styles.breadcrumb}>{product.category}</span>
+        <span className={styles.separator}>/</span>
+        <span className={styles.breadcrumb}>{product.name}</span>
+      </div>
 
       <div className={styles.layout}>
         <div className={styles.images}>
@@ -62,11 +67,7 @@ export default function ProductPage() {
         </div>
 
         <div className={styles.info}>
-          <div className={styles.meta}>
-            <span className={styles.category}>{product.category}</span>
-            {product.weight && <span className={styles.metaItem}>{product.weight}g</span>}
-            {product.pieces && <span className={styles.metaItem}>{product.pieces} pcs</span>}
-          </div>
+          <span className={styles.category}>{product.category}</span>
           <h1 className={styles.name}>{product.name}</h1>
 
           {product.averageRating && (
@@ -85,6 +86,11 @@ export default function ProductPage() {
               </>
             )}
             <span className={styles.price}>₴{product.discountedPrice || product.price}</span>
+          </div>
+
+          <div className={styles.details}>
+            {product.weight && <span className={styles.detail}>{product.weight}g</span>}
+            {product.pieces && <span className={styles.detail}>{product.pieces} pieces</span>}
           </div>
 
           {product.promotionTitle && (
@@ -108,6 +114,7 @@ export default function ProductPage() {
         </div>
       </div>
 
+      <RelatedProducts productId={product.id} />
       <ReviewSection productId={product.id} />
     </div>
   )
