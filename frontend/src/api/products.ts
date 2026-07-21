@@ -56,3 +56,8 @@ export const getPopularProducts = async (): Promise<ProductListResponse[]> => {
   const { data } = await api.get('/products/popular')
   return data
 }
+
+export const getRelatedProducts = async (id: number): Promise<ProductListResponse[]> => {
+  const { data } = await api.get(`/products/${id}/related`)
+  return data
+}

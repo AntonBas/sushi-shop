@@ -9,8 +9,10 @@ export function useProducts() {
   const listApi = useApi<Page<ProductListResponse>>()
   const itemApi = useApi<ProductResponse>()
   const popularApi = useApi<ProductListResponse[]>()
+  const relatedApi = useApi<ProductListResponse[]>()
   const [products, setProducts] = useState<ProductListResponse[]>([])
   const [popular, setPopular] = useState<ProductListResponse[]>([])
+  const [related, setRelated] = useState<ProductListResponse[]>([])
 
   const loadProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
     const data = await listApi.execute(() => productsApi.getProducts(page, 12, filters))
@@ -22,16 +24,23 @@ export function useProducts() {
     if (data) setPopular(data)
   }, [])
 
+  const loadRelated = useCallback(async (id: number) => {
+    const data = await relatedApi.execute(() => productsApi.getRelatedProducts(id))
+    if (data) setRelated(data)
+  }, [])
+
   const getProduct = (id: number) => itemApi.execute(() => productsApi.getProduct(id))
 
   return {
     products,
     popular,
+    related,
     totalPages: listApi.data?.totalPages || 0,
     loading: listApi.loading,
     error: listApi.error,
     loadProducts,
     loadPopular,
+    loadRelated,
     getProduct,
     product: itemApi.data,
     productLoading: itemApi.loading
