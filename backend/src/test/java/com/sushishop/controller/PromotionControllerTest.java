@@ -76,6 +76,18 @@ public class PromotionControllerTest {
     }
 
     @Test
+    void shouldGetById() throws Exception {
+        var response = new PromotionResponse(1L, "Weekend Sale", null, new BigDecimal("20.00"),
+                LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
+
+        when(promotionService.getById(1L)).thenReturn(response);
+
+        mockMvc.perform(get("/api/promotions/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Weekend Sale"));
+    }
+
+    @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldDeletePromotion() throws Exception {
         mockMvc.perform(delete("/api/promotions/1"))

@@ -60,6 +60,16 @@ public class PromotionController {
         return ResponseEntity.ok(promotionService.getAll(pageable));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get promotion by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotion found"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
+    public ResponseEntity<PromotionResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(promotionService.getById(id));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete promotion")

@@ -70,6 +70,20 @@ public class PromotionServiceTest {
     }
 
     @Test
+    void shouldGetById() {
+        var expected = new PromotionResponse(1L, "Weekend Sale", null, new BigDecimal("20.00"),
+                LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
+
+        when(promotionRepository.findById(1L)).thenReturn(Optional.of(new Promotion()));
+        when(promotionMapper.toResponse(any())).thenReturn(expected);
+
+        var result = promotionService.getById(1L);
+
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.title()).isEqualTo("Weekend Sale");
+    }
+
+    @Test
     void shouldDeletePromotion() {
         var promotion = new Promotion();
 

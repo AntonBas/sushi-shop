@@ -73,6 +73,11 @@ public class PromotionService {
         return promotionRepository.findAll(pageable).map(promotionMapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public PromotionResponse getById(Long id) {
+        return promotionRepository.findById(id).map(promotionMapper::toResponse).orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
+    }
+
     @Auditable(action = "DELETE", entity = "Promotion")
     @Transactional
     @Caching(evict = {

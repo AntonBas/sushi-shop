@@ -1,4 +1,4 @@
-import { Tag } from 'lucide-react'
+import { Tag, Clock } from 'lucide-react'
 import { usePromotions } from '../../../hooks/features/usePromotions'
 import styles from './PromotionsSection.module.css'
 
@@ -11,18 +11,37 @@ export default function PromotionsSection() {
     <section className={styles.section}>
       <h2 className={styles.title}>Special Offers</h2>
       <div className={styles.list}>
-        {promotions.map(promo => (
-          <div key={promo.id} className={styles.card}>
-            <div className={styles.info}>
-              <Tag size={20} />
-              <div>
-                <h3>{promo.title}</h3>
-                <p>{promo.description || `-${promo.discountPercent}% off`}</p>
+        {promotions.map(promo => {
+          const daysLeft = Math.ceil((new Date(promo.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+          
+          return (
+            <div key={promo.id} className={styles.card}>
+              <div className={styles.cardContent}>
+                <div className={styles.badge}>
+                  <Tag size={16} />
+                  <span>PROMOTION</span>
+                </div>
+                <h3 className={styles.cardTitle}>{promo.title}</h3>
+                {promo.description && (
+                  <p className={styles.cardDesc}>{promo.description}</p>
+                )}
+                <div className={styles.cardMeta}>
+                  <span className={styles.productCount}>
+                    {promo.products.length} product{promo.products.length !== 1 ? 's' : ''}
+                  </span>
+                  <span className={styles.daysLeft}>
+                    <Clock size={14} />
+                    {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                  </span>
+                </div>
+              </div>
+              <div className={styles.discountBadge}>
+                <span className={styles.discountValue}>{promo.discountPercent}%</span>
+                <span className={styles.discountLabel}>OFF</span>
               </div>
             </div>
-            <span className={styles.discount}>-{promo.discountPercent}%</span>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )
