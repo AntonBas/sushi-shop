@@ -14,13 +14,14 @@ import ResetPassword from './pages/Auth/ResetPassword/ResetPassword'
 import CartPage from './pages/Cart/CartPage'
 import ProfilePage from './pages/Profile/ProfilePage/ProfilePage'
 import MyOrdersPage from './pages/Profile/MyOrdersPage/MyOrdersPage'
+import PromotionPage from './pages/Promotion/PromotionPage'
+import ProductPage from './pages/Product/ProductPage'
 import AdminProductsPage from './pages/Admin/Products/AdminProductsPage/AdminProductsPage'
 import AdminProductForm from './pages/Admin/Products/AdminProductForm/AdminProductForm'
 import AdminOrdersPage from './pages/Admin/Orders/AdminOrdersPage'
 import AdminPromotionsPage from './pages/Admin/Promotions/AdminPromotionsPage/AdminPromotionsPage'
 import AdminPromotionForm from './pages/Admin/Promotions/AdminPromotionForm/AdminPromotionForm'
 import AdminAuditPage from './pages/Admin/Audit/AdminAuditPage'
-import ProductPage from './pages/Product/ProductPage'
 
 function App() {
   const { loading } = useAuth()
@@ -33,6 +34,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products/:id" element={<ProductPage />} />
+        <Route path="/promotions/:id" element={<PromotionPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

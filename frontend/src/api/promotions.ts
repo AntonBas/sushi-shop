@@ -12,6 +12,11 @@ export const getPromotions = async (page = 0, size = 12): Promise<Page<Promotion
   return data
 }
 
+export const getPromotionById = async (id: number): Promise<PromotionResponse> => {
+  const { data } = await api.get(`/promotions/${id}`)
+  return data
+}
+
 export const createPromotion = async (data: CreatePromotionRequest): Promise<PromotionResponse> => {
   const { data: res } = await api.post('/promotions', data)
   return res

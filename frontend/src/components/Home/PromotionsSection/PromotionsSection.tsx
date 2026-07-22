@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { Tag, Clock } from 'lucide-react'
 import { usePromotions } from '../../../hooks/features/usePromotions'
 import styles from './PromotionsSection.module.css'
@@ -15,7 +16,7 @@ export default function PromotionsSection() {
           const daysLeft = Math.ceil((new Date(promo.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
           
           return (
-            <div key={promo.id} className={styles.card}>
+            <Link to={`/promotions/${promo.id}`} key={promo.id} className={styles.card}>
               <div className={styles.cardContent}>
                 <div className={styles.badge}>
                   <Tag size={16} />
@@ -39,7 +40,7 @@ export default function PromotionsSection() {
                 <span className={styles.discountValue}>{promo.discountPercent}%</span>
                 <span className={styles.discountLabel}>OFF</span>
               </div>
-            </div>
+            </Link>
           )
         })}
       </div>
