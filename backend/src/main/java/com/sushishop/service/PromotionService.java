@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -42,7 +42,7 @@ public class PromotionService {
         validateDates(request.startDate(), request.endDate());
         validateProductsExist(request.productIds());
 
-        var products = new HashSet<>(productRepository.findAllById(request.productIds()));
+        var products = new ArrayList<>(productRepository.findAllById(request.productIds()));
 
         var promotion = Promotion.builder()
                 .title(request.title())
@@ -58,6 +58,7 @@ public class PromotionService {
         return promotionMapper.toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "promotions", key = "'active'")
     public List<PromotionResponse> getActive() {
         var now = LocalDateTime.now();
@@ -67,6 +68,7 @@ public class PromotionService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public Page<PromotionResponse> getAll(Pageable pageable) {
         return promotionRepository.findAll(pageable).map(promotionMapper::toResponse);
     }

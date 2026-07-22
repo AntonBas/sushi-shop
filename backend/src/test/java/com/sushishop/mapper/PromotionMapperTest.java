@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +39,7 @@ public class PromotionMapperTest {
                 .startDate(LocalDateTime.now())
                 .endDate(LocalDateTime.now().plusDays(7))
                 .active(true)
-                .products(Set.of(product))
+                .products(List.of(product))
                 .build();
 
         var response = promotionMapper.toResponse(promotion);
