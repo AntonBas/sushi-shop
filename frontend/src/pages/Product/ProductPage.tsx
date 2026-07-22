@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { Star, ShoppingCart } from 'lucide-react'
+import { Star, ShoppingCart, Menu as MenuIcon } from 'lucide-react'
 import { useProducts } from '../../hooks/features/useProducts'
 import { useCart } from '../../hooks/features/useCart'
+import { CATEGORY_DISPLAY } from '../../types/enums'
 import Loading from '../../components/UI/Loading/Loading'
 import Button from '../../components/UI/Button/Button'
 import ReviewSection from '../../components/Product/ReviewSection/ReviewSection'
@@ -37,9 +38,11 @@ export default function ProductPage() {
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
-        <Link to="/" className={styles.breadcrumbLink}>Menu</Link>
+        <Link to="/" className={styles.breadcrumbLink}>
+          <MenuIcon size={14} /> Menu
+        </Link>
         <span className={styles.separator}>/</span>
-        <span className={styles.breadcrumb}>{product.category}</span>
+        <span className={styles.breadcrumb}>{CATEGORY_DISPLAY[product.category]}</span>
         <span className={styles.separator}>/</span>
         <span className={styles.breadcrumb}>{product.name}</span>
       </div>
@@ -67,7 +70,7 @@ export default function ProductPage() {
         </div>
 
         <div className={styles.info}>
-          <span className={styles.category}>{product.category}</span>
+          <span className={styles.category}>{CATEGORY_DISPLAY[product.category]}</span>
           <h1 className={styles.name}>{product.name}</h1>
 
           {product.averageRating && (

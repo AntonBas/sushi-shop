@@ -7,3 +7,12 @@ export type OrderStatus = 'NEW' | 'CONFIRMED' | 'COOKING' | 'DELIVERING' | 'READ
 export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
 
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'COURIER'
+
+export const CATEGORY_DISPLAY: Record<Category, string> = {
+  ROLL: 'Roll',
+  SET: 'Set',
+  DRINK: 'Drink',
+  DESSERT: 'Dessert',
+  SOUP: 'Soup',
+  EXTRA: 'Extra',
+}
