@@ -1,0 +1,53 @@
+.section {
+  margin-bottom: 36px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--color-text);
+}
+
+.list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(var(--color-primary-rgb), 0.08);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+  border-radius: 12px;
+  min-width: 300px;
+  flex-shrink: 0;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-primary);
+}
+
+.info h3 {
+  font-size: 16px;
+  margin: 0;
+}
+
+.info p {
+  font-size: 13px;
+  margin: 2px 0 0;
+  opacity: 0.8;
+}
+
+.discount {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
