@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Tag, Clock } from 'lucide-react'
+import { Tag, Clock, Menu as MenuIcon } from 'lucide-react'
 import { useApi } from '../../hooks/common/useApi'
 import * as promotionsApi from '../../api/promotions'
 import ProductCard from '../../components/Product/ProductCard/ProductCard'
@@ -23,9 +23,15 @@ export default function PromotionPage() {
 
   return (
     <div className={styles.page}>
-      <Link to="/" className={styles.back}>
-        <ArrowLeft size={20} /> Back to Home
-      </Link>
+      <div className={styles.breadcrumbs}>
+        <Link to="/" className={styles.breadcrumbLink}>
+          <MenuIcon size={14} /> Menu
+        </Link>
+        <span className={styles.separator}>/</span>
+        <span className={styles.breadcrumb}>Promotions</span>
+        <span className={styles.separator}>/</span>
+        <span className={styles.breadcrumb}>{promotion.title}</span>
+      </div>
 
       <div className={styles.header}>
         <div className={styles.headerInfo}>
