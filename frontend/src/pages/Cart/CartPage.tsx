@@ -1,11 +1,11 @@
-import { Link } from 'react-router-dom'
-import { Trash2, ShoppingBag } from 'lucide-react'
-import { useCart } from '../../hooks/features/useCart'
-import Button from '../../components/UI/Button/Button'
-import styles from './CartPage.module.css'
+import { Link } from "react-router-dom";
+import { Trash2, ShoppingBag } from "lucide-react";
+import { useCart } from "../../hooks/features/useCart";
+import Button from "../../components/UI/Button/Button";
+import styles from "./CartPage.module.css";
 
 export default function CartPage() {
-  const { items, removeItem, clearCart, total, count } = useCart()
+  const { items, removeItem, clearCart, total, count } = useCart();
 
   if (items.length === 0) {
     return (
@@ -20,14 +20,16 @@ export default function CartPage() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Cart ({count})</h1>
-        <button onClick={clearCart} className={styles.clearBtn}>Clear</button>
+        <button onClick={clearCart} className={styles.clearBtn}>
+          Clear
+        </button>
       </div>
 
       <div className={styles.items}>
@@ -35,12 +37,17 @@ export default function CartPage() {
           <div key={item.productId} className={styles.item}>
             <div className={styles.itemInfo}>
               <h3>{item.name}</h3>
-              <span className={styles.itemPrice}>₴{item.price}</span>
+              <span className={styles.itemPrice}>{item.price} ₴</span>
             </div>
             <div className={styles.itemActions}>
               <span className={styles.quantity}>× {item.quantity}</span>
-              <span className={styles.itemTotal}>₴{item.price * item.quantity}</span>
-              <button onClick={() => removeItem(item.productId)} className={styles.removeBtn}>
+              <span className={styles.itemTotal}>
+                {item.price * item.quantity} ₴
+              </span>
+              <button
+                onClick={() => removeItem(item.productId)}
+                className={styles.removeBtn}
+              >
                 <Trash2 size={16} />
               </button>
             </div>
@@ -51,12 +58,12 @@ export default function CartPage() {
       <div className={styles.footer}>
         <div className={styles.total}>
           <span>Total</span>
-          <span className={styles.totalPrice}>₴{total}</span>
+          <span className={styles.totalPrice}>{total} ₴</span>
         </div>
         <Link to="/checkout">
-          <Button style={{ width: '100%' }}>Proceed to Checkout</Button>
+          <Button style={{ width: "100%" }}>Proceed to Checkout</Button>
         </Link>
       </div>
     </div>
-  )
+  );
 }
