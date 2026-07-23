@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useProducts } from '../../../hooks/features/useProducts'
 import { CATEGORY_DISPLAY } from '../../../types/enums'
 import type { Category } from '../../../types'
@@ -15,6 +15,10 @@ export default function MenuSection() {
   const [activeCategory, setActiveCategory] = useState<Category | ''>('')
 
   const categories: Category[] = ['ROLL', 'SET', 'DRINK', 'DESSERT', 'SOUP', 'EXTRA']
+
+  useEffect(() => {
+    loadProducts(0, {})
+  }, [])
 
   const handleSearch = () => {
     setPage(0)
