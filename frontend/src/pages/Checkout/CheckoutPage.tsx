@@ -4,6 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../hooks/features/useCart";
 import { useOrders } from "../../hooks/features/useOrders";
 import { useNotification } from "../../context/NotificationContext";
+import * as paymentsApi from "../../api/payments";
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";
 import type { DeliveryMethod } from "../../types";
@@ -20,6 +21,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("PICKUP");
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "online">("cash");
   const [city, setCity] = useState("");
   const [street, setStreet] = useState("");
   const [house, setHouse] = useState("");
@@ -57,8 +59,17 @@ export default function CheckoutPage() {
       });
       if (order) {
         clearCart();
-        showNotification("Order placed successfully!", "success");
-        navigate(`/profile/orders`);
+        if (paymentMethod === "online") {
+          const url = await paymentsApi.createCheckout(
+            order.id,
+            Math.round(order.totalAmount * 100),
+            user?.email || "",
+          );
+          window.location.href = url;
+        } else {
+          showNotification("Order placed successfully!", "success");
+          navigate("/profile/orders");
+        }
       }
     } catch {}
   };
@@ -151,6 +162,26 @@ export default function CheckoutPage() {
         )}
 
         <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Payment Method</h2>
+          <div className={styles.methodButtons}>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${paymentMethod === "cash" ? styles.activeMethod : ""}`}
+              onClick={() => setPaymentMethod("cash")}
+            >
+              Pay on {deliveryMethod === "PICKUP" ? "Pickup" : "Delivery"}
+            </button>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${paymentMethod === "online" ? styles.activeMethod : ""}`}
+              onClick={() => setPaymentMethod("online")}
+            >
+              Pay Online
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Order Summary</h2>
           <div className={styles.items}>
             {items.map((item) => (
@@ -169,7 +200,7 @@ export default function CheckoutPage() {
         </div>
 
         <Button type="submit" loading={loading} style={{ width: "100%" }}>
-          Place Order
+          {paymentMethod === "online" ? "Proceed to Payment" : "Place Order"}
         </Button>
       </form>
     </div>
