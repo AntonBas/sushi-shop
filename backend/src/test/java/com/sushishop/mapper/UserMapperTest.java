@@ -39,6 +39,10 @@ public class UserMapperTest {
         assertThat(response.email()).isEqualTo("anton@example.com");
         assertThat(response.phone()).isEqualTo("+380961791111");
         assertThat(response.userRole()).isEqualTo(UserRole.CUSTOMER);
-        assertThat(response.address()).isNull();
+        assertThat(response.address()).isNotNull();
+        assertThat(response.address().city()).isEqualTo("Lviv");
+        assertThat(response.address().street()).isEqualTo("Zelena");
+        assertThat(response.address().house()).isEqualTo("204");
+        assertThat(response.address().apartment()).isEqualTo("280");
     }
 }

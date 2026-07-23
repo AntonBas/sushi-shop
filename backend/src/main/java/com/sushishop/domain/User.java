@@ -26,13 +26,13 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 15)
     private String phone;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String city;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String street;
 
-    @Column(nullable = false, length = 10)
+    @Column(length = 10)
     private String house;
 
     @Column(length = 10)
