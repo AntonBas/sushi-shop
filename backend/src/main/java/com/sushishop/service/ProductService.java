@@ -192,13 +192,9 @@ public class ProductService {
             discountedPrice = product.getPrice().multiply(BigDecimal.ONE.subtract(discount));
         }
 
-        String mainImage = product.getProductImages().stream()
-                .min(Comparator.comparingInt(ProductImage::getSortOrder))
-                .map(ProductImage::getUrl).orElse(null);
-
         return new ProductListResponse(
                 response.id(), response.name(), response.price(), discountedPrice,
-                getAverageRating(product), response.category(), mainImage, response.available(),
+                getAverageRating(product), response.category(), response.mainImage(), response.available(),
                 product.getWeight(), product.getPieces()
         );
     }
