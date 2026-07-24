@@ -1,0 +1,1 @@
+ALTER TABLE payments ALTER COLUMN stripe_session_id TYPE VARCHAR(500);
