@@ -1,14 +1,11 @@
 package com.sushishop.mapper;
 
 import com.sushishop.domain.Product;
-import com.sushishop.domain.ProductImage;
 import com.sushishop.dto.request.CreateProductRequest;
 import com.sushishop.dto.request.UpdateProductRequest;
 import com.sushishop.dto.response.ProductListResponse;
 import com.sushishop.dto.response.ProductResponse;
 import org.mapstruct.*;
-
-import java.util.Comparator;
 
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
@@ -40,16 +37,8 @@ public interface ProductMapper {
     @Mapping(target = "averageRating", ignore = true)
     ProductResponse toResponse(Product product);
 
-    @Mapping(target = "mainImage", expression = "java(getMainImage(product))")
+    @Mapping(target = "mainImage", expression = "java(ProductImageMapper.getMainImage(product))")
     @Mapping(target = "discountedPrice", ignore = true)
     @Mapping(target = "averageRating", ignore = true)
     ProductListResponse toListResponse(Product product);
-
-    default String getMainImage(Product product) {
-        if (product.getProductImages() == null || product.getProductImages().isEmpty()) return null;
-        return product.getProductImages().stream()
-                .min(Comparator.comparingInt(ProductImage::getSortOrder))
-                .map(ProductImage::getUrl)
-                .orElse(null);
-    }
 }
