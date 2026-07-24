@@ -35,6 +35,13 @@ export default function CartPage() {
       <div className={styles.items}>
         {items.map((item) => (
           <div key={item.productId} className={styles.item}>
+            {item.mainImage && (
+              <img
+                src={item.mainImage}
+                alt={item.name}
+                className={styles.itemImage}
+              />
+            )}
             <div className={styles.itemInfo}>
               <h3>{item.name}</h3>
               <span className={styles.itemPrice}>{item.price} ₴</span>

@@ -4,6 +4,7 @@ import type { OrderItemRequest } from '../../types'
 interface CartItem extends OrderItemRequest {
   name: string
   price: number
+  mainImage?: string | null
 }
 
 export function useCart() {
