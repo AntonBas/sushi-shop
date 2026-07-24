@@ -26,6 +26,7 @@ export default function CheckoutPage() {
   const [street, setStreet] = useState("");
   const [house, setHouse] = useState("");
   const [apartment, setApartment] = useState("");
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -50,7 +51,13 @@ export default function CheckoutPage() {
         deliveryMethod,
         address:
           deliveryMethod === "DELIVERY"
-            ? { city, street, house, apartment: apartment || undefined }
+            ? {
+                city,
+                street,
+                house,
+                apartment: apartment || undefined,
+                comment: comment || undefined,
+              }
             : undefined,
         items: items.map((i) => ({
           productId: i.productId,
@@ -158,6 +165,12 @@ export default function CheckoutPage() {
                 placeholder="Apt"
               />
             </div>
+            <Input
+              label="Comment"
+              value={comment}
+              onChange={setComment}
+              placeholder="Floor, intercom code, etc."
+            />
           </div>
         )}
 
