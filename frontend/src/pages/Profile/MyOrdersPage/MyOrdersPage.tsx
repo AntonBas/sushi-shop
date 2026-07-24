@@ -1,38 +1,40 @@
-import { useState } from 'react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as ordersApi from '../../../api/orders'
-import Loading from '../../../components/UI/Loading/Loading'
-import Pagination from '../../../components/UI/Pagination/Pagination'
-import type { OrderResponse } from '../../../types'
-import type { Page } from '../../../types/common'
-import styles from './MyOrdersPage.module.css'
+import { useState } from "react";
+import { useApi } from "../../../hooks/common/useApi";
+import * as ordersApi from "../../../api/orders";
+import Loading from "../../../components/UI/Loading/Loading";
+import Pagination from "../../../components/UI/Pagination/Pagination";
+import type { OrderResponse } from "../../../types";
+import type { Page } from "../../../types/common";
+import styles from "./MyOrdersPage.module.css";
 
 const STATUS_COLORS: Record<string, string> = {
-  NEW: '#6366f1',
-  CONFIRMED: '#3b82f6',
-  COOKING: '#f59e0b',
-  DELIVERING: '#8b5cf6',
-  READY: '#10b981',
-  DELIVERED: '#22c55e',
-  CANCELLED: '#ef4444',
-}
+  NEW: "#6366f1",
+  CONFIRMED: "#3b82f6",
+  COOKING: "#f59e0b",
+  DELIVERING: "#8b5cf6",
+  READY: "#10b981",
+  DELIVERED: "#22c55e",
+  CANCELLED: "#ef4444",
+};
 
 export default function MyOrdersPage() {
-  const { data, loading, execute } = useApi<Page<OrderResponse>>()
-  const [orders, setOrders] = useState<OrderResponse[]>([])
-  const [page, setPage] = useState(0)
-  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const { data, loading, execute } = useApi<Page<OrderResponse>>();
+  const [orders, setOrders] = useState<OrderResponse[]>([]);
+  const [page, setPage] = useState(0);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useState(() => {
-    execute(() => ordersApi.getOrders(page)).then((res) => setOrders(res.content))
-  })
+    execute(() => ordersApi.getOrders(page)).then((res) =>
+      setOrders(res.content),
+    );
+  });
 
   const loadPage = (p: number) => {
-    setPage(p)
-    execute(() => ordersApi.getOrders(p)).then((res) => setOrders(res.content))
-  }
+    setPage(p);
+    execute(() => ordersApi.getOrders(p)).then((res) => setOrders(res.content));
+  };
 
-  if (loading) return <Loading text="Loading orders..." />
+  if (loading) return <Loading text="Loading orders..." />;
 
   return (
     <div className={styles.page}>
@@ -50,21 +52,31 @@ export default function MyOrdersPage() {
               <div key={order.id} className={styles.orderCard}>
                 <div
                   className={styles.orderHeader}
-                  onClick={() => setExpandedId(expandedId === order.id ? null : order.id)}
+                  onClick={() =>
+                    setExpandedId(expandedId === order.id ? null : order.id)
+                  }
                 >
                   <div>
                     <span className={styles.orderId}>Order #{order.id}</span>
                     <span className={styles.orderDate}>
-                      {new Date(order.createdAt).toLocaleDateString('uk-UA', {
-                        day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                      {new Date(order.createdAt).toLocaleDateString("uk-UA", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
                       })}
                     </span>
                   </div>
                   <div className={styles.orderHeaderRight}>
-                    <span className={styles.orderTotal}>₴{order.totalAmount}</span>
+                    <span className={styles.orderTotal}>
+                      {order.totalAmount} ₴
+                    </span>
                     <span
                       className={styles.statusBadge}
-                      style={{ background: STATUS_COLORS[order.status] || '#64748b' }}
+                      style={{
+                        background: STATUS_COLORS[order.status] || "#64748b",
+                      }}
                     >
                       {order.status}
                     </span>
@@ -89,16 +101,28 @@ export default function MyOrdersPage() {
                       <div className={styles.detailRow}>
                         <span>Address:</span>
                         <span>
-                          {order.address.city}, {order.address.street} {order.address.house}
-                          {order.address.apartment ? `, apt. ${order.address.apartment}` : ''}
+                          {order.address.city}, {order.address.street}{" "}
+                          {order.address.house}
+                          {order.address.apartment
+                            ? `, apt. ${order.address.apartment}`
+                            : ""}
                         </span>
                       </div>
                     )}
                     <div className={styles.itemsList}>
                       {order.items.map((item) => (
                         <div key={item.productId} className={styles.item}>
-                          <span>{item.productName} × {item.quantity}</span>
-                          <span>₴{item.unitPrice * item.quantity}</span>
+                          {item.mainImage && (
+                            <img
+                              src={item.mainImage}
+                              alt={item.productName}
+                              className={styles.itemImage}
+                            />
+                          )}
+                          <span>
+                            {item.productName} × {item.quantity}
+                          </span>
+                          <span>{item.unitPrice * item.quantity} ₴</span>
                         </div>
                       ))}
                     </div>
@@ -116,5 +140,5 @@ export default function MyOrdersPage() {
         </>
       )}
     </div>
-  )
+  );
 }

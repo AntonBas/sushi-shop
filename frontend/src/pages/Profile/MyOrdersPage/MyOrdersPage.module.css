@@ -109,7 +109,19 @@
 
 .item {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
   font-size: 14px;
   color: var(--color-text);
+}
+
+.item span:last-child {
+  margin-left: auto;
+}
+
+.itemImage {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
 }

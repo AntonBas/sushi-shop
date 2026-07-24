@@ -31,6 +31,7 @@ export interface OrderItemResponse {
   productName: string
   quantity: number
   unitPrice: number
+  mainImage?: string | null
 }
 
 export interface OrderStatusUpdateResponse {
