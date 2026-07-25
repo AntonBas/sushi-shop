@@ -15,6 +15,7 @@ import java.util.List;
 public interface OrderMapper {
 
     @Mapping(target = "address", expression = "java(mapAddress(order))")
+    @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "items", source = "items")
     OrderResponse toResponse(Order order);
 

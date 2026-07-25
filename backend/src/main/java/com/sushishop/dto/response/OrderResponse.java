@@ -17,6 +17,9 @@ public record OrderResponse(
         @Schema(description = "Customer name", example = "Anton")
         String customerName,
 
+        @Schema(description = "User email", example = "user@example.com")
+        String userEmail,
+
         @Schema(description = "Contact phone", example = "+380961791111")
         String phone,
 

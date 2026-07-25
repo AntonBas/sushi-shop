@@ -64,7 +64,7 @@ public class OrderServiceTest {
         var user = User.builder().id(1L).email("test@test.com").build();
         var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
         var order = new Order();
-        var expectedResponse = new OrderResponse(1L, "Anton", "+380961791111",
+        var expectedResponse = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
                 DeliveryMethod.DELIVERY, OrderStatus.NEW, PaymentStatus.PENDING, new BigDecimal("500.00"), null, List.of());
 
@@ -110,7 +110,7 @@ public class OrderServiceTest {
     @Test
     void shouldGetById() {
         var order = new Order();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderMapper.toResponse(order)).thenReturn(expected);
@@ -123,7 +123,7 @@ public class OrderServiceTest {
     @Test
     void shouldUpdateStatusForDelivery() {
         var order = Order.builder().id(1L).status(OrderStatus.NEW).deliveryMethod(DeliveryMethod.DELIVERY).build();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.DELIVERY, OrderStatus.CONFIRMED, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.DELIVERY, OrderStatus.CONFIRMED, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
@@ -138,7 +138,7 @@ public class OrderServiceTest {
     @Test
     void shouldUpdateStatusToReadyForPickup() {
         var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.PICKUP).build();
-        var expected = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.READY, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.READY, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
