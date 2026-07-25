@@ -1,6 +1,6 @@
 import PromotionsSection from '../../components/Home/PromotionsSection/PromotionsSection'
 import PopularSection from '../../components/Home/PopularSection/PopularSection'
-import MenuSection from '../../components/Home/MenuSection/MenuSection'
+import MenuSection from '../../components/Menu/MenuSection'
 import styles from './Home.module.css'
 
 export default function Home() {

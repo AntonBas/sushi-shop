@@ -44,9 +44,12 @@ export default function ProductPage() {
           <MenuIcon size={14} /> Menu
         </Link>
         <span className={styles.separator}>/</span>
-        <span className={styles.breadcrumb}>
+        <Link
+          to={`/menu?category=${product.category}`}
+          className={styles.breadcrumbLink}
+        >
           {CATEGORY_DISPLAY[product.category]}
-        </span>
+        </Link>
         <span className={styles.separator}>/</span>
         <span className={styles.breadcrumb}>{product.name}</span>
       </div>

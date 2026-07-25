@@ -1,0 +1,130 @@
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useProducts } from "../../hooks/features/useProducts";
+import { CATEGORY_DISPLAY } from "../../types/enums";
+import type { Category } from "../../types";
+import ProductCard from "../Product/ProductCard/ProductCard";
+import Pagination from "../UI/Pagination/Pagination";
+import Loading from "../UI/Loading/Loading";
+import { Search } from "lucide-react";
+import styles from "./MenuSection.module.css";
+
+export default function MenuSection() {
+  const { products, totalPages, loading, loadProducts } = useProducts();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<Category | "">("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const categories: Category[] = [
+    "ROLL",
+    "SET",
+    "DRINK",
+    "DESSERT",
+    "SOUP",
+    "EXTRA",
+  ];
+
+  useEffect(() => {
+    const cat = searchParams.get("category") as Category | "";
+    const q = searchParams.get("search") || "";
+    if (cat && categories.includes(cat)) setActiveCategory(cat);
+    if (q) setSearch(q);
+    loadProducts(0, { search: q || undefined, category: cat || undefined });
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(0);
+      if (value) {
+        setSearchParams({
+          search: value,
+          ...(activeCategory && { category: activeCategory }),
+        });
+      } else if (activeCategory) {
+        setSearchParams({ category: activeCategory });
+      } else {
+        setSearchParams({});
+      }
+      loadProducts(0, {
+        search: value || undefined,
+        category: activeCategory || undefined,
+      });
+    }, 300);
+  };
+
+  const handleCategoryChange = (cat: Category | "") => {
+    setActiveCategory(cat);
+    setPage(0);
+    if (cat) {
+      setSearchParams({ category: cat, ...(search && { search }) });
+    } else if (search) {
+      setSearchParams({ search });
+    } else {
+      setSearchParams({});
+    }
+    loadProducts(0, {
+      search: search || undefined,
+      category: cat || undefined,
+    });
+  };
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.title}>Menu</h2>
+
+      <div className={styles.filters}>
+        <div className={styles.search}>
+          <Search size={18} className={styles.searchIcon} />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search..."
+            className={styles.searchInput}
+          />
+        </div>
+
+        <div className={styles.categories}>
+          <button
+            className={`${styles.categoryBtn} ${activeCategory === "" ? styles.active : ""}`}
+            onClick={() => handleCategoryChange("")}
+          >
+            All
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              className={`${styles.categoryBtn} ${activeCategory === cat ? styles.active : ""}`}
+              onClick={() => handleCategoryChange(cat)}
+            >
+              {CATEGORY_DISPLAY[cat]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <Loading text="Loading menu..." />
+      ) : products.length === 0 ? (
+        <div className={styles.empty}>No products found</div>
+      ) : (
+        <>
+          <div className={styles.grid}>
+            {products.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+          <Pagination
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </>
+      )}
+    </section>
+  );
+}

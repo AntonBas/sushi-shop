@@ -23,6 +23,7 @@ import AdminPromotionsPage from "./pages/Admin/Promotions/AdminPromotionsPage/Ad
 import AdminPromotionForm from "./pages/Admin/Promotions/AdminPromotionForm/AdminPromotionForm";
 import AdminAuditPage from "./pages/Admin/Audit/AdminAuditPage";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
+import MenuPage from "./pages/Menu/MenuPage";
 
 function App() {
   const { loading } = useAuth();
@@ -33,6 +34,7 @@ function App() {
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
+        <Route path="/menu" element={<MenuPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products/:id" element={<ProductPage />} />
         <Route path="/promotions/:id" element={<PromotionPage />} />
