@@ -3,6 +3,7 @@ package com.sushishop.controller;
 import com.sushishop.domain.enums.OrderStatus;
 import com.sushishop.dto.request.CreateOrderRequest;
 import com.sushishop.dto.response.OrderResponse;
+import com.sushishop.dto.response.UserOrderResponse;
 import com.sushishop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -52,7 +53,7 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "List of user orders")
     })
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Page<OrderResponse>> getMyOrders(
+    public ResponseEntity<Page<UserOrderResponse>> getMyOrders(
             @AuthenticationPrincipal UserDetails userDetails,
             @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/orders/my - user: {}", userDetails.getUsername());

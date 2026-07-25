@@ -61,6 +61,7 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.PAID);
         payment.getOrder().setStatus(OrderStatus.CONFIRMED);
+        payment.getOrder().setPaymentStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
         log.info("Payment confirmed: {}", stripeSessionId);
     }

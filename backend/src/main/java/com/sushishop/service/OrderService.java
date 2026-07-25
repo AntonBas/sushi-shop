@@ -9,6 +9,7 @@ import com.sushishop.dto.request.CreateOrderRequest;
 import com.sushishop.dto.request.OrderItemRequest;
 import com.sushishop.dto.response.OrderResponse;
 import com.sushishop.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.dto.response.UserOrderResponse;
 import com.sushishop.exception.core.BadRequestException;
 import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.OrderMapper;
@@ -64,8 +65,8 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
-    public Page<OrderResponse> getByUser(String email, Pageable pageable) {
-        return orderRepository.findByUserEmail(email, pageable).map(orderMapper::toResponse);
+    public Page<UserOrderResponse> getByUser(String email, Pageable pageable) {
+        return orderRepository.findByUserEmail(email, pageable).map(orderMapper::toUserResponse);
     }
 
     @Auditable(action = "UPDATE_STATUS", entity = "Order")

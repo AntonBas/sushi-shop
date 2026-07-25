@@ -4,6 +4,7 @@ import com.sushishop.domain.Order;
 import com.sushishop.domain.OrderItem;
 import com.sushishop.dto.response.OrderItemResponse;
 import com.sushishop.dto.response.OrderResponse;
+import com.sushishop.dto.response.UserOrderResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -19,6 +20,9 @@ public interface OrderMapper {
     @Mapping(target = "address.comment", source = "addressComment")
     @Mapping(target = "items", source = "items")
     OrderResponse toResponse(Order order);
+
+    @Mapping(target = "items", source = "items")
+    UserOrderResponse toUserResponse(Order order);
 
     @Mapping(target = "productId", source = "product.id")
     @Mapping(target = "productName", source = "product.name")

@@ -3,11 +3,13 @@ package com.sushishop.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sushishop.domain.enums.DeliveryMethod;
 import com.sushishop.domain.enums.OrderStatus;
+import com.sushishop.domain.enums.PaymentStatus;
 import com.sushishop.dto.request.AddressRequest;
 import com.sushishop.dto.request.CreateOrderRequest;
 import com.sushishop.dto.request.OrderItemRequest;
 import com.sushishop.dto.response.AddressResponse;
 import com.sushishop.dto.response.OrderResponse;
+import com.sushishop.dto.response.UserOrderResponse;
 import com.sushishop.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +63,7 @@ public class OrderControllerTest {
 
         var response = new OrderResponse(1L, "Anton", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
-                DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
+                DeliveryMethod.DELIVERY, OrderStatus.NEW, PaymentStatus.PENDING, new BigDecimal("500.00"), null, List.of());
 
         when(orderService.create(any(CreateOrderRequest.class), eq("test@test.com"))).thenReturn(response);
 
@@ -85,20 +87,20 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(username = "test@test.com")
     void shouldGetMyOrders() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
-        Page<OrderResponse> page = new PageImpl<>(List.of(response));
+        var response = new UserOrderResponse(1L, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        Page<UserOrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/orders/my"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].customerName").value("Anton"));
+                .andExpect(jsonPath("$.content[0].status").value("NEW"));
     }
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAllOrders() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
         Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getAll(any(Pageable.class))).thenReturn(page);
@@ -110,7 +112,7 @@ public class OrderControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
 
         when(orderService.getById(1L)).thenReturn(response);
 
@@ -122,7 +124,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldUpdateStatus() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.COOKING, BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.COOKING, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
 
         when(orderService.updateStatus(eq(1L), any())).thenReturn(response);
 

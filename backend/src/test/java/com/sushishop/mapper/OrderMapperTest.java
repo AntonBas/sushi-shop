@@ -5,8 +5,10 @@ import com.sushishop.domain.OrderItem;
 import com.sushishop.domain.Product;
 import com.sushishop.domain.enums.DeliveryMethod;
 import com.sushishop.domain.enums.OrderStatus;
+import com.sushishop.domain.enums.PaymentStatus;
 import com.sushishop.dto.response.OrderItemResponse;
 import com.sushishop.dto.response.OrderResponse;
+import com.sushishop.dto.response.UserOrderResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +51,7 @@ public class OrderMapperTest {
                 .addressComment("code 123")
                 .deliveryMethod(DeliveryMethod.DELIVERY)
                 .status(OrderStatus.NEW)
+                .paymentStatus(PaymentStatus.PENDING)
                 .totalAmount(new BigDecimal("500.00"))
                 .items(List.of(item))
                 .build();
@@ -62,6 +65,7 @@ public class OrderMapperTest {
         assertThat(response.phone()).isEqualTo("+380961791111");
         assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
         assertThat(response.status()).isEqualTo(OrderStatus.NEW);
+        assertThat(response.paymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         assertThat(response.address()).isNotNull();
         assertThat(response.address().city()).isEqualTo("Lviv");
@@ -69,6 +73,40 @@ public class OrderMapperTest {
         assertThat(response.address().house()).isEqualTo("204");
         assertThat(response.address().apartment()).isEqualTo("280");
         assertThat(response.address().comment()).isEqualTo("code 123");
+        assertThat(response.items()).hasSize(1);
+    }
+
+    @Test
+    void shouldMapToUserResponse() {
+        Product product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .build();
+
+        OrderItem item = OrderItem.builder()
+                .id(1L)
+                .product(product)
+                .quantity(2)
+                .price(new BigDecimal("250.00"))
+                .build();
+
+        Order order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.NEW)
+                .paymentStatus(PaymentStatus.PENDING)
+                .totalAmount(new BigDecimal("500.00"))
+                .items(List.of(item))
+                .build();
+
+        item.setOrder(order);
+
+        UserOrderResponse response = orderMapper.toUserResponse(order);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.status()).isEqualTo(OrderStatus.NEW);
+        assertThat(response.paymentStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         assertThat(response.items()).hasSize(1);
     }
 
