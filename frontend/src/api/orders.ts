@@ -1,5 +1,5 @@
 import api from './client'
-import type { CreateOrderRequest, OrderResponse, OrderStatus } from '../types'
+import type { CreateOrderRequest, OrderResponse, UserOrderResponse, OrderStatus } from '../types'
 import type { Page } from '../types/common'
 
 export const createOrder = async (data: CreateOrderRequest): Promise<OrderResponse> => {
@@ -7,7 +7,7 @@ export const createOrder = async (data: CreateOrderRequest): Promise<OrderRespon
   return res
 }
 
-export const getMyOrders = async (page = 0, size = 12): Promise<Page<OrderResponse>> => {
+export const getMyOrders = async (page = 0, size = 12): Promise<Page<UserOrderResponse>> => {
   const { data } = await api.get('/orders/my', { params: { page, size, sort: 'createdAt,desc' } })
   return data
 }

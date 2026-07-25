@@ -3,23 +3,19 @@ import { useApi } from "../../../hooks/common/useApi";
 import * as ordersApi from "../../../api/orders";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
-import type { OrderResponse } from "../../../types";
+import type { UserOrderResponse } from "../../../types";
 import type { Page } from "../../../types/common";
+import {
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_COLORS,
+  PAYMENT_STATUS_LABELS,
+} from "../../../types/enums";
 import styles from "./MyOrdersPage.module.css";
 
-const STATUS_COLORS: Record<string, string> = {
-  NEW: "#6366f1",
-  CONFIRMED: "#3b82f6",
-  COOKING: "#f59e0b",
-  DELIVERING: "#8b5cf6",
-  READY: "#10b981",
-  DELIVERED: "#22c55e",
-  CANCELLED: "#ef4444",
-};
-
 export default function MyOrdersPage() {
-  const { data, loading, execute } = useApi<Page<OrderResponse>>();
-  const [orders, setOrders] = useState<OrderResponse[]>([]);
+  const { data, loading, execute } = useApi<Page<UserOrderResponse>>();
+  const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -71,46 +67,38 @@ export default function MyOrdersPage() {
                     </span>
                   </div>
                   <div className={styles.orderHeaderRight}>
+                    <span className={styles.methodBadge}>
+                      {order.deliveryMethod === "DELIVERY"
+                        ? "Delivery"
+                        : "Pickup"}
+                    </span>
                     <span className={styles.orderTotal}>
                       {order.totalAmount}₴
                     </span>
                     <span
                       className={styles.statusBadge}
                       style={{
-                        background: STATUS_COLORS[order.status] || "#64748b",
+                        background:
+                          PAYMENT_STATUS_COLORS[order.paymentStatus] ||
+                          "#64748b",
                       }}
                     >
-                      {order.status}
+                      {PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                    </span>
+                    <span
+                      className={styles.statusBadge}
+                      style={{
+                        background:
+                          ORDER_STATUS_COLORS[order.status] || "#64748b",
+                      }}
+                    >
+                      {ORDER_STATUS_LABELS[order.status]}
                     </span>
                   </div>
                 </div>
 
                 {expandedId === order.id && (
                   <div className={styles.orderDetails}>
-                    <div className={styles.detailRow}>
-                      <span>Customer:</span>
-                      <span>{order.customerName}</span>
-                    </div>
-                    <div className={styles.detailRow}>
-                      <span>Phone:</span>
-                      <span>{order.phone}</span>
-                    </div>
-                    <div className={styles.detailRow}>
-                      <span>Delivery:</span>
-                      <span>{order.deliveryMethod}</span>
-                    </div>
-                    {order.address && (
-                      <div className={styles.detailRow}>
-                        <span>Address:</span>
-                        <span>
-                          {order.address.city}, {order.address.street}{" "}
-                          {order.address.house}
-                          {order.address.apartment
-                            ? `, apt. ${order.address.apartment}`
-                            : ""}
-                        </span>
-                      </div>
-                    )}
                     <div className={styles.itemsList}>
                       {order.items.map((item) => (
                         <div key={item.productId} className={styles.item}>

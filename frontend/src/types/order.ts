@@ -1,5 +1,5 @@
 import type { AddressRequest, AddressResponse } from "./address"
-import type { DeliveryMethod, OrderStatus } from "./enums"
+import type { DeliveryMethod, OrderStatus, PaymentStatus } from "./enums"
 
 export interface CreateOrderRequest {
   customerName: string
@@ -21,6 +21,17 @@ export interface OrderResponse {
   address?: AddressResponse
   deliveryMethod: DeliveryMethod
   status: OrderStatus
+  paymentStatus: PaymentStatus
+  totalAmount: number
+  createdAt: string
+  items: OrderItemResponse[]
+}
+
+export interface UserOrderResponse {
+  id: number
+  deliveryMethod: DeliveryMethod
+  status: OrderStatus
+  paymentStatus: PaymentStatus
   totalAmount: number
   createdAt: string
   items: OrderItemResponse[]
