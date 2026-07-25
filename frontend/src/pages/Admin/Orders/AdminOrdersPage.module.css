@@ -93,14 +93,26 @@
 .itemsList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .itemRow {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   color: var(--color-text-secondary);
+}
+
+.itemRow span:last-child {
+  margin-left: auto;
+}
+
+.itemImage {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  object-fit: cover;
 }
 
 .statusBadge {

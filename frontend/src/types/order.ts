@@ -17,6 +17,7 @@ export interface OrderItemRequest {
 export interface OrderResponse {
   id: number
   customerName: string
+  userEmail: string
   phone: string
   address?: AddressResponse
   deliveryMethod: DeliveryMethod

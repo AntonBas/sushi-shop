@@ -160,10 +160,14 @@ export default function AdminOrdersPage() {
                       <td colSpan={7}>
                         <div className={styles.expandedContent}>
                           <div className={styles.detailRow}>
+                            <span>Email:</span>
+                            <span>{order.userEmail}</span>
+                          </div>
+                          <div className={styles.detailRow}>
                             <span>Phone:</span>
                             <span>{order.phone}</span>
                           </div>
-                          {order.address && (
+                          {order.address?.city && (
                             <div className={styles.detailRow}>
                               <span>Address:</span>
                               <span>
@@ -181,6 +185,13 @@ export default function AdminOrdersPage() {
                                 key={item.productId}
                                 className={styles.itemRow}
                               >
+                                {item.mainImage && (
+                                  <img
+                                    src={item.mainImage}
+                                    alt={item.productName}
+                                    className={styles.itemImage}
+                                  />
+                                )}
                                 <span>
                                   {item.productName} × {item.quantity}
                                 </span>
