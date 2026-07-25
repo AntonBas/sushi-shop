@@ -9,10 +9,14 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = {ProductImageMapper.class})
 public interface OrderMapper {
 
-    @Mapping(target = "address", ignore = true)
+    @Mapping(target = "address.city", source = "city")
+    @Mapping(target = "address.street", source = "street")
+    @Mapping(target = "address.house", source = "house")
+    @Mapping(target = "address.apartment", source = "apartment")
+    @Mapping(target = "address.comment", source = "addressComment")
     @Mapping(target = "items", source = "items")
     OrderResponse toResponse(Order order);
 

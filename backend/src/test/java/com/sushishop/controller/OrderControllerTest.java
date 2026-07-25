@@ -53,6 +53,7 @@ public class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test@test.com")
     void shouldCreateOrder() throws Exception {
         var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.DELIVERY,
                 new AddressRequest("Lviv", "Zelena", "204", "280", "code 123"),
@@ -62,7 +63,7 @@ public class OrderControllerTest {
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
                 DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
-        when(orderService.create(any())).thenReturn(response);
+        when(orderService.create(any(CreateOrderRequest.class), eq("test@test.com"))).thenReturn(response);
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -79,6 +80,19 @@ public class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = "test@test.com")
+    void shouldGetMyOrders() throws Exception {
+        var response = new OrderResponse(1L, "Anton", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
+        Page<OrderResponse> page = new PageImpl<>(List.of(response));
+
+        when(orderService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/orders/my"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].customerName").value("Anton"));
     }
 
     @Test

@@ -14,6 +14,7 @@ import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.OrderMapper;
 import com.sushishop.repository.OrderRepository;
 import com.sushishop.repository.ProductRepository;
+import com.sushishop.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -34,14 +35,17 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final UserRepository userRepository;
 
     @Auditable(action = "CREATE", entity = "Order")
     @Transactional
-    public OrderResponse create(CreateOrderRequest request) {
+    public OrderResponse create(CreateOrderRequest request, String userEmail) {
+        var user = userRepository.findByEmail(userEmail).orElseThrow(() -> new NotFoundException("User not found"));
         validateDelivery(request);
         var items = createOrderItems(request.items());
         var totalAmount = calculateTotalPrice(items);
         var order = buildOrder(request, items, totalAmount);
+        order.setUser(user);
         items.forEach(i -> i.setOrder(order));
         var saved = orderRepository.save(order);
         log.info("Order created: {}", saved.getId());
@@ -58,6 +62,10 @@ public class OrderService {
         return orderRepository.findById(id)
                 .map(orderMapper::toResponse)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
+    }
+
+    public Page<OrderResponse> getByUser(String email, Pageable pageable) {
+        return orderRepository.findByUserEmail(email, pageable).map(orderMapper::toResponse);
     }
 
     @Auditable(action = "UPDATE_STATUS", entity = "Order")

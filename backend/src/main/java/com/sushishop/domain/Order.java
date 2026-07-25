@@ -22,19 +22,23 @@ public class Order extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
     @Column(nullable = false, length = 50)
     private String customerName;
 
     @Column(nullable = false, length = 15)
     private String phone;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String city;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String street;
 
-    @Column(nullable = false, length = 10)
+    @Column(length = 10)
     private String house;
 
     @Column(length = 10)

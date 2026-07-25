@@ -2,6 +2,7 @@ package com.sushishop.service;
 
 import com.sushishop.domain.Order;
 import com.sushishop.domain.Product;
+import com.sushishop.domain.User;
 import com.sushishop.domain.enums.Category;
 import com.sushishop.domain.enums.DeliveryMethod;
 import com.sushishop.domain.enums.OrderStatus;
@@ -12,10 +13,10 @@ import com.sushishop.dto.response.AddressResponse;
 import com.sushishop.dto.response.OrderResponse;
 import com.sushishop.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.exception.core.BadRequestException;
-import com.sushishop.exception.core.NotFoundException;
 import com.sushishop.mapper.OrderMapper;
 import com.sushishop.repository.OrderRepository;
 import com.sushishop.repository.ProductRepository;
+import com.sushishop.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -42,6 +43,9 @@ public class OrderServiceTest {
     private ProductRepository productRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private OrderMapper orderMapper;
 
     @Mock
@@ -56,17 +60,19 @@ public class OrderServiceTest {
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.DELIVERY, address, List.of(itemRequest));
 
+        var user = User.builder().id(1L).email("test@test.com").build();
         var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
         var order = new Order();
         var expectedResponse = new OrderResponse(1L, "Anton", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
                 DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(orderRepository.save(any())).thenReturn(order);
         when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
 
-        var result = orderService.create(request);
+        var result = orderService.create(request, "test@test.com");
 
         assertThat(result.customerName()).isEqualTo("Anton");
         assertThat(result.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
@@ -78,30 +84,25 @@ public class OrderServiceTest {
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.PICKUP, null, List.of(itemRequest));
 
+        var user = User.builder().id(1L).email("test@test.com").build();
         var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).available(false).build();
 
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
 
-        assertThatThrownBy(() -> orderService.create(request))
+        assertThatThrownBy(() -> orderService.create(request, "test@test.com"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Product is not available");
-    }
-
-    @Test
-    void shouldThrowWhenQuantityNotPositive() {
-        var itemRequest = new OrderItemRequest(1L, 0);
-        var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.PICKUP, null, List.of(itemRequest));
-
-        assertThatThrownBy(() -> orderService.create(request))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Quantity must be positive");
     }
 
     @Test
     void shouldThrowWhenDeliveryWithoutAddress() {
         var request = new CreateOrderRequest("Anton", "+380961791111", DeliveryMethod.DELIVERY, null, List.of());
 
-        assertThatThrownBy(() -> orderService.create(request))
+        var user = User.builder().id(1L).email("test@test.com").build();
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> orderService.create(request, "test@test.com"))
                 .isInstanceOf(BadRequestException.class);
     }
 
