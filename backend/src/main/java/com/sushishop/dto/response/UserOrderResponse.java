@@ -1,5 +1,6 @@
 package com.sushishop.dto.response;
 
+import com.sushishop.domain.enums.DeliveryMethod;
 import com.sushishop.domain.enums.OrderStatus;
 import com.sushishop.domain.enums.PaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,6 +19,9 @@ public record UserOrderResponse(
 
         @Schema(description = "Payment status", example = "PENDING")
         PaymentStatus paymentStatus,
+
+        @Schema(description = "Delivery method", example = "DELIVERY")
+        DeliveryMethod deliveryMethod,
 
         @Schema(description = "Total amount", example = "750.00")
         BigDecimal totalAmount,

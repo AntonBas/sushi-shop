@@ -87,14 +87,15 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(username = "test@test.com")
     void shouldGetMyOrders() throws Exception {
-        var response = new UserOrderResponse(1L, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var response = new UserOrderResponse(1L, OrderStatus.NEW, PaymentStatus.PENDING, DeliveryMethod.DELIVERY, BigDecimal.ZERO, null, List.of());
         Page<UserOrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/orders/my"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].status").value("NEW"));
+                .andExpect(jsonPath("$.content[0].status").value("NEW"))
+                .andExpect(jsonPath("$.content[0].deliveryMethod").value("DELIVERY"));
     }
 
     @Test

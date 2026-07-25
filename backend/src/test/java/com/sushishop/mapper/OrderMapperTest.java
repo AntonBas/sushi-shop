@@ -93,6 +93,7 @@ public class OrderMapperTest {
 
         Order order = Order.builder()
                 .id(1L)
+                .deliveryMethod(DeliveryMethod.DELIVERY)
                 .status(OrderStatus.NEW)
                 .paymentStatus(PaymentStatus.PENDING)
                 .totalAmount(new BigDecimal("500.00"))
@@ -104,6 +105,7 @@ public class OrderMapperTest {
         UserOrderResponse response = orderMapper.toUserResponse(order);
 
         assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
         assertThat(response.status()).isEqualTo(OrderStatus.NEW);
         assertThat(response.paymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));

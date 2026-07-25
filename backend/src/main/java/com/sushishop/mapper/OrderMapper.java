@@ -22,6 +22,7 @@ public interface OrderMapper {
     OrderResponse toResponse(Order order);
 
     @Mapping(target = "items", source = "items")
+    @Mapping(target = "deliveryMethod", source = "deliveryMethod")
     UserOrderResponse toUserResponse(Order order);
 
     @Mapping(target = "productId", source = "product.id")
