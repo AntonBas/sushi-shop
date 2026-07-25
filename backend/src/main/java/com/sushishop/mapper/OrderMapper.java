@@ -2,6 +2,7 @@ package com.sushishop.mapper;
 
 import com.sushishop.domain.Order;
 import com.sushishop.domain.OrderItem;
+import com.sushishop.dto.response.AddressResponse;
 import com.sushishop.dto.response.OrderItemResponse;
 import com.sushishop.dto.response.OrderResponse;
 import com.sushishop.dto.response.UserOrderResponse;
@@ -13,11 +14,7 @@ import java.util.List;
 @Mapper(componentModel = "spring", imports = {ProductImageMapper.class})
 public interface OrderMapper {
 
-    @Mapping(target = "address.city", source = "city")
-    @Mapping(target = "address.street", source = "street")
-    @Mapping(target = "address.house", source = "house")
-    @Mapping(target = "address.apartment", source = "apartment")
-    @Mapping(target = "address.comment", source = "addressComment")
+    @Mapping(target = "address", expression = "java(mapAddress(order))")
     @Mapping(target = "items", source = "items")
     OrderResponse toResponse(Order order);
 
@@ -31,4 +28,15 @@ public interface OrderMapper {
     OrderItemResponse toItemResponse(OrderItem item);
 
     List<OrderItemResponse> toItemResponseList(List<OrderItem> items);
+
+    default AddressResponse mapAddress(Order order) {
+        if (order.getCity() == null && order.getStreet() == null && order.getHouse() == null) return null;
+        return new AddressResponse(
+                order.getCity(),
+                order.getStreet(),
+                order.getHouse(),
+                order.getApartment(),
+                order.getAddressComment()
+        );
+    }
 }
