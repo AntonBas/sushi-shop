@@ -125,7 +125,7 @@ export default function AdminProductsPage() {
                   <td><span className={styles.badge}>{product.category}</span></td>
                   <td>{product.weight || '—'}</td>
                   <td>{product.pieces ? `${product.pieces} pcs` : '—'}</td>
-                  <td>₴{product.price}</td>
+                  <td>{product.price}₴</td>
                   <td>
                     <button onClick={() => handleToggle(product.id)} className={styles.toggleBtn}>
                       {product.available ? <ToggleRight size={20} className={styles.on} /> : <ToggleLeft size={20} className={styles.off} />}

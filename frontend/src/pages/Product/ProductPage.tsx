@@ -92,14 +92,14 @@ export default function ProductPage() {
           <div className={styles.priceRow}>
             {discounted && (
               <>
-                <span className={styles.oldPrice}>{product.price} ₴</span>
+                <span className={styles.oldPrice}>{product.price}₴</span>
                 <span className={styles.discount}>
                   -{product.discountPercent}%
                 </span>
               </>
             )}
             <span className={styles.price}>
-              {product.discountedPrice || product.price} ₴
+              {product.discountedPrice || product.price}₴
             </span>
           </div>
 
@@ -130,7 +130,7 @@ export default function ProductPage() {
             </div>
             <Button onClick={handleAddToCart} className={styles.addBtn}>
               <ShoppingCart size={18} /> Add to Cart —{" "}
-              {(product.discountedPrice || product.price) * quantity} ₴
+              {(product.discountedPrice || product.price) * quantity}₴
             </Button>
           </div>
         </div>

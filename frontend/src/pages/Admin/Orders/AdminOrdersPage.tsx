@@ -102,7 +102,7 @@ export default function AdminOrdersPage() {
                   <td>{order.customerName}</td>
                   <td>{order.phone}</td>
                   <td>{order.deliveryMethod}</td>
-                  <td>{order.totalAmount} ₴</td>
+                  <td>{order.totalAmount}₴</td>
                   <td>
                     <span
                       className={styles.statusBadge}

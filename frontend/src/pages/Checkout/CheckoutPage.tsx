@@ -202,13 +202,13 @@ export default function CheckoutPage() {
                 <span>
                   {item.name} × {item.quantity}
                 </span>
-                <span>{item.price * item.quantity} ₴</span>
+                <span>{item.price * item.quantity}₴</span>
               </div>
             ))}
           </div>
           <div className={styles.total}>
             <span>Total</span>
-            <span className={styles.totalPrice}>{total} ₴</span>
+            <span className={styles.totalPrice}>{total}₴</span>
           </div>
         </div>
 

@@ -33,11 +33,11 @@ export default function ProductCard({ product }: Props) {
         <div className={styles.priceRow}>
           {product.discountedPrice ? (
             <>
-              <span className={styles.oldPrice}>{product.price} ₴</span>
-              <span className={styles.price}>{product.discountedPrice} ₴</span>
+              <span className={styles.oldPrice}>{product.price}₴</span>
+              <span className={styles.price}>{product.discountedPrice}₴</span>
             </>
           ) : (
-            <span className={styles.price}>{product.price} ₴</span>
+            <span className={styles.price}>{product.price}₴</span>
           )}
         </div>
         {product.averageRating && (

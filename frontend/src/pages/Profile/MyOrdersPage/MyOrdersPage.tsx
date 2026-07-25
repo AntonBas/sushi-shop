@@ -72,7 +72,7 @@ export default function MyOrdersPage() {
                   </div>
                   <div className={styles.orderHeaderRight}>
                     <span className={styles.orderTotal}>
-                      {order.totalAmount} ₴
+                      {order.totalAmount}₴
                     </span>
                     <span
                       className={styles.statusBadge}
@@ -124,7 +124,7 @@ export default function MyOrdersPage() {
                           <span>
                             {item.productName} × {item.quantity}
                           </span>
-                          <span>{item.price * item.quantity} ₴</span>
+                          <span>{item.price * item.quantity}₴</span>
                         </div>
                       ))}
                     </div>
