@@ -7,7 +7,12 @@ export const createOrder = async (data: CreateOrderRequest): Promise<OrderRespon
   return res
 }
 
-export const getOrders = async (page = 0, size = 12): Promise<Page<OrderResponse>> => {
+export const getMyOrders = async (page = 0, size = 12): Promise<Page<OrderResponse>> => {
+  const { data } = await api.get('/orders/my', { params: { page, size, sort: 'createdAt,desc' } })
+  return data
+}
+
+export const getAllOrders = async (page = 0, size = 12): Promise<Page<OrderResponse>> => {
   const { data } = await api.get('/orders', { params: { page, size, sort: 'createdAt,desc' } })
   return data
 }

@@ -24,14 +24,16 @@ export default function MyOrdersPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useState(() => {
-    execute(() => ordersApi.getOrders(page)).then((res) =>
+    execute(() => ordersApi.getMyOrders(page)).then((res) =>
       setOrders(res.content),
     );
   });
 
   const loadPage = (p: number) => {
     setPage(p);
-    execute(() => ordersApi.getOrders(p)).then((res) => setOrders(res.content));
+    execute(() => ordersApi.getMyOrders(p)).then((res) =>
+      setOrders(res.content),
+    );
   };
 
   if (loading) return <Loading text="Loading orders..." />;
@@ -122,7 +124,7 @@ export default function MyOrdersPage() {
                           <span>
                             {item.productName} × {item.quantity}
                           </span>
-                          <span>{item.unitPrice * item.quantity} ₴</span>
+                          <span>{item.price * item.quantity} ₴</span>
                         </div>
                       ))}
                     </div>

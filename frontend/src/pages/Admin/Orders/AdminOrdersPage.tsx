@@ -1,51 +1,60 @@
-import { useState } from 'react'
-import { useAdminOrders } from '../../../hooks/features/useAdmin'
-import { useNotification } from '../../../context/NotificationContext'
-import * as ordersApi from '../../../api/orders'
-import Loading from '../../../components/UI/Loading/Loading'
-import Pagination from '../../../components/UI/Pagination/Pagination'
-import type { OrderStatus } from '../../../types'
-import styles from './AdminOrdersPage.module.css'
+import { useState, useEffect } from "react";
+import { useAdminOrders } from "../../../hooks/features/useAdmin";
+import { useNotification } from "../../../context/NotificationContext";
+import * as ordersApi from "../../../api/orders";
+import Loading from "../../../components/UI/Loading/Loading";
+import Pagination from "../../../components/UI/Pagination/Pagination";
+import type { OrderStatus } from "../../../types";
+import styles from "./AdminOrdersPage.module.css";
 
 const STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
-  NEW: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['COOKING', 'CANCELLED'],
-  COOKING: ['DELIVERING', 'READY'],
-  DELIVERING: ['DELIVERED'],
-  READY: ['DELIVERED'],
+  NEW: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["COOKING", "CANCELLED"],
+  COOKING: ["DELIVERING", "READY"],
+  DELIVERING: ["DELIVERED"],
+  READY: ["DELIVERED"],
   DELIVERED: [],
   CANCELLED: [],
-}
+};
 
 const STATUS_COLORS: Record<OrderStatus, string> = {
-  NEW: '#6366f1',
-  CONFIRMED: '#3b82f6',
-  COOKING: '#f59e0b',
-  DELIVERING: '#8b5cf6',
-  READY: '#10b981',
-  DELIVERED: '#22c55e',
-  CANCELLED: '#ef4444',
-}
+  NEW: "#6366f1",
+  CONFIRMED: "#3b82f6",
+  COOKING: "#f59e0b",
+  DELIVERING: "#8b5cf6",
+  READY: "#10b981",
+  DELIVERED: "#22c55e",
+  CANCELLED: "#ef4444",
+};
 
 export default function AdminOrdersPage() {
-  const { orders, totalPages, loading, loadOrders } = useAdminOrders()
-  const { showNotification } = useNotification()
-  const [page, setPage] = useState(0)
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('')
+  const { orders, totalPages, loading, loadOrders } = useAdminOrders();
+  const { showNotification } = useNotification();
+  const [page, setPage] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
 
-  const handleStatusChange = async (orderId: number, newStatus: OrderStatus) => {
+  useEffect(() => {
+    loadOrders(0);
+  }, []);
+
+  const handleStatusChange = async (
+    orderId: number,
+    newStatus: OrderStatus,
+  ) => {
     try {
-      await ordersApi.updateOrderStatus(orderId, newStatus)
-      showNotification(`Order #${orderId} → ${newStatus}`, 'success')
-      loadOrders(page)
+      await ordersApi.updateOrderStatus(orderId, newStatus);
+      showNotification(`Order #${orderId} → ${newStatus}`, "success");
+      loadOrders(page);
     } catch {
-      showNotification('Failed to update status', 'error')
+      showNotification("Failed to update status", "error");
     }
-  }
+  };
 
-  const filteredOrders = statusFilter ? orders.filter((o) => o.status === statusFilter) : orders
+  const filteredOrders = statusFilter
+    ? orders.filter((o) => o.status === statusFilter)
+    : orders;
 
-  if (loading) return <Loading text="Loading orders..." />
+  if (loading) return <Loading text="Loading orders..." />;
 
   return (
     <div className={styles.page}>
@@ -56,12 +65,14 @@ export default function AdminOrdersPage() {
       <div className={styles.filters}>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as OrderStatus | '')}
+          onChange={(e) => setStatusFilter(e.target.value as OrderStatus | "")}
           className={styles.filterSelect}
         >
           <option value="">All Statuses</option>
           {Object.keys(STATUS_FLOW).map((s) => (
-            <option key={s} value={s}>{s}</option>
+            <option key={s} value={s}>
+              {s}
+            </option>
           ))}
         </select>
       </div>
@@ -91,7 +102,7 @@ export default function AdminOrdersPage() {
                   <td>{order.customerName}</td>
                   <td>{order.phone}</td>
                   <td>{order.deliveryMethod}</td>
-                  <td>₴{order.totalAmount}</td>
+                  <td>{order.totalAmount} ₴</td>
                   <td>
                     <span
                       className={styles.statusBadge}
@@ -105,7 +116,9 @@ export default function AdminOrdersPage() {
                       {STATUS_FLOW[order.status]?.map((nextStatus) => (
                         <button
                           key={nextStatus}
-                          onClick={() => handleStatusChange(order.id, nextStatus)}
+                          onClick={() =>
+                            handleStatusChange(order.id, nextStatus)
+                          }
                           className={styles.actionBtn}
                           style={{ background: STATUS_COLORS[nextStatus] }}
                         >
@@ -127,5 +140,5 @@ export default function AdminOrdersPage() {
         </>
       )}
     </div>
-  )
+  );
 }

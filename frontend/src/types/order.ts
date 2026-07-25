@@ -30,7 +30,7 @@ export interface OrderItemResponse {
   productId: number
   productName: string
   quantity: number
-  unitPrice: number
+  price: number
   mainImage?: string | null
 }
 
