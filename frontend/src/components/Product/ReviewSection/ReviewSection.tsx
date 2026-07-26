@@ -1,85 +1,141 @@
-import { useState, useEffect } from 'react'
-import { Star } from 'lucide-react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as reviewsApi from '../../../api/reviews'
-import { useNotification } from '../../../context/NotificationContext'
-import Button from '../../UI/Button/Button'
-import Pagination from '../../UI/Pagination/Pagination'
-import type { ReviewResponse } from '../../../types'
-import styles from './ReviewSection.module.css'
+import { useState, useEffect } from "react";
+import { Star, Pencil, Trash2 } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
+import { useApi } from "../../../hooks/common/useApi";
+import * as reviewsApi from "../../../api/reviews";
+import { useNotification } from "../../../context/NotificationContext";
+import Button from "../../UI/Button/Button";
+import Pagination from "../../UI/Pagination/Pagination";
+import type { ReviewResponse, ReviewReplyResponse } from "../../../types";
+import styles from "./ReviewSection.module.css";
 
 interface Props {
-  productId: number
+  productId: number;
 }
 
 export default function ReviewSection({ productId }: Props) {
-  const { showNotification } = useNotification()
-  const createApi = useApi<ReviewResponse>()
-  const [reviews, setReviews] = useState<ReviewResponse[]>([])
-  const [reviewPage, setReviewPage] = useState(0)
-  const [totalReviewPages, setTotalReviewPages] = useState(0)
-  const [newRating, setNewRating] = useState(5)
-  const [newComment, setNewComment] = useState('')
+  const { user, isAdmin } = useAuth();
+  const { showNotification } = useNotification();
+  const createApi = useApi<ReviewResponse>();
+  const updateApi = useApi<ReviewResponse>();
+  const replyApi = useApi<ReviewReplyResponse>();
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [totalReviewPages, setTotalReviewPages] = useState(0);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editRating, setEditRating] = useState(5);
+  const [editComment, setEditComment] = useState("");
+  const [replyMessage, setReplyMessage] = useState("");
+  const [replyingId, setReplyingId] = useState<number | null>(null);
 
   const loadReviews = (page: number) => {
     reviewsApi.getReviews(productId, page).then((res) => {
-      setReviews(res.content)
-      setTotalReviewPages(res.totalPages)
-    })
-  }
+      setReviews(res.content);
+      setTotalReviewPages(res.totalPages);
+    });
+  };
 
   useEffect(() => {
-    loadReviews(0)
-  }, [productId])
+    loadReviews(0);
+  }, [productId]);
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
       await createApi.execute(() =>
         reviewsApi.createReview({
           productId,
           rating: newRating,
           comment: newComment || undefined,
-        })
-      )
-      setNewComment('')
-      setNewRating(5)
-      showNotification('Review submitted', 'success')
-      loadReviews(reviewPage)
+        }),
+      );
+      setNewComment("");
+      setNewRating(5);
+      showNotification("Review submitted", "success");
+      loadReviews(reviewPage);
     } catch {}
-  }
+  };
+
+  const handleUpdate = async (reviewId: number) => {
+    try {
+      await updateApi.execute(() =>
+        reviewsApi.updateReview(reviewId, {
+          productId,
+          rating: editRating,
+          comment: editComment || undefined,
+        }),
+      );
+      setEditingId(null);
+      showNotification("Review updated", "success");
+      loadReviews(reviewPage);
+    } catch {}
+  };
+
+  const handleDelete = async (reviewId: number) => {
+    if (!window.confirm("Delete your review?")) return;
+    try {
+      await reviewsApi.deleteReview(reviewId);
+      showNotification("Review deleted", "success");
+      loadReviews(reviewPage);
+    } catch {}
+  };
+
+  const handleReply = async (reviewId: number) => {
+    if (!replyMessage.trim()) return;
+    try {
+      await replyApi.execute(() =>
+        reviewsApi.addReply(reviewId, { message: replyMessage }),
+      );
+      setReplyMessage("");
+      setReplyingId(null);
+      showNotification("Reply added", "success");
+      loadReviews(reviewPage);
+    } catch {}
+  };
+
+  const startEdit = (review: ReviewResponse) => {
+    setEditingId(review.id);
+    setEditRating(review.rating);
+    setEditComment(review.comment || "");
+  };
 
   return (
     <div className={styles.section}>
       <h2 className={styles.title}>Reviews ({reviews.length})</h2>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.stars}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => setNewRating(star)}
-              className={styles.starBtn}
-            >
-              <Star
-                size={20}
-                fill={star <= newRating ? '#fbbf24' : 'none'}
-                stroke="#fbbf24"
-              />
-            </button>
-          ))}
-        </div>
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Share your thoughts... (optional)"
-          rows={3}
-          className={styles.textarea}
-          maxLength={100}
-        />
-        <Button type="submit" loading={createApi.loading}>Submit Review</Button>
-      </form>
+      {user && (
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.stars}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setNewRating(star)}
+                className={styles.starBtn}
+              >
+                <Star
+                  size={20}
+                  fill={star <= newRating ? "#fbbf24" : "none"}
+                  stroke="#fbbf24"
+                />
+              </button>
+            ))}
+          </div>
+          <textarea
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Share your thoughts... (optional)"
+            rows={3}
+            className={styles.textarea}
+            maxLength={100}
+          />
+          <Button type="submit" loading={createApi.loading}>
+            Submit Review
+          </Button>
+        </form>
+      )}
 
       {reviews.length > 0 ? (
         <div className={styles.list}>
@@ -92,23 +148,148 @@ export default function ReviewSection({ productId }: Props) {
                     <Star
                       key={i}
                       size={14}
-                      fill={i < review.rating ? '#fbbf24' : 'none'}
+                      fill={i < review.rating ? "#fbbf24" : "none"}
                       stroke="#fbbf24"
                     />
                   ))}
                 </div>
                 <span className={styles.date}>
                   {new Date(review.createdAt).toLocaleDateString()}
+                  {review.updatedAt &&
+                    review.updatedAt !== review.createdAt && (
+                      <span className={styles.edited}> (edited)</span>
+                    )}
                 </span>
+                {review.userId === user?.id && (
+                  <div className={styles.actions}>
+                    <button
+                      onClick={() => startEdit(review)}
+                      className={styles.editBtn}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(review.id)}
+                      className={styles.deleteBtn}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
-              {review.comment && <p className={styles.comment}>{review.comment}</p>}
+
+              {editingId === review.id ? (
+                <div className={styles.editForm}>
+                  <div className={styles.stars}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setEditRating(star)}
+                        className={styles.starBtn}
+                      >
+                        <Star
+                          size={16}
+                          fill={star <= editRating ? "#fbbf24" : "none"}
+                          stroke="#fbbf24"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    value={editComment}
+                    onChange={(e) => setEditComment(e.target.value)}
+                    rows={2}
+                    className={styles.textarea}
+                    maxLength={100}
+                  />
+                  <div className={styles.editActions}>
+                    <Button
+                      onClick={() => setEditingId(null)}
+                      variant="secondary"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={() => handleUpdate(review.id)}
+                      loading={updateApi.loading}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                review.comment && (
+                  <p className={styles.comment}>{review.comment}</p>
+                )
+              )}
+
+              {review.replies && review.replies.length > 0 && (
+                <div className={styles.replies}>
+                  {review.replies.map((reply) => (
+                    <div key={reply.id} className={styles.reply}>
+                      <span className={styles.replyAuthor}>
+                        {reply.authorName}
+                      </span>
+                      <span className={styles.replyDate}>
+                        {new Date(reply.createdAt).toLocaleDateString()}
+                      </span>
+                      <p className={styles.replyMessage}>{reply.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isAdmin && (
+                <div className={styles.replyForm}>
+                  {replyingId === review.id ? (
+                    <>
+                      <textarea
+                        value={replyMessage}
+                        onChange={(e) => setReplyMessage(e.target.value)}
+                        placeholder="Reply to this review..."
+                        rows={2}
+                        className={styles.textarea}
+                        maxLength={100}
+                      />
+                      <div className={styles.editActions}>
+                        <Button
+                          onClick={() => {
+                            setReplyingId(null);
+                            setReplyMessage("");
+                          }}
+                          variant="secondary"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => handleReply(review.id)}
+                          loading={replyApi.loading}
+                        >
+                          Reply
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setReplyingId(review.id)}
+                      className={styles.replyBtn}
+                    >
+                      Reply
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           ))}
           {totalReviewPages > 1 && (
             <Pagination
               currentPage={reviewPage}
               totalPages={totalReviewPages}
-              onPageChange={(p) => { setReviewPage(p); loadReviews(p) }}
+              onPageChange={(p) => {
+                setReviewPage(p);
+                loadReviews(p);
+              }}
             />
           )}
         </div>
@@ -116,5 +297,5 @@ export default function ReviewSection({ productId }: Props) {
         <p className={styles.empty}>No reviews yet. Be the first!</p>
       )}
     </div>
-  )
+  );
 }

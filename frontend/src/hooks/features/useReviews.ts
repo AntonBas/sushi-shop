@@ -1,12 +1,14 @@
 import { useCallback } from 'react'
 import { useApi } from '.././common/useApi'
 import * as reviewsApi from '../../api/reviews'
-import type { ReviewResponse, CreateReviewRequest } from '../../types'
+import type { ReviewResponse, ReviewReplyResponse, CreateReviewRequest, CreateReviewReplyRequest } from '../../types'
 import type { Page } from '../../types/common'
 
 export function useReviews() {
   const listApi = useApi<Page<ReviewResponse>>()
   const createApi = useApi<ReviewResponse>()
+  const updateApi = useApi<ReviewResponse>()
+  const replyApi = useApi<ReviewReplyResponse>()
 
   const loadReviews = useCallback((productId: number, page = 0) => {
     return listApi.execute(() => reviewsApi.getReviews(productId, page))
@@ -16,6 +18,14 @@ export function useReviews() {
     return createApi.execute(() => reviewsApi.createReview(data))
   }, [])
 
+  const updateReview = useCallback((id: number, data: CreateReviewRequest) => {
+    return updateApi.execute(() => reviewsApi.updateReview(id, data))
+  }, [])
+
+  const addReply = useCallback((reviewId: number, data: CreateReviewReplyRequest) => {
+    return replyApi.execute(() => reviewsApi.addReply(reviewId, data))
+  }, [])
+
   return {
     reviews: listApi.data?.content || [],
     totalPages: listApi.data?.totalPages || 0,
@@ -23,6 +33,8 @@ export function useReviews() {
     error: listApi.error,
     loadReviews,
     createReview,
+    updateReview,
+    addReply,
     createdReview: createApi.data
   }
 }

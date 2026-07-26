@@ -1,5 +1,6 @@
 .section {
   margin-top: 48px;
+  margin-bottom: 48px;
   padding-top: 32px;
   border-top: 1px solid var(--color-border);
 }
@@ -85,11 +86,109 @@
   color: var(--color-text-muted);
 }
 
+.edited {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.editBtn,
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: none;
+  color: var(--color-text-muted);
+}
+
+.editBtn:hover {
+  color: var(--color-primary);
+}
+
+.deleteBtn:hover {
+  color: var(--color-error);
+}
+
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .comment {
   margin: 8px 0 0;
   font-size: 14px;
   color: var(--color-text-secondary);
   line-height: 1.5;
+}
+
+.replies {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reply {
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border-radius: 8px;
+}
+
+.replyAuthor {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-primary);
+}
+
+.replyDate {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-left: 8px;
+}
+
+.replyMessage {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.replyForm {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.replyBtn {
+  font-size: 13px;
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.replyBtn:hover {
+  text-decoration: underline;
 }
 
 .empty {
