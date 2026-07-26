@@ -1,6 +1,6 @@
 package com.sushishop.converter;
 
-import com.sushishop.dto.response.AddressResponse;
+import com.sushishop.shared.address.AddressResponse;
 import org.springframework.stereotype.Component;
 
 @Component

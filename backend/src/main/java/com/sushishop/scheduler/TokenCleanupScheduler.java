@@ -1,6 +1,6 @@
 package com.sushishop.scheduler;
 
-import com.sushishop.repository.TokenRepository;
+import com.sushishop.user.TokenRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

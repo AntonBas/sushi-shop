@@ -1,0 +1,65 @@
+package com.sushishop.review;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sushishop.review.dto.request.CreateReviewRequest;
+import com.sushishop.review.dto.response.ReviewResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest
+@ActiveProfiles("test")
+public class ReviewControllerTest {
+
+    private MockMvc mockMvc;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Autowired
+    private WebApplicationContext context;
+
+    @MockitoBean
+    private ReviewService reviewService;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com")
+    void shouldCreateReview() throws Exception {
+        var request = new CreateReviewRequest(1L, 5, "Very tasty!");
+        var response = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null);
+
+        when(reviewService.create(any(), eq("anton@example.com"))).thenReturn(response);
+
+        mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.rating").value(5));
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com")
+    void shouldDeleteReview() throws Exception {
+        mockMvc.perform(delete("/api/reviews/1"))
+                .andExpect(status().isNoContent());
+    }
+}
