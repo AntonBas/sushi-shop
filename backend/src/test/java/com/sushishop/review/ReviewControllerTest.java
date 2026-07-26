@@ -1,7 +1,9 @@
 package com.sushishop.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
+import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.review.dto.response.ReviewResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,8 +20,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -45,7 +46,7 @@ public class ReviewControllerTest {
     @WithMockUser(username = "anton@example.com")
     void shouldCreateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
-        var response = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null);
+        var response = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null, null, null);
 
         when(reviewService.create(any(), eq("anton@example.com"))).thenReturn(response);
 
@@ -54,6 +55,36 @@ public class ReviewControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.rating").value(5));
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com")
+    void shouldUpdateReview() throws Exception {
+        var request = new CreateReviewRequest(1L, 4, "Updated!");
+        var response = new ReviewResponse(1L, "Anton", 4, "Updated!", null, null, null);
+
+        when(reviewService.update(eq(1L), any(), eq("anton@example.com"))).thenReturn(response);
+
+        mockMvc.perform(put("/api/reviews/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rating").value(4));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldAddReply() throws Exception {
+        var request = new CreateReviewReplyRequest("Thank you!");
+        var response = new ReviewReplyResponse(1L, "Thank you!", "Admin", null);
+
+        when(reviewService.addReply(eq(1L), any(), eq("admin@example.com"))).thenReturn(response);
+
+        mockMvc.perform(post("/api/reviews/1/replies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.message").value("Thank you!"));
     }
 
     @Test

@@ -1,7 +1,9 @@
 package com.sushishop.review;
 
 import com.sushishop.annotation.Auditable;
+import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
+import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.review.dto.response.ReviewResponse;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
@@ -25,6 +27,7 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
+    private final ReviewReplyRepository reviewReplyRepository;
 
     @Auditable(action = "CREATE", entity = "Review")
     @Transactional
@@ -51,8 +54,39 @@ public class ReviewService {
         return reviewMapper.toResponse(saved);
     }
 
+    @Transactional
+    public ReviewReplyResponse addReply(Long reviewId, CreateReviewReplyRequest request, String userEmail) {
+        var review = reviewRepository.findById(reviewId).orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
+        var user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        var reply = ReviewReply.builder()
+                .review(review)
+                .user(user)
+                .message(request.message())
+                .build();
+
+        var saved = reviewReplyRepository.save(reply);
+        log.info("Reply added to review: {}", reviewId);
+        return reviewMapper.toReplyResponse(saved);
+    }
+
     public Page<ReviewResponse> getByProduct(Long productId, Pageable pageable) {
         return reviewRepository.findByProductId(productId, pageable).map(reviewMapper::toResponse);
+    }
+
+    @Transactional
+    @CacheEvict(value = "products", key = "#review.product.id")
+    public ReviewResponse update(Long reviewId, CreateReviewRequest request, String email) {
+        var review = reviewRepository.findById(reviewId).orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
+        if (!review.getUser().getEmail().equals(email)) {
+            throw new BadRequestException("You can only edit your own reviews");
+        }
+        review.setRating(request.rating());
+        review.setComment(request.comment());
+        var saved = reviewRepository.save(review);
+        log.info("Review updated: {}", saved.getId());
+        return reviewMapper.toResponse(saved);
     }
 
     @Auditable(action = "DELETE", entity = "Review")

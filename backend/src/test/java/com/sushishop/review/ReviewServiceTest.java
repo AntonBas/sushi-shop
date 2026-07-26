@@ -2,7 +2,9 @@ package com.sushishop.review;
 
 import com.sushishop.product.Product;
 import com.sushishop.user.User;
+import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
+import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.review.dto.response.ReviewResponse;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
@@ -36,6 +38,9 @@ public class ReviewServiceTest {
     @Mock
     private ReviewMapper reviewMapper;
 
+    @Mock
+    private ReviewReplyRepository reviewReplyRepository;
+
     @InjectMocks
     private ReviewService reviewService;
 
@@ -44,7 +49,7 @@ public class ReviewServiceTest {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
-        var expected = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null);
+        var expected = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null, null, null);
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -56,6 +61,42 @@ public class ReviewServiceTest {
 
         assertThat(result.rating()).isEqualTo(5);
         assertThat(result.comment()).isEqualTo("Very tasty!");
+    }
+
+    @Test
+    void shouldUpdateReview() {
+        var user = User.builder().id(1L).email("anton@example.com").build();
+        var review = Review.builder().id(1L).user(user).rating(4).comment("Good").build();
+        var request = new CreateReviewRequest(1L, 5, "Very tasty!");
+        var expected = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null, null, null);
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(reviewRepository.save(any())).thenReturn(review);
+        when(reviewMapper.toResponse(review)).thenReturn(expected);
+
+        var result = reviewService.update(1L, request, "anton@example.com");
+
+        assertThat(result.rating()).isEqualTo(5);
+        assertThat(result.comment()).isEqualTo("Very tasty!");
+    }
+
+    @Test
+    void shouldAddReply() {
+        var user = User.builder().id(1L).email("admin@example.com").name("Admin").build();
+        var review = Review.builder().id(1L).build();
+        var request = new CreateReviewReplyRequest("Thank you!");
+        var reply = ReviewReply.builder().id(1L).user(user).message("Thank you!").build();
+        var expected = new ReviewReplyResponse(1L, "Thank you!", "Admin", null);
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(user));
+        when(reviewReplyRepository.save(any())).thenReturn(reply);
+        when(reviewMapper.toReplyResponse(reply)).thenReturn(expected);
+
+        var result = reviewService.addReply(1L, request, "admin@example.com");
+
+        assertThat(result.message()).isEqualTo("Thank you!");
+        assertThat(result.authorName()).isEqualTo("Admin");
     }
 
     @Test

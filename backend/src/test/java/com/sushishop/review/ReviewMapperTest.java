@@ -31,5 +31,22 @@ public class ReviewMapperTest {
         assertThat(response.userName()).isEqualTo("Anton");
         assertThat(response.rating()).isEqualTo(5);
         assertThat(response.comment()).isEqualTo("Very tasty!");
+        assertThat(response.replies()).isEmpty();
+    }
+
+    @Test
+    void shouldMapToReplyResponse() {
+        var user = User.builder().name("Admin").build();
+        var reply = ReviewReply.builder()
+                .id(1L)
+                .user(user)
+                .message("Thank you!")
+                .build();
+
+        var response = reviewMapper.toReplyResponse(reply);
+
+        assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.authorName()).isEqualTo("Admin");
+        assertThat(response.message()).isEqualTo("Thank you!");
     }
 }
