@@ -49,7 +49,7 @@ public class ReviewServiceTest {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
-        var expected = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null, null, null);
+        var expected = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -68,7 +68,7 @@ public class ReviewServiceTest {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var review = Review.builder().id(1L).user(user).rating(4).comment("Good").build();
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
-        var expected = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null, null, null);
+        var expected = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
         when(reviewRepository.save(any())).thenReturn(review);

@@ -46,7 +46,7 @@ public class ReviewControllerTest {
     @WithMockUser(username = "anton@example.com")
     void shouldCreateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
-        var response = new ReviewResponse(1L, "Anton", 5, "Very tasty!", null, null, null);
+        var response = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 
         when(reviewService.create(any(), eq("anton@example.com"))).thenReturn(response);
 
@@ -61,7 +61,7 @@ public class ReviewControllerTest {
     @WithMockUser(username = "anton@example.com")
     void shouldUpdateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 4, "Updated!");
-        var response = new ReviewResponse(1L, "Anton", 4, "Updated!", null, null, null);
+        var response = new ReviewResponse(1L, 1L, "Anton", 4, "Updated!", null, null, null);
 
         when(reviewService.update(eq(1L), any(), eq("anton@example.com"))).thenReturn(response);
 

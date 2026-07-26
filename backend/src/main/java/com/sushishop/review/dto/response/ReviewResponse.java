@@ -10,6 +10,9 @@ public record ReviewResponse(
         @Schema(description = "Review ID", example = "1")
         Long id,
 
+        @Schema(description = "User ID", example = "1")
+        Long userId,
+
         @Schema(description = "User name", example = "Anton")
         String userName,
 
