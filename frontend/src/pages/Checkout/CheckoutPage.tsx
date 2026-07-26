@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { useCart } from "../../hooks/features/useCart";
+import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../hooks/features/useOrders";
 import { useNotification } from "../../context/NotificationContext";
 import * as paymentsApi from "../../api/payments";

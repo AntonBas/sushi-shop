@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../hooks/common/useTheme";
-import { useCart } from "../../hooks/features/useCart";
+import { useCart } from "../../context/CartContext";
 import {
   ShoppingCart,
   Sun,

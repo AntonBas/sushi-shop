@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Star, ShoppingCart, Menu as MenuIcon } from "lucide-react";
 import { useProducts } from "../../hooks/features/useProducts";
-import { useCart } from "../../hooks/features/useCart";
+import { useCart } from "../../context/CartContext";
+import { useNotification } from "../../context/NotificationContext";
 import { CATEGORY_DISPLAY } from "../../types/enums";
 import Loading from "../../components/UI/Loading/Loading";
 import Button from "../../components/UI/Button/Button";
@@ -14,6 +15,7 @@ export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const { product, productLoading, getProduct } = useProducts();
   const { addItem } = useCart();
+  const { showNotification } = useNotification();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
@@ -32,6 +34,7 @@ export default function ProductPage() {
       quantity,
       mainImage: product.images[0] || null,
     });
+    showNotification(`${product.name} added to cart`, "success");
   };
 
   const discounted =
