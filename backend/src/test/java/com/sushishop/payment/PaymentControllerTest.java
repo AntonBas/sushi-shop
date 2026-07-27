@@ -40,8 +40,9 @@ public class PaymentControllerTest {
     @Test
     @WithMockUser
     void shouldCreateCheckoutSession() throws Exception {
+        var info = new StripeService.CheckoutSessionInfo("sess_123", "https://checkout.stripe.com/session_123");
         when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
-                .thenReturn("https://checkout.stripe.com/session_123");
+                .thenReturn(info);
 
         mockMvc.perform(post("/api/payments/order/1")
                         .param("amountInCents", "50000")

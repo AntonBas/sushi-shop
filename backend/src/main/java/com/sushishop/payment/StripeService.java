@@ -25,12 +25,15 @@ public class StripeService {
     @Value("${app.stripe.webhook-secret}")
     private String webhookSecret;
 
+    public record CheckoutSessionInfo(String id, String url) {
+    }
+
     @PostConstruct
     public void init() {
         Stripe.apiKey = secretKey;
     }
 
-    public String createCheckoutSession(Long orderId, Long amountInCents, String email) {
+    public CheckoutSessionInfo createCheckoutSession(Long orderId, Long amountInCents, String email) {
         var params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(baseUrl + "/orders/" + orderId + "?success=true")
@@ -51,7 +54,7 @@ public class StripeService {
         try {
             var session = Session.create(params);
             log.info("Stripe session created: {} for order: {}", session.getId(), orderId);
-            return session.getUrl();
+            return new CheckoutSessionInfo(session.getId(), session.getUrl());
         } catch (StripeException e) {
             log.error("Failed to create Stripe session for order: {}", orderId, e);
             throw new RuntimeException("Payment session creation failed", e);
@@ -62,8 +65,11 @@ public class StripeService {
         try {
             var event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
             if ("checkout.session.completed".equals(event.getType())) {
-                var session = (Session) event.getDataObjectDeserializer().getObject().orElseThrow();
-                return session.getId();
+                var deserializer = event.getDataObjectDeserializer();
+                if (deserializer.getObject().isPresent()) {
+                    var session = (Session) deserializer.getObject().get();
+                    return session.getId();
+                }
             }
             return null;
         } catch (SignatureVerificationException e) {

@@ -25,10 +25,10 @@ public class PaymentController {
     public ResponseEntity<Map<String, String>> createCheckout(@PathVariable Long orderId,
                                                               @RequestParam Long amountInCents,
                                                               @RequestParam String email) {
-        var url = stripeService.createCheckoutSession(orderId, amountInCents, email);
-        paymentService.create(orderId, url, BigDecimal.valueOf(amountInCents, 2));
+        var info = stripeService.createCheckoutSession(orderId, amountInCents, email);
+        paymentService.create(orderId, info.id(), BigDecimal.valueOf(amountInCents, 2));
         log.info("Checkout session created for order: {}", orderId);
-        return ResponseEntity.ok(Map.of("url", url));
+        return ResponseEntity.ok(Map.of("url", info.url()));
     }
 
     @PostMapping("/webhook")
