@@ -36,8 +36,8 @@ public class StripeService {
     public CheckoutSessionInfo createCheckoutSession(Long orderId, Long amountInCents, String email) {
         var params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl(baseUrl + "/orders/" + orderId + "?success=true")
-                .setCancelUrl(baseUrl + "/orders/" + orderId + "?canceled=true")
+                .setSuccessUrl(baseUrl + "/order-success?orderId=" + orderId)
+                .setCancelUrl(baseUrl + "/order-cancel?orderId=" + orderId)
                 .setCustomerEmail(email)
                 .addLineItem(SessionCreateParams.LineItem.builder()
                         .setQuantity(1L)
