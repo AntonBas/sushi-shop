@@ -24,6 +24,8 @@ import AdminPromotionForm from "./pages/Admin/Promotions/AdminPromotionForm/Admi
 import AdminAuditPage from "./pages/Admin/Audit/AdminAuditPage";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import MenuPage from "./pages/Menu/MenuPage";
+import OrderSuccessPage from "./pages/OrderSuccess/OrderSuccessPage";
+import OrderCancelPage from './pages/OrderCancel/OrderCancelPage'
 
 function App() {
   const { loading } = useAuth();
@@ -43,6 +45,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/order-success" element={<OrderSuccessPage />} />
+        <Route path="/order-cancel" element={<OrderCancelPage />} />
         <Route path="/profile" element={<ProfileLayout />}>
           <Route index element={<ProfilePage />} />
           <Route path="orders" element={<MyOrdersPage />} />
