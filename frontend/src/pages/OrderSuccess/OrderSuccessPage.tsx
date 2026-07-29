@@ -1,11 +1,18 @@
+import { useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
+import { useCart } from "../../context/CartContext";
 import Button from "../../components/UI/Button/Button";
 import styles from "./OrderSuccessPage.module.css";
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const { clearCart } = useCart();
+
+  useEffect(() => {
+    clearCart();
+  }, []);
 
   return (
     <div className={styles.page}>

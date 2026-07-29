@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { useOrders } from "../../hooks/features/useOrders";
+import { useApi } from "../../hooks/common/useApi";
 import { useNotification } from "../../context/NotificationContext";
 import * as paymentsApi from "../../api/payments";
 import Button from "../../components/UI/Button/Button";
@@ -14,6 +15,7 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const { items, total, clearCart } = useCart();
   const { createOrder, loading } = useOrders();
+  const paymentApi = useApi<string>();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
 
@@ -65,15 +67,19 @@ export default function CheckoutPage() {
         })),
       });
       if (order) {
-        clearCart();
         if (paymentMethod === "online") {
-          const url = await paymentsApi.createCheckout(
-            order.id,
-            Math.round(order.totalAmount * 100),
-            user?.email || "",
+          const url = await paymentApi.execute(() =>
+            paymentsApi.createCheckout(
+              order.id,
+              Math.round(order.totalAmount * 100),
+              user?.email || "",
+            ),
           );
-          window.location.href = url;
+          if (url) {
+            window.location.href = url;
+          }
         } else {
+          clearCart();
           showNotification("Order placed successfully!", "success");
           navigate("/profile/orders");
         }
@@ -212,8 +218,16 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <Button type="submit" loading={loading} style={{ width: "100%" }}>
-          {paymentMethod === "online" ? "Proceed to Payment" : "Place Order"}
+        <Button
+          type="submit"
+          loading={loading || paymentApi.loading}
+          style={{ width: "100%" }}
+        >
+          {paymentApi.loading
+            ? "Redirecting to payment..."
+            : paymentMethod === "online"
+              ? "Proceed to Payment"
+              : "Place Order"}
         </Button>
       </form>
     </div>
