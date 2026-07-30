@@ -18,7 +18,7 @@ public record CreateReviewRequest(
         @Schema(description = "Rating from 1 to 5", example = "5")
         Integer rating,
 
-        @Size(max = 100, message = "Comment must be less than 100 characters")
+        @Size(max = 250, message = "Comment must be less than 250 characters")
         @Schema(description = "Review comment", example = "Very tasty rolls!")
         String comment
 ) {

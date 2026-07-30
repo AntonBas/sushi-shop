@@ -6,5 +6,7 @@ public enum Category {
     DRINK,
     DESSERT,
     SOUP,
+    SALAD,
+    WOK,
     EXTRA
 }

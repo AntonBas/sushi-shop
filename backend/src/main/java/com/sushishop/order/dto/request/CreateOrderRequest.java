@@ -22,7 +22,6 @@ public record CreateOrderRequest(
         @Schema(description = "Contact phone", example = "+380961791111")
         @NotBlank(message = "Phone number is required")
         @Pattern(regexp = "^\\+?[0-9]{10,15}$", message = "Phone must be 10-15 digits")
-        @Size(max = 15, message = "Phone must be less than 15 characters")
         String phone,
 
         @Schema(description = "Delivery method", example = "DELIVERY")

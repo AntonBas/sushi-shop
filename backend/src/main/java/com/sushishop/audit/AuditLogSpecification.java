@@ -1,5 +1,6 @@
 package com.sushishop.audit;
 
+import com.sushishop.shared.enums.AuditAction;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -8,12 +9,12 @@ import java.util.ArrayList;
 
 public class AuditLogSpecification {
 
-    public static Specification<AuditLog> filter(String action, String entityName, Long entityId,
+    public static Specification<AuditLog> filter(AuditAction action, String entityName, Long entityId,
                                                  String performedBy, LocalDateTime start, LocalDateTime end) {
         return (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
 
-            if (action != null && !action.isBlank()) {
+            if (action != null) {
                 predicates.add(cb.equal(root.get("action"), action));
             }
             if (entityName != null && !entityName.isBlank()) {

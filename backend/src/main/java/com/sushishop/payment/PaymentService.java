@@ -1,11 +1,11 @@
 package com.sushishop.payment;
 
 import com.sushishop.annotation.Auditable;
-import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.order.OrderService;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.order.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,17 +19,16 @@ import java.math.BigDecimal;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
-    private final OrderRepository orderRepository;
+    private final OrderService orderService;
 
-    @Auditable(action = "CREATE", entity = "Payment")
+    @Auditable(action = AuditAction.CREATE, entity = "Payment")
     @Transactional
     public Payment create(Long orderId, String stripeSessionId, BigDecimal amount) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new BadRequestException("Amount must be greater than zero");
         }
 
-        var order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+        var order = orderService.getOrderById(orderId);
 
         var payment = Payment.builder()
                 .order(order)
@@ -43,7 +42,7 @@ public class PaymentService {
         return saved;
     }
 
-    @Auditable(action = "CONFIRM", entity = "Payment")
+    @Auditable(action = AuditAction.UPDATE, entity = "Payment")
     @Transactional
     public void confirmPayment(String stripeSessionId) {
         if (stripeSessionId == null || stripeSessionId.isBlank()) {
@@ -58,9 +57,8 @@ public class PaymentService {
         }
 
         payment.setStatus(PaymentStatus.PAID);
-        payment.getOrder().setStatus(OrderStatus.CONFIRMED);
-        payment.getOrder().setPaymentStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
+        orderService.confirmOrder(payment.getOrder().getId());
         log.info("Payment confirmed: {}", stripeSessionId);
     }
 }

@@ -5,7 +5,6 @@ import com.sushishop.user.User;
 import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.request.OrderItemRequest;
@@ -63,7 +62,7 @@ public class OrderServiceTest {
         var order = new Order();
         var expectedResponse = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
-                DeliveryMethod.DELIVERY, OrderStatus.NEW, PaymentStatus.PENDING, new BigDecimal("500.00"), null, List.of());
+                DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -107,7 +106,7 @@ public class OrderServiceTest {
     @Test
     void shouldGetById() {
         var order = new Order();
-        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderMapper.toResponse(order)).thenReturn(expected);
@@ -120,7 +119,7 @@ public class OrderServiceTest {
     @Test
     void shouldUpdateStatusForDelivery() {
         var order = Order.builder().id(1L).status(OrderStatus.NEW).deliveryMethod(DeliveryMethod.DELIVERY).build();
-        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.DELIVERY, OrderStatus.CONFIRMED, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.DELIVERY, OrderStatus.CONFIRMED, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
@@ -135,7 +134,7 @@ public class OrderServiceTest {
     @Test
     void shouldUpdateStatusToReadyForPickup() {
         var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.PICKUP).build();
-        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.READY, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.READY, BigDecimal.ZERO, null, List.of());
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);

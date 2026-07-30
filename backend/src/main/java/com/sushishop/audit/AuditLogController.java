@@ -1,6 +1,7 @@
 package com.sushishop.audit;
 
 import com.sushishop.audit.dto.AuditLogResponse;
+import com.sushishop.shared.enums.AuditAction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,7 +33,7 @@ public class AuditLogController {
     @GetMapping
     @Operation(summary = "Get audit logs")
     public ResponseEntity<Page<AuditLogResponse>> getAll(
-            @RequestParam(required = false) String action,
+            @RequestParam(required = false) AuditAction action,
             @RequestParam(required = false) String entityName,
             @RequestParam(required = false) Long entityId,
             @RequestParam(required = false) String performedBy,

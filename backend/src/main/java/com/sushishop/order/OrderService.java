@@ -1,16 +1,17 @@
 package com.sushishop.order;
 
 import com.sushishop.annotation.Auditable;
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.request.OrderItemRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.product.ProductRepository;
+import com.sushishop.shared.enums.AuditAction;
+import com.sushishop.shared.enums.DeliveryMethod;
+import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.product.ProductRepository;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,13 +35,13 @@ public class OrderService {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
 
-    @Auditable(action = "CREATE", entity = "Order")
+    @Auditable(action = AuditAction.CREATE, entity = "Order")
     @Transactional
     public OrderResponse create(CreateOrderRequest request, String userEmail) {
         var user = userRepository.findByEmail(userEmail).orElseThrow(() -> new NotFoundException("User not found"));
         validateDelivery(request);
         var items = createOrderItems(request.items());
-        var totalAmount = calculateTotalPrice(items);
+        var totalAmount = calculateTotalAmount(items);
         var order = buildOrder(request, items, totalAmount);
         order.setUser(user);
         items.forEach(i -> i.setOrder(order));
@@ -61,17 +62,22 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
+    public Order getOrderById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Order not found: " + id));
+    }
+
     public Page<UserOrderResponse> getByUser(String email, Pageable pageable) {
         return orderRepository.findByUserEmail(email, pageable).map(orderMapper::toUserResponse);
     }
 
-    @Auditable(action = "UPDATE_STATUS", entity = "Order")
+    @Auditable(action = AuditAction.UPDATE, entity = "Order")
     @Transactional
     public OrderResponse updateStatus(Long id, OrderStatus newStatus) {
         var order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
 
-        validateStatusTransition(order, newStatus);
+        order.getStatus().validateTransition(newStatus, order.getDeliveryMethod());
         order.setStatus(newStatus);
         var updated = orderRepository.save(order);
 
@@ -82,28 +88,13 @@ public class OrderService {
         return orderMapper.toResponse(updated);
     }
 
-    private void validateStatusTransition(Order order, OrderStatus newStatus) {
-        OrderStatus current = order.getStatus();
-
-        if (current == newStatus) {
-            throw new BadRequestException("Order already has status: " + current);
-        }
-
-        if (newStatus == OrderStatus.CANCELLED && current != OrderStatus.NEW) {
-            throw new BadRequestException("Cannot cancel order with status: " + current);
-        }
-
-        if (newStatus == OrderStatus.DELIVERING && order.getDeliveryMethod() == DeliveryMethod.PICKUP) {
-            throw new BadRequestException("Cannot set DELIVERING for PICKUP order");
-        }
-
-        if (newStatus == OrderStatus.READY && order.getDeliveryMethod() == DeliveryMethod.DELIVERY) {
-            throw new BadRequestException("Cannot set READY for DELIVERY order");
-        }
-
-        if (newStatus == OrderStatus.DELIVERED && order.getDeliveryMethod() != DeliveryMethod.DELIVERY) {
-            throw new BadRequestException("Cannot set DELIVERED for PICKUP order");
-        }
+    @Transactional
+    public void confirmOrder(Long orderId) {
+        var order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+        order.setStatus(OrderStatus.CONFIRMED);
+        orderRepository.save(order);
+        log.info("Order {} confirmed after payment", orderId);
     }
 
     private void validateDelivery(CreateOrderRequest request) {
@@ -122,21 +113,24 @@ public class OrderService {
             if (!product.isAvailable()) {
                 throw new BadRequestException("Product is not available: " + product.getName());
             }
+            var unitPrice = product.getPrice();
+            var subtotal = unitPrice.multiply(BigDecimal.valueOf(item.quantity()));
             return OrderItem.builder()
                     .product(product)
                     .quantity(item.quantity())
-                    .price(product.getPrice())
+                    .unitPrice(unitPrice)
+                    .subtotal(subtotal)
                     .build();
         }).toList();
     }
 
-    private BigDecimal calculateTotalPrice(List<OrderItem> items) {
+    private BigDecimal calculateTotalAmount(List<OrderItem> items) {
         return items.stream()
-                .map(i -> i.getPrice().multiply(BigDecimal.valueOf(i.getQuantity())))
+                .map(OrderItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    private Order buildOrder(CreateOrderRequest request, List<OrderItem> items, BigDecimal totalPrice) {
+    private Order buildOrder(CreateOrderRequest request, List<OrderItem> items, BigDecimal totalAmount) {
         return Order.builder()
                 .customerName(request.customerName())
                 .phone(request.phone())
@@ -146,7 +140,7 @@ public class OrderService {
                 .apartment(request.address() != null ? request.address().apartment() : null)
                 .addressComment(request.address() != null ? request.address().comment() : null)
                 .deliveryMethod(request.deliveryMethod())
-                .totalAmount(totalPrice)
+                .totalAmount(totalAmount)
                 .items(items)
                 .build();
     }

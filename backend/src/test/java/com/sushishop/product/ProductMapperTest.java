@@ -42,8 +42,8 @@ public class ProductMapperTest {
         assertThat(response.available()).isTrue();
         assertThat(response.weight()).isEqualTo(250);
         assertThat(response.pieces()).isEqualTo(8);
-        assertThat(response.images()).isNull();
-        assertThat(response.reviewCount()).isNull();
+        assertThat(response.images()).isEmpty();
+        assertThat(response.reviewCount()).isZero();
         assertThat(response.averageRating()).isNull();
         assertThat(response.discountedPrice()).isNull();
     }

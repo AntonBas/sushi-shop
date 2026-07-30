@@ -1,11 +1,10 @@
 package com.sushishop.payment;
 
 import com.sushishop.order.Order;
-import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.order.OrderService;
 import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.order.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,7 +17,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PaymentServiceTest {
@@ -27,7 +27,7 @@ public class PaymentServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
-    private OrderRepository orderRepository;
+    private OrderService orderService;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -37,7 +37,7 @@ public class PaymentServiceTest {
         var order = new Order();
         order.setId(1L);
 
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderService.getOrderById(1L)).thenReturn(order);
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var result = paymentService.create(1L, "sess_123", new BigDecimal("500.00"));
@@ -62,7 +62,7 @@ public class PaymentServiceTest {
 
     @Test
     void shouldThrowWhenOrderNotFound() {
-        when(orderRepository.findById(99L)).thenReturn(Optional.empty());
+        when(orderService.getOrderById(99L)).thenThrow(new NotFoundException("Order not found: 99"));
 
         assertThatThrownBy(() -> paymentService.create(99L, "sess_123", new BigDecimal("500.00")))
                 .isInstanceOf(NotFoundException.class);
@@ -71,6 +71,7 @@ public class PaymentServiceTest {
     @Test
     void shouldConfirmPayment() {
         var order = new Order();
+        order.setId(1L);
         var payment = Payment.builder()
                 .stripeSessionId("sess_123")
                 .status(PaymentStatus.PENDING)
@@ -82,8 +83,8 @@ public class PaymentServiceTest {
         paymentService.confirmPayment("sess_123");
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         verify(paymentRepository).save(payment);
+        verify(orderService).confirmOrder(1L);
     }
 
     @Test

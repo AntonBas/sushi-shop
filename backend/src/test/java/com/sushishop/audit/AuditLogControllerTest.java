@@ -1,6 +1,7 @@
 package com.sushishop.audit;
 
 import com.sushishop.audit.dto.AuditLogResponse;
+import com.sushishop.shared.enums.AuditAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,7 @@ public class AuditLogControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAllAuditLogs() throws Exception {
-        var log = new AuditLogResponse(1L, "CREATE", "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
+        var log = new AuditLogResponse(1L, AuditAction.CREATE, "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
         Page<AuditLogResponse> page = new PageImpl<>(List.of(log));
 
         when(auditLogService.getAll(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
@@ -58,10 +59,10 @@ public class AuditLogControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAuditLogsWithFilters() throws Exception {
-        var log = new AuditLogResponse(1L, "CREATE", "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
+        var log = new AuditLogResponse(1L, AuditAction.CREATE, "Product", 1L, "Product created", "admin@example.com", LocalDateTime.now());
         Page<AuditLogResponse> page = new PageImpl<>(List.of(log));
 
-        when(auditLogService.getAll(eq("CREATE"), eq("Product"), eq(1L), eq("admin@example.com"), any(), any(), any(Pageable.class)))
+        when(auditLogService.getAll(eq(AuditAction.CREATE), eq("Product"), eq(1L), eq("admin@example.com"), any(), any(), any(Pageable.class)))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/admin/audit")

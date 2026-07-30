@@ -1,10 +1,11 @@
 package com.sushishop.product;
 
-import com.sushishop.shared.BaseEntity;
 import com.sushishop.promotion.Promotion;
 import com.sushishop.review.Review;
+import com.sushishop.shared.BaseEntity;
 import com.sushishop.shared.enums.Category;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -14,42 +15,56 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(callSuper = true)
-@Table(name = "products")
+@Table(name = "products", indexes = {
+        @Index(name = "idx_product_category", columnList = "category")})
+@EqualsAndHashCode(callSuper = true, exclude = {"productImages", "promotions", "reviews"})
 public class Product extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Size(max = 120)
+    @Column(nullable = false, unique = true, length = 120)
+    private String slug;
+
+    @NotBlank
+    @Size(max = 50)
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(length = 250)
+    @Size(max = 500)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
+    @NotNull
+    @Positive
+    @Digits(integer = 8, fraction = 2)
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Category category;
 
-    @Column
+    @Positive
+    @Column(nullable = false)
     private Integer weight;
 
-    @Column
     private Integer pieces;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ProductImage> productImages = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "products")
+    @ManyToMany(mappedBy = "products", fetch = FetchType.LAZY)
     @Builder.Default
     private Set<Promotion> promotions = new HashSet<>();
 
@@ -57,6 +72,7 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
+    @Column(nullable = false)
     @Builder.Default
     private boolean available = true;
 }

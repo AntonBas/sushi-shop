@@ -5,6 +5,7 @@ import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
@@ -29,7 +30,7 @@ public class ReviewService {
     private final ReviewMapper reviewMapper;
     private final ReviewReplyRepository reviewReplyRepository;
 
-    @Auditable(action = "CREATE", entity = "Review")
+    @Auditable(action = AuditAction.CREATE, entity = "Review")
     @Transactional
     @CacheEvict(value = "products", key = "#request.productId()")
     public ReviewResponse create(CreateReviewRequest request, String email) {
@@ -89,7 +90,7 @@ public class ReviewService {
         return reviewMapper.toResponse(saved);
     }
 
-    @Auditable(action = "DELETE", entity = "Review")
+    @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
     @CacheEvict(value = "products", key = "#review.product.id")
     public void delete(Long reviewId, String email) {

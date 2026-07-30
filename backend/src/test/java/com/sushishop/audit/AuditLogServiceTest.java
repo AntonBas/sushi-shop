@@ -1,6 +1,7 @@
 package com.sushishop.audit;
 
 import com.sushishop.audit.dto.AuditLogResponse;
+import com.sushishop.shared.enums.AuditAction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatchers;
@@ -33,7 +34,7 @@ public class AuditLogServiceTest {
 
     @Test
     void shouldLogAction() {
-        auditLogService.log("CREATE", "Product", 1L, "Product created", "admin@example.com");
+        auditLogService.log(AuditAction.CREATE, "Product", 1L, "Product created", "admin@example.com");
         verify(auditLogRepository).save(any());
     }
 
@@ -44,21 +45,15 @@ public class AuditLogServiceTest {
     }
 
     @Test
-    void shouldNotLogWhenActionIsBlank() {
-        auditLogService.log("   ", "Product", 1L, "details", "admin@example.com");
-        verify(auditLogRepository, never()).save(any());
-    }
-
-    @Test
     void shouldUseSystemAsDefaultPerformedBy() {
-        auditLogService.log("CREATE", "Product", 1L, "details", null);
+        auditLogService.log(AuditAction.CREATE, "Product", 1L, "details", null);
         verify(auditLogRepository).save(any());
     }
 
     @Test
     void shouldGetAllWithNoFilters() {
         var log = new AuditLog();
-        var response = new AuditLogResponse(1L, "CREATE", "Product", 5L, "details", "admin@example.com", LocalDateTime.now());
+        var response = new AuditLogResponse(1L, AuditAction.CREATE, "Product", 5L, "details", "admin@example.com", LocalDateTime.now());
         Page<AuditLog> page = new PageImpl<>(List.of(log));
 
         when(auditLogRepository.findAll(ArgumentMatchers.<Specification<AuditLog>>any(), any(Pageable.class))).thenReturn(page);
@@ -72,13 +67,13 @@ public class AuditLogServiceTest {
     @Test
     void shouldGetAllWithFilters() {
         var log = new AuditLog();
-        var response = new AuditLogResponse(1L, "CREATE", "Product", 5L, "details", "admin@example.com", LocalDateTime.now());
+        var response = new AuditLogResponse(1L, AuditAction.CREATE, "Product", 5L, "details", "admin@example.com", LocalDateTime.now());
         Page<AuditLog> page = new PageImpl<>(List.of(log));
 
         when(auditLogRepository.findAll(ArgumentMatchers.<Specification<AuditLog>>any(), any(Pageable.class))).thenReturn(page);
         when(auditLogMapper.toResponse(log)).thenReturn(response);
 
-        var result = auditLogService.getAll("CREATE", "Product", 5L, "admin@example.com",
+        var result = auditLogService.getAll(AuditAction.CREATE, "Product", 5L, "admin@example.com",
                 LocalDateTime.now().minusDays(1), LocalDateTime.now(), Pageable.unpaged());
 
         assertThat(result.getContent()).hasSize(1);

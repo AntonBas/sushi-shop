@@ -3,7 +3,6 @@ package com.sushishop.order;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.request.OrderItemRequest;
@@ -37,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class OrderControllerTest {
+class OrderControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -62,7 +61,7 @@ public class OrderControllerTest {
 
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111",
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
-                DeliveryMethod.DELIVERY, OrderStatus.NEW, PaymentStatus.PENDING, new BigDecimal("500.00"), null, List.of());
+                DeliveryMethod.DELIVERY, OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
         when(orderService.create(any(CreateOrderRequest.class), eq("test@test.com"))).thenReturn(response);
 
@@ -86,7 +85,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(username = "test@test.com")
     void shouldGetMyOrders() throws Exception {
-        var response = new UserOrderResponse(1L, OrderStatus.NEW, PaymentStatus.PENDING, DeliveryMethod.DELIVERY, BigDecimal.ZERO, null, List.of());
+        var response = new UserOrderResponse(1L, OrderStatus.NEW, DeliveryMethod.DELIVERY, BigDecimal.ZERO, null, List.of());
         Page<UserOrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);
@@ -100,7 +99,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldGetAllOrders() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
         Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getAll(any(Pageable.class))).thenReturn(page);
@@ -112,7 +111,7 @@ public class OrderControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
         when(orderService.getById(1L)).thenReturn(response);
 
@@ -124,7 +123,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(roles = {"ADMIN"})
     void shouldUpdateStatus() throws Exception {
-        var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.COOKING, PaymentStatus.PENDING, BigDecimal.ZERO, null, List.of());
+        var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, OrderStatus.COOKING, BigDecimal.ZERO, null, List.of());
 
         when(orderService.updateStatus(eq(1L), any())).thenReturn(response);
 

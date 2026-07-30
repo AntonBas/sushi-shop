@@ -14,7 +14,7 @@ public record UpdateProductRequest(
         String name,
 
         @Schema(description = "Product description", example = "Updated description")
-        @Size(max = 250, message = "Description must be less than 250 characters")
+        @Size(max = 500, message = "Description must be less than 500 characters")
         String description,
 
         @Schema(description = "Product price", example = "280.00")

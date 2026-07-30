@@ -1,6 +1,7 @@
 package com.sushishop.audit;
 
 import com.sushishop.audit.dto.AuditLogResponse;
+import com.sushishop.shared.enums.AuditAction;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,8 +21,8 @@ public class AuditLogService {
     private final AuditLogMapper auditLogMapper;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void log(String action, String entityName, Long entityId, String details, String performedBy) {
-        if (action == null || action.isBlank()) {
+    public void log(AuditAction action, String entityName, Long entityId, String details, String performedBy) {
+        if (action == null) {
             log.warn("Audit log skipped: action is empty");
             return;
         }
@@ -37,7 +38,7 @@ public class AuditLogService {
         log.info("Audit: {} {} [{}] by {}", action, entityName, entityId, performedBy);
     }
 
-    public Page<AuditLogResponse> getAll(String action, String entityName, Long entityId,
+    public Page<AuditLogResponse> getAll(AuditAction action, String entityName, Long entityId,
                                          String performedBy, LocalDateTime start, LocalDateTime end,
                                          Pageable pageable) {
         var spec = AuditLogSpecification.filter(action, entityName, entityId, performedBy, start, end);

@@ -2,6 +2,7 @@ package com.sushishop.user;
 
 import com.sushishop.annotation.Auditable;
 import com.sushishop.mail.MailService;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.enums.UserRole;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
@@ -33,7 +34,7 @@ public class UserService {
     private final UserMapper userMapper;
     private final MailService mailService;
 
-    @Auditable(action = "REGISTER", entity = "User")
+    @Auditable(action = AuditAction.CREATE, entity = "User")
     @Transactional
     public UserResponse create(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -65,7 +66,7 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
     }
 
-    @Auditable(action = "UPDATE_PROFILE", entity = "User")
+    @Auditable(action = AuditAction.UPDATE, entity = "User")
     public UserResponse update(String email, UpdateUserRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
@@ -84,7 +85,7 @@ public class UserService {
         return userMapper.toResponse(saved);
     }
 
-    @Auditable(action = "CHANGE_PASSWORD", entity = "User")
+    @Auditable(action = AuditAction.UPDATE, entity = "User")
     @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)

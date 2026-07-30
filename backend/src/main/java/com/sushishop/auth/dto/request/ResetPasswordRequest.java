@@ -2,6 +2,7 @@ package com.sushishop.auth.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Reset password request")
@@ -11,7 +12,8 @@ public record ResetPasswordRequest(
         String token,
 
         @NotBlank(message = "New password is required")
-        @Size(min = 8, max = 32, message = "Password must be between 8 and 64 characters")
+        @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters")
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "Password must contain at least one letter and one number")
         @Schema(description = "New password", example = "NewPassword123")
         String newPassword,
 

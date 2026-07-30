@@ -1,11 +1,12 @@
 package com.sushishop.promotion;
 
 import com.sushishop.annotation.Auditable;
+import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Slf4j
@@ -29,7 +30,7 @@ public class PromotionService {
     private final ProductRepository productRepository;
     private final PromotionMapper promotionMapper;
 
-    @Auditable(action = "CREATE", entity = "Promotion")
+    @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "promotions", allEntries = true),
@@ -39,7 +40,7 @@ public class PromotionService {
         validateDates(request.startDate(), request.endDate());
         validateProductsExist(request.productIds());
 
-        var products = new ArrayList<>(productRepository.findAllById(request.productIds()));
+        var products = new HashSet<>(productRepository.findAllById(request.productIds()));
 
         var promotion = Promotion.builder()
                 .title(request.title())
@@ -75,7 +76,7 @@ public class PromotionService {
         return promotionRepository.findById(id).map(promotionMapper::toResponse).orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
     }
 
-    @Auditable(action = "DELETE", entity = "Promotion")
+    @Auditable(action = AuditAction.DELETE, entity = "Promotion")
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = "promotions", allEntries = true),

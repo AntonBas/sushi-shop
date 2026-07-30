@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 public record CreateReviewReplyRequest(
         @Schema(description = "Reply message", example = "Thank you for your feedback!")
         @NotBlank(message = "Message is required")
-        @Size(max = 100, message = "Message must be less than 100 characters")
+        @Size(max = 250, message = "Message must be less than 250 characters")
         String message
 ) {
 }

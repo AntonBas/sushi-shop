@@ -3,15 +3,18 @@ package com.sushishop.review;
 import com.sushishop.shared.BaseEntity;
 import com.sushishop.user.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(callSuper = true)
 @Table(name = "review_replies")
+@EqualsAndHashCode(callSuper = true, exclude = {"review", "user"})
 public class ReviewReply extends BaseEntity {
 
     @Id
@@ -26,6 +29,8 @@ public class ReviewReply extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false, length = 100)
+    @NotBlank
+    @Size(max = 250)
+    @Column(nullable = false, length = 250)
     private String message;
 }

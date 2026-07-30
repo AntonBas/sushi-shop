@@ -1,8 +1,7 @@
 package com.sushishop.product;
 
 import com.sushishop.annotation.Auditable;
-import com.sushishop.promotion.Promotion;
-import com.sushishop.review.Review;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.Category;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
@@ -23,11 +22,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -39,7 +34,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final FileStorageService fileStorageService;
 
-    @Auditable(action = "CREATE", entity = "Product")
+    @Auditable(action = AuditAction.CREATE, entity = "Product")
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse create(CreateProductRequest request, List<MultipartFile> images) {
         log.info("Creating product with {} images: {}", images != null ? images.size() : 0, request.name());
@@ -52,14 +47,16 @@ public class ProductService {
 
         var saved = productRepository.save(product);
         log.info("Created product with ID: {}", saved.getId());
-        return enrichProductResponse(saved);
+        return productMapper.toResponse(saved);
     }
 
     @Cacheable("products")
     public Page<ProductListResponse> getAll(Pageable pageable, String search, Category category, Boolean available) {
-        var spec = Specification.where(ProductSpecification.hasSearch(search)).and(ProductSpecification.hasCategory(category)).and(ProductSpecification.isAvailable(available));
+        var spec = Specification.where(ProductSpecification.hasSearch(search))
+                .and(ProductSpecification.hasCategory(category))
+                .and(ProductSpecification.isAvailable(available));
         log.info("Getting all products, page: {}", pageable.getPageNumber());
-        return productRepository.findAll(spec, pageable).map(this::enrichListResponse);
+        return productRepository.findAll(spec, pageable).map(productMapper::toListResponse);
     }
 
     @Cacheable(value = "products", key = "#id")
@@ -67,14 +64,14 @@ public class ProductService {
         log.info("Get product with ID: {}", id);
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-        return enrichProductResponse(product);
+        return productMapper.toResponse(product);
     }
 
-    @Cacheable(value = "products", key = "popular")
+    @Cacheable(value = "products", key = "'popular'")
     public List<ProductListResponse> getPopular() {
         return productRepository.findPopular(Pageable.ofSize(10))
                 .stream()
-                .map(this::enrichListResponse)
+                .map(productMapper::toListResponse)
                 .toList();
     }
 
@@ -84,11 +81,11 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         return productRepository.findRelated(product.getCategory(), id, Pageable.ofSize(4))
                 .stream()
-                .map(this::enrichListResponse)
+                .map(productMapper::toListResponse)
                 .toList();
     }
 
-    @Auditable(action = "UPDATE", entity = "Product")
+    @Auditable(action = AuditAction.UPDATE, entity = "Product")
     @CachePut(value = "products", key = "#id")
     public ProductResponse update(Long id, UpdateProductRequest request) {
         log.info("Update product : {}", request.name());
@@ -97,7 +94,7 @@ public class ProductService {
         productMapper.updateEntity(request, product);
         var updated = productRepository.save(product);
         log.info("Product updated: {}", updated.getId());
-        return enrichProductResponse(updated);
+        return productMapper.toResponse(updated);
     }
 
     @CacheEvict(value = "products", key = "#productId")
@@ -131,7 +128,7 @@ public class ProductService {
         log.info("Image {} deleted from product: {}", imageId, productId);
     }
 
-    @Auditable(action = "TOGGLE", entity = "Product")
+    @Auditable(action = AuditAction.UPDATE, entity = "Product")
     @CacheEvict(value = "products", key = "#id")
     public void toggleAvailability(Long id) {
         var product = productRepository.findById(id)
@@ -141,7 +138,7 @@ public class ProductService {
         log.info("Product {} is now {}", id, product.isAvailable() ? "available" : "unavailable");
     }
 
-    @Auditable(action = "DELETE", entity = "Product")
+    @Auditable(action = AuditAction.DELETE, entity = "Product")
     @Caching(evict = {@CacheEvict(value = "products", key = "#id"),
             @CacheEvict(value = "products", allEntries = true)})
     public void delete(Long id) {
@@ -163,63 +160,5 @@ public class ProductService {
             }
         }
         product.setProductImages(productImages);
-    }
-
-    private Promotion getBestPromo(Product product) {
-        return product.getPromotions().stream()
-                .filter(p -> p.isActive() && p.getEndDate().isAfter(LocalDateTime.now()))
-                .max(Comparator.comparing(Promotion::getDiscountPercent))
-                .orElse(null);
-    }
-
-    private Double getAverageRating(Product product) {
-        if (product.getReviews().isEmpty()) return null;
-        return product.getReviews().stream()
-                .mapToInt(Review::getRating).average().orElse(0.0);
-    }
-
-    private ProductListResponse enrichListResponse(Product product) {
-        var response = productMapper.toListResponse(product);
-        var bestPromo = getBestPromo(product);
-
-        BigDecimal discountedPrice = null;
-        if (bestPromo != null) {
-            var discount = bestPromo.getDiscountPercent().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            discountedPrice = product.getPrice().multiply(BigDecimal.ONE.subtract(discount));
-        }
-
-        return new ProductListResponse(
-                response.id(), response.name(), response.price(), discountedPrice,
-                getAverageRating(product), response.category(), response.mainImage(), response.available(),
-                product.getWeight(), product.getPieces()
-        );
-    }
-
-    private ProductResponse enrichProductResponse(Product product) {
-        var response = productMapper.toResponse(product);
-        var bestPromo = getBestPromo(product);
-
-        BigDecimal discountedPrice = null;
-        BigDecimal discountPercent = null;
-        String promotionTitle = null;
-        if (bestPromo != null) {
-            discountPercent = bestPromo.getDiscountPercent();
-            promotionTitle = bestPromo.getTitle();
-            var discount = discountPercent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-            discountedPrice = product.getPrice().multiply(BigDecimal.ONE.subtract(discount));
-        }
-
-        List<String> images = product.getProductImages().stream()
-                .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
-                .map(ProductImage::getUrl).toList();
-
-        int reviewCount = product.getReviews().size();
-
-        return new ProductResponse(
-                response.id(), response.name(), response.description(),
-                response.price(), discountedPrice, discountPercent, promotionTitle,
-                response.category(), images, reviewCount, getAverageRating(product), response.available(),
-                product.getWeight(), product.getPieces()
-        );
     }
 }

@@ -3,7 +3,6 @@ package com.sushishop.order;
 import com.sushishop.product.Product;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.order.dto.response.OrderItemResponse;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
@@ -12,14 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.math.BigDecimal;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
 public class OrderMapperTest {
+
     @Autowired
     private OrderMapper orderMapper;
 
@@ -35,7 +35,8 @@ public class OrderMapperTest {
                 .id(1L)
                 .product(product)
                 .quantity(2)
-                .price(new BigDecimal("250.00"))
+                .unitPrice(new BigDecimal("250.00"))
+                .subtotal(new BigDecimal("500.00"))
                 .build();
 
         Order order = Order.builder()
@@ -49,7 +50,6 @@ public class OrderMapperTest {
                 .addressComment("code 123")
                 .deliveryMethod(DeliveryMethod.DELIVERY)
                 .status(OrderStatus.NEW)
-                .paymentStatus(PaymentStatus.PENDING)
                 .totalAmount(new BigDecimal("500.00"))
                 .items(List.of(item))
                 .build();
@@ -63,7 +63,6 @@ public class OrderMapperTest {
         assertThat(response.phone()).isEqualTo("+380961791111");
         assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
         assertThat(response.status()).isEqualTo(OrderStatus.NEW);
-        assertThat(response.paymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         assertThat(response.address()).isNotNull();
         assertThat(response.address().city()).isEqualTo("Lviv");
@@ -86,14 +85,14 @@ public class OrderMapperTest {
                 .id(1L)
                 .product(product)
                 .quantity(2)
-                .price(new BigDecimal("250.00"))
+                .unitPrice(new BigDecimal("250.00"))
+                .subtotal(new BigDecimal("500.00"))
                 .build();
 
         Order order = Order.builder()
                 .id(1L)
                 .deliveryMethod(DeliveryMethod.DELIVERY)
                 .status(OrderStatus.NEW)
-                .paymentStatus(PaymentStatus.PENDING)
                 .totalAmount(new BigDecimal("500.00"))
                 .items(List.of(item))
                 .build();
@@ -105,7 +104,6 @@ public class OrderMapperTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
         assertThat(response.status()).isEqualTo(OrderStatus.NEW);
-        assertThat(response.paymentStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         assertThat(response.items()).hasSize(1);
     }
@@ -122,7 +120,8 @@ public class OrderMapperTest {
                 .id(1L)
                 .product(product)
                 .quantity(2)
-                .price(new BigDecimal("250.00"))
+                .unitPrice(new BigDecimal("250.00"))
+                .subtotal(new BigDecimal("500.00"))
                 .build();
 
         OrderItemResponse response = orderMapper.toItemResponse(item);
@@ -130,7 +129,7 @@ public class OrderMapperTest {
         assertThat(response.productId()).isEqualTo(1L);
         assertThat(response.productName()).isEqualTo("Maki");
         assertThat(response.quantity()).isEqualTo(2);
-        assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
+        assertThat(response.unitPrice()).isEqualByComparingTo(new BigDecimal("250.00"));
     }
 
     @Test
@@ -143,13 +142,15 @@ public class OrderMapperTest {
         OrderItem item1 = OrderItem.builder()
                 .product(product)
                 .quantity(2)
-                .price(new BigDecimal("250.00"))
+                .unitPrice(new BigDecimal("250.00"))
+                .subtotal(new BigDecimal("500.00"))
                 .build();
 
         OrderItem item2 = OrderItem.builder()
                 .product(product)
                 .quantity(1)
-                .price(new BigDecimal("250.00"))
+                .unitPrice(new BigDecimal("250.00"))
+                .subtotal(new BigDecimal("250.00"))
                 .build();
 
         List<OrderItemResponse> responses = orderMapper.toItemResponseList(List.of(item1, item2));

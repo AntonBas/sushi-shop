@@ -16,7 +16,7 @@ public record OrderItemResponse(
         Integer quantity,
 
         @Schema(description = "Price per item", example = "250.00")
-        BigDecimal price,
+        BigDecimal unitPrice,
 
         @Schema(description = "Product main image")
         String mainImage

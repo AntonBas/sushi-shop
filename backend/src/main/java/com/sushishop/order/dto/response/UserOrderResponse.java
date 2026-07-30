@@ -2,7 +2,6 @@ package com.sushishop.order.dto.response;
 
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -16,9 +15,6 @@ public record UserOrderResponse(
 
         @Schema(description = "Order status", example = "NEW")
         OrderStatus status,
-
-        @Schema(description = "Payment status", example = "PENDING")
-        PaymentStatus paymentStatus,
 
         @Schema(description = "Delivery method", example = "DELIVERY")
         DeliveryMethod deliveryMethod,
