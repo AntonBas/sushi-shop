@@ -1,3 +1,8 @@
+ALTER TABLE products ADD COLUMN IF NOT EXISTS slug VARCHAR(120);
+UPDATE products SET slug = 'product-' || id WHERE slug IS NULL;
+ALTER TABLE products ALTER COLUMN slug SET NOT NULL;
+ALTER TABLE products ADD CONSTRAINT uq_product_slug UNIQUE (slug);
+
 ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(255);
 CREATE INDEX IF NOT EXISTS idx_product_category ON products(category);
 
