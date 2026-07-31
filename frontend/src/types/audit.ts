@@ -1,6 +1,9 @@
+import type { AuditAction } from './enums'
+
+
 export interface AuditLogResponse {
   id: number
-  action: string
+  action: AuditAction
   entityName: string
   entityId: number | null
   details: string | null
@@ -9,7 +12,7 @@ export interface AuditLogResponse {
 }
 
 export interface AuditLogFilters {
-  action?: string
+  action?: AuditAction
   entityName?: string
   entityId?: number
   performedBy?: string

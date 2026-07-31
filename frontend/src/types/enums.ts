@@ -1,4 +1,4 @@
-export type Category = 'ROLL' | 'SET' | 'DRINK' | 'DESSERT' | 'SOUP' | 'EXTRA'
+export type Category = 'ROLL' | 'SET' | 'DRINK' | 'DESSERT' | 'SOUP' | 'SALAD' | 'WOK' | 'EXTRA'
 
 export type DeliveryMethod = 'DELIVERY' | 'PICKUP'
 
@@ -8,12 +8,16 @@ export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
 
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'COURIER'
 
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'EXPORT'
+
 export const CATEGORY_DISPLAY: Record<Category, string> = {
   ROLL: 'Roll',
   SET: 'Set',
   DRINK: 'Drink',
   DESSERT: 'Dessert',
   SOUP: 'Soup',
+  SALAD: 'Salad',
+  WOK: 'Wok',
   EXTRA: 'Extra',
 }
 
