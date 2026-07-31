@@ -12,16 +12,16 @@ import RelatedProducts from "../../components/Product/RelatedProducts/RelatedPro
 import styles from "./ProductPage.module.css";
 
 export default function ProductPage() {
-  const { id } = useParams<{ id: string }>();
-  const { product, productLoading, getProduct } = useProducts();
+  const { slug } = useParams<{ slug: string }>();
+  const { product, productLoading, getProductBySlug } = useProducts();
   const { addItem } = useCart();
   const { showNotification } = useNotification();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
-    if (id) getProduct(Number(id));
-  }, [id]);
+    if (slug) getProductBySlug(slug);
+  }, [slug]);
 
   if (productLoading) return <Loading text="Loading product..." />;
   if (!product) return null;

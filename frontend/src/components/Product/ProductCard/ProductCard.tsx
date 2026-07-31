@@ -10,7 +10,7 @@ interface Props {
 
 export default function ProductCard({ product }: Props) {
   return (
-    <Link to={`/products/${product.id}`} className={styles.card}>
+    <Link to={`/products/${product.slug}`} className={styles.card}>
       <div className={styles.image}>
         <img src={product.mainImage || "/placeholder.jpg"} alt={product.name} />
         {!product.available && (

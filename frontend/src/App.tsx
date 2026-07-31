@@ -25,7 +25,7 @@ import AdminAuditPage from "./pages/Admin/Audit/AdminAuditPage";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import MenuPage from "./pages/Menu/MenuPage";
 import OrderSuccessPage from "./pages/OrderSuccess/OrderSuccessPage";
-import OrderCancelPage from './pages/OrderCancel/OrderCancelPage'
+import OrderCancelPage from "./pages/OrderCancel/OrderCancelPage";
 
 function App() {
   const { loading } = useAuth();
@@ -38,7 +38,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/menu" element={<MenuPage />} />
         <Route path="/cart" element={<CartPage />} />
-        <Route path="/products/:id" element={<ProductPage />} />
+        <Route path="/products/:slug" element={<ProductPage />} />{" "}
         <Route path="/promotions/:id" element={<PromotionPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
