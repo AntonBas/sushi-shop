@@ -111,7 +111,10 @@ export default function ProductPage() {
 
           <div className={styles.details}>
             {product.weight && (
-              <span className={styles.detail}>{product.weight}g</span>
+              <span className={styles.detail}>
+                {product.weight}
+                {product.category === "DRINK" ? "ml" : "g"}
+              </span>
             )}
             {product.pieces && (
               <span className={styles.detail}>{product.pieces} pieces</span>
