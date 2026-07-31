@@ -3,6 +3,7 @@ package com.sushishop.payment;
 import com.sushishop.order.Order;
 import com.sushishop.order.OrderService;
 import com.sushishop.shared.enums.PaymentStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -21,13 +23,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PaymentServiceTest {
+class PaymentServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
 
     @Mock
     private OrderService orderService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private PaymentService paymentService;
@@ -84,7 +89,7 @@ public class PaymentServiceTest {
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
         verify(paymentRepository).save(payment);
-        verify(orderService).confirmOrder(1L);
+        verify(eventPublisher).publishEvent(any(PaymentConfirmedEvent.class));
     }
 
     @Test
