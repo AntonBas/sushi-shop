@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductServiceTest {
+class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -35,6 +35,9 @@ public class ProductServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private SlugService slugService;
 
     @InjectMocks
     private ProductService productService;
@@ -46,8 +49,9 @@ public class ProductServiceTest {
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
+        var expected = new ProductResponse(1L, "maki", "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
 
+        when(slugService.generateUniqueSlug("Maki")).thenReturn("maki");
         when(productMapper.toEntity(request)).thenReturn(product);
         when(productRepository.save(product)).thenReturn(product);
         when(productMapper.toResponse(product)).thenReturn(expected);
@@ -64,7 +68,7 @@ public class ProductServiceTest {
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
+        var expected = new ProductResponse(1L, "maki", "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(expected);
@@ -86,12 +90,14 @@ public class ProductServiceTest {
     void shouldUpdateProduct() {
         var request = new UpdateProductRequest("Updated", null, null, null, null, null, null);
         var product = new Product();
+        product.setName("Old Name");
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
-        var expected = new ProductResponse(1L, "Updated", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, null, null);
+        var expected = new ProductResponse(1L, "updated", "Updated", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, null, null);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(slugService.generateUniqueSlug("Updated")).thenReturn("updated");
         when(productRepository.save(product)).thenReturn(product);
         when(productMapper.toResponse(product)).thenReturn(expected);
 
@@ -182,7 +188,7 @@ public class ProductServiceTest {
         relatedProduct.setReviews(new ArrayList<>());
         relatedProduct.setProductImages(new ArrayList<>());
 
-        var listResponse = new ProductListResponse(2L, "Related", BigDecimal.TEN, null, null, Category.ROLL, null, true, null, null);
+        var listResponse = new ProductListResponse(2L, "related", "Related", BigDecimal.TEN, null, null, Category.ROLL, null, true, null, null);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.findRelated(Category.ROLL, 1L, Pageable.ofSize(4))).thenReturn(List.of(relatedProduct));

@@ -1,15 +1,15 @@
 package com.sushishop.product;
 
 import com.sushishop.annotation.Auditable;
-import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.enums.Category;
+import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.shared.enums.AuditAction;
+import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.file.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,12 +33,14 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
     private final FileStorageService fileStorageService;
+    private final SlugService slugService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Product")
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse create(CreateProductRequest request, List<MultipartFile> images) {
         log.info("Creating product with {} images: {}", images != null ? images.size() : 0, request.name());
         var product = productMapper.toEntity(request);
+        product.setSlug(slugService.generateUniqueSlug(request.name()));
         addImagesToProduct(product, images);
 
         if (request.category() == Category.SET && request.pieces() == null) {
@@ -62,9 +64,13 @@ public class ProductService {
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getById(Long id) {
         log.info("Get product with ID: {}", id);
-        var product = productRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-        return productMapper.toResponse(product);
+        return productRepository.findById(id).map(productMapper::toResponse).orElseThrow(() -> new NotFoundException("Product with ID: " + id));
+    }
+
+    @Cacheable(value = "products", key = "#slug")
+    public ProductResponse getBySlug(String slug) {
+        log.info("Get product by slug: {}", slug);
+        return productRepository.findBySlug(slug).map(productMapper::toResponse).orElseThrow(() -> new NotFoundException("Product not found: " + slug));
     }
 
     @Cacheable(value = "products", key = "'popular'")
@@ -92,6 +98,12 @@ public class ProductService {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         productMapper.updateEntity(request, product);
+
+        if (request.name() != null && !request.name().equals(product.getName())) {
+            product.setName(request.name());
+            product.setSlug(slugService.generateUniqueSlug(request.name()));
+        }
+
         var updated = productRepository.save(product);
         log.info("Product updated: {}", updated.getId());
         return productMapper.toResponse(updated);

@@ -46,7 +46,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetAllProducts() throws Exception {
-        var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), null, null, Category.ROLL, null, true, 250, 8);
+        var response = new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), null, null, Category.ROLL, null, true, 250, 8);
         Page<ProductListResponse> page = new PageImpl<>(List.of(response));
 
         when(productService.getAll(any(Pageable.class), isNull(), isNull(), isNull())).thenReturn(page);
@@ -58,7 +58,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new ProductResponse(1L, "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
+        var response = new ProductResponse(1L, "maki", "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
 
         when(productService.getById(1L)).thenReturn(response);
 
@@ -69,7 +69,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetPopular() throws Exception {
-        var response = new ProductListResponse(1L, "Maki", new BigDecimal("250.00"), null, 4.5, Category.ROLL, null, true, 250, 8);
+        var response = new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), null, 4.5, Category.ROLL, null, true, 250, 8);
 
         when(productService.getPopular()).thenReturn(List.of(response));
 
@@ -94,7 +94,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldGetRelated() throws Exception {
-        var response = new ProductListResponse(2L, "Related", new BigDecimal("200.00"), null, null, Category.ROLL, null, true, null, null);
+        var response = new ProductListResponse(2L, "related", "Related", new BigDecimal("200.00"), null, null, Category.ROLL, null, true, null, null);
 
         when(productService.getRelated(1L)).thenReturn(List.of(response));
 

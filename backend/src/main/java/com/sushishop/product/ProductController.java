@@ -66,6 +66,17 @@ public class ProductController {
         return ResponseEntity.ok(productService.getById(id));
     }
 
+    @GetMapping("/slug/{slug}")
+    @Operation(summary = "Get product by slug")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Product found"),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+    })
+    public ResponseEntity<ProductResponse> getBySlug(@PathVariable String slug) {
+        log.info("GET /api/products/slug/{}", slug);
+        return ResponseEntity.ok(productService.getBySlug(slug));
+    }
+
     @GetMapping("/popular")
     @Operation(summary = "Get popular products", description = "Returns top 10 products sorted by rating and review count")
     @ApiResponses(value = {

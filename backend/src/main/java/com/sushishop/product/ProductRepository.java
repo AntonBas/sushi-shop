@@ -23,6 +23,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Nonnull
     Optional<Product> findById(@Nonnull Long id);
 
+    Optional<Product> findBySlug(String slug);
+
     @Query("""
                 SELECT p FROM Product p
                 LEFT JOIN p.reviews r

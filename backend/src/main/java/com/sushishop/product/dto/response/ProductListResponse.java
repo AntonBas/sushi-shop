@@ -10,6 +10,9 @@ public record ProductListResponse(
         @Schema(description = "Product ID", example = "1")
         Long id,
 
+        @Schema(description = "Product slug", example = "california-roll")
+        String slug,
+
         @Schema(description = "Product name", example = "Maki")
         String name,
 
