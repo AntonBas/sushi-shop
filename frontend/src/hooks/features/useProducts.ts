@@ -31,6 +31,8 @@ export function useProducts() {
 
   const getProduct = (id: number) => itemApi.execute(() => productsApi.getProduct(id))
 
+  const getProductBySlug = (slug: string) => itemApi.execute(() => productsApi.getProductBySlug(slug))
+
   return {
     products,
     popular,
@@ -42,6 +44,7 @@ export function useProducts() {
     loadPopular,
     loadRelated,
     getProduct,
+    getProductBySlug,
     product: itemApi.data,
     productLoading: itemApi.loading
   }

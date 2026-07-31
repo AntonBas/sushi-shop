@@ -27,6 +27,11 @@ export const createProduct = async (product: CreateProductRequest, images?: File
   return data
 }
 
+export const getProductBySlug = async (slug: string): Promise<ProductResponse> => {
+  const { data } = await api.get(`/products/slug/${slug}`)
+  return data
+}
+
 export const updateProduct = async (id: number, data: UpdateProductRequest): Promise<ProductResponse> => {
   const { data: res } = await api.put(`/products/${id}`, data)
   return res

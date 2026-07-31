@@ -21,6 +21,7 @@ export interface UpdateProductRequest {
 
 export interface ProductListResponse {
   id: number
+  slug: string
   name: string
   price: number
   discountedPrice?: number | null
@@ -34,6 +35,7 @@ export interface ProductListResponse {
 
 export interface ProductResponse {
   id: number
+  slug: string
   name: string
   description?: string
   price: number
