@@ -97,12 +97,12 @@ public class ProductService {
         log.info("Update product : {}", request.name());
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-        productMapper.updateEntity(request, product);
 
         if (request.name() != null && !request.name().equals(product.getName())) {
-            product.setName(request.name());
             product.setSlug(slugService.generateUniqueSlug(request.name()));
         }
+
+        productMapper.updateEntity(request, product);
 
         var updated = productRepository.save(product);
         log.info("Product updated: {}", updated.getId());
