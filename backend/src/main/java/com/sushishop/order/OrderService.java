@@ -10,11 +10,13 @@ import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -86,6 +88,11 @@ public class OrderService {
 
         log.info("Order {} status updated to {}", id, newStatus);
         return orderMapper.toResponse(updated);
+    }
+
+    @EventListener
+    public void onPaymentConfirmed(PaymentConfirmedEvent event) {
+        confirmOrder(event.getPayment().getOrder().getId());
     }
 
     @Transactional

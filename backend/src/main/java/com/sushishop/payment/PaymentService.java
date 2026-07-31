@@ -4,10 +4,12 @@ import com.sushishop.annotation.Auditable;
 import com.sushishop.order.OrderService;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.PaymentStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderService orderService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Auditable(action = AuditAction.CREATE, entity = "Payment")
     @Transactional
@@ -58,7 +61,7 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
-        orderService.confirmOrder(payment.getOrder().getId());
+        eventPublisher.publishEvent(new PaymentConfirmedEvent(this, payment));
         log.info("Payment confirmed: {}", stripeSessionId);
     }
 }
