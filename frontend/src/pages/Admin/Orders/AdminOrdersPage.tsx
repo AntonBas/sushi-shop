@@ -1,16 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdmin";
 import { useNotification } from "../../../context/NotificationContext";
 import * as ordersApi from "../../../api/orders";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { OrderStatus } from "../../../types";
-import {
-  ORDER_STATUS_COLORS,
-  ORDER_STATUS_LABELS,
-  PAYMENT_STATUS_COLORS,
-  PAYMENT_STATUS_LABELS,
-} from "../../../types/enums";
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "../../../types/enums";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import styles from "./AdminOrdersPage.module.css";
 
 const STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
@@ -29,10 +26,28 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const stompRef = useRef<Client | null>(null);
 
   useEffect(() => {
     loadOrders(0);
   }, []);
+
+  useEffect(() => {
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      onConnect: () => {
+        client.subscribe("/topic/orders/new", () => {
+          loadOrders(page);
+        });
+      },
+    });
+    client.activate();
+    stompRef.current = client;
+
+    return () => {
+      client.deactivate();
+    };
+  }, [page]);
 
   const handleStatusChange = async (
     orderId: number,
@@ -90,7 +105,6 @@ export default function AdminOrdersPage() {
                 <th>Customer</th>
                 <th>Method</th>
                 <th>Total</th>
-                <th>Payment</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -113,18 +127,6 @@ export default function AdminOrdersPage() {
                         : "Pickup"}
                     </td>
                     <td>{order.totalAmount}₴</td>
-                    <td>
-                      <span
-                        className={styles.statusBadge}
-                        style={{
-                          background:
-                            PAYMENT_STATUS_COLORS[order.paymentStatus] ||
-                            "#64748b",
-                        }}
-                      >
-                        {PAYMENT_STATUS_LABELS[order.paymentStatus]}
-                      </span>
-                    </td>
                     <td>
                       <span
                         className={styles.statusBadge}
@@ -157,7 +159,7 @@ export default function AdminOrdersPage() {
                   </tr>
                   {expandedId === order.id && (
                     <tr className={styles.expandedRow}>
-                      <td colSpan={7}>
+                      <td colSpan={6}>
                         <div className={styles.expandedContent}>
                           <div className={styles.detailRow}>
                             <span>Email:</span>
@@ -195,7 +197,7 @@ export default function AdminOrdersPage() {
                                 <span>
                                   {item.productName} × {item.quantity}
                                 </span>
-                                <span>{item.price * item.quantity}₴</span>
+                                <span>{item.unitPrice * item.quantity}₴</span>
                               </div>
                             ))}
                           </div>

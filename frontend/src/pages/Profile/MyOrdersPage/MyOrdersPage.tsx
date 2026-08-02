@@ -1,16 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useApi } from "../../../hooks/common/useApi";
 import * as ordersApi from "../../../api/orders";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { UserOrderResponse } from "../../../types";
 import type { Page } from "../../../types/common";
-import {
-  ORDER_STATUS_COLORS,
-  ORDER_STATUS_LABELS,
-  PAYMENT_STATUS_COLORS,
-  PAYMENT_STATUS_LABELS,
-} from "../../../types/enums";
+import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "../../../types/enums";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
@@ -18,19 +15,37 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const stompRef = useRef<Client | null>(null);
 
-  useState(() => {
+  useEffect(() => {
     execute(() => ordersApi.getMyOrders(page)).then((res) =>
       setOrders(res.content),
     );
-  });
+  }, [page]);
 
-  const loadPage = (p: number) => {
-    setPage(p);
-    execute(() => ordersApi.getMyOrders(p)).then((res) =>
-      setOrders(res.content),
-    );
-  };
+  useEffect(() => {
+    const client = new Client({
+      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      onConnect: () => {
+        orders.forEach((order) => {
+          client.subscribe(`/topic/orders/${order.id}`, (message) => {
+            const update = JSON.parse(message.body);
+            setOrders((prev) =>
+              prev.map((o) =>
+                o.id === update.orderId ? { ...o, status: update.status } : o,
+              ),
+            );
+          });
+        });
+      },
+    });
+    client.activate();
+    stompRef.current = client;
+
+    return () => {
+      client.deactivate();
+    };
+  }, [orders.length]);
 
   if (loading) return <Loading text="Loading orders..." />;
 
@@ -79,16 +94,6 @@ export default function MyOrdersPage() {
                       className={styles.statusBadge}
                       style={{
                         background:
-                          PAYMENT_STATUS_COLORS[order.paymentStatus] ||
-                          "#64748b",
-                      }}
-                    >
-                      {PAYMENT_STATUS_LABELS[order.paymentStatus]}
-                    </span>
-                    <span
-                      className={styles.statusBadge}
-                      style={{
-                        background:
                           ORDER_STATUS_COLORS[order.status] || "#64748b",
                       }}
                     >
@@ -112,7 +117,7 @@ export default function MyOrdersPage() {
                           <span>
                             {item.productName} × {item.quantity}
                           </span>
-                          <span>{item.price * item.quantity}₴</span>
+                          <span>{item.unitPrice * item.quantity}₴</span>
                         </div>
                       ))}
                     </div>
@@ -125,7 +130,7 @@ export default function MyOrdersPage() {
           <Pagination
             currentPage={page}
             totalPages={data?.totalPages || 0}
-            onPageChange={loadPage}
+            onPageChange={setPage}
           />
         </>
       )}
