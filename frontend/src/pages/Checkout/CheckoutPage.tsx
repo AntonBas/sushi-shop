@@ -8,7 +8,7 @@ import { useNotification } from "../../context/NotificationContext";
 import * as paymentsApi from "../../api/payments";
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";
-import type { DeliveryMethod } from "../../types";
+import type { DeliveryMethod, PaymentMethod } from "../../types";
 import styles from "./CheckoutPage.module.css";
 
 export default function CheckoutPage() {
@@ -23,7 +23,8 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("PICKUP");
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "online">("cash");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("ON_DELIVERY");
   const [city, setCity] = useState("");
   const [street, setStreet] = useState("");
   const [house, setHouse] = useState("");
@@ -50,6 +51,7 @@ export default function CheckoutPage() {
       const order = await createOrder({
         customerName,
         phone,
+        paymentMethod,
         deliveryMethod,
         address:
           deliveryMethod === "DELIVERY"
@@ -67,7 +69,7 @@ export default function CheckoutPage() {
         })),
       });
       if (order) {
-        if (paymentMethod === "online") {
+        if (paymentMethod === "ONLINE") {
           const url = await paymentApi.execute(() =>
             paymentsApi.createCheckout(
               order.id,
@@ -185,15 +187,15 @@ export default function CheckoutPage() {
           <div className={styles.methodButtons}>
             <button
               type="button"
-              className={`${styles.methodBtn} ${paymentMethod === "cash" ? styles.activeMethod : ""}`}
-              onClick={() => setPaymentMethod("cash")}
+              className={`${styles.methodBtn} ${paymentMethod === "ON_DELIVERY" ? styles.activeMethod : ""}`}
+              onClick={() => setPaymentMethod("ON_DELIVERY")}
             >
               Pay on {deliveryMethod === "PICKUP" ? "Pickup" : "Delivery"}
             </button>
             <button
               type="button"
-              className={`${styles.methodBtn} ${paymentMethod === "online" ? styles.activeMethod : ""}`}
-              onClick={() => setPaymentMethod("online")}
+              className={`${styles.methodBtn} ${paymentMethod === "ONLINE" ? styles.activeMethod : ""}`}
+              onClick={() => setPaymentMethod("ONLINE")}
             >
               Pay Online
             </button>
@@ -225,7 +227,7 @@ export default function CheckoutPage() {
         >
           {paymentApi.loading
             ? "Redirecting to payment..."
-            : paymentMethod === "online"
+            : paymentMethod === "ONLINE"
               ? "Proceed to Payment"
               : "Place Order"}
         </Button>

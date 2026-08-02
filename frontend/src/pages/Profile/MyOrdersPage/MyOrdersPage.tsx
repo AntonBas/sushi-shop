@@ -5,7 +5,11 @@ import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { UserOrderResponse } from "../../../types";
 import type { Page } from "../../../types/common";
-import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "../../../types/enums";
+import {
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
+} from "../../../types/enums";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import styles from "./MyOrdersPage.module.css";
@@ -86,6 +90,10 @@ export default function MyOrdersPage() {
                       {order.deliveryMethod === "DELIVERY"
                         ? "Delivery"
                         : "Pickup"}
+                    </span>
+                    <span className={styles.methodBadge}>
+                      {PAYMENT_STATUS_LABELS[order.paymentStatus] ||
+                        order.paymentStatus}
                     </span>
                     <span className={styles.orderTotal}>
                       {order.totalAmount}₴

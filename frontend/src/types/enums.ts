@@ -4,7 +4,7 @@ export type DeliveryMethod = 'DELIVERY' | 'PICKUP'
 
 export type OrderStatus = 'NEW' | 'CONFIRMED' | 'COOKING' | 'DELIVERING' | 'READY' | 'DELIVERED' | 'CANCELLED'
 
-export type PaymentStatus = 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
+export type PaymentMethod = 'ONLINE' | 'ON_DELIVERY'
 
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'COURIER'
 
@@ -41,16 +41,13 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "Cancelled",
 }
 
-export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-  PENDING: "#f59e0b",
-  PAID: "#22c55e",
-  FAILED: "#ef4444",
-  REFUNDED: "#6366f1",
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  ONLINE: "Online",
+  ON_DELIVERY: "On Delivery",
 }
 
-export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  PENDING: "Payment Pending",
+export const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  ON_DELIVERY: "On Delivery",
+  PENDING: "Pending",
   PAID: "Paid",
-  FAILED: "Payment Failed",
-  REFUNDED: "Refunded",
 }

@@ -4,20 +4,34 @@ import { useNotification } from "../../../context/NotificationContext";
 import * as ordersApi from "../../../api/orders";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
-import type { OrderStatus } from "../../../types";
-import { ORDER_STATUS_COLORS, ORDER_STATUS_LABELS } from "../../../types/enums";
+import type { DeliveryMethod, OrderStatus } from "../../../types";
+import {
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  PAYMENT_STATUS_LABELS,
+} from "../../../types/enums";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import styles from "./AdminOrdersPage.module.css";
 
-const STATUS_FLOW: Record<OrderStatus, OrderStatus[]> = {
-  NEW: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED: ["COOKING", "CANCELLED"],
-  COOKING: ["DELIVERING", "READY"],
-  DELIVERING: ["DELIVERED"],
-  READY: ["DELIVERED"],
-  DELIVERED: [],
-  CANCELLED: [],
+const getStatusFlow = (
+  currentStatus: OrderStatus,
+  deliveryMethod: DeliveryMethod,
+): OrderStatus[] => {
+  switch (currentStatus) {
+    case "NEW":
+      return ["CONFIRMED", "CANCELLED"];
+    case "CONFIRMED":
+      return ["COOKING", "CANCELLED"];
+    case "COOKING":
+      return deliveryMethod === "DELIVERY" ? ["DELIVERING"] : ["READY"];
+    case "DELIVERING":
+      return ["DELIVERED"];
+    case "READY":
+      return ["DELIVERED"];
+    default:
+      return [];
+  }
 };
 
 export default function AdminOrdersPage() {
@@ -84,7 +98,15 @@ export default function AdminOrdersPage() {
           className={styles.filterSelect}
         >
           <option value="">All Statuses</option>
-          {Object.keys(STATUS_FLOW).map((s) => (
+          {[
+            "NEW",
+            "CONFIRMED",
+            "COOKING",
+            "DELIVERING",
+            "READY",
+            "DELIVERED",
+            "CANCELLED",
+          ].map((s) => (
             <option key={s} value={s}>
               {ORDER_STATUS_LABELS[s as OrderStatus]}
             </option>
@@ -104,6 +126,7 @@ export default function AdminOrdersPage() {
                 <th>ID</th>
                 <th>Customer</th>
                 <th>Method</th>
+                <th>Payment</th>
                 <th>Total</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -126,6 +149,10 @@ export default function AdminOrdersPage() {
                         ? "Delivery"
                         : "Pickup"}
                     </td>
+                    <td>
+                      {PAYMENT_STATUS_LABELS[order.paymentStatus] ||
+                        order.paymentStatus}
+                    </td>
                     <td>{order.totalAmount}₴</td>
                     <td>
                       <span
@@ -139,27 +166,29 @@ export default function AdminOrdersPage() {
                     </td>
                     <td>
                       <div className={styles.actions}>
-                        {STATUS_FLOW[order.status]?.map((nextStatus) => (
-                          <button
-                            key={nextStatus}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleStatusChange(order.id, nextStatus);
-                            }}
-                            className={styles.actionBtn}
-                            style={{
-                              background: ORDER_STATUS_COLORS[nextStatus],
-                            }}
-                          >
-                            {ORDER_STATUS_LABELS[nextStatus]}
-                          </button>
-                        ))}
+                        {getStatusFlow(order.status, order.deliveryMethod).map(
+                          (nextStatus) => (
+                            <button
+                              key={nextStatus}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChange(order.id, nextStatus);
+                              }}
+                              className={styles.actionBtn}
+                              style={{
+                                background: ORDER_STATUS_COLORS[nextStatus],
+                              }}
+                            >
+                              {ORDER_STATUS_LABELS[nextStatus]}
+                            </button>
+                          ),
+                        )}
                       </div>
                     </td>
                   </tr>
                   {expandedId === order.id && (
                     <tr className={styles.expandedRow}>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className={styles.expandedContent}>
                           <div className={styles.detailRow}>
                             <span>Email:</span>
