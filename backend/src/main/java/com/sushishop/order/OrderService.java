@@ -48,6 +48,8 @@ public class OrderService {
         order.setUser(user);
         items.forEach(i -> i.setOrder(order));
         var saved = orderRepository.save(order);
+        messagingTemplate.convertAndSend("/topic/orders/new",
+                new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name()));
         log.info("Order created: {}", saved.getId());
         return orderMapper.toResponse(saved);
     }
