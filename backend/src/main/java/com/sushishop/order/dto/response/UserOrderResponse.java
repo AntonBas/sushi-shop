@@ -2,6 +2,7 @@ package com.sushishop.order.dto.response;
 
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -18,6 +19,12 @@ public record UserOrderResponse(
 
         @Schema(description = "Delivery method", example = "DELIVERY")
         DeliveryMethod deliveryMethod,
+
+        @Schema(description = "Payment method", example = "ONLINE")
+        PaymentMethod paymentMethod,
+
+        @Schema(description = "Payment status", example = "PAID")
+        String paymentStatus,
 
         @Schema(description = "Total amount", example = "750.00")
         BigDecimal totalAmount,

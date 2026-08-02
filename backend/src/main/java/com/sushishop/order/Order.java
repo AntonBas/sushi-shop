@@ -4,6 +4,7 @@ import com.sushishop.payment.Payment;
 import com.sushishop.shared.BaseEntity;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
@@ -65,6 +66,10 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private OrderStatus status = OrderStatus.NEW;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentMethod paymentMethod;
 
     @NotNull
     @Enumerated(EnumType.STRING)

@@ -3,6 +3,7 @@ package com.sushishop.order;
 import com.sushishop.product.Product;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.order.dto.response.OrderItemResponse;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
@@ -43,6 +44,7 @@ public class OrderMapperTest {
                 .id(1L)
                 .customerName("Anton")
                 .phone("+380961791111")
+                .paymentMethod(PaymentMethod.ON_DELIVERY)
                 .city("Lviv")
                 .street("Zelena")
                 .house("204")
@@ -61,6 +63,8 @@ public class OrderMapperTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.customerName()).isEqualTo("Anton");
         assertThat(response.phone()).isEqualTo("+380961791111");
+        assertThat(response.paymentMethod()).isEqualTo(PaymentMethod.ON_DELIVERY);
+        assertThat(response.paymentStatus()).isEqualTo("ON_DELIVERY");
         assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
         assertThat(response.status()).isEqualTo(OrderStatus.NEW);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
@@ -91,6 +95,7 @@ public class OrderMapperTest {
 
         Order order = Order.builder()
                 .id(1L)
+                .paymentMethod(PaymentMethod.ON_DELIVERY)
                 .deliveryMethod(DeliveryMethod.DELIVERY)
                 .status(OrderStatus.NEW)
                 .totalAmount(new BigDecimal("500.00"))
@@ -102,6 +107,8 @@ public class OrderMapperTest {
         UserOrderResponse response = orderMapper.toUserResponse(order);
 
         assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.paymentMethod()).isEqualTo(PaymentMethod.ON_DELIVERY);
+        assertThat(response.paymentStatus()).isEqualTo("ON_DELIVERY");
         assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);
         assertThat(response.status()).isEqualTo(OrderStatus.NEW);
         assertThat(response.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));

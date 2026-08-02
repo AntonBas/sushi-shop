@@ -10,6 +10,7 @@ import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
@@ -47,6 +48,11 @@ public class OrderService {
         var order = buildOrder(request, items, totalAmount);
         order.setUser(user);
         items.forEach(i -> i.setOrder(order));
+
+        if (request.paymentMethod() == PaymentMethod.ON_DELIVERY) {
+            order.setStatus(OrderStatus.CONFIRMED);
+        }
+
         var saved = orderRepository.save(order);
         messagingTemplate.convertAndSend("/topic/orders/new",
                 new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name()));
@@ -143,6 +149,7 @@ public class OrderService {
         return Order.builder()
                 .customerName(request.customerName())
                 .phone(request.phone())
+                .paymentMethod(request.paymentMethod())
                 .city(request.address() != null ? request.address().city() : null)
                 .street(request.address() != null ? request.address().street() : null)
                 .house(request.address() != null ? request.address().house() : null)

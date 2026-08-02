@@ -2,6 +2,7 @@ package com.sushishop.order.dto.response;
 
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.shared.address.AddressResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -28,6 +29,12 @@ public record OrderResponse(
 
         @Schema(description = "Delivery method", example = "DELIVERY")
         DeliveryMethod deliveryMethod,
+
+        @Schema(description = "Payment method", example = "ONLINE")
+        PaymentMethod paymentMethod,
+
+        @Schema(description = "Payment status", example = "PAID")
+        String paymentStatus,
 
         @Schema(description = "Order status", example = "NEW")
         OrderStatus status,

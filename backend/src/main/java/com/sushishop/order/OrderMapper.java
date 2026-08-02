@@ -2,6 +2,8 @@ package com.sushishop.order;
 
 import com.sushishop.product.ProductImageMapper;
 import com.sushishop.shared.address.AddressResponse;
+import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.order.dto.response.OrderItemResponse;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
@@ -16,9 +18,11 @@ public interface OrderMapper {
     @Mapping(target = "address", expression = "java(mapAddress(order))")
     @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "items", source = "items")
+    @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
     OrderResponse toResponse(Order order);
 
     @Mapping(target = "items", source = "items")
+    @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
     UserOrderResponse toUserResponse(Order order);
 
     @Mapping(target = "productId", source = "product.id")
@@ -37,5 +41,10 @@ public interface OrderMapper {
                 order.getApartment(),
                 order.getAddressComment()
         );
+    }
+
+    default String getPaymentStatus(Order order) {
+        if (order.getPaymentMethod() == PaymentMethod.ON_DELIVERY) return "ON_DELIVERY";
+        return order.getStatus() == OrderStatus.NEW ? "PENDING" : "PAID";
     }
 }
