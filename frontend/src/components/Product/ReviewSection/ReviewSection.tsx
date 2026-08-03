@@ -20,6 +20,7 @@ export default function ReviewSection({ productId }: Props) {
   const createApi = useApi<ReviewResponse>();
   const updateApi = useApi<ReviewResponse>();
   const replyApi = useApi<ReviewReplyResponse>();
+  const updateReplyApi = useApi<ReviewReplyResponse>();
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [reviewPage, setReviewPage] = useState(0);
   const [totalReviewPages, setTotalReviewPages] = useState(0);
@@ -30,7 +31,10 @@ export default function ReviewSection({ productId }: Props) {
   const [editComment, setEditComment] = useState("");
   const [replyMessage, setReplyMessage] = useState("");
   const [replyingId, setReplyingId] = useState<number | null>(null);
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [editReplyMessage, setEditReplyMessage] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
   const loadReviews = (page: number) => {
     reviewsApi.getReviews(productId, page).then((res) => {
@@ -98,10 +102,38 @@ export default function ReviewSection({ productId }: Props) {
     } catch {}
   };
 
+  const handleUpdateReply = async () => {
+    if (!editingReplyId || !editReplyMessage.trim()) return;
+    try {
+      await updateReplyApi.execute(() =>
+        reviewsApi.updateReply(editingReplyId, { message: editReplyMessage }),
+      );
+      setEditingReplyId(null);
+      setEditReplyMessage("");
+      showNotification("Reply updated", "success");
+      loadReviews(reviewPage);
+    } catch {}
+  };
+
+  const handleDeleteReply = async () => {
+    if (!deleteReplyId) return;
+    try {
+      await reviewsApi.deleteReply(deleteReplyId);
+      setDeleteReplyId(null);
+      showNotification("Reply deleted", "success");
+      loadReviews(reviewPage);
+    } catch {}
+  };
+
   const startEdit = (review: ReviewResponse) => {
     setEditingId(review.id);
     setEditRating(review.rating);
     setEditComment(review.comment || "");
+  };
+
+  const startEditReply = (reply: ReviewReplyResponse) => {
+    setEditingReplyId(reply.id);
+    setEditReplyMessage(reply.message);
   };
 
   return (
@@ -231,13 +263,59 @@ export default function ReviewSection({ productId }: Props) {
                 <div className={styles.replies}>
                   {review.replies.map((reply) => (
                     <div key={reply.id} className={styles.reply}>
-                      <span className={styles.replyAuthor}>
-                        {reply.authorName}
-                      </span>
-                      <span className={styles.replyDate}>
-                        {new Date(reply.createdAt).toLocaleDateString()}
-                      </span>
-                      <p className={styles.replyMessage}>{reply.message}</p>
+                      <div className={styles.replyHeader}>
+                        <span className={styles.replyAuthor}>
+                          {reply.authorName}
+                        </span>
+                        <span className={styles.replyDate}>
+                          {new Date(reply.createdAt).toLocaleDateString()}
+                        </span>
+                        {isAdmin && (
+                          <div className={styles.actions}>
+                            <button
+                              onClick={() => startEditReply(reply)}
+                              className={styles.editBtn}
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button
+                              onClick={() => setDeleteReplyId(reply.id)}
+                              className={styles.deleteBtn}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {editingReplyId === reply.id ? (
+                        <div className={styles.editForm}>
+                          <textarea
+                            value={editReplyMessage}
+                            onChange={(e) =>
+                              setEditReplyMessage(e.target.value)
+                            }
+                            rows={2}
+                            className={styles.textarea}
+                            maxLength={100}
+                          />
+                          <div className={styles.editActions}>
+                            <Button
+                              onClick={() => setEditingReplyId(null)}
+                              variant="secondary"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={handleUpdateReply}
+                              loading={updateReplyApi.loading}
+                            >
+                              Save
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className={styles.replyMessage}>{reply.message}</p>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -311,6 +389,22 @@ export default function ReviewSection({ productId }: Props) {
             Cancel
           </Button>
           <Button onClick={handleDelete} variant="danger">
+            Delete
+          </Button>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={!!deleteReplyId}
+        onClose={() => setDeleteReplyId(null)}
+        title="Delete Reply"
+      >
+        <p>Are you sure you want to delete this reply?</p>
+        <div className={styles.editActions}>
+          <Button onClick={() => setDeleteReplyId(null)} variant="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteReply} variant="danger">
             Delete
           </Button>
         </div>

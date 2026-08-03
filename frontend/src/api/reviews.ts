@@ -22,6 +22,15 @@ export const addReply = async (reviewId: number, data: CreateReviewReplyRequest)
   return res
 }
 
+export const updateReply = async (replyId: number, data: CreateReviewReplyRequest): Promise<ReviewReplyResponse> => {
+  const { data: res } = await api.put(`/reviews/replies/${replyId}`, data)
+  return res
+}
+
+export const deleteReply = async (replyId: number): Promise<void> => {
+  await api.delete(`/reviews/replies/${replyId}`)
+}
+
 export const deleteReview = async (id: number): Promise<void> => {
   await api.delete(`/reviews/${id}`)
 }

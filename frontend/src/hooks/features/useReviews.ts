@@ -9,6 +9,7 @@ export function useReviews() {
   const createApi = useApi<ReviewResponse>()
   const updateApi = useApi<ReviewResponse>()
   const replyApi = useApi<ReviewReplyResponse>()
+  const updateReplyApi = useApi<ReviewReplyResponse>()
 
   const loadReviews = useCallback((productId: number, page = 0) => {
     return listApi.execute(() => reviewsApi.getReviews(productId, page))
@@ -26,6 +27,14 @@ export function useReviews() {
     return replyApi.execute(() => reviewsApi.addReply(reviewId, data))
   }, [])
 
+  const updateReply = useCallback((replyId: number, data: CreateReviewReplyRequest) => {
+    return updateReplyApi.execute(() => reviewsApi.updateReply(replyId, data))
+  }, [])
+
+  const deleteReply = useCallback((replyId: number) => {
+    return reviewsApi.deleteReply(replyId)
+  }, [])
+
   return {
     reviews: listApi.data?.content || [],
     totalPages: listApi.data?.totalPages || 0,
@@ -35,6 +44,8 @@ export function useReviews() {
     createReview,
     updateReview,
     addReply,
+    updateReply,
+    deleteReply,
     createdReview: createApi.data
   }
 }
