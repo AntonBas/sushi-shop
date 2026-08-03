@@ -6,6 +6,7 @@ import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.product.ProductRepository;
@@ -97,6 +98,57 @@ public class ReviewServiceTest {
 
         assertThat(result.message()).isEqualTo("Thank you!");
         assertThat(result.authorName()).isEqualTo("Admin");
+    }
+
+    @Test
+    void shouldUpdateReply() {
+        var user = User.builder().id(1L).email("admin@example.com").name("Admin").build();
+        var reply = ReviewReply.builder().id(1L).user(user).message("Old message").build();
+        var request = new CreateReviewReplyRequest("Updated message");
+        var expected = new ReviewReplyResponse(1L, "Updated message", "Admin", null);
+
+        when(reviewReplyRepository.findById(1L)).thenReturn(Optional.of(reply));
+        when(reviewReplyRepository.save(any())).thenReturn(reply);
+        when(reviewMapper.toReplyResponse(reply)).thenReturn(expected);
+
+        var result = reviewService.updateReply(1L, request, "admin@example.com");
+
+        assertThat(result.message()).isEqualTo("Updated message");
+    }
+
+    @Test
+    void shouldDeleteReply() {
+        var user = User.builder().id(1L).email("admin@example.com").build();
+        var reply = ReviewReply.builder().id(1L).user(user).build();
+
+        when(reviewReplyRepository.findById(1L)).thenReturn(Optional.of(reply));
+
+        reviewService.deleteReply(1L, "admin@example.com");
+
+        verify(reviewReplyRepository).delete(reply);
+    }
+
+    @Test
+    void shouldThrowWhenUpdateReplyNotOwner() {
+        var user = User.builder().id(1L).email("admin@example.com").build();
+        var reply = ReviewReply.builder().id(1L).user(user).build();
+        var request = new CreateReviewReplyRequest("Test");
+
+        when(reviewReplyRepository.findById(1L)).thenReturn(Optional.of(reply));
+
+        assertThatThrownBy(() -> reviewService.updateReply(1L, request, "other@example.com"))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void shouldThrowWhenDeleteReplyNotOwner() {
+        var user = User.builder().id(1L).email("admin@example.com").build();
+        var reply = ReviewReply.builder().id(1L).user(user).build();
+
+        when(reviewReplyRepository.findById(1L)).thenReturn(Optional.of(reply));
+
+        assertThatThrownBy(() -> reviewService.deleteReply(1L, "other@example.com"))
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

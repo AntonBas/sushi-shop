@@ -88,6 +88,28 @@ public class ReviewControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldUpdateReply() throws Exception {
+        var request = new CreateReviewReplyRequest("Updated reply");
+        var response = new ReviewReplyResponse(1L, "Updated reply", "Admin", null);
+
+        when(reviewService.updateReply(eq(1L), any(), eq("admin@example.com"))).thenReturn(response);
+
+        mockMvc.perform(put("/api/reviews/replies/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Updated reply"));
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldDeleteReply() throws Exception {
+        mockMvc.perform(delete("/api/reviews/replies/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
     @WithMockUser(username = "anton@example.com")
     void shouldDeleteReview() throws Exception {
         mockMvc.perform(delete("/api/reviews/1"))

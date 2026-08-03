@@ -1,6 +1,7 @@
 package com.sushishop.review;
 
 import com.sushishop.annotation.Auditable;
+import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
@@ -9,7 +10,6 @@ import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.product.ProductRepository;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +90,16 @@ public class ReviewService {
         return reviewMapper.toResponse(saved);
     }
 
+    @Transactional
+    public ReviewReplyResponse updateReply(Long replyId, CreateReviewReplyRequest request, String userEmail) {
+        var reply = reviewReplyRepository.findById(replyId).orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
+        if (!reply.getUser().getEmail().equals(userEmail)) {
+            throw new BadRequestException("You can only edit your own reviews");
+        }
+        reply.setMessage(request.message());
+        return reviewMapper.toReplyResponse(reviewReplyRepository.save(reply));
+    }
+
     @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
     @CacheEvict(value = "products", key = "#review.product.id")
@@ -101,5 +111,14 @@ public class ReviewService {
         }
         reviewRepository.delete(review);
         log.info("Review deleted: {}", reviewId);
+    }
+
+    @Transactional
+    public void deleteReply(Long replyId, String email) {
+        var reply = reviewReplyRepository.findById(replyId).orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
+        if (!reply.getUser().getEmail().equals(email)) {
+            throw new BadRequestException("You can only delete your own reviews");
+        }
+        reviewReplyRepository.delete(reply);
     }
 }

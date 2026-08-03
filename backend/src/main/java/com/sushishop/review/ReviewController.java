@@ -52,6 +52,18 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.update(id, request, userDetails.getUsername()));
     }
 
+    @PutMapping("/replies/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update a reply")
+    @ApiResponse(responseCode = "200", description = "Reply updated")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ReviewReplyResponse> updateReply(@PathVariable Long id,
+                                                           @Valid @RequestBody CreateReviewReplyRequest request,
+                                                           @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("PUT /api/reviews/replies/{}", id);
+        return ResponseEntity.ok(reviewService.updateReply(id, request, userDetails.getUsername()));
+    }
+
     @GetMapping("/product/{productId}")
     @Operation(summary = "Get reviews by product")
     public ResponseEntity<Page<ReviewResponse>> getByProduct(
@@ -81,6 +93,18 @@ public class ReviewController {
                                        @AuthenticationPrincipal UserDetails userDetails) {
         log.info("DELETE /api/reviews/{}", id);
         reviewService.delete(id, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/replies/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Delete a reply")
+    @ApiResponse(responseCode = "204", description = "Reply deleted")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> deleteReply(@PathVariable Long id,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("DELETE /api/reviews/replies/{}", id);
+        reviewService.deleteReply(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

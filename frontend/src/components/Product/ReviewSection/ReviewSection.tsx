@@ -6,6 +6,7 @@ import * as reviewsApi from "../../../api/reviews";
 import { useNotification } from "../../../context/NotificationContext";
 import Button from "../../UI/Button/Button";
 import Pagination from "../../UI/Pagination/Pagination";
+import Modal from "../../UI/Modal/Modal";
 import type { ReviewResponse, ReviewReplyResponse } from "../../../types";
 import styles from "./ReviewSection.module.css";
 
@@ -29,6 +30,7 @@ export default function ReviewSection({ productId }: Props) {
   const [editComment, setEditComment] = useState("");
   const [replyMessage, setReplyMessage] = useState("");
   const [replyingId, setReplyingId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const loadReviews = (page: number) => {
     reviewsApi.getReviews(productId, page).then((res) => {
@@ -73,10 +75,11 @@ export default function ReviewSection({ productId }: Props) {
     } catch {}
   };
 
-  const handleDelete = async (reviewId: number) => {
-    if (!window.confirm("Delete your review?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      await reviewsApi.deleteReview(reviewId);
+      await reviewsApi.deleteReview(deleteId);
+      setDeleteId(null);
       showNotification("Review deleted", "success");
       loadReviews(reviewPage);
     } catch {}
@@ -169,7 +172,7 @@ export default function ReviewSection({ productId }: Props) {
                       <Pencil size={14} />
                     </button>
                     <button
-                      onClick={() => handleDelete(review.id)}
+                      onClick={() => setDeleteId(review.id)}
                       className={styles.deleteBtn}
                     >
                       <Trash2 size={14} />
@@ -296,6 +299,22 @@ export default function ReviewSection({ productId }: Props) {
       ) : (
         <p className={styles.empty}>No reviews yet. Be the first!</p>
       )}
+
+      <Modal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Delete Review"
+      >
+        <p>Are you sure you want to delete your review?</p>
+        <div className={styles.editActions}>
+          <Button onClick={() => setDeleteId(null)} variant="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} variant="danger">
+            Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
