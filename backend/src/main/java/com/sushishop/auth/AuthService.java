@@ -1,16 +1,16 @@
 package com.sushishop.auth;
 
-import com.sushishop.user.Token;
-import com.sushishop.shared.enums.TokenType;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
+import com.sushishop.mail.MailService;
+import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.security.jwt.JwtUtil;
+import com.sushishop.user.Token;
 import com.sushishop.user.TokenRepository;
 import com.sushishop.user.UserRepository;
-import com.sushishop.shared.security.jwt.JwtUtil;
-import com.sushishop.mail.MailService;
 import com.sushishop.user.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +85,7 @@ public class AuthService {
         log.info("Email verified for {}", user.getEmail());
     }
 
+    @Transactional
     public void forgotPassword(String email) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
