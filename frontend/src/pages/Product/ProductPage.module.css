@@ -79,6 +79,7 @@
   justify-content: center;
   opacity: 0;
   transition: opacity 0.2s;
+  z-index: 1;
 }
 
 .mainImageWrapper:hover .arrow {
@@ -258,7 +259,13 @@
   }
 
   .actions {
-    flex-direction: column;
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg-card);
+    padding: 12px 16px;
+    margin: 0 -16px;
+    border-top: 1px solid var(--color-border);
+    z-index: 10;
   }
 
   .quantity {

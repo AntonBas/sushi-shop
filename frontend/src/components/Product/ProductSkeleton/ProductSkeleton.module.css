@@ -1,0 +1,110 @@
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-top: 24px;
+}
+
+.breadcrumbs {
+  margin-bottom: 24px;
+}
+
+.breadcrumbSkel {
+  width: 200px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+}
+
+.images {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mainImageSkel {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+}
+
+.thumbnailsSkel {
+  display: flex;
+  gap: 8px;
+}
+
+.thumbSkel {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.categorySkel {
+  width: 80px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.nameSkel {
+  width: 70%;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.ratingSkel {
+  width: 140px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.priceSkel {
+  width: 120px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.detailsSkel {
+  width: 100px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.descSkel {
+  width: 100%;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.actionsSkel {
+  width: 100%;
+  height: 48px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.skeleton {
+  background: var(--color-bg-tertiary);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}

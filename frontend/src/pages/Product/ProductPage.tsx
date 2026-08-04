@@ -7,11 +7,13 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 import { useProducts } from "../../hooks/features/useProducts";
 import { useCart } from "../../context/CartContext";
 import { useNotification } from "../../context/NotificationContext";
 import { CATEGORY_DISPLAY } from "../../types/enums";
-import Loading from "../../components/UI/Loading/Loading";
+import ProductSkeleton from "../../components/Product/ProductSkeleton/ProductSkeleton";
 import Button from "../../components/UI/Button/Button";
 import ReviewSection from "../../components/Product/ReviewSection/ReviewSection";
 import RelatedProducts from "../../components/Product/RelatedProducts/RelatedProducts";
@@ -29,7 +31,7 @@ export default function ProductPage() {
     if (slug) getProductBySlug(slug);
   }, [slug]);
 
-  if (productLoading) return <Loading text="Loading product..." />;
+  if (productLoading) return <ProductSkeleton />;
   if (!product) return null;
 
   const handleAddToCart = () => {
@@ -78,11 +80,13 @@ export default function ProductPage() {
       <div className={styles.layout}>
         <div className={styles.images}>
           <div className={styles.mainImageWrapper}>
-            <img
-              src={product.images[activeImage] || "/placeholder.jpg"}
-              alt={product.name}
-              className={styles.mainImage}
-            />
+            <Zoom>
+              <img
+                src={product.images[activeImage] || "/placeholder.jpg"}
+                alt={product.name}
+                className={styles.mainImage}
+              />
+            </Zoom>
             {product.images.length > 1 && (
               <>
                 <button
