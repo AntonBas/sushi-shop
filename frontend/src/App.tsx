@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Loading from "./components/UI/Loading/Loading";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import MainLayout from "./layout/MainLayout/MainLayout";
 import AdminLayout from "./components/Admin/AdminLayout/AdminLayout";
 import ProfileLayout from "./components/Profile/ProfileLayout/ProfileLayout";
@@ -44,17 +45,52 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/order-success" element={<OrderSuccessPage />} />
-        <Route path="/order-cancel" element={<OrderCancelPage />} />
-        <Route path="/profile" element={<ProfileLayout />}>
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-success"
+          element={
+            <ProtectedRoute>
+              <OrderSuccessPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order-cancel"
+          element={
+            <ProtectedRoute>
+              <OrderCancelPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfileLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route index element={<ProfilePage />} />
           <Route path="orders" element={<MyOrdersPage />} />
         </Route>
       </Route>
       <Route path="/verify-email" element={<EmailVerification />} />
       <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="products" replace />} />
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="products/new" element={<AdminProductForm />} />
