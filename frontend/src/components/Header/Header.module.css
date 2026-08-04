@@ -55,7 +55,7 @@
 }
 
 .active {
-  color: var(--color-primary) !important;
+  color: var(--color-primary);
 }
 
 .badge {
@@ -227,6 +227,10 @@
 }
 
 @media (max-width: 768px) {
+  .header {
+    position: sticky;
+  }
+
   .link { display: none; }
   .iconBtn { display: none; }
   .loginBtn { display: none; }
