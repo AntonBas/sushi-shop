@@ -17,14 +17,7 @@ export default function MenuSection() {
   const [activeCategory, setActiveCategory] = useState<Category | "">("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const categories: Category[] = [
-    "ROLL",
-    "SET",
-    "DRINK",
-    "DESSERT",
-    "SOUP",
-    "EXTRA",
-  ];
+  const categories: Category[] = Object.keys(CATEGORY_DISPLAY) as Category[];
 
   useEffect(() => {
     const cat = searchParams.get("category") as Category | "";
@@ -72,6 +65,16 @@ export default function MenuSection() {
     });
   };
 
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    if (nextPage >= totalPages) return;
+    setPage(nextPage);
+    loadProducts(nextPage, {
+      search: search || undefined,
+      category: activeCategory || undefined,
+    });
+  };
+
   return (
     <section className={styles.section}>
       <h2 className={styles.title}>Menu</h2>
@@ -107,7 +110,7 @@ export default function MenuSection() {
         </div>
       </div>
 
-      {loading ? (
+      {loading && page === 0 ? (
         <Loading text="Loading menu..." />
       ) : products.length === 0 ? (
         <div className={styles.empty}>No products found</div>
@@ -118,11 +121,15 @@ export default function MenuSection() {
               <ProductCard key={p.id} product={p} />
             ))}
           </div>
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          {page < totalPages - 1 && (
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={handleLoadMore}
+              variant="load-more"
+              loading={loading}
+            />
+          )}
         </>
       )}
     </section>
