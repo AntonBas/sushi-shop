@@ -121,6 +121,28 @@
   border-top: 1px solid var(--color-border);
 }
 
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  color: var(--color-text-muted);
+}
+
+.searchBox input {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  padding: 10px 0;
+  width: 100%;
+  outline: none;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .row {
     grid-template-columns: 1fr;

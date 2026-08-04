@@ -1,56 +1,66 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Trash2 } from 'lucide-react'
-import { useApi } from '../../../../hooks/common/useApi'
-import { useNotification } from '../../../../context/NotificationContext'
-import * as promotionsApi from '../../../../api/promotions'
-import Button from '../../../../components/UI/Button/Button'
-import Loading from '../../../../components/UI/Loading/Loading'
-import Pagination from '../../../../components/UI/Pagination/Pagination'
-import type { PromotionResponse } from '../../../../types'
-import type { Page } from '../../../../types/common'
-import styles from './AdminPromotionsPage.module.css'
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Trash2 } from "lucide-react";
+import { useApi } from "../../../../hooks/common/useApi";
+import { useNotification } from "../../../../context/NotificationContext";
+import * as promotionsApi from "../../../../api/promotions";
+import Button from "../../../../components/UI/Button/Button";
+import Loading from "../../../../components/UI/Loading/Loading";
+import Pagination from "../../../../components/UI/Pagination/Pagination";
+import Modal from "../../../../components/UI/Modal/Modal";
+import type { PromotionResponse } from "../../../../types";
+import type { Page } from "../../../../types/common";
+import styles from "./AdminPromotionsPage.module.css";
 
 export default function AdminPromotionsPage() {
-  const navigate = useNavigate()
-  const { showNotification } = useNotification()
-  const { data, loading, execute } = useApi<Page<PromotionResponse>>()
-  const [promotions, setPromotions] = useState<PromotionResponse[]>([])
-  const [page, setPage] = useState(0)
+  const navigate = useNavigate();
+  const { showNotification } = useNotification();
+  const { data, loading, execute } = useApi<Page<PromotionResponse>>();
+  const [promotions, setPromotions] = useState<PromotionResponse[]>([]);
+  const [page, setPage] = useState(0);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteTitle, setDeleteTitle] = useState("");
 
   const loadPromotions = (p: number) => {
-    execute(() => promotionsApi.getPromotions(p)).then((res) => setPromotions(res.content))
-  }
+    execute(() => promotionsApi.getPromotions(p)).then((res) =>
+      setPromotions(res.content),
+    );
+  };
 
   useEffect(() => {
-    loadPromotions(page)
-  }, [page])
+    loadPromotions(page);
+  }, [page]);
 
-  const handleDelete = async (id: number, title: string) => {
-    if (!window.confirm(`Delete "${title}"?`)) return
+  const handleDelete = async () => {
+    if (!deleteId) return;
     try {
-      await promotionsApi.deletePromotion(id)
-      showNotification('Promotion deleted', 'success')
-      loadPromotions(page)
+      await promotionsApi.deletePromotion(deleteId);
+      setDeleteId(null);
+      showNotification("Promotion deleted", "success");
+      loadPromotions(page);
     } catch {
-      showNotification('Failed to delete promotion', 'error')
+      showNotification("Failed to delete promotion", "error");
     }
-  }
+  };
 
-  if (loading) return <Loading text="Loading promotions..." />
+  if (loading) return <Loading text="Loading promotions..." />;
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1>Promotions</h1>
-        <Button onClick={() => navigate('/admin/promotions/new')}>Add Promotion</Button>
+        <Button onClick={() => navigate("/admin/promotions/new")}>
+          Add Promotion
+        </Button>
       </div>
 
       {promotions.length === 0 ? (
         <div className={styles.empty}>
           <h3>No promotions found</h3>
           <p>Create your first promotion</p>
-          <Button onClick={() => navigate('/admin/promotions/new')}>Add Promotion</Button>
+          <Button onClick={() => navigate("/admin/promotions/new")}>
+            Add Promotion
+          </Button>
         </div>
       ) : (
         <>
@@ -71,16 +81,25 @@ export default function AdminPromotionsPage() {
                   <td className={styles.name}>{promo.title}</td>
                   <td>{promo.discountPercent}%</td>
                   <td>
-                    {new Date(promo.startDate).toLocaleDateString()} – {new Date(promo.endDate).toLocaleDateString()}
+                    {new Date(promo.startDate).toLocaleDateString()} –{" "}
+                    {new Date(promo.endDate).toLocaleDateString()}
                   </td>
                   <td>{promo.products.length}</td>
                   <td>
-                    <span className={`${styles.statusBadge} ${promo.active ? styles.active : styles.inactive}`}>
-                      {promo.active ? 'Active' : 'Inactive'}
+                    <span
+                      className={`${styles.statusBadge} ${promo.active ? styles.active : styles.inactive}`}
+                    >
+                      {promo.active ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td>
-                    <button onClick={() => handleDelete(promo.id, promo.title)} className={styles.deleteBtn}>
+                    <button
+                      onClick={() => {
+                        setDeleteId(promo.id);
+                        setDeleteTitle(promo.title);
+                      }}
+                      className={styles.deleteBtn}
+                    >
                       <Trash2 size={16} />
                     </button>
                   </td>
@@ -96,6 +115,29 @@ export default function AdminPromotionsPage() {
           />
         </>
       )}
+
+      <Modal
+        isOpen={!!deleteId}
+        onClose={() => setDeleteId(null)}
+        title="Delete Promotion"
+      >
+        <p>Are you sure you want to delete "{deleteTitle}"?</p>
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            justifyContent: "flex-end",
+            marginTop: 16,
+          }}
+        >
+          <Button onClick={() => setDeleteId(null)} variant="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleDelete} variant="danger">
+            Delete
+          </Button>
+        </div>
+      </Modal>
     </div>
-  )
+  );
 }
