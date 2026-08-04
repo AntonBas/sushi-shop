@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
-import { useCart } from "../../context/CartContext";
-import Button from "../../components/UI/Button/Button";
-import styles from "./OrderSuccessPage.module.css";
+import { useCart } from "../../../context/CartContext";
+import Button from "../../../components/UI/Button/Button";
+import styles from "./SuccessPage.module.css";
 
 export default function OrderSuccessPage() {
   const [searchParams] = useSearchParams();

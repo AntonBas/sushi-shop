@@ -1,7 +1,7 @@
 import { useSearchParams, Link } from "react-router-dom";
 import { XCircle } from "lucide-react";
-import Button from "../../components/UI/Button/Button";
-import styles from "./OrderCancelPage.module.css";
+import Button from "../../../components/UI/Button/Button";
+import styles from "./CancelPage.module.css";
 
 export default function OrderCancelPage() {
   const [searchParams] = useSearchParams();
