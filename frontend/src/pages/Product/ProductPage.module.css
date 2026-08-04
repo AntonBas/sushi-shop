@@ -49,12 +49,48 @@
   gap: 12px;
 }
 
+.mainImageWrapper {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--color-bg-tertiary);
+}
+
 .mainImage {
   width: 100%;
-  aspect-ratio: 1;
+  height: 100%;
   object-fit: contain;
-  border-radius: 16px;
-  background: var(--color-bg-tertiary);
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.mainImageWrapper:hover .arrow {
+  opacity: 1;
+}
+
+.arrowLeft {
+  left: 12px;
+}
+
+.arrowRight {
+  right: 12px;
 }
 
 .thumbnails {

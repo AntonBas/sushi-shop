@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, ShoppingCart, Menu as MenuIcon } from "lucide-react";
+import {
+  Star,
+  ShoppingCart,
+  Menu as MenuIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useProducts } from "../../hooks/features/useProducts";
 import { useCart } from "../../context/CartContext";
 import { useNotification } from "../../context/NotificationContext";
@@ -40,6 +46,18 @@ export default function ProductPage() {
   const discounted =
     product.discountedPrice && product.discountedPrice < product.price;
 
+  const prevImage = () => {
+    setActiveImage((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1,
+    );
+  };
+
+  const nextImage = () => {
+    setActiveImage((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1,
+    );
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
@@ -59,11 +77,29 @@ export default function ProductPage() {
 
       <div className={styles.layout}>
         <div className={styles.images}>
-          <img
-            src={product.images[activeImage] || "/placeholder.jpg"}
-            alt={product.name}
-            className={styles.mainImage}
-          />
+          <div className={styles.mainImageWrapper}>
+            <img
+              src={product.images[activeImage] || "/placeholder.jpg"}
+              alt={product.name}
+              className={styles.mainImage}
+            />
+            {product.images.length > 1 && (
+              <>
+                <button
+                  onClick={prevImage}
+                  className={`${styles.arrow} ${styles.arrowLeft}`}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className={`${styles.arrow} ${styles.arrowRight}`}
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+          </div>
           {product.images.length > 1 && (
             <div className={styles.thumbnails}>
               {product.images.map((img, i) => (
