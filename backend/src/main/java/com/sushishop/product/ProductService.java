@@ -99,8 +99,9 @@ public class ProductService {
     public List<ProductListResponse> getRelated(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-        return productRepository.findRelated(product.getCategory(), id, Pageable.ofSize(4))
+        return productRepository.findRelated(product.getCategory(), id)
                 .stream()
+                .limit(4)
                 .map(productMapper::toListResponse)
                 .toList();
     }

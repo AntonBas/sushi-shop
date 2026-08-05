@@ -1,29 +1,28 @@
 package com.sushishop.product;
 
 import com.sushishop.file.FileStorageService;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductServiceTest {
@@ -39,9 +38,6 @@ public class ProductServiceTest {
 
     @Mock
     private SlugService slugService;
-
-    @Mock
-    private ProductEnrichmentService productEnrichmentService;
 
     @InjectMocks
     private ProductService productService;
@@ -92,7 +88,7 @@ public class ProductServiceTest {
 
     @Test
     void shouldUpdateProduct() {
-        var request = new UpdateProductRequest("Updated", null, null, null, null, null, null);
+        var request = new UpdateProductRequest("Updated", null, null, null, null, null);
         var product = new Product();
         product.setName("Old Name");
         product.setPromotions(new HashSet<>());
@@ -195,7 +191,7 @@ public class ProductServiceTest {
         var listResponse = new ProductListResponse(2L, "related", "Related", BigDecimal.TEN, null, null, Category.ROLL, null, true, null, null);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.findRelated(Category.ROLL, 1L, Pageable.ofSize(4))).thenReturn(List.of(relatedProduct));
+        when(productRepository.findRelated(Category.ROLL, 1L)).thenReturn(List.of(relatedProduct));
         when(productMapper.toListResponse(relatedProduct)).thenReturn(listResponse);
 
         var result = productService.getRelated(1L);
