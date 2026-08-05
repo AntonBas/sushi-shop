@@ -235,7 +235,7 @@ export default function AdminProductForm() {
               >
                 {categories.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {CATEGORY_DISPLAY[c]}
                   </option>
                 ))}
               </select>

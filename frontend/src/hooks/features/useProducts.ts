@@ -15,9 +15,14 @@ export function useProducts() {
   const [related, setRelated] = useState<ProductListResponse[]>([])
 
   const loadProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
-  const data = await listApi.execute(() => productsApi.getProducts(page, 12, filters))
-  setProducts(prev => page === 0 ? data.content : [...prev, ...data.content])
-}, [])
+    const data = await listApi.execute(() => productsApi.getProducts(page, 12, filters))
+    setProducts(data.content)
+  }, [])
+
+  const loadMoreProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
+    const data = await listApi.execute(() => productsApi.getProducts(page, 12, filters))
+    setProducts(prev => page === 0 ? data.content : [...prev, ...data.content])
+  }, [])
 
   const loadPopular = useCallback(async () => {
     const data = await popularApi.execute(() => productsApi.getPopularProducts())
@@ -41,6 +46,7 @@ export function useProducts() {
     loading: listApi.loading,
     error: listApi.error,
     loadProducts,
+    loadMoreProducts,
     loadPopular,
     loadRelated,
     getProduct,

@@ -156,7 +156,9 @@ export default function AdminProductsPage() {
                   </td>
                   <td className={styles.name}>{product.name}</td>
                   <td>
-                    <span className={styles.badge}>{product.category}</span>
+                    <span className={styles.badge}>
+                      {CATEGORY_DISPLAY[product.category]}
+                    </span>
                   </td>
                   <td>{product.weight || "—"}</td>
                   <td>{product.pieces ? `${product.pieces} pcs` : "—"}</td>

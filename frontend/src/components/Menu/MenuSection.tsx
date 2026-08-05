@@ -10,7 +10,7 @@ import { Search } from "lucide-react";
 import styles from "./MenuSection.module.css";
 
 export default function MenuSection() {
-  const { products, totalPages, loading, loadProducts } = useProducts();
+  const { products, totalPages, loading, loadMoreProducts } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
@@ -24,7 +24,7 @@ export default function MenuSection() {
     const q = searchParams.get("search") || "";
     if (cat && categories.includes(cat)) setActiveCategory(cat);
     if (q) setSearch(q);
-    loadProducts(0, { search: q || undefined, category: cat || undefined });
+    loadMoreProducts(0, { search: q || undefined, category: cat || undefined });
   }, []);
 
   const handleSearchChange = (value: string) => {
@@ -42,7 +42,7 @@ export default function MenuSection() {
       } else {
         setSearchParams({});
       }
-      loadProducts(0, {
+      loadMoreProducts(0, {
         search: value || undefined,
         category: activeCategory || undefined,
       });
@@ -59,7 +59,7 @@ export default function MenuSection() {
     } else {
       setSearchParams({});
     }
-    loadProducts(0, {
+    loadMoreProducts(0, {
       search: search || undefined,
       category: cat || undefined,
     });
@@ -69,7 +69,7 @@ export default function MenuSection() {
     const nextPage = page + 1;
     if (nextPage >= totalPages) return;
     setPage(nextPage);
-    loadProducts(nextPage, {
+    loadMoreProducts(nextPage, {
       search: search || undefined,
       category: activeCategory || undefined,
     });
