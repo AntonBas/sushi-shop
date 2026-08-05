@@ -14,7 +14,6 @@ export interface UpdateProductRequest {
   description?: string
   price?: number
   category?: Category
-  isAvailable?: boolean
   weight?: number
   pieces?: number
 }
