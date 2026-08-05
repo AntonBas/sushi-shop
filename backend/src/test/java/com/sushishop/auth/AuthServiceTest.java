@@ -1,18 +1,14 @@
 package com.sushishop.auth;
 
 import com.sushishop.mail.MailService;
-import com.sushishop.user.Token;
-import com.sushishop.user.User;
+import com.sushishop.user.*;
 import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.enums.UserRole;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.RegisterRequest;
-import com.sushishop.user.UserService;
 import com.sushishop.user.dto.response.UserResponse;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.user.TokenRepository;
-import com.sushishop.user.UserRepository;
 import com.sushishop.shared.security.jwt.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +43,9 @@ public class AuthServiceTest {
     private UserService userService;
 
     @Mock
+    private UserMapper userMapper;
+
+    @Mock
     private Authentication authentication;
 
     @Mock
@@ -75,7 +74,7 @@ public class AuthServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
         when(authentication.getAuthorities()).thenAnswer(inv -> List.of(authority));
         when(jwtUtil.generateToken("anton@example.com", "CUSTOMER", 0)).thenReturn("jwt-token");
-        when(userService.getByEmail("anton@example.com")).thenReturn(userResponse);
+        when(userMapper.toResponse(user)).thenReturn(userResponse);
 
         var result = authService.login(request);
 

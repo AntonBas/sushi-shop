@@ -8,10 +8,7 @@ import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.security.jwt.JwtUtil;
-import com.sushishop.user.Token;
-import com.sushishop.user.TokenRepository;
-import com.sushishop.user.UserRepository;
-import com.sushishop.user.UserService;
+import com.sushishop.user.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,6 +30,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
     private final MailService mailService;
@@ -55,7 +53,7 @@ public class AuthService {
         String role = authority != null ? authority.replace("ROLE_", "") : "CUSTOMER";
         String jwt = jwtUtil.generateToken(request.email(), role, user.getTokenVersion());
 
-        var userResponse = userService.getByEmail(request.email());
+        var userResponse = userMapper.toResponse(user);
         log.info("Login successful for email: {}", request.email());
         return new AuthResponse(jwt, userResponse);
     }
