@@ -34,6 +34,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final FileStorageService fileStorageService;
     private final SlugService slugService;
+    private final ProductEnrichmentService productEnrichmentService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Product")
     @CacheEvict(value = "products", allEntries = true)
@@ -58,7 +59,20 @@ public class ProductService {
                 .and(ProductSpecification.hasCategory(category))
                 .and(ProductSpecification.isAvailable(available));
         log.info("Getting all products, page: {}", pageable.getPageNumber());
-        return productRepository.findAll(spec, pageable).map(productMapper::toListResponse);
+        var page = productRepository.findAll(spec, pageable);
+
+        var productIds = page.getContent().stream().map(Product::getId).toList();
+        var ratings = productEnrichmentService.getAverageRatings(productIds);
+
+        return page.map(product -> {
+            var response = productMapper.toListResponse(product);
+            return new ProductListResponse(
+                    response.id(), response.slug(), response.name(), response.price(),
+                    response.discountedPrice(), ratings.get(product.getId()),
+                    response.category(), response.mainImage(), response.available(),
+                    response.weight(), response.pieces()
+            );
+        });
     }
 
     @Cacheable(value = "products", key = "#id")

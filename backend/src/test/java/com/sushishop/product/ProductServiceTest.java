@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ProductServiceTest {
+public class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -38,6 +39,9 @@ class ProductServiceTest {
 
     @Mock
     private SlugService slugService;
+
+    @Mock
+    private ProductEnrichmentService productEnrichmentService;
 
     @InjectMocks
     private ProductService productService;

@@ -19,10 +19,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Nonnull
     Page<Product> findAll(Specification<Product> spec, @Nonnull Pageable pageable);
 
-    @EntityGraph(attributePaths = {"promotions", "productImages", "reviews"})
+    @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Nonnull
     Optional<Product> findById(@Nonnull Long id);
 
+    @EntityGraph(attributePaths = {"promotions", "productImages"})
     Optional<Product> findBySlug(String slug);
 
     @Query("""
@@ -34,6 +35,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
     List<Product> findPopular(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Query("SELECT p FROM Product p WHERE p.category = :category AND p.id != :id AND p.available = true ORDER BY p.id DESC")
     List<Product> findRelated(@Param("category") Category category, @Param("id") Long id, Pageable pageable);
+
+    @Query("SELECT r.product.id, AVG(r.rating) FROM Review r WHERE r.product.id IN :productIds GROUP BY r.product.id")
+    List<Object[]> findAverageRatingsByProductIds(@Param("productIds") List<Long> productIds);
 }

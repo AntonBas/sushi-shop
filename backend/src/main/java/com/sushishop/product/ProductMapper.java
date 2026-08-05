@@ -37,12 +37,12 @@ public interface ProductMapper {
     @Mapping(target = "discountPercent", source = "product", qualifiedByName = "discountPercent")
     @Mapping(target = "promotionTitle", source = "product", qualifiedByName = "promotionTitle")
     @Mapping(target = "reviewCount", expression = "java(product.getReviews().size())")
-    @Mapping(target = "averageRating", source = "product", qualifiedByName = "averageRating")
+    @Mapping(target = "averageRating", expression = "java(product.getReviews().isEmpty() ? null : product.getReviews().stream().mapToInt(r -> r.getRating()).average().orElse(0.0))")
     ProductResponse toResponse(Product product);
 
     @Mapping(target = "mainImage", expression = "java(ProductImageMapper.getMainImage(product))")
     @Mapping(target = "discountedPrice", source = "product", qualifiedByName = "discountedPrice")
-    @Mapping(target = "averageRating", source = "product", qualifiedByName = "averageRating")
+    @Mapping(target = "averageRating", ignore = true)
     ProductListResponse toListResponse(Product product);
 
     default List<String> mapImages(Product product) {

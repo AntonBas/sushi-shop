@@ -1,7 +1,7 @@
 package com.sushishop.product;
 
 import com.sushishop.promotion.Promotion;
-import com.sushishop.review.Review;
+import lombok.RequiredArgsConstructor;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Service;
 
@@ -9,9 +9,15 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ProductEnrichmentService {
+
+    private final ProductRepository productRepository;
 
     @Named("discountedPrice")
     public BigDecimal calculateDiscountedPrice(Product product) {
@@ -33,18 +39,21 @@ public class ProductEnrichmentService {
         return bestPromo != null ? bestPromo.getTitle() : null;
     }
 
-    @Named("averageRating")
-    public Double getAverageRating(Product product) {
-        if (product.getReviews().isEmpty()) return null;
-        return product.getReviews().stream()
-                .mapToInt(Review::getRating)
-                .average().orElse(0.0);
-    }
-
     public Promotion getBestPromo(Product product) {
         return product.getPromotions().stream()
                 .filter(p -> p.isActive() && p.getEndDate().isAfter(LocalDateTime.now()))
                 .max(Comparator.comparing(Promotion::getDiscountPercent))
                 .orElse(null);
     }
+
+    public Map<Long, Double> getAverageRatings(List<Long> productIds) {
+        if (productIds.isEmpty()) return Map.of();
+        return productRepository.findAverageRatingsByProductIds(productIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Double) row[1]
+                ));
+    }
+
 }
