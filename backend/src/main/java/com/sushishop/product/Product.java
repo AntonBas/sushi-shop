@@ -7,6 +7,7 @@ import com.sushishop.shared.enums.Category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -61,6 +62,7 @@ public class Product extends BaseEntity {
     private Integer pieces;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<ProductImage> productImages = new ArrayList<>();
 
@@ -69,6 +71,7 @@ public class Product extends BaseEntity {
     private Set<Promotion> promotions = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 20)
     @Builder.Default
     private List<Review> reviews = new ArrayList<>();
 
