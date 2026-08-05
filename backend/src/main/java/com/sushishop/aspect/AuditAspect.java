@@ -32,6 +32,13 @@ public class AuditAspect {
             Method getId = result.getClass().getMethod("getId");
             Object id = getId.invoke(result);
             if (id instanceof Long longId) return longId;
+        } catch (NoSuchMethodException e) {
+            try {
+                Method idMethod = result.getClass().getMethod("id");
+                Object id = idMethod.invoke(result);
+                if (id instanceof Long longId) return longId;
+            } catch (Exception ignored) {
+            }
         } catch (Exception ignored) {
         }
         return null;
