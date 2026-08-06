@@ -29,6 +29,8 @@ export default function ProductPage() {
 
   useEffect(() => {
     if (slug) getProductBySlug(slug);
+    setQuantity(1);
+    setActiveImage(0);
   }, [slug]);
 
   if (productLoading) return <ProductSkeleton />;
