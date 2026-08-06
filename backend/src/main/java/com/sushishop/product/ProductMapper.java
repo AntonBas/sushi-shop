@@ -2,6 +2,7 @@ package com.sushishop.product;
 
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
+import com.sushishop.product.dto.response.ProductImageResponse;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
 import org.mapstruct.*;
@@ -45,7 +46,7 @@ public interface ProductMapper {
     @Mapping(target = "averageRating", ignore = true)
     ProductListResponse toListResponse(Product product);
 
-    default List<String> mapImages(Product product) {
-        return product.getProductImages().stream().sorted(Comparator.comparingInt(ProductImage::getSortOrder)).map(ProductImage::getUrl).toList();
+    default List<ProductImageResponse> mapImages(Product product) {
+        return product.getProductImages().stream().sorted(Comparator.comparingInt(ProductImage::getSortOrder)).map(img -> new ProductImageResponse(img.getId(), img.getUrl())).toList();
     }
 }

@@ -36,7 +36,7 @@ public record ProductResponse(
         Category category,
 
         @Schema(description = "Product images", example = "[\"/api/files/abc.jpg\"]")
-        List<String> images,
+        List<ProductImageResponse> images,
 
         @Schema(description = "Number of reviews", example = "21")
         Integer reviewCount,
