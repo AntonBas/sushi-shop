@@ -7,7 +7,11 @@ import * as productsApi from "../../../../api/products";
 import Button from "../../../../components/UI/Button/Button";
 import Input from "../../../../components/UI/Input/Input";
 import Loading from "../../../../components/UI/Loading/Loading";
-import { CATEGORY_DISPLAY, type Category } from "../../../../types";
+import {
+  CATEGORY_DISPLAY,
+  type Category,
+  type ProductImageResponse,
+} from "../../../../types";
 import styles from "./AdminProductForm.module.css";
 
 export default function AdminProductForm() {
@@ -25,9 +29,9 @@ export default function AdminProductForm() {
   const [weight, setWeight] = useState("");
   const [pieces, setPieces] = useState("");
   const [images, setImages] = useState<File[]>([]);
-  const [existingImages, setExistingImages] = useState<
-    { id: number; url: string }[]
-  >([]);
+  const [existingImages, setExistingImages] = useState<ProductImageResponse[]>(
+    [],
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -44,9 +48,7 @@ export default function AdminProductForm() {
       setCategory(product.category as Category);
       setWeight(product.weight?.toString() || "");
       setPieces(product.pieces?.toString() || "");
-      setExistingImages(
-        product.images.map((url, index) => ({ id: index, url })),
-      );
+      setExistingImages(product.images);
     }
   }, [isEdit, product]);
 
@@ -59,20 +61,15 @@ export default function AdminProductForm() {
     setImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleRemoveExistingImage = async (imageUrl: string) => {
+  const handleRemoveExistingImage = async (imageId: number) => {
     if (isEdit && id) {
       try {
-        const imageId = existingImages.find((img) => img.url === imageUrl)?.id;
-        if (imageId !== undefined) {
-          await productsApi.deleteProductImage(Number(id), imageId);
-        }
-        setExistingImages((prev) => prev.filter((img) => img.url !== imageUrl));
+        await productsApi.deleteProductImage(Number(id), imageId);
+        setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
         showNotification("Image removed", "success");
       } catch {
         showNotification("Failed to remove image", "error");
       }
-    } else {
-      setExistingImages((prev) => prev.filter((img) => img.url !== imageUrl));
     }
   };
 
@@ -139,11 +136,11 @@ export default function AdminProductForm() {
             <label className={styles.label}>Images</label>
             <div className={styles.imageGrid}>
               {existingImages.map((img) => (
-                <div key={img.url} className={styles.imageItem}>
+                <div key={img.id} className={styles.imageItem}>
                   <img src={img.url} alt="" />
                   <button
                     type="button"
-                    onClick={() => handleRemoveExistingImage(img.url)}
+                    onClick={() => handleRemoveExistingImage(img.id)}
                     className={styles.removeBtn}
                   >
                     <X size={14} />

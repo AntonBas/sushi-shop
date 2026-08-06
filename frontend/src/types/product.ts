@@ -32,6 +32,11 @@ export interface ProductListResponse {
   pieces?: number | null
 }
 
+export interface ProductImageResponse {
+  id: number
+  url: string
+}
+
 export interface ProductResponse {
   id: number
   slug: string
@@ -42,7 +47,7 @@ export interface ProductResponse {
   discountPercent?: number | null
   promotionTitle?: string | null
   category: Category
-  images: string[]
+  images: ProductImageResponse[]
   reviewCount: number
   averageRating?: number | null
   available: boolean

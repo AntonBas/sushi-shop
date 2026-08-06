@@ -40,7 +40,7 @@ export default function ProductPage() {
       name: product.name,
       price: product.discountedPrice || product.price,
       quantity,
-      mainImage: product.images[0] || null,
+      mainImage: product.images[0]?.url || null,
     });
     showNotification(`${product.name} added to cart`, "success");
   };
@@ -82,7 +82,7 @@ export default function ProductPage() {
           <div className={styles.mainImageWrapper}>
             <Zoom>
               <img
-                src={product.images[activeImage] || "/placeholder.jpg"}
+                src={product.images[activeImage]?.url || "/placeholder.jpg"}
                 alt={product.name}
                 className={styles.mainImage}
               />
@@ -108,11 +108,11 @@ export default function ProductPage() {
             <div className={styles.thumbnails}>
               {product.images.map((img, i) => (
                 <button
-                  key={i}
+                  key={img.id}
                   onClick={() => setActiveImage(i)}
                   className={`${styles.thumb} ${i === activeImage ? styles.activeThumb : ""}`}
                 >
-                  <img src={img} alt="" />
+                  <img src={img.url} alt="" />
                 </button>
               ))}
             </div>
