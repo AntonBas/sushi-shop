@@ -1,9 +1,11 @@
 package com.sushishop.order;
 
-import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.shared.enums.DeliveryMethod;
+import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.enums.PaymentMethod;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -64,9 +66,13 @@ public class OrderController {
     @Operation(summary = "Get all orders (admin)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
-            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(required = false) DeliveryMethod deliveryMethod,
+            @RequestParam(required = false) PaymentMethod paymentMethod,
+            @RequestParam(required = false) String search) {
         log.info("GET /api/orders (admin)");
-        return ResponseEntity.ok(orderService.getAll(pageable));
+        return ResponseEntity.ok(orderService.getAll(pageable, status, deliveryMethod, paymentMethod, search));
     }
 
     @GetMapping("/{id}")

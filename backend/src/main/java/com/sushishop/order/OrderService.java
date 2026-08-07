@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +61,13 @@ public class OrderService {
         return orderMapper.toResponse(saved);
     }
 
-    public Page<OrderResponse> getAll(Pageable pageable) {
-        log.info("Getting all orders");
-        return orderRepository.findAll(pageable).map(orderMapper::toResponse);
+    public Page<OrderResponse> getAll(Pageable pageable, OrderStatus status,
+                                      DeliveryMethod deliveryMethod, PaymentMethod paymentMethod, String search) {
+        var spec = Specification.where(OrderSpecification.hasStatus(status))
+                .and(OrderSpecification.hasDeliveryMethod(deliveryMethod))
+                .and(OrderSpecification.hasPaymentMethod(paymentMethod))
+                .and(OrderSpecification.hasSearch(search));
+        return orderRepository.findAll(spec, pageable).map(orderMapper::toResponse);
     }
 
     public OrderResponse getById(Long id) {

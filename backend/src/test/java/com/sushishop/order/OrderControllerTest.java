@@ -28,8 +28,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -103,7 +102,7 @@ public class OrderControllerTest {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
         Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
-        when(orderService.getAll(any(Pageable.class))).thenReturn(page);
+        when(orderService.getAll(any(Pageable.class), isNull(), isNull(), isNull(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/orders"))
                 .andExpect(status().isOk())
