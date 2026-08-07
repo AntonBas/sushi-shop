@@ -53,3 +53,10 @@ export interface OrderStatusUpdateResponse {
   orderId: number
   status: OrderStatus
 }
+
+export interface OrderFilters {
+  status?: OrderStatus
+  deliveryMethod?: DeliveryMethod
+  paymentMethod?: PaymentMethod
+  search?: string
+}

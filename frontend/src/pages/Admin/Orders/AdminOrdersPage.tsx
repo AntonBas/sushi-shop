@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { useAdminOrders } from "../../../hooks/features/useAdmin";
+import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
 import { useNotification } from "../../../context/NotificationContext";
 import * as ordersApi from "../../../api/orders";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
-import type { DeliveryMethod, OrderStatus } from "../../../types";
+import type {
+  DeliveryMethod,
+  OrderStatus,
+  PaymentMethod,
+} from "../../../types";
 import {
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
@@ -39,6 +43,9 @@ export default function AdminOrdersPage() {
   const { showNotification } = useNotification();
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
+  const [deliveryFilter, setDeliveryFilter] = useState<DeliveryMethod | "">("");
+  const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "">("");
+  const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
 
@@ -47,11 +54,25 @@ export default function AdminOrdersPage() {
   }, []);
 
   useEffect(() => {
+    loadOrders(page, 12, {
+      status: statusFilter || undefined,
+      deliveryMethod: deliveryFilter || undefined,
+      paymentMethod: paymentFilter || undefined,
+      search: search || undefined,
+    });
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
+
+  useEffect(() => {
     const client = new Client({
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
       onConnect: () => {
         client.subscribe("/topic/orders/new", () => {
-          loadOrders(page);
+          loadOrders(page, 12, {
+            status: statusFilter || undefined,
+            deliveryMethod: deliveryFilter || undefined,
+            paymentMethod: paymentFilter || undefined,
+            search: search || undefined,
+          });
         });
       },
     });
@@ -61,7 +82,7 @@ export default function AdminOrdersPage() {
     return () => {
       client.deactivate();
     };
-  }, [page]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
 
   const handleStatusChange = async (
     orderId: number,
@@ -73,15 +94,16 @@ export default function AdminOrdersPage() {
         `Order #${orderId} → ${ORDER_STATUS_LABELS[newStatus]}`,
         "success",
       );
-      loadOrders(page);
+      loadOrders(page, 12, {
+        status: statusFilter || undefined,
+        deliveryMethod: deliveryFilter || undefined,
+        paymentMethod: paymentFilter || undefined,
+        search: search || undefined,
+      });
     } catch {
       showNotification("Failed to update status", "error");
     }
   };
-
-  const filteredOrders = statusFilter
-    ? orders.filter((o) => o.status === statusFilter)
-    : orders;
 
   if (loading) return <Loading text="Loading orders..." />;
 
@@ -92,9 +114,22 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className={styles.filters}>
+        <input
+          type="text"
+          placeholder="Search customer or phone..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(0);
+          }}
+          className={styles.filterInput}
+        />
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as OrderStatus | "")}
+          onChange={(e) => {
+            setStatusFilter(e.target.value as OrderStatus | "");
+            setPage(0);
+          }}
           className={styles.filterSelect}
         >
           <option value="">All Statuses</option>
@@ -112,9 +147,33 @@ export default function AdminOrdersPage() {
             </option>
           ))}
         </select>
+        <select
+          value={deliveryFilter}
+          onChange={(e) => {
+            setDeliveryFilter(e.target.value as DeliveryMethod | "");
+            setPage(0);
+          }}
+          className={styles.filterSelect}
+        >
+          <option value="">All Methods</option>
+          <option value="DELIVERY">Delivery</option>
+          <option value="PICKUP">Pickup</option>
+        </select>
+        <select
+          value={paymentFilter}
+          onChange={(e) => {
+            setPaymentFilter(e.target.value as PaymentMethod | "");
+            setPage(0);
+          }}
+          className={styles.filterSelect}
+        >
+          <option value="">All Payments</option>
+          <option value="ONLINE">Online</option>
+          <option value="ON_DELIVERY">On Delivery</option>
+        </select>
       </div>
 
-      {filteredOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <div className={styles.empty}>
           <h3>No orders found</h3>
         </div>
@@ -133,7 +192,7 @@ export default function AdminOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order) => (
+              {orders.map((order) => (
                 <>
                   <tr
                     key={order.id}

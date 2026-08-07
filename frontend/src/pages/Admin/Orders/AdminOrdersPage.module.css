@@ -13,7 +13,10 @@
 }
 
 .filters {
+  display: flex;
+  gap: 8px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .filterSelect {
@@ -24,6 +27,23 @@
   border-radius: 8px;
   font-size: 14px;
   outline: none;
+}
+
+.filterInput {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  flex: 1;
+  min-width: 200px;
+}
+
+.filterInput:focus,
+.filterSelect:focus {
+  border-color: var(--color-primary);
 }
 
 .empty {
