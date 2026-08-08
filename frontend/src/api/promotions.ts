@@ -7,8 +7,8 @@ export const getActivePromotions = async (): Promise<PromotionResponse[]> => {
   return data
 }
 
-export const getPromotions = async (page = 0, size = 12): Promise<Page<PromotionResponse>> => {
-  const { data } = await api.get('/promotions', { params: { page, size, sort: 'startDate,desc' } })
+export const getPromotions = async (page = 0, size = 12, search?: string): Promise<Page<PromotionResponse>> => {
+  const { data } = await api.get('/promotions', { params: { page, size, sort: 'startDate,desc', ...(search && { search }) } })
   return data
 }
 

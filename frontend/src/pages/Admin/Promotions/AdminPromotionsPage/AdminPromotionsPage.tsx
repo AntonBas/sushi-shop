@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useNotification } from "../../../../context/NotificationContext";
 import * as promotionsApi from "../../../../api/promotions";
@@ -18,18 +18,19 @@ export default function AdminPromotionsPage() {
   const { data, loading, execute } = useApi<Page<PromotionResponse>>();
   const [promotions, setPromotions] = useState<PromotionResponse[]>([]);
   const [page, setPage] = useState(0);
+  const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteTitle, setDeleteTitle] = useState("");
 
-  const loadPromotions = (p: number) => {
-    execute(() => promotionsApi.getPromotions(p)).then((res) =>
+  const loadPromotions = (p: number, s?: string) => {
+    execute(() => promotionsApi.getPromotions(p, 12, s)).then((res) =>
       setPromotions(res.content),
     );
   };
 
   useEffect(() => {
-    loadPromotions(page);
-  }, [page]);
+    loadPromotions(page, search || undefined);
+  }, [page, search]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -37,7 +38,7 @@ export default function AdminPromotionsPage() {
       await promotionsApi.deletePromotion(deleteId);
       setDeleteId(null);
       showNotification("Promotion deleted", "success");
-      loadPromotions(page);
+      loadPromotions(page, search || undefined);
     } catch {
       showNotification("Failed to delete promotion", "error");
     }
@@ -52,6 +53,21 @@ export default function AdminPromotionsPage() {
         <Button onClick={() => navigate("/admin/promotions/new")}>
           Add Promotion
         </Button>
+      </div>
+
+      <div className={styles.filters}>
+        <div className={styles.searchBox}>
+          <Search size={16} />
+          <input
+            type="text"
+            placeholder="Search promotions..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+          />
+        </div>
       </div>
 
       {promotions.length === 0 ? (
