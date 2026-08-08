@@ -117,3 +117,28 @@
   background: var(--color-bg-tertiary);
   color: var(--color-text-secondary);
 }
+
+.paySection {
+  padding: 0 20px 16px;
+}
+
+.payBtn {
+  padding: 8px 20px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.payBtn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.payBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

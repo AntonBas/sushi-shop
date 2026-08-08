@@ -32,6 +32,7 @@ export interface OrderResponse {
 
 export interface UserOrderResponse {
   id: number
+  userEmail: string
   status: OrderStatus
   deliveryMethod: DeliveryMethod
   paymentMethod: PaymentMethod

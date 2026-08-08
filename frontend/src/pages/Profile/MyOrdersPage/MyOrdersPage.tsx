@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useApi } from "../../../hooks/common/useApi";
 import * as ordersApi from "../../../api/orders";
+import * as paymentsApi from "../../../api/payments";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { UserOrderResponse } from "../../../types";
@@ -19,6 +20,7 @@ export default function MyOrdersPage() {
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [payLoading, setPayLoading] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
 
   useEffect(() => {
@@ -50,6 +52,20 @@ export default function MyOrdersPage() {
       client.deactivate();
     };
   }, [orders.length]);
+
+  const handlePay = async (order: UserOrderResponse) => {
+    setPayLoading(order.id);
+    try {
+      const url = await paymentsApi.createCheckout(
+        order.id,
+        Math.round(order.totalAmount * 100),
+        order.userEmail,
+      );
+      if (url) window.location.href = url;
+    } finally {
+      setPayLoading(null);
+    }
+  };
 
   if (loading) return <Loading text="Loading orders..." />;
 
@@ -109,6 +125,21 @@ export default function MyOrdersPage() {
                     </span>
                   </div>
                 </div>
+
+                {order.status === "NEW" && order.paymentMethod === "ONLINE" && (
+                  <div className={styles.paySection}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePay(order);
+                      }}
+                      disabled={payLoading === order.id}
+                      className={styles.payBtn}
+                    >
+                      {payLoading === order.id ? "Loading..." : "Pay Now"}
+                    </button>
+                  </div>
+                )}
 
                 {expandedId === order.id && (
                   <div className={styles.orderDetails}>
