@@ -21,6 +21,7 @@ public interface OrderMapper {
     @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
     OrderResponse toResponse(Order order);
 
+    @Mapping(target = "userEmail", source = "user.email")
     @Mapping(target = "items", source = "items")
     @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
     UserOrderResponse toUserResponse(Order order);

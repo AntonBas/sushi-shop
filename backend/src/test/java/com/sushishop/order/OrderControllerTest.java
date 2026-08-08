@@ -85,7 +85,7 @@ public class OrderControllerTest {
     @Test
     @WithMockUser(username = "test@test.com")
     void shouldGetMyOrders() throws Exception {
-        var response = new UserOrderResponse(1L, OrderStatus.NEW, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", BigDecimal.ZERO, null, List.of());
+        var response = new UserOrderResponse(1L, "test@test.com", OrderStatus.NEW, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", BigDecimal.ZERO, null, List.of());
         Page<UserOrderResponse> page = new PageImpl<>(List.of(response));
 
         when(orderService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);

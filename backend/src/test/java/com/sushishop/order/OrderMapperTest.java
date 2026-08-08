@@ -1,12 +1,13 @@
 package com.sushishop.order;
 
+import com.sushishop.order.dto.response.OrderItemResponse;
+import com.sushishop.order.dto.response.OrderResponse;
+import com.sushishop.order.dto.response.UserOrderResponse;
 import com.sushishop.product.Product;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.shared.enums.PaymentMethod;
-import com.sushishop.order.dto.response.OrderItemResponse;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -93,8 +94,11 @@ public class OrderMapperTest {
                 .subtotal(new BigDecimal("500.00"))
                 .build();
 
+        User user = User.builder().email("anton@example.com").build();
+
         Order order = Order.builder()
                 .id(1L)
+                .user(user)
                 .paymentMethod(PaymentMethod.ON_DELIVERY)
                 .deliveryMethod(DeliveryMethod.DELIVERY)
                 .status(OrderStatus.NEW)
@@ -107,6 +111,7 @@ public class OrderMapperTest {
         UserOrderResponse response = orderMapper.toUserResponse(order);
 
         assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.userEmail()).isEqualTo("anton@example.com");
         assertThat(response.paymentMethod()).isEqualTo(PaymentMethod.ON_DELIVERY);
         assertThat(response.paymentStatus()).isEqualTo("ON_DELIVERY");
         assertThat(response.deliveryMethod()).isEqualTo(DeliveryMethod.DELIVERY);

@@ -14,6 +14,9 @@ public record UserOrderResponse(
         @Schema(description = "Order ID", example = "1")
         Long id,
 
+        @Schema(description = "User email", example = "user@example.com")
+        String userEmail,
+
         @Schema(description = "Order status", example = "NEW")
         OrderStatus status,
 
