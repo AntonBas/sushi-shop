@@ -67,7 +67,10 @@ public class PromotionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<PromotionResponse> getAll(Pageable pageable) {
+    public Page<PromotionResponse> getAll(Pageable pageable, String search) {
+        if (search != null && !search.isBlank()) {
+            return promotionRepository.findAllBySearch(search, pageable).map(promotionMapper::toResponse);
+        }
         return promotionRepository.findAll(pageable).map(promotionMapper::toResponse);
     }
 

@@ -54,9 +54,11 @@ public class PromotionController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Get all promotions (admin)")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Page<PromotionResponse>> getAll(@PageableDefault(size = 12, sort = "startDate", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ResponseEntity<Page<PromotionResponse>> getAll(
+            @PageableDefault(size = 12, sort = "startDate", direction = Sort.Direction.DESC) Pageable pageable,
+            @RequestParam(required = false) String search) {
         log.info("GET /api/promotions");
-        return ResponseEntity.ok(promotionService.getAll(pageable));
+        return ResponseEntity.ok(promotionService.getAll(pageable, search));
     }
 
     @GetMapping("/{id}")
