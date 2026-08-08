@@ -97,8 +97,13 @@ export default function AdminPromotionsPage() {
                   <td className={styles.name}>{promo.title}</td>
                   <td>{promo.discountPercent}%</td>
                   <td>
-                    {new Date(promo.startDate).toLocaleDateString()} –{" "}
-                    {new Date(promo.endDate).toLocaleDateString()}
+                    {promo.startDate
+                      ? new Date(promo.startDate).toLocaleDateString()
+                      : "—"}{" "}
+                    –{" "}
+                    {promo.endDate
+                      ? new Date(promo.endDate).toLocaleDateString()
+                      : "—"}
                   </td>
                   <td>{promo.products.length}</td>
                   <td>

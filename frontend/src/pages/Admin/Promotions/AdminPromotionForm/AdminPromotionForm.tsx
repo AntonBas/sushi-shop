@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useProducts } from "../../../../hooks/features/useProducts";
 import { useNotification } from "../../../../context/NotificationContext";
@@ -24,6 +24,9 @@ export default function AdminPromotionForm() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+  const [selectedProductNames, setSelectedProductNames] = useState<
+    Record<number, string>
+  >({});
   const [productSearch, setProductSearch] = useState("");
   const [productPage, setProductPage] = useState(0);
 
@@ -34,10 +37,29 @@ export default function AdminPromotionForm() {
     });
   }, [productPage, productSearch]);
 
-  const toggleProduct = (id: number) => {
-    setSelectedProductIds((prev) =>
-      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
-    );
+  const toggleProduct = (id: number, name: string) => {
+    setSelectedProductIds((prev) => {
+      if (prev.includes(id)) {
+        setSelectedProductNames((names) => {
+          const updated = { ...names };
+          delete updated[id];
+          return updated;
+        });
+        return prev.filter((p) => p !== id);
+      } else {
+        setSelectedProductNames((names) => ({ ...names, [id]: name }));
+        return [...prev, id];
+      }
+    });
+  };
+
+  const removeSelected = (id: number) => {
+    setSelectedProductIds((prev) => prev.filter((p) => p !== id));
+    setSelectedProductNames((names) => {
+      const updated = { ...names };
+      delete updated[id];
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
@@ -79,7 +101,6 @@ export default function AdminPromotionForm() {
           onChange={setTitle}
           placeholder="Weekend Sale"
         />
-
         <div className={styles.fieldGroup}>
           <label className={styles.label}>Description</label>
           <textarea
@@ -91,7 +112,6 @@ export default function AdminPromotionForm() {
             maxLength={250}
           />
         </div>
-
         <Input
           label="Discount (%)"
           value={discountPercent}
@@ -99,7 +119,6 @@ export default function AdminPromotionForm() {
           placeholder="20"
           type="number"
         />
-
         <div className={styles.row}>
           <Input
             label="Start Date"
@@ -119,6 +138,20 @@ export default function AdminPromotionForm() {
           <label className={styles.label}>
             Products ({selectedProductIds.length} selected)
           </label>
+          {selectedProductIds.length > 0 && (
+            <div className={styles.selectedList}>
+              {selectedProductIds.map((id) => (
+                <span
+                  key={id}
+                  className={styles.selectedTag}
+                  onClick={() => removeSelected(id)}
+                >
+                  {selectedProductNames[id] || `#${id}`}
+                  <X size={12} />
+                </span>
+              ))}
+            </div>
+          )}
           <div className={styles.searchBox}>
             <Search size={14} />
             <input
@@ -140,7 +173,7 @@ export default function AdminPromotionForm() {
                   <button
                     key={product.id}
                     type="button"
-                    onClick={() => toggleProduct(product.id)}
+                    onClick={() => toggleProduct(product.id, product.name)}
                     className={`${styles.productItem} ${selectedProductIds.includes(product.id) ? styles.selected : ""}`}
                   >
                     <span>{product.name}</span>
