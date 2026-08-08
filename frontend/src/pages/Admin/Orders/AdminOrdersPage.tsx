@@ -4,6 +4,7 @@ import { useNotification } from "../../../context/NotificationContext";
 import * as ordersApi from "../../../api/orders";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
+import { Search } from "lucide-react";
 import type {
   DeliveryMethod,
   OrderStatus,
@@ -114,16 +115,18 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="Search customer or phone..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
-          className={styles.filterInput}
-        />
+        <div className={styles.searchBox}>
+          <Search size={16} />
+          <input
+            type="text"
+            placeholder="Search customer or phone..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+          />
+        </div>
         <select
           value={statusFilter}
           onChange={(e) => {

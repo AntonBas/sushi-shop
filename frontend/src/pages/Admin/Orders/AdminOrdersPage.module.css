@@ -14,9 +14,36 @@
 
 .filters {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 12px;
+  flex: 1;
+  color: var(--color-text-muted);
+  min-width: 200px;
+}
+
+.searchBox input {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  padding: 10px 0;
+  width: 100%;
+  outline: none;
+  font-size: 14px;
+}
+
+.searchBox:focus-within {
+  border-color: var(--color-primary);
 }
 
 .filterSelect {
@@ -29,19 +56,6 @@
   outline: none;
 }
 
-.filterInput {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  flex: 1;
-  min-width: 200px;
-}
-
-.filterInput:focus,
 .filterSelect:focus {
   border-color: var(--color-primary);
 }
