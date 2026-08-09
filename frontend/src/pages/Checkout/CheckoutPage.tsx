@@ -77,16 +77,19 @@ export default function CheckoutPage() {
               user?.email || "",
             ),
           );
-          if (url) {
-            window.location.href = url;
-          }
+          if (url) window.location.href = url;
         } else {
           clearCart();
           showNotification("Order placed successfully!", "success");
           navigate("/profile/orders");
         }
       }
-    } catch {}
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to place order";
+      showNotification(message, "error");
+    }
   };
 
   if (items.length === 0) {
@@ -106,7 +109,6 @@ export default function CheckoutPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Checkout</h1>
-
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Contact Info</h2>
@@ -123,7 +125,6 @@ export default function CheckoutPage() {
             placeholder="+380991234567"
           />
         </div>
-
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Delivery Method</h2>
           <div className={styles.methodButtons}>
@@ -143,7 +144,6 @@ export default function CheckoutPage() {
             </button>
           </div>
         </div>
-
         {deliveryMethod === "DELIVERY" && (
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>Delivery Address</h2>
@@ -181,7 +181,6 @@ export default function CheckoutPage() {
             />
           </div>
         )}
-
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Payment Method</h2>
           <div className={styles.methodButtons}>
@@ -201,7 +200,6 @@ export default function CheckoutPage() {
             </button>
           </div>
         </div>
-
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Order Summary</h2>
           <div className={styles.items}>
@@ -219,7 +217,6 @@ export default function CheckoutPage() {
             <span className={styles.totalPrice}>{total}₴</span>
           </div>
         </div>
-
         <Button
           type="submit"
           loading={loading || paymentApi.loading}

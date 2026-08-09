@@ -44,8 +44,11 @@ export default function AdminProductsPage() {
         category: categoryFilter || undefined,
         available: availableFilter === "" ? undefined : availableFilter,
       });
-    } catch {
-      showNotification("Failed to delete product", "error");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to delete product";
+      showNotification(message, "error");
     }
   };
 
@@ -58,8 +61,11 @@ export default function AdminProductsPage() {
         category: categoryFilter || undefined,
         available: availableFilter === "" ? undefined : availableFilter,
       });
-    } catch {
-      showNotification("Failed to update product", "error");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to update product";
+      showNotification(message, "error");
     }
   };
 
@@ -200,7 +206,6 @@ export default function AdminProductsPage() {
               ))}
             </tbody>
           </table>
-
           <Pagination
             currentPage={page}
             totalPages={totalPages}

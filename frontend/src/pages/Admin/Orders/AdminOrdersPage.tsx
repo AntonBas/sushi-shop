@@ -101,8 +101,11 @@ export default function AdminOrdersPage() {
         paymentMethod: paymentFilter || undefined,
         search: search || undefined,
       });
-    } catch {
-      showNotification("Failed to update status", "error");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to update status";
+      showNotification(message, "error");
     }
   };
 

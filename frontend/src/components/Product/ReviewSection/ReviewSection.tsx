@@ -47,6 +47,13 @@ export default function ReviewSection({ productId }: Props) {
     loadReviews(0);
   }, [productId]);
 
+  const showError = (err: unknown, fallback: string) => {
+    const message =
+      (err as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message || fallback;
+    showNotification(message, "error");
+  };
+
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
@@ -61,7 +68,9 @@ export default function ReviewSection({ productId }: Props) {
       setNewRating(5);
       showNotification("Review submitted", "success");
       loadReviews(reviewPage);
-    } catch {}
+    } catch (err: unknown) {
+      showError(err, "Failed to submit review");
+    }
   };
 
   const handleUpdate = async (reviewId: number) => {
@@ -76,7 +85,9 @@ export default function ReviewSection({ productId }: Props) {
       setEditingId(null);
       showNotification("Review updated", "success");
       loadReviews(reviewPage);
-    } catch {}
+    } catch (err: unknown) {
+      showError(err, "Failed to update review");
+    }
   };
 
   const handleDelete = async () => {
@@ -86,7 +97,9 @@ export default function ReviewSection({ productId }: Props) {
       setDeleteId(null);
       showNotification("Review deleted", "success");
       loadReviews(reviewPage);
-    } catch {}
+    } catch (err: unknown) {
+      showError(err, "Failed to delete review");
+    }
   };
 
   const handleReply = async (reviewId: number) => {
@@ -99,7 +112,9 @@ export default function ReviewSection({ productId }: Props) {
       setReplyingId(null);
       showNotification("Reply added", "success");
       loadReviews(reviewPage);
-    } catch {}
+    } catch (err: unknown) {
+      showError(err, "Failed to add reply");
+    }
   };
 
   const handleUpdateReply = async () => {
@@ -112,7 +127,9 @@ export default function ReviewSection({ productId }: Props) {
       setEditReplyMessage("");
       showNotification("Reply updated", "success");
       loadReviews(reviewPage);
-    } catch {}
+    } catch (err: unknown) {
+      showError(err, "Failed to update reply");
+    }
   };
 
   const handleDeleteReply = async () => {
@@ -122,7 +139,9 @@ export default function ReviewSection({ productId }: Props) {
       setDeleteReplyId(null);
       showNotification("Reply deleted", "success");
       loadReviews(reviewPage);
-    } catch {}
+    } catch (err: unknown) {
+      showError(err, "Failed to delete reply");
+    }
   };
 
   const startEdit = (review: ReviewResponse) => {
@@ -139,7 +158,6 @@ export default function ReviewSection({ productId }: Props) {
   return (
     <div className={styles.section}>
       <h2 className={styles.title}>Reviews ({reviews.length})</h2>
-
       {user && (
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.stars}>
@@ -171,7 +189,6 @@ export default function ReviewSection({ productId }: Props) {
           </Button>
         </form>
       )}
-
       {reviews.length > 0 ? (
         <div className={styles.list}>
           {reviews.map((review) => (
@@ -212,7 +229,6 @@ export default function ReviewSection({ productId }: Props) {
                   </div>
                 )}
               </div>
-
               {editingId === review.id ? (
                 <div className={styles.editForm}>
                   <div className={styles.stars}>
@@ -258,7 +274,6 @@ export default function ReviewSection({ productId }: Props) {
                   <p className={styles.comment}>{review.comment}</p>
                 )
               )}
-
               {review.replies && review.replies.length > 0 && (
                 <div className={styles.replies}>
                   {review.replies.map((reply) => (
@@ -320,7 +335,6 @@ export default function ReviewSection({ productId }: Props) {
                   ))}
                 </div>
               )}
-
               {isAdmin && (
                 <div className={styles.replyForm}>
                   {replyingId === review.id ? (
@@ -377,7 +391,6 @@ export default function ReviewSection({ productId }: Props) {
       ) : (
         <p className={styles.empty}>No reviews yet. Be the first!</p>
       )}
-
       <Modal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
@@ -393,7 +406,6 @@ export default function ReviewSection({ productId }: Props) {
           </Button>
         </div>
       </Modal>
-
       <Modal
         isOpen={!!deleteReplyId}
         onClose={() => setDeleteReplyId(null)}

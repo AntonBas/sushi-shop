@@ -35,9 +35,7 @@ export default function AdminProductForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isEdit && id) {
-      getProduct(Number(id));
-    }
+    if (isEdit && id) getProduct(Number(id));
   }, [isEdit, id]);
 
   useEffect(() => {
@@ -67,8 +65,11 @@ export default function AdminProductForm() {
         await productsApi.deleteProductImage(Number(id), imageId);
         setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
         showNotification("Image removed", "success");
-      } catch {
-        showNotification("Failed to remove image", "error");
+      } catch (err: unknown) {
+        const message =
+          (err as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "Failed to remove image";
+        showNotification(message, "error");
       }
     }
   };
@@ -107,8 +108,11 @@ export default function AdminProductForm() {
         showNotification("Product created", "success");
       }
       navigate("/admin/products");
-    } catch {
-      showNotification("Failed to save product", "error");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to save product";
+      showNotification(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +189,6 @@ export default function AdminProductForm() {
               onChange={setName}
               placeholder="Product name"
             />
-
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Description</label>
               <textarea
@@ -197,7 +200,6 @@ export default function AdminProductForm() {
                 maxLength={250}
               />
             </div>
-
             <div className={styles.row}>
               <Input
                 label="Weight (g)"
@@ -214,7 +216,6 @@ export default function AdminProductForm() {
                 type="number"
               />
             </div>
-
             <Input
               label="Price (₴)"
               value={price}
@@ -222,7 +223,6 @@ export default function AdminProductForm() {
               placeholder="250.00"
               type="number"
             />
-
             <div className={styles.fieldGroup}>
               <label className={styles.label}>Category</label>
               <select

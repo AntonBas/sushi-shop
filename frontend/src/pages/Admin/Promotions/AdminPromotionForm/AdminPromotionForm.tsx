@@ -77,8 +77,11 @@ export default function AdminPromotionForm() {
       );
       showNotification("Promotion created", "success");
       navigate("/admin/promotions");
-    } catch {
-      showNotification("Failed to create promotion", "error");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to create promotion";
+      showNotification(message, "error");
     }
   };
 
@@ -93,7 +96,6 @@ export default function AdminPromotionForm() {
         </button>
         <h1>New Promotion</h1>
       </div>
-
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input
           label="Title"
@@ -133,7 +135,6 @@ export default function AdminPromotionForm() {
             type="datetime-local"
           />
         </div>
-
         <div className={styles.fieldGroup}>
           <label className={styles.label}>
             Products ({selectedProductIds.length} selected)
@@ -193,7 +194,6 @@ export default function AdminPromotionForm() {
             </>
           )}
         </div>
-
         <div className={styles.actions}>
           <Button
             type="button"

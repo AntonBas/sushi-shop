@@ -39,8 +39,11 @@ export default function AdminPromotionsPage() {
       setDeleteId(null);
       showNotification("Promotion deleted", "success");
       loadPromotions(page, search || undefined);
-    } catch {
-      showNotification("Failed to delete promotion", "error");
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to delete promotion";
+      showNotification(message, "error");
     }
   };
 
@@ -54,7 +57,6 @@ export default function AdminPromotionsPage() {
           Add Promotion
         </Button>
       </div>
-
       <div className={styles.filters}>
         <div className={styles.searchBox}>
           <Search size={16} />
@@ -69,7 +71,6 @@ export default function AdminPromotionsPage() {
           />
         </div>
       </div>
-
       {promotions.length === 0 ? (
         <div className={styles.empty}>
           <h3>No promotions found</h3>
@@ -128,7 +129,6 @@ export default function AdminPromotionsPage() {
               ))}
             </tbody>
           </table>
-
           <Pagination
             currentPage={page}
             totalPages={data?.totalPages || 0}
@@ -136,7 +136,6 @@ export default function AdminPromotionsPage() {
           />
         </>
       )}
-
       <Modal
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
