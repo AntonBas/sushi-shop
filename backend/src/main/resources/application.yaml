@@ -38,8 +38,6 @@ spring:
 
   cache:
     type: redis
-    redis:
-      time-to-live: 30m
 
   mail:
     host: smtp.gmail.com
@@ -91,6 +89,8 @@ app:
 logging:
   level:
     com.sushishop: DEBUG
+    org.springframework.cache: TRACE
+    org.springframework.data.redis: DEBUG
 
 management:
   endpoints:

@@ -54,7 +54,6 @@ public class ProductService {
         return productMapper.toResponse(saved);
     }
 
-    @Cacheable("products")
     public Page<ProductListResponse> getAll(Pageable pageable, String search, Category category, Boolean available) {
         var spec = Specification.where(ProductSpecification.hasSearch(search))
                 .and(ProductSpecification.hasCategory(category))
@@ -96,7 +95,6 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Product not found: " + slug));
     }
 
-    @Cacheable(value = "products", key = "'popular'")
     public List<ProductListResponse> getPopular() {
         List<Product> products = productRepository.findPopular(Pageable.ofSize(10));
 
@@ -114,7 +112,6 @@ public class ProductService {
                 .toList();
     }
 
-    @Cacheable(value = "products", key = "'related-' + #id")
     public List<ProductListResponse> getRelated(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
@@ -139,7 +136,10 @@ public class ProductService {
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Product")
-    @CachePut(value = "products", key = "#id")
+    @Caching(
+            put = @CachePut(value = "products", key = "#id"),
+            evict = @CacheEvict(value = "products", allEntries = true)
+    )
     public ProductResponse update(Long id, UpdateProductRequest request) {
         log.info("Update product : {}", request.name());
         var product = productRepository.findById(id)
@@ -156,7 +156,10 @@ public class ProductService {
         return productMapper.toResponse(updated);
     }
 
-    @CacheEvict(value = "products", key = "#productId")
+    @Caching(evict = {
+            @CacheEvict(value = "products", key = "#productId"),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public void addImage(Long productId, MultipartFile file) {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
@@ -178,7 +181,10 @@ public class ProductService {
         log.info("Image added to product: {}", productId);
     }
 
-    @CacheEvict(value = "products", key = "#productId")
+    @Caching(evict = {
+            @CacheEvict(value = "products", key = "#productId"),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public void deleteImage(Long productId, Long imageId) {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
@@ -193,7 +199,10 @@ public class ProductService {
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Product")
-    @CacheEvict(value = "products", key = "#id")
+    @Caching(evict = {
+            @CacheEvict(value = "products", key = "#id"),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public void toggleAvailability(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));

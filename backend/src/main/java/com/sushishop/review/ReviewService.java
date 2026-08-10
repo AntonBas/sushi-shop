@@ -14,6 +14,7 @@ import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,23 +33,16 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.CREATE, entity = "Review")
     @Transactional
-    @CacheEvict(value = "products", key = "#request.productId()")
+    @CacheEvict(value = {"products", "reviews"}, key = "#request.productId()")
     public ReviewResponse create(CreateReviewRequest request, String email) {
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found"));
-        var product = productRepository.findById(request.productId())
-                .orElseThrow(() -> new NotFoundException("Product not found: " + request.productId()));
+        var user = userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+        var product = productRepository.findById(request.productId()).orElseThrow(() -> new NotFoundException("Product not found: " + request.productId()));
 
         if (reviewRepository.existsByUserIdAndProductId(user.getId(), product.getId())) {
             throw new ConflictException("You have already reviewed this product");
         }
 
-        var review = Review.builder()
-                .user(user)
-                .product(product)
-                .rating(request.rating())
-                .comment(request.comment())
-                .build();
+        var review = Review.builder().user(user).product(product).rating(request.rating()).comment(request.comment()).build();
 
         var saved = reviewRepository.save(review);
         log.info("Review created: {}", saved.getId());
@@ -56,16 +50,12 @@ public class ReviewService {
     }
 
     @Transactional
+    @CacheEvict(value = "reviews", key = "#reviewId")
     public ReviewReplyResponse addReply(Long reviewId, CreateReviewReplyRequest request, String userEmail) {
         var review = reviewRepository.findById(reviewId).orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
-        var user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        var user = userRepository.findByEmail(userEmail).orElseThrow(() -> new NotFoundException("User not found"));
 
-        var reply = ReviewReply.builder()
-                .review(review)
-                .user(user)
-                .message(request.message())
-                .build();
+        var reply = ReviewReply.builder().review(review).user(user).message(request.message()).build();
 
         var saved = reviewReplyRepository.save(reply);
         log.info("Reply added to review: {}", reviewId);
@@ -77,7 +67,7 @@ public class ReviewService {
     }
 
     @Transactional
-    @CacheEvict(value = "products", key = "#review.product.id")
+    @CacheEvict(value = {"products", "reviews"}, key = "#review.product.id")
     public ReviewResponse update(Long reviewId, CreateReviewRequest request, String email) {
         var review = reviewRepository.findById(reviewId).orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
         if (!review.getUser().getEmail().equals(email)) {
@@ -91,6 +81,7 @@ public class ReviewService {
     }
 
     @Transactional
+    @CacheEvict(value = "reviews", key = "#replyId")
     public ReviewReplyResponse updateReply(Long replyId, CreateReviewReplyRequest request, String userEmail) {
         var reply = reviewReplyRepository.findById(replyId).orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
         if (!reply.getUser().getEmail().equals(userEmail)) {
@@ -102,10 +93,9 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
-    @CacheEvict(value = "products", key = "#review.product.id")
+    @CacheEvict(value = {"products", "reviews"}, key = "#review.product.id")
     public void delete(Long reviewId, String email) {
-        var review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
+        var review = reviewRepository.findById(reviewId).orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
         if (!review.getUser().getEmail().equals(email)) {
             throw new BadRequestException("You can only delete your own reviews");
         }
@@ -114,6 +104,7 @@ public class ReviewService {
     }
 
     @Transactional
+    @CacheEvict(value = "reviews", key = "#replyId")
     public void deleteReply(Long replyId, String email) {
         var reply = reviewReplyRepository.findById(replyId).orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
         if (!reply.getUser().getEmail().equals(email)) {

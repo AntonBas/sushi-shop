@@ -57,7 +57,6 @@ public class PromotionService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "promotions", key = "'active'")
     public List<PromotionResponse> getActive() {
         var now = LocalDateTime.now();
         return promotionRepository.findByStartDateBeforeAndEndDateAfter(now, now)
@@ -75,6 +74,7 @@ public class PromotionService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "promotions", key = "#id")
     public PromotionResponse getById(Long id) {
         return promotionRepository.findById(id).map(promotionMapper::toResponse).orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
     }
