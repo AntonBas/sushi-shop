@@ -1,0 +1,56 @@
+spring:
+  docker:
+    compose:
+      enabled: false
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:sushi_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - email
+              - profile
+            redirect-uri: "${APP_BASE_URL}/login/oauth2/code/google"
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000
+  upload:
+    dir: uploads
+    allowed-types: image/jpeg,image/png,image/webp
+    max-size: 5242880
+    url-prefix: /api/files/
+  base-url: ${APP_BASE_URL}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+
+logging:
+  level:
+    com.sushishop: INFO÷

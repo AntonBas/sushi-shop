@@ -10,12 +10,106 @@ services:
       - '${DB_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sushi-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   redis:
     image: 'redis:7-alpine'
-    container_name: sushi_redis
+    container_name: sushi-redis
     ports:
       - '${REDIS_PORT}:6379'
+    networks:
+      - sushi-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sushi-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      APP_BASE_URL: ${APP_BASE_URL}
+    ports:
+      - '8080:8080'
+    networks:
+      - sushi-net
+    volumes:
+      - ./backend/uploads:/app/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sushi-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - '5173:5173'
+    networks:
+      - sushi-net
+    environment:
+      VITE_API_URL: http://backend:8080
+    restart: unless-stopped
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: sushi-ngrok
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
+    command: http backend:8080 --log=stdout --log-level=info
+    ports:
+      - '4040:4040'
+    networks:
+      - sushi-net
+    restart: unless-stopped
+
+networks:
+  sushi-net:
+    driver: bridge
 
 volumes:
   postgres_data:
