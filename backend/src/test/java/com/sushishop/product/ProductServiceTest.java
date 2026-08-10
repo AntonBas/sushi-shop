@@ -7,6 +7,7 @@ import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
 import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,9 +23,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +57,7 @@ public class ProductServiceTest {
         var expected = new ProductResponse(1L, "maki", "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
 
         when(productMapper.toEntity(request)).thenReturn(product);
-        when(slugService.generateUniqueSlug("Maki")).thenReturn("maki");
+        when(slugService.generateUniqueSlug(eq("Maki"), any())).thenReturn("maki");
         when(productRepository.save(product)).thenReturn(product);
         when(productMapper.toResponse(product)).thenReturn(expected);
 
@@ -149,7 +148,7 @@ public class ProductServiceTest {
         var expected = new ProductResponse(1L, "updated", "Updated", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, null, null);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(slugService.generateUniqueSlug("Updated")).thenReturn("updated");
+        when(slugService.generateUniqueSlug(eq("Updated"), any())).thenReturn("updated");
         when(productRepository.save(product)).thenReturn(product);
         when(productMapper.toResponse(product)).thenReturn(expected);
 
