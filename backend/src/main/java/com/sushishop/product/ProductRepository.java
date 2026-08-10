@@ -15,7 +15,6 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Nonnull
     Page<Product> findAll(Specification<Product> spec, @Nonnull Pageable pageable);
 
@@ -35,10 +34,16 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             """)
     List<Product> findPopular(Pageable pageable);
 
-    @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Query("SELECT p FROM Product p WHERE p.category = :category AND p.id != :id AND p.available = true ORDER BY p.id DESC")
     List<Product> findRelated(@Param("category") Category category, @Param("id") Long id);
 
     @Query("SELECT r.product.id, AVG(r.rating) FROM Review r WHERE r.product.id IN :productIds GROUP BY r.product.id")
     List<Object[]> findAverageRatingsByProductIds(@Param("productIds") List<Long> productIds);
+
+    @Query("SELECT pi FROM ProductImage pi WHERE pi.product.id IN :productIds ORDER BY pi.sortOrder")
+    List<ProductImage> findImagesByProductIds(@Param("productIds") List<Long> productIds);
+
+    @EntityGraph(attributePaths = {"promotions"})
+    @Query("SELECT DISTINCT p FROM Product p WHERE p.id IN :productIds")
+    List<Product> findWithPromotions(@Param("productIds") List<Long> productIds);
 }

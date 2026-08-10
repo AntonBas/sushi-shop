@@ -43,10 +43,13 @@ public interface ProductMapper {
 
     @Mapping(target = "mainImage", expression = "java(ProductImageMapper.getMainImage(product))")
     @Mapping(target = "discountedPrice", source = "product", qualifiedByName = "discountedPrice")
-    @Mapping(target = "averageRating", ignore = true)
-    ProductListResponse toListResponse(Product product);
+    @Mapping(target = "averageRating", source = "rating")
+    ProductListResponse toListResponse(Product product, Double rating);
 
     default List<ProductImageResponse> mapImages(Product product) {
-        return product.getProductImages().stream().sorted(Comparator.comparingInt(ProductImage::getSortOrder)).map(img -> new ProductImageResponse(img.getId(), img.getUrl())).toList();
+        return product.getProductImages().stream()
+                .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
+                .map(img -> new ProductImageResponse(img.getId(), img.getUrl()))
+                .toList();
     }
 }

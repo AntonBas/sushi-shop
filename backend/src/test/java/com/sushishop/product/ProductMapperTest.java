@@ -60,7 +60,8 @@ public class ProductMapperTest {
                 .pieces(8)
                 .build();
 
-        ProductListResponse response = productMapper.toListResponse(product);
+        Double rating = 4.5;
+        ProductListResponse response = productMapper.toListResponse(product, rating);
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.name()).isEqualTo("Maki");
@@ -70,7 +71,26 @@ public class ProductMapperTest {
         assertThat(response.weight()).isEqualTo(250);
         assertThat(response.pieces()).isEqualTo(8);
         assertThat(response.mainImage()).isNull();
-        assertThat(response.averageRating()).isNull();
+        assertThat(response.averageRating()).isEqualTo(4.5);
         assertThat(response.discountedPrice()).isNull();
+    }
+
+    @Test
+    void shouldMapToListResponseWithNullRating() {
+        Product product = Product.builder()
+                .id(2L)
+                .name("Uramaki")
+                .price(new BigDecimal("300.00"))
+                .category(Category.ROLL)
+                .available(true)
+                .weight(300)
+                .pieces(6)
+                .build();
+
+        ProductListResponse response = productMapper.toListResponse(product, null);
+
+        assertThat(response.id()).isEqualTo(2L);
+        assertThat(response.name()).isEqualTo("Uramaki");
+        assertThat(response.averageRating()).isNull();
     }
 }

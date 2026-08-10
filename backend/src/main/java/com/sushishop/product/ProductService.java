@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -59,39 +60,57 @@ public class ProductService {
                 .and(ProductSpecification.hasCategory(category))
                 .and(ProductSpecification.isAvailable(available));
         log.info("Getting all products, page: {}", pageable.getPageNumber());
-        var page = productRepository.findAll(spec, pageable);
 
-        var productIds = page.getContent().stream().map(Product::getId).toList();
+        var page = productRepository.findAll(spec, pageable);
+        List<Product> products = page.getContent();
+
+        if (products.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        productEnrichmentService.enrichProductsWithImagesAndPromotions(products);
+
+        var productIds = products.stream().map(Product::getId).toList();
         var ratings = productEnrichmentService.getAverageRatings(productIds);
 
-        return page.map(product -> {
-            var response = productMapper.toListResponse(product);
-            return new ProductListResponse(
-                    response.id(), response.slug(), response.name(), response.price(),
-                    response.discountedPrice(), ratings.get(product.getId()),
-                    response.category(), response.mainImage(), response.available(),
-                    response.weight(), response.pieces()
-            );
-        });
+        List<ProductListResponse> responses = products.stream()
+                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId())))
+                .toList();
+
+        return new PageImpl<>(responses, pageable, page.getTotalElements());
     }
 
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getById(Long id) {
         log.info("Get product with ID: {}", id);
-        return productRepository.findById(id).map(productMapper::toResponse).orElseThrow(() -> new NotFoundException("Product with ID: " + id));
+        return productRepository.findById(id)
+                .map(productMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Product with ID: " + id));
     }
 
     @Cacheable(value = "products", key = "#slug")
     public ProductResponse getBySlug(String slug) {
         log.info("Get product by slug: {}", slug);
-        return productRepository.findBySlug(slug).map(productMapper::toResponse).orElseThrow(() -> new NotFoundException("Product not found: " + slug));
+        return productRepository.findBySlug(slug)
+                .map(productMapper::toResponse)
+                .orElseThrow(() -> new NotFoundException("Product not found: " + slug));
     }
 
     @Cacheable(value = "products", key = "'popular'")
     public List<ProductListResponse> getPopular() {
-        return productRepository.findPopular(Pageable.ofSize(10))
-                .stream()
-                .map(productMapper::toListResponse)
+        List<Product> products = productRepository.findPopular(Pageable.ofSize(10));
+
+        if (products.isEmpty()) {
+            return List.of();
+        }
+
+        productEnrichmentService.enrichProductsWithImagesAndPromotions(products);
+
+        var productIds = products.stream().map(Product::getId).toList();
+        var ratings = productEnrichmentService.getAverageRatings(productIds);
+
+        return products.stream()
+                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId())))
                 .toList();
     }
 
@@ -99,10 +118,23 @@ public class ProductService {
     public List<ProductListResponse> getRelated(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-        return productRepository.findRelated(product.getCategory(), id)
+
+        List<Product> relatedProducts = productRepository.findRelated(product.getCategory(), id)
                 .stream()
                 .limit(4)
-                .map(productMapper::toListResponse)
+                .toList();
+
+        if (relatedProducts.isEmpty()) {
+            return List.of();
+        }
+
+        productEnrichmentService.enrichProductsWithImagesAndPromotions(relatedProducts);
+
+        var productIds = relatedProducts.stream().map(Product::getId).toList();
+        var ratings = productEnrichmentService.getAverageRatings(productIds);
+
+        return relatedProducts.stream()
+                .map(p -> productMapper.toListResponse(p, ratings.get(p.getId())))
                 .toList();
     }
 
@@ -134,9 +166,14 @@ public class ProductService {
             return;
         }
         int nextOrder = product.getProductImages().stream()
-                .mapToInt(ProductImage::getSortOrder).max().orElse(-1) + 1;
+                .mapToInt(ProductImage::getSortOrder)
+                .max()
+                .orElse(-1) + 1;
         product.getProductImages().add(ProductImage.builder()
-                .url(url).sortOrder(nextOrder).product(product).build());
+                .url(url)
+                .sortOrder(nextOrder)
+                .product(product)
+                .build());
         productRepository.save(product);
         log.info("Image added to product: {}", productId);
     }
@@ -166,8 +203,10 @@ public class ProductService {
     }
 
     @Auditable(action = AuditAction.DELETE, entity = "Product")
-    @Caching(evict = {@CacheEvict(value = "products", key = "#id"),
-            @CacheEvict(value = "products", allEntries = true)})
+    @Caching(evict = {
+            @CacheEvict(value = "products", key = "#id"),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public void delete(Long id) {
         log.info("Delete product with ID: {}", id);
         var product = productRepository.findById(id)
@@ -183,7 +222,11 @@ public class ProductService {
         for (int i = 0; i < images.size(); i++) {
             String url = fileStorageService.store(images.get(i));
             if (url != null) {
-                productImages.add(ProductImage.builder().url(url).sortOrder(i).product(product).build());
+                productImages.add(ProductImage.builder()
+                        .url(url)
+                        .sortOrder(i)
+                        .product(product)
+                        .build());
             }
         }
         product.setProductImages(productImages);

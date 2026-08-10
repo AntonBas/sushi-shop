@@ -8,9 +8,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +38,7 @@ public class ProductEnrichmentService {
     }
 
     public Promotion getBestPromo(Product product) {
+        if (product.getPromotions() == null || product.getPromotions().isEmpty()) return null;
         return product.getPromotions().stream()
                 .filter(p -> p.isActive() && p.getEndDate().isAfter(LocalDateTime.now()))
                 .max(Comparator.comparing(Promotion::getDiscountPercent))
@@ -56,4 +55,28 @@ public class ProductEnrichmentService {
                 ));
     }
 
+    public void enrichProductsWithImagesAndPromotions(List<Product> products) {
+        if (products.isEmpty()) return;
+
+        List<Long> productIds = products.stream().map(Product::getId).toList();
+
+        Map<Long, List<ProductImage>> imagesMap = productRepository
+                .findImagesByProductIds(productIds)
+                .stream()
+                .collect(Collectors.groupingBy(img -> img.getProduct().getId()));
+
+        Map<Long, Set<Promotion>> promotionsMap = productRepository
+                .findWithPromotions(productIds)
+                .stream()
+                .collect(Collectors.toMap(Product::getId, Product::getPromotions));
+
+        products.forEach(product -> {
+            product.setProductImages(imagesMap.getOrDefault(product.getId(), Collections.emptyList()));
+
+            Set<Promotion> promotions = promotionsMap.get(product.getId());
+            if (promotions != null) {
+                product.setPromotions(promotions);
+            }
+        });
+    }
 }

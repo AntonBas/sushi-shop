@@ -22,7 +22,10 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Table(name = "products", indexes = {
-        @Index(name = "idx_product_category", columnList = "category")})
+        @Index(name = "idx_product_category", columnList = "category"),
+        @Index(name = "idx_product_slug", columnList = "slug"),
+        @Index(name = "idx_product_available", columnList = "available")
+})
 @EqualsAndHashCode(callSuper = true, exclude = {"productImages", "promotions", "reviews"})
 public class Product extends BaseEntity {
 
@@ -66,7 +69,13 @@ public class Product extends BaseEntity {
     @Builder.Default
     private List<ProductImage> productImages = new ArrayList<>();
 
-    @ManyToMany(mappedBy = "products", fetch = FetchType.LAZY)
+    @ManyToMany
+    @JoinTable(
+            name = "promotion_products",
+            joinColumns = @JoinColumn(name = "product_id"),
+            inverseJoinColumns = @JoinColumn(name = "promotion_id")
+    )
+    @BatchSize(size = 20)
     @Builder.Default
     private Set<Promotion> promotions = new HashSet<>();
 

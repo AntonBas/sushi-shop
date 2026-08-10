@@ -12,17 +12,20 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class ProductServiceTest {
@@ -39,6 +42,9 @@ public class ProductServiceTest {
     @Mock
     private SlugService slugService;
 
+    @Mock
+    private ProductEnrichmentService productEnrichmentService;
+
     @InjectMocks
     private ProductService productService;
 
@@ -51,8 +57,8 @@ public class ProductServiceTest {
         product.setProductImages(new ArrayList<>());
         var expected = new ProductResponse(1L, "maki", "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
 
-        when(slugService.generateUniqueSlug("Maki")).thenReturn("maki");
         when(productMapper.toEntity(request)).thenReturn(product);
+        when(slugService.generateUniqueSlug("Maki")).thenReturn("maki");
         when(productRepository.save(product)).thenReturn(product);
         when(productMapper.toResponse(product)).thenReturn(expected);
 
@@ -84,6 +90,52 @@ public class ProductServiceTest {
 
         assertThatThrownBy(() -> productService.getById(1L))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldGetAllProducts() {
+        Product product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00"))
+                .category(Category.ROLL).available(true).weight(250).pieces(8).build();
+        product.setProductImages(new ArrayList<>());
+        product.setPromotions(new HashSet<>());
+        product.setReviews(new ArrayList<>());
+
+        Pageable pageable = PageRequest.of(0, 12);
+        var page = new PageImpl<>(List.of(product), pageable, 1);
+        var listResponse = new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), null, 4.5, Category.ROLL, null, true, 250, 8);
+
+        doNothing().when(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
+        when(productRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+        when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(1L, 4.5));
+        when(productMapper.toListResponse(product, 4.5)).thenReturn(listResponse);
+
+        var result = productService.getAll(pageable, null, null, null);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().name()).isEqualTo("Maki");
+        verify(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
+    }
+
+    @Test
+    void shouldGetPopularProducts() {
+        Product product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00"))
+                .category(Category.ROLL).available(true).weight(250).pieces(8).build();
+        product.setProductImages(new ArrayList<>());
+        product.setPromotions(new HashSet<>());
+        product.setReviews(new ArrayList<>());
+
+        var listResponse = new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), null, 4.5, Category.ROLL, null, true, 250, 8);
+
+        doNothing().when(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
+        when(productRepository.findPopular(any(Pageable.class))).thenReturn(List.of(product));
+        when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(1L, 4.5));
+        when(productMapper.toListResponse(product, 4.5)).thenReturn(listResponse);
+
+        var result = productService.getPopular();
+
+        assertThat(result).hasSize(1);
+        verify(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
     }
 
     @Test
@@ -176,26 +228,28 @@ public class ProductServiceTest {
 
     @Test
     void shouldGetRelatedProducts() {
-        var product = new Product();
-        product.setId(1L);
-        product.setCategory(Category.ROLL);
+        var product = Product.builder().id(1L).category(Category.ROLL).build();
         product.setPromotions(new HashSet<>());
         product.setReviews(new ArrayList<>());
         product.setProductImages(new ArrayList<>());
 
-        var relatedProduct = new Product();
+        var relatedProduct = Product.builder().id(2L).name("Related").price(BigDecimal.TEN)
+                .category(Category.ROLL).available(true).build();
         relatedProduct.setPromotions(new HashSet<>());
         relatedProduct.setReviews(new ArrayList<>());
         relatedProduct.setProductImages(new ArrayList<>());
 
-        var listResponse = new ProductListResponse(2L, "related", "Related", BigDecimal.TEN, null, null, Category.ROLL, null, true, null, null);
+        var listResponse = new ProductListResponse(2L, "related", "Related", BigDecimal.TEN, null, 3.0, Category.ROLL, null, true, null, null);
 
+        doNothing().when(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.findRelated(Category.ROLL, 1L)).thenReturn(List.of(relatedProduct));
-        when(productMapper.toListResponse(relatedProduct)).thenReturn(listResponse);
+        when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(2L, 3.0));
+        when(productMapper.toListResponse(relatedProduct, 3.0)).thenReturn(listResponse);
 
         var result = productService.getRelated(1L);
 
         assertThat(result).hasSize(1);
+        verify(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
     }
 }
