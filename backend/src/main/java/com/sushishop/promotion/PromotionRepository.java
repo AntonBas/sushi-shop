@@ -19,19 +19,14 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     List<Promotion> findByStartDateBeforeAndEndDateAfter(LocalDateTime start, LocalDateTime end);
 
     @Nonnull
-    @EntityGraph(attributePaths = {"products", "products.productImages"})
+    @EntityGraph(attributePaths = {"products"})
     @Query("SELECT p FROM Promotion p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%'))")
     Page<Promotion> findAllBySearch(@Param("search") String search, @Nonnull Pageable pageable);
 
     @Override
     @Nonnull
-    @EntityGraph(attributePaths = {"products", "products.productImages"})
+    @EntityGraph(attributePaths = {"products"})
     Page<Promotion> findAll(@Nonnull Pageable pageable);
-
-    @Override
-    @Nonnull
-    @EntityGraph(attributePaths = {"products", "products.productImages"})
-    Optional<Promotion> findById(@Nonnull Long id);
 
     @Nonnull
     @EntityGraph(attributePaths = {"products", "products.productImages"})

@@ -47,6 +47,6 @@ public class PromotionMapperTest {
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.slug()).isEqualTo("weekend-sale");
         assertThat(response.title()).isEqualTo("Weekend Sale");
-        assertThat(response.products()).hasSize(1);
+        assertThat(response.products()).isNull();
     }
 }

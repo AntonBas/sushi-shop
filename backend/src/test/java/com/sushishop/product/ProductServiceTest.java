@@ -107,7 +107,8 @@ public class ProductServiceTest {
         doNothing().when(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
         when(productRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
         when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(1L, 4.5));
-        when(productMapper.toListResponse(product, 4.5)).thenReturn(listResponse);
+        when(productEnrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
+        when(productMapper.toListResponse(eq(product), eq(4.5), any())).thenReturn(listResponse);
 
         var result = productService.getAll(pageable, null, null, null);
 
@@ -129,7 +130,8 @@ public class ProductServiceTest {
         doNothing().when(productEnrichmentService).enrichProductsWithImagesAndPromotions(anyList());
         when(productRepository.findPopular(any(Pageable.class))).thenReturn(List.of(product));
         when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(1L, 4.5));
-        when(productMapper.toListResponse(product, 4.5)).thenReturn(listResponse);
+        when(productEnrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
+        when(productMapper.toListResponse(eq(product), eq(4.5), any())).thenReturn(listResponse);
 
         var result = productService.getPopular();
 
@@ -244,7 +246,8 @@ public class ProductServiceTest {
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(productRepository.findRelated(Category.ROLL, 1L)).thenReturn(List.of(relatedProduct));
         when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(2L, 3.0));
-        when(productMapper.toListResponse(relatedProduct, 3.0)).thenReturn(listResponse);
+        when(productEnrichmentService.calculateDiscountedPrice(relatedProduct)).thenReturn(null);
+        when(productMapper.toListResponse(eq(relatedProduct), eq(3.0), any())).thenReturn(listResponse);
 
         var result = productService.getRelated(1L);
 

@@ -7,6 +7,7 @@ import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
 import org.mapstruct.*;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,9 +43,9 @@ public interface ProductMapper {
     ProductResponse toResponse(Product product);
 
     @Mapping(target = "mainImage", expression = "java(ProductImageMapper.getMainImage(product))")
-    @Mapping(target = "discountedPrice", source = "product", qualifiedByName = "discountedPrice")
+    @Mapping(target = "discountedPrice", source = "discountedPrice")
     @Mapping(target = "averageRating", source = "rating")
-    ProductListResponse toListResponse(Product product, Double rating);
+    ProductListResponse toListResponse(Product product, Double rating, BigDecimal discountedPrice);
 
     default List<ProductImageResponse> mapImages(Product product) {
         return product.getProductImages().stream()

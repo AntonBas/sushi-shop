@@ -74,7 +74,7 @@ public class ProductService {
         var ratings = productEnrichmentService.getAverageRatings(productIds);
 
         List<ProductListResponse> responses = products.stream()
-                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId())))
+                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId()), productEnrichmentService.calculateDiscountedPrice(product)))
                 .toList();
 
         return new PageImpl<>(responses, pageable, page.getTotalElements());
@@ -109,7 +109,7 @@ public class ProductService {
         var ratings = productEnrichmentService.getAverageRatings(productIds);
 
         return products.stream()
-                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId())))
+                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId()), productEnrichmentService.calculateDiscountedPrice(product)))
                 .toList();
     }
 
@@ -132,7 +132,7 @@ public class ProductService {
         var ratings = productEnrichmentService.getAverageRatings(productIds);
 
         return relatedProducts.stream()
-                .map(p -> productMapper.toListResponse(p, ratings.get(p.getId())))
+                .map(p -> productMapper.toListResponse(p, ratings.get(p.getId()), productEnrichmentService.calculateDiscountedPrice(p)))
                 .toList();
     }
 

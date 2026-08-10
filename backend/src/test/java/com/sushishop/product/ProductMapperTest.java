@@ -1,8 +1,8 @@
 package com.sushishop.product;
 
-import com.sushishop.shared.enums.Category;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.shared.enums.Category;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -61,7 +61,7 @@ public class ProductMapperTest {
                 .build();
 
         Double rating = 4.5;
-        ProductListResponse response = productMapper.toListResponse(product, rating);
+        ProductListResponse response = productMapper.toListResponse(product, rating, null);
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.name()).isEqualTo("Maki");
@@ -76,6 +76,23 @@ public class ProductMapperTest {
     }
 
     @Test
+    void shouldMapToListResponseWithDiscountedPrice() {
+        Product product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .category(Category.ROLL)
+                .available(true)
+                .weight(250)
+                .pieces(8)
+                .build();
+
+        ProductListResponse response = productMapper.toListResponse(product, null, new BigDecimal("200.00"));
+
+        assertThat(response.discountedPrice()).isEqualByComparingTo(new BigDecimal("200.00"));
+    }
+
+    @Test
     void shouldMapToListResponseWithNullRating() {
         Product product = Product.builder()
                 .id(2L)
@@ -87,7 +104,7 @@ public class ProductMapperTest {
                 .pieces(6)
                 .build();
 
-        ProductListResponse response = productMapper.toListResponse(product, null);
+        ProductListResponse response = productMapper.toListResponse(product, null, null);
 
         assertThat(response.id()).isEqualTo(2L);
         assertThat(response.name()).isEqualTo("Uramaki");

@@ -1,9 +1,13 @@
 package com.sushishop.promotion;
 
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductEnrichmentService;
+import com.sushishop.product.ProductMapper;
 import com.sushishop.product.ProductRepository;
+import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
@@ -15,13 +19,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +40,12 @@ public class PromotionServiceTest {
     private PromotionMapper promotionMapper;
 
     @Mock
+    private ProductMapper productMapper;
+
+    @Mock
+    private ProductEnrichmentService productEnrichmentService;
+
+    @Mock
     private SlugService slugService;
 
     @InjectMocks
@@ -47,15 +55,31 @@ public class PromotionServiceTest {
     void shouldCreatePromotion() {
         var request = new CreatePromotionRequest("Weekend Sale", "20% off", new BigDecimal("20.00"),
                 LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), List.of(1L));
-        var product = Product.builder().id(1L).build();
-        var expected = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", "20% off", new BigDecimal("20.00"),
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
+        product.setProductImages(new ArrayList<>());
+
+        var promoEntity = Promotion.builder()
+                .id(1L)
+                .slug("weekend-sale")
+                .title("Weekend Sale")
+                .description("20% off")
+                .discountPercent(new BigDecimal("20.00"))
+                .startDate(request.startDate())
+                .endDate(request.endDate())
+                .active(true)
+                .products(Set.of(product))
+                .build();
+
+        var mappedResponse = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", "20% off", new BigDecimal("20.00"),
                 request.startDate(), request.endDate(), true, List.of());
 
         when(promotionRepository.findByTitle("Weekend Sale")).thenReturn(Optional.empty());
         when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
         when(slugService.generateUniqueSlug(eq("Weekend Sale"), any())).thenReturn("weekend-sale");
-        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(promotionMapper.toResponse(any())).thenReturn(expected);
+        when(promotionRepository.save(any())).thenReturn(promoEntity);
+        when(promotionMapper.toResponse(any())).thenReturn(mappedResponse);
+        when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of());
+        when(productMapper.toListResponse(any(), any(), any())).thenReturn(new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), new BigDecimal("200.00"), null, Category.ROLL, null, true, null, null));
 
         var result = promotionService.create(request);
 
@@ -66,11 +90,27 @@ public class PromotionServiceTest {
 
     @Test
     void shouldGetActivePromotions() {
-        var expected = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
-                LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
+        product.setProductImages(new ArrayList<>());
 
-        when(promotionRepository.findByStartDateBeforeAndEndDateAfter(any(), any())).thenReturn(List.of(new Promotion()));
-        when(promotionMapper.toResponse(any())).thenReturn(expected);
+        var promotion = Promotion.builder()
+                .id(1L)
+                .slug("weekend-sale")
+                .title("Weekend Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(Set.of(product))
+                .build();
+
+        var mappedResponse = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
+                null, null, true, List.of());
+
+        when(promotionRepository.findByStartDateBeforeAndEndDateAfter(any(), any())).thenReturn(List.of(promotion));
+        when(promotionMapper.toResponse(any())).thenReturn(mappedResponse);
+        when(productEnrichmentService.getAverageRatings(anyList())).thenReturn(Map.of());
+        when(productMapper.toListResponse(any(), any(), any())).thenReturn(new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), new BigDecimal("200.00"), null, Category.ROLL, null, true, null, null));
 
         var result = promotionService.getActive();
 
@@ -79,11 +119,22 @@ public class PromotionServiceTest {
 
     @Test
     void shouldGetById() {
-        var expected = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
-                LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
+        var promotion = Promotion.builder()
+                .id(1L)
+                .slug("weekend-sale")
+                .title("Weekend Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(Set.of())
+                .build();
 
-        when(promotionRepository.findById(1L)).thenReturn(Optional.of(new Promotion()));
-        when(promotionMapper.toResponse(any())).thenReturn(expected);
+        var mappedResponse = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
+                null, null, true, List.of());
+
+        when(promotionRepository.findById(1L)).thenReturn(Optional.of(promotion));
+        when(promotionMapper.toResponse(any())).thenReturn(mappedResponse);
 
         var result = promotionService.getById(1L);
 
@@ -93,11 +144,22 @@ public class PromotionServiceTest {
 
     @Test
     void shouldGetBySlug() {
-        var expected = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
-                LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
+        var promotion = Promotion.builder()
+                .id(1L)
+                .slug("weekend-sale")
+                .title("Weekend Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .startDate(LocalDateTime.now())
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(Set.of())
+                .build();
 
-        when(promotionRepository.findBySlug("weekend-sale")).thenReturn(Optional.of(new Promotion()));
-        when(promotionMapper.toResponse(any())).thenReturn(expected);
+        var mappedResponse = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
+                null, null, true, List.of());
+
+        when(promotionRepository.findBySlug("weekend-sale")).thenReturn(Optional.of(promotion));
+        when(promotionMapper.toResponse(any())).thenReturn(mappedResponse);
 
         var result = promotionService.getBySlug("weekend-sale");
 
