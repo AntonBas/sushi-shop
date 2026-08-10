@@ -1,5 +1,5 @@
 import api from './client'
-import type { CreatePromotionRequest, PromotionResponse } from '../types'
+import type { CreatePromotionRequest, UpdatePromotionRequest, PromotionResponse } from '../types'
 import type { Page } from '../types/common'
 
 export const getActivePromotions = async (): Promise<PromotionResponse[]> => {
@@ -17,8 +17,18 @@ export const getPromotionById = async (id: number): Promise<PromotionResponse> =
   return data
 }
 
+export const getPromotionBySlug = async (slug: string): Promise<PromotionResponse> => {
+  const { data } = await api.get(`/promotions/slug/${slug}`)
+  return data
+}
+
 export const createPromotion = async (data: CreatePromotionRequest): Promise<PromotionResponse> => {
   const { data: res } = await api.post('/promotions', data)
+  return res
+}
+
+export const updatePromotion = async (id: number, data: UpdatePromotionRequest): Promise<PromotionResponse> => {
+  const { data: res } = await api.put(`/promotions/${id}`, data)
   return res
 }
 

@@ -1,22 +1,29 @@
-import { Link } from 'react-router-dom'
-import { Tag, Clock } from 'lucide-react'
-import { usePromotions } from '../../../hooks/features/usePromotions'
-import styles from './PromotionsSection.module.css'
+import { Link } from "react-router-dom";
+import { Tag, Clock } from "lucide-react";
+import { usePromotions } from "../../../hooks/features/usePromotions";
+import styles from "./PromotionsSection.module.css";
 
 export default function PromotionsSection() {
-  const { promotions } = usePromotions()
+  const { promotions } = usePromotions();
 
-  if (promotions.length === 0) return null
+  if (promotions.length === 0) return null;
 
   return (
     <section className={styles.section}>
       <h2 className={styles.title}>Special Offers</h2>
       <div className={styles.list}>
-        {promotions.map(promo => {
-          const daysLeft = Math.ceil((new Date(promo.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-          
+        {promotions.map((promo) => {
+          const daysLeft = Math.ceil(
+            (new Date(promo.endDate).getTime() - Date.now()) /
+              (1000 * 60 * 60 * 24),
+          );
+
           return (
-            <Link to={`/promotions/${promo.id}`} key={promo.id} className={styles.card}>
+            <Link
+              to={`/promotions/${promo.slug}`}
+              key={promo.id}
+              className={styles.card}
+            >
               <div className={styles.cardContent}>
                 <div className={styles.badge}>
                   <Tag size={16} />
@@ -28,22 +35,25 @@ export default function PromotionsSection() {
                 )}
                 <div className={styles.cardMeta}>
                   <span className={styles.productCount}>
-                    {promo.products.length} product{promo.products.length !== 1 ? 's' : ''}
+                    {promo.products.length} product
+                    {promo.products.length !== 1 ? "s" : ""}
                   </span>
                   <span className={styles.daysLeft}>
                     <Clock size={14} />
-                    {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                    {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
                   </span>
                 </div>
               </div>
               <div className={styles.discountBadge}>
-                <span className={styles.discountValue}>{promo.discountPercent}%</span>
+                <span className={styles.discountValue}>
+                  {promo.discountPercent}%
+                </span>
                 <span className={styles.discountLabel}>OFF</span>
               </div>
             </Link>
-          )
+          );
         })}
       </div>
     </section>
-  )
+  );
 }

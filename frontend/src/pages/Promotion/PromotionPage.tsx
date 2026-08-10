@@ -9,12 +9,12 @@ import type { PromotionResponse } from "../../types";
 import styles from "./PromotionPage.module.css";
 
 export default function PromotionPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { data: promotion, loading, execute } = useApi<PromotionResponse>();
 
   useEffect(() => {
-    if (id) execute(() => promotionsApi.getPromotionById(Number(id)));
-  }, [id]);
+    if (slug) execute(() => promotionsApi.getPromotionBySlug(slug));
+  }, [slug]);
 
   if (loading) return <Loading text="Loading promotion..." />;
   if (!promotion) return null;

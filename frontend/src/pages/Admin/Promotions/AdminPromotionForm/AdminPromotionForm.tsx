@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useProducts } from "../../../../hooks/features/useProducts";
@@ -14,8 +14,12 @@ import styles from "./AdminPromotionForm.module.css";
 
 export default function AdminPromotionForm() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEdit = !!id;
   const { showNotification } = useNotification();
   const createApi = useApi<PromotionResponse>();
+  const updateApi = useApi<PromotionResponse>();
+  const getApi = useApi<PromotionResponse>();
   const { products, totalPages, loading, loadProducts } = useProducts();
 
   const [title, setTitle] = useState("");
@@ -31,59 +35,87 @@ export default function AdminPromotionForm() {
   const [productPage, setProductPage] = useState(0);
 
   useEffect(() => {
+    if (isEdit) {
+      getApi
+        .execute(() => promotionsApi.getPromotionById(Number(id)))
+        .then((promo) => {
+          if (!promo) return;
+          setTitle(promo.title);
+          setDescription(promo.description || "");
+          setDiscountPercent(String(promo.discountPercent));
+          setStartDate(promo.startDate?.slice(0, 16) || "");
+          setEndDate(promo.endDate?.slice(0, 16) || "");
+          setSelectedProductIds(promo.products.map((p) => p.id));
+          setSelectedProductNames(
+            Object.fromEntries(promo.products.map((p) => [p.id, p.name])),
+          );
+        });
+    }
+  }, [id]);
+
+  useEffect(() => {
     loadProducts(productPage, {
       search: productSearch || undefined,
       available: true,
     });
   }, [productPage, productSearch]);
 
-  const toggleProduct = (id: number, name: string) => {
+  const toggleProduct = (pid: number, name: string) => {
     setSelectedProductIds((prev) => {
-      if (prev.includes(id)) {
+      if (prev.includes(pid)) {
         setSelectedProductNames((names) => {
           const updated = { ...names };
-          delete updated[id];
+          delete updated[pid];
           return updated;
         });
-        return prev.filter((p) => p !== id);
+        return prev.filter((p) => p !== pid);
       } else {
-        setSelectedProductNames((names) => ({ ...names, [id]: name }));
-        return [...prev, id];
+        setSelectedProductNames((names) => ({ ...names, [pid]: name }));
+        return [...prev, pid];
       }
     });
   };
 
-  const removeSelected = (id: number) => {
-    setSelectedProductIds((prev) => prev.filter((p) => p !== id));
+  const removeSelected = (pid: number) => {
+    setSelectedProductIds((prev) => prev.filter((p) => p !== pid));
     setSelectedProductNames((names) => {
       const updated = { ...names };
-      delete updated[id];
+      delete updated[pid];
       return updated;
     });
   };
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    const payload = {
+      title,
+      description: description || undefined,
+      discountPercent: Number(discountPercent),
+      startDate: new Date(startDate).toISOString(),
+      endDate: new Date(endDate).toISOString(),
+      productIds: selectedProductIds,
+    };
+
     try {
-      await createApi.execute(() =>
-        promotionsApi.createPromotion({
-          title,
-          description: description || undefined,
-          discountPercent: Number(discountPercent),
-          startDate: new Date(startDate).toISOString(),
-          endDate: new Date(endDate).toISOString(),
-          productIds: selectedProductIds,
-        }),
-      );
-      showNotification("Promotion created", "success");
+      if (isEdit) {
+        await updateApi.execute(() =>
+          promotionsApi.updatePromotion(Number(id), payload),
+        );
+        showNotification("Promotion updated", "success");
+      } else {
+        await createApi.execute(() => promotionsApi.createPromotion(payload));
+        showNotification("Promotion created", "success");
+      }
       navigate("/admin/promotions");
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to create promotion";
+          ?.message || `Failed to ${isEdit ? "update" : "create"} promotion`;
       showNotification(message, "error");
     }
   };
+
+  if (isEdit && getApi.loading) return <Loading text="Loading promotion..." />;
 
   return (
     <div className={styles.page}>
@@ -94,7 +126,7 @@ export default function AdminPromotionForm() {
         >
           <ArrowLeft size={20} />
         </button>
-        <h1>New Promotion</h1>
+        <h1>{isEdit ? "Edit Promotion" : "New Promotion"}</h1>
       </div>
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input
@@ -141,13 +173,13 @@ export default function AdminPromotionForm() {
           </label>
           {selectedProductIds.length > 0 && (
             <div className={styles.selectedList}>
-              {selectedProductIds.map((id) => (
+              {selectedProductIds.map((pid) => (
                 <span
-                  key={id}
+                  key={pid}
                   className={styles.selectedTag}
-                  onClick={() => removeSelected(id)}
+                  onClick={() => removeSelected(pid)}
                 >
-                  {selectedProductNames[id] || `#${id}`}
+                  {selectedProductNames[pid] || `#${pid}`}
                   <X size={12} />
                 </span>
               ))}
@@ -202,8 +234,11 @@ export default function AdminPromotionForm() {
           >
             Cancel
           </Button>
-          <Button type="submit" loading={createApi.loading}>
-            Create Promotion
+          <Button
+            type="submit"
+            loading={isEdit ? updateApi.loading : createApi.loading}
+          >
+            {isEdit ? "Update Promotion" : "Create Promotion"}
           </Button>
         </div>
       </form>

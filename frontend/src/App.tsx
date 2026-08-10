@@ -40,7 +40,7 @@ function App() {
         <Route path="/menu" element={<MenuPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products/:slug" element={<ProductPage />} />
-        <Route path="/promotions/:id" element={<PromotionPage />} />
+        <Route path="/promotions/:slug" element={<PromotionPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -98,6 +98,7 @@ function App() {
         <Route path="orders" element={<AdminOrdersPage />} />
         <Route path="promotions" element={<AdminPromotionsPage />} />
         <Route path="promotions/new" element={<AdminPromotionForm />} />
+        <Route path="promotions/:id/edit" element={<AdminPromotionForm />} />
         <Route path="audit" element={<AdminAuditPage />} />
       </Route>
     </Routes>

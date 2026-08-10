@@ -107,17 +107,35 @@
   color: #94a3b8;
 }
 
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editBtn,
 .deleteBtn {
   padding: 6px;
   border-radius: 6px;
   border: none;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: background 0.2s;
+}
+
+.editBtn {
+  background: rgba(var(--color-primary-rgb), 0.15);
+  color: var(--color-primary);
+}
+
+.editBtn:hover {
+  background: rgba(var(--color-primary-rgb), 0.25);
+}
+
+.deleteBtn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
 }
 
 .deleteBtn:hover {

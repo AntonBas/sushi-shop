@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Search } from "lucide-react";
+import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useNotification } from "../../../../context/NotificationContext";
 import * as promotionsApi from "../../../../api/promotions";
@@ -115,15 +115,25 @@ export default function AdminPromotionsPage() {
                     </span>
                   </td>
                   <td>
-                    <button
-                      onClick={() => {
-                        setDeleteId(promo.id);
-                        setDeleteTitle(promo.title);
-                      }}
-                      className={styles.deleteBtn}
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className={styles.actions}>
+                      <button
+                        onClick={() =>
+                          navigate(`/admin/promotions/${promo.id}/edit`)
+                        }
+                        className={styles.editBtn}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeleteId(promo.id);
+                          setDeleteTitle(promo.title);
+                        }}
+                        className={styles.deleteBtn}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
