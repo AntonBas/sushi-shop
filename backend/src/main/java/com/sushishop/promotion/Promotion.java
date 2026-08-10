@@ -26,6 +26,11 @@ public class Promotion extends BaseEntity {
     private Long id;
 
     @NotBlank
+    @Size(max = 120)
+    @Column(nullable = false, unique = true, length = 120)
+    private String slug;
+
+    @NotBlank
     @Size(max = 50)
     @Column(nullable = false, length = 50)
     private String title;

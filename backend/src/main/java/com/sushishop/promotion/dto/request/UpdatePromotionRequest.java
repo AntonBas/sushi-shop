@@ -1,26 +1,24 @@
-package com.sushishop.promotion.dto.response;
+package com.sushishop.promotion.dto.request;
 
-import com.sushishop.product.dto.response.ProductListResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Schema(description = "Promotion response")
-public record PromotionResponse(
-        @Schema(description = "Promotion ID", example = "1")
-        Long id,
-
-        @Schema(description = "Promotion slug", example = "weekend-sale")
-        String slug,
-
+@Schema(description = "Request to update a promotion")
+public record UpdatePromotionRequest(
+        @Size(max = 50, message = "Title must be less than 50 characters")
         @Schema(description = "Promotion title", example = "Weekend Sale")
         String title,
 
+        @Size(max = 250, message = "Description must be less than 250 characters")
         @Schema(description = "Promotion description", example = "20% off on all rolls")
         String description,
 
+        @Positive(message = "Discount must be greater than 0")
         @Schema(description = "Discount percentage", example = "20.00")
         BigDecimal discountPercent,
 
@@ -30,10 +28,6 @@ public record PromotionResponse(
         @Schema(description = "End date")
         LocalDateTime endDate,
 
-        @Schema(description = "Is promotion active")
-        boolean active,
-
-        @Schema(description = "Products in promotion")
-        List<ProductListResponse> products
-) {
+        @Schema(description = "Product IDs to include")
+        List<Long> productIds) {
 }

@@ -49,8 +49,8 @@ public class PromotionControllerTest {
     @WithMockUser(roles = {"ADMIN"})
     void shouldCreatePromotion() throws Exception {
         var request = new CreatePromotionRequest("Weekend Sale", "20% off", new BigDecimal("20.00"),
-                LocalDateTime.now(), LocalDateTime.now().plusDays(7), List.of(1L));
-        var response = new PromotionResponse(1L, "Weekend Sale", "20% off", new BigDecimal("20.00"),
+                LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), List.of(1L));
+        var response = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", "20% off", new BigDecimal("20.00"),
                 request.startDate(), request.endDate(), true, List.of());
 
         when(promotionService.create(any())).thenReturn(response);
@@ -59,12 +59,13 @@ public class PromotionControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.title").value("Weekend Sale"));
+                .andExpect(jsonPath("$.title").value("Weekend Sale"))
+                .andExpect(jsonPath("$.slug").value("weekend-sale"));
     }
 
     @Test
     void shouldGetActivePromotions() throws Exception {
-        var response = new PromotionResponse(1L, "Weekend Sale", null, new BigDecimal("20.00"),
+        var response = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
                 LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
 
         when(promotionService.getActive()).thenReturn(List.of(response));
@@ -76,7 +77,7 @@ public class PromotionControllerTest {
 
     @Test
     void shouldGetById() throws Exception {
-        var response = new PromotionResponse(1L, "Weekend Sale", null, new BigDecimal("20.00"),
+        var response = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
                 LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
 
         when(promotionService.getById(1L)).thenReturn(response);
@@ -84,6 +85,18 @@ public class PromotionControllerTest {
         mockMvc.perform(get("/api/promotions/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Weekend Sale"));
+    }
+
+    @Test
+    void shouldGetBySlug() throws Exception {
+        var response = new PromotionResponse(1L, "weekend-sale", "Weekend Sale", null, new BigDecimal("20.00"),
+                LocalDateTime.now(), LocalDateTime.now().plusDays(7), true, List.of());
+
+        when(promotionService.getBySlug("weekend-sale")).thenReturn(response);
+
+        mockMvc.perform(get("/api/promotions/slug/weekend-sale"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.slug").value("weekend-sale"));
     }
 
     @Test

@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class PromotionMapperTest {
+public class PromotionMapperTest {
 
     @Autowired
     private PromotionMapper promotionMapper;
@@ -32,6 +32,7 @@ class PromotionMapperTest {
 
         var promotion = Promotion.builder()
                 .id(1L)
+                .slug("weekend-sale")
                 .title("Weekend Sale")
                 .description("20% off")
                 .discountPercent(new BigDecimal("20.00"))
@@ -44,6 +45,7 @@ class PromotionMapperTest {
         var response = promotionMapper.toResponse(promotion);
 
         assertThat(response.id()).isEqualTo(1L);
+        assertThat(response.slug()).isEqualTo("weekend-sale");
         assertThat(response.title()).isEqualTo("Weekend Sale");
         assertThat(response.products()).hasSize(1);
     }

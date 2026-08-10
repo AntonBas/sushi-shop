@@ -1,6 +1,7 @@
 package com.sushishop.promotion;
 
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
+import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -61,6 +62,16 @@ public class PromotionController {
         return ResponseEntity.ok(promotionService.getAll(pageable, search));
     }
 
+    @GetMapping("/slug/{slug}")
+    @Operation(summary = "Get promotion by slug")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotion found"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
+    public ResponseEntity<PromotionResponse> getBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(promotionService.getBySlug(slug));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get promotion by ID")
     @ApiResponses(value = {
@@ -69,6 +80,20 @@ public class PromotionController {
     })
     public ResponseEntity<PromotionResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(promotionService.getById(id));
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Update promotion")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Promotion updated"),
+            @ApiResponse(responseCode = "400", description = "Invalid input"),
+            @ApiResponse(responseCode = "404", description = "Promotion not found")
+    })
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<PromotionResponse> update(@PathVariable Long id, @Valid @RequestBody UpdatePromotionRequest request) {
+        log.info("PUT /api/promotions/{}", id);
+        return ResponseEntity.ok(promotionService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
