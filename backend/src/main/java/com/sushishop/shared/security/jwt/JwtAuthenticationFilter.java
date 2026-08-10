@@ -1,5 +1,6 @@
 package com.sushishop.shared.security.jwt;
 
+import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import com.sushishop.shared.security.user.CustomUserDetails;
 import jakarta.servlet.FilterChain;
@@ -8,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -21,6 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final CacheManager cacheManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -36,20 +40,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtil.getEmail(token);
                 Integer tokenVersion = jwtUtil.getTokenVersion(token);
 
-                var userOptional = userRepository.findByEmail(email);
+                User user = getCachedUser(email, tokenVersion);
 
-                if (userOptional.isPresent()) {
-                    var user = userOptional.get();
-
-                    if (user.getTokenVersion().equals(tokenVersion)) {
-                        var principal = new CustomUserDetails(user);
-                        var auth = new UsernamePasswordAuthenticationToken(
-                                principal, null, principal.getAuthorities());
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                    }
+                if (user != null) {
+                    var principal = new CustomUserDetails(user);
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            principal, null, principal.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
         }
         filterChain.doFilter(request, response);
+    }
+
+    private User getCachedUser(String email, Integer tokenVersion) {
+        Cache cache = cacheManager.getCache("userCache");
+        if (cache == null) {
+            return getUserFromDb(email);
+        }
+
+        String cacheKey = email + ":" + tokenVersion;
+        User cached = cache.get(cacheKey, User.class);
+
+        if (cached != null) {
+            return cached;
+        }
+
+        User user = getUserFromDb(email);
+        if (user != null) {
+            cache.put(cacheKey, user);
+        }
+        return user;
+    }
+
+    private User getUserFromDb(String email) {
+        return userRepository.findByEmail(email).orElse(null);
     }
 }
