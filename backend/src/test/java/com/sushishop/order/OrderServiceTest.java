@@ -1,25 +1,30 @@
 package com.sushishop.order;
 
+import com.sushishop.order.dto.request.CreateOrderRequest;
+import com.sushishop.order.dto.request.OrderItemRequest;
+import com.sushishop.order.dto.response.OrderResponse;
+import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.order.dto.response.UserOrderResponse;
 import com.sushishop.product.Product;
-import com.sushishop.user.User;
+import com.sushishop.product.ProductRepository;
+import com.sushishop.shared.address.AddressRequest;
+import com.sushishop.shared.address.AddressResponse;
 import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.shared.enums.PaymentMethod;
-import com.sushishop.shared.address.AddressRequest;
-import com.sushishop.order.dto.request.CreateOrderRequest;
-import com.sushishop.order.dto.request.OrderItemRequest;
-import com.sushishop.shared.address.AddressResponse;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.shared.exception.core.BadRequestException;
-import com.sushishop.product.ProductRepository;
+import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
@@ -29,6 +34,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -102,6 +108,45 @@ public class OrderServiceTest {
 
         assertThatThrownBy(() -> orderService.create(request, "test@test.com"))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldGetAllOrders() {
+        Pageable pageable = PageRequest.of(0, 20);
+        var order = Order.builder().id(1L).customerName("Anton").totalAmount(new BigDecimal("500.00")).build();
+        var page = new PageImpl<>(List.of(order), pageable, 1);
+        var expectedResponse = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
+                DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
+
+        when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+        when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
+        when(orderMapper.toResponse(order)).thenReturn(expectedResponse);
+
+        var result = orderService.getAll(pageable, null, null, null, null);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().customerName()).isEqualTo("Anton");
+        verify(orderRepository).findItemsByOrderIds(anyList());
+    }
+
+    @Test
+    void shouldGetByUser() {
+        Pageable pageable = PageRequest.of(0, 20);
+        var order = Order.builder().id(1L).customerName("Anton").totalAmount(new BigDecimal("500.00")).build();
+        var page = new PageImpl<>(List.of(order), pageable, 1);
+        var expectedResponse = new UserOrderResponse(1L, "test@test.com", OrderStatus.NEW, DeliveryMethod.DELIVERY,
+                PaymentMethod.ON_DELIVERY, "ON_DELIVERY", new BigDecimal("500.00"), null, List.of());
+
+        when(orderRepository.findByUserEmail("test@test.com", pageable)).thenReturn(page);
+        when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
+        when(orderMapper.toUserResponse(order)).thenReturn(expectedResponse);
+
+        var result = orderService.getByUser("test@test.com", pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().userEmail()).isEqualTo("test@test.com");
+        verify(orderRepository).findItemsByOrderIds(anyList());
     }
 
     @Test

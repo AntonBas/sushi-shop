@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -27,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -61,13 +64,28 @@ public class OrderService {
         return orderMapper.toResponse(saved);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getAll(Pageable pageable, OrderStatus status,
                                       DeliveryMethod deliveryMethod, PaymentMethod paymentMethod, String search) {
         var spec = Specification.where(OrderSpecification.hasStatus(status))
                 .and(OrderSpecification.hasDeliveryMethod(deliveryMethod))
                 .and(OrderSpecification.hasPaymentMethod(paymentMethod))
                 .and(OrderSpecification.hasSearch(search));
-        return orderRepository.findAll(spec, pageable).map(orderMapper::toResponse);
+
+        var page = orderRepository.findAll(spec, pageable);
+        List<Order> orders = page.getContent();
+
+        if (orders.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        enrichOrdersWithItems(orders);
+
+        List<OrderResponse> responses = orders.stream()
+                .map(orderMapper::toResponse)
+                .toList();
+
+        return new PageImpl<>(responses, pageable, page.getTotalElements());
     }
 
     public OrderResponse getById(Long id) {
@@ -82,8 +100,22 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
+    @Transactional(readOnly = true)
     public Page<UserOrderResponse> getByUser(String email, Pageable pageable) {
-        return orderRepository.findByUserEmail(email, pageable).map(orderMapper::toUserResponse);
+        var page = orderRepository.findByUserEmail(email, pageable);
+        List<Order> orders = page.getContent();
+
+        if (orders.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        enrichOrdersWithItems(orders);
+
+        List<UserOrderResponse> responses = orders.stream()
+                .map(orderMapper::toUserResponse)
+                .toList();
+
+        return new PageImpl<>(responses, pageable, page.getTotalElements());
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Order")
@@ -115,6 +147,19 @@ public class OrderService {
         order.setStatus(OrderStatus.CONFIRMED);
         orderRepository.save(order);
         log.info("Order {} confirmed after payment", orderId);
+    }
+
+    private void enrichOrdersWithItems(List<Order> orders) {
+        List<Long> orderIds = orders.stream().map(Order::getId).toList();
+        List<OrderItem> allItems = orderRepository.findItemsByOrderIds(orderIds);
+
+        Map<Long, List<OrderItem>> itemsByOrder = allItems.stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
+        orders.forEach(order -> {
+            List<OrderItem> items = itemsByOrder.getOrDefault(order.getId(), List.of());
+            order.setItems(items);
+        });
     }
 
     private void validateDelivery(CreateOrderRequest request) {
