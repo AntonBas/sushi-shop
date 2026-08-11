@@ -74,6 +74,7 @@ public class PromotionServiceTest {
                 request.startDate(), request.endDate(), true, List.of());
 
         when(promotionRepository.findByTitle("Weekend Sale")).thenReturn(Optional.empty());
+        when(promotionRepository.findByStartDateBeforeAndEndDateAfter(any(), any())).thenReturn(List.of());
         when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
         when(slugService.generateUniqueSlug(eq("Weekend Sale"), any())).thenReturn("weekend-sale");
         when(promotionRepository.save(any())).thenReturn(promoEntity);
@@ -86,6 +87,26 @@ public class PromotionServiceTest {
         assertThat(result.title()).isEqualTo("Weekend Sale");
         assertThat(result.slug()).isEqualTo("weekend-sale");
         verify(promotionRepository).save(any());
+    }
+
+    @Test
+    void shouldThrowWhenProductInAnotherActivePromotion() {
+        var request = new CreatePromotionRequest("New Sale", "Desc", new BigDecimal("20.00"),
+                LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), List.of(1L));
+
+        var existingPromotion = Promotion.builder()
+                .id(1L)
+                .title("Weekend Sale")
+                .products(Set.of(Product.builder().id(1L).name("Maki").build()))
+                .build();
+
+        when(promotionRepository.findByTitle("New Sale")).thenReturn(Optional.empty());
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(Product.builder().id(1L).name("Maki").build()));
+        when(promotionRepository.findByStartDateBeforeAndEndDateAfter(any(), any())).thenReturn(List.of(existingPromotion));
+
+        assertThatThrownBy(() -> promotionService.create(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("already in active promotion");
     }
 
     @Test

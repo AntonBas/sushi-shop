@@ -44,14 +44,12 @@ public class PromotionService {
 
     @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "promotions", allEntries = true),
-            @CacheEvict(value = "products", allEntries = true)
-    })
+    @Caching(evict = {@CacheEvict(value = "promotions", allEntries = true), @CacheEvict(value = "products", allEntries = true)})
     public PromotionResponse create(CreatePromotionRequest request) {
         validateDates(request.startDate(), request.endDate());
         validateTitleUnique(request.title());
         validateProductsExist(request.productIds());
+        validateProductsNotInOtherActivePromotions(request.productIds(), null);
 
         var products = new HashSet<>(productRepository.findAllById(request.productIds()));
 
@@ -105,10 +103,7 @@ public class PromotionService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "promotions", allEntries = true),
-            @CacheEvict(value = "products", allEntries = true)
-    })
+    @Caching(evict = {@CacheEvict(value = "promotions", allEntries = true), @CacheEvict(value = "products", allEntries = true)})
     public PromotionResponse update(Long id, UpdatePromotionRequest request) {
         var promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
@@ -135,6 +130,7 @@ public class PromotionService {
 
         if (request.productIds() != null) {
             validateProductsExist(request.productIds());
+            validateProductsNotInOtherActivePromotions(request.productIds(), id);
             promotion.setProducts(new HashSet<>(productRepository.findAllById(request.productIds())));
         }
 
@@ -145,10 +141,7 @@ public class PromotionService {
 
     @Auditable(action = AuditAction.DELETE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "promotions", allEntries = true),
-            @CacheEvict(value = "products", allEntries = true)
-    })
+    @Caching(evict = {@CacheEvict(value = "promotions", allEntries = true), @CacheEvict(value = "products", allEntries = true)})
     public void delete(Long id) {
         var promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
@@ -214,6 +207,28 @@ public class PromotionService {
                     .map(String::valueOf)
                     .toList();
             throw new NotFoundException("Products not found: " + String.join(", ", missingIds));
+        }
+    }
+
+    private void validateProductsNotInOtherActivePromotions(List<Long> productIds, Long excludePromotionId) {
+        var now = LocalDateTime.now();
+        var activePromotions = promotionRepository.findByStartDateBeforeAndEndDateAfter(now, now);
+
+        for (var promotion : activePromotions) {
+            if (promotion.getId().equals(excludePromotionId)) {
+                continue;
+            }
+            var conflictingProducts = promotion.getProducts().stream()
+                    .map(Product::getId)
+                    .filter(productIds::contains)
+                    .toList();
+
+            if (!conflictingProducts.isEmpty()) {
+                var productNames = productRepository.findAllById(conflictingProducts).stream()
+                        .map(Product::getName)
+                        .toList();
+                throw new BadRequestException("Products already in active promotion '" + promotion.getTitle() + "': " + String.join(", ", productNames));
+            }
         }
     }
 }
