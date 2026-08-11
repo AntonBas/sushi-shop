@@ -66,3 +66,7 @@ export const getRelatedProducts = async (id: number): Promise<ProductListRespons
   const { data } = await api.get(`/products/${id}/related`)
   return data
 }
+
+export const reorderProductImages = async (productId: number, imageIds: number[]): Promise<void> => {
+  await api.patch(`/products/${productId}/images/reorder`, imageIds)
+}

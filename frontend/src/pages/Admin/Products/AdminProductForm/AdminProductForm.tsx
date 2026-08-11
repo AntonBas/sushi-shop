@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, GripVertical } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
 import { useNotification } from "../../../../context/NotificationContext";
 import * as productsApi from "../../../../api/products";
@@ -12,7 +12,64 @@ import {
   type Category,
   type ProductImageResponse,
 } from "../../../../types";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import styles from "./AdminProductForm.module.css";
+
+interface SortableImageProps {
+  img: ProductImageResponse;
+  onRemove: (id: number) => void;
+}
+
+function SortableImage({ img, onRemove }: SortableImageProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: img.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={styles.imageItem}>
+      <img src={img.url} alt="" />
+      <button
+        type="button"
+        className={styles.dragHandle}
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={() => onRemove(img.id)}
+        className={styles.removeBtn}
+      >
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
 
 export default function AdminProductForm() {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +90,10 @@ export default function AdminProductForm() {
     [],
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
   useEffect(() => {
     if (isEdit && id) getProduct(Number(id));
@@ -74,6 +135,20 @@ export default function AdminProductForm() {
     }
   };
 
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    setExistingImages((prev) => {
+      const oldIndex = prev.findIndex((img) => img.id === active.id);
+      const newIndex = prev.findIndex((img) => img.id === over.id);
+      const updated = [...prev];
+      const [moved] = updated.splice(oldIndex, 1);
+      updated.splice(newIndex, 0, moved);
+      return updated;
+    });
+  };
+
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -87,6 +162,12 @@ export default function AdminProductForm() {
           weight: weight ? Number(weight) : undefined,
           pieces: pieces ? Number(pieces) : undefined,
         });
+
+        const imageIds = existingImages.map((img) => img.id);
+        if (imageIds.length > 0) {
+          await productsApi.reorderProductImages(Number(id), imageIds);
+        }
+
         if (images.length > 0) {
           for (const image of images) {
             await productsApi.addProductImage(Number(id), image);
@@ -138,40 +219,46 @@ export default function AdminProductForm() {
         <div className={styles.layout}>
           <div className={styles.imagesSection}>
             <label className={styles.label}>Images</label>
-            <div className={styles.imageGrid}>
-              {existingImages.map((img) => (
-                <div key={img.id} className={styles.imageItem}>
-                  <img src={img.url} alt="" />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExistingImage(img.id)}
-                    className={styles.removeBtn}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-              {images.map((file, index) => (
-                <div key={index} className={styles.imageItem}>
-                  <img src={URL.createObjectURL(file)} alt="" />
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveNewImage(index)}
-                    className={styles.removeBtn}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className={styles.addImage}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={existingImages.map((img) => img.id)}
+                strategy={rectSortingStrategy}
               >
-                <Upload size={20} />
-                <span>Add</span>
-              </button>
-            </div>
+                <div className={styles.imageGrid}>
+                  {existingImages.map((img) => (
+                    <SortableImage
+                      key={img.id}
+                      img={img}
+                      onRemove={handleRemoveExistingImage}
+                    />
+                  ))}
+                  {images.map((file, index) => (
+                    <div key={`new-${index}`} className={styles.imageItem}>
+                      <img src={URL.createObjectURL(file)} alt="" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveNewImage(index)}
+                        className={styles.removeBtn}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className={styles.addImage}
+                  >
+                    <Upload size={20} />
+                    <span>Add</span>
+                  </button>
+                </div>
+              </SortableContext>
+            </DndContext>
             <input
               ref={fileInputRef}
               type="file"

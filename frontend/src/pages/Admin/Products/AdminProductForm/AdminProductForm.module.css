@@ -171,6 +171,26 @@
   border-top: 1px solid var(--color-border);
 }
 
+.dragHandle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: none;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dragHandle:active {
+  cursor: grabbing;
+}
+
 @media (max-width: 768px) {
   .layout {
     grid-template-columns: 1fr;
