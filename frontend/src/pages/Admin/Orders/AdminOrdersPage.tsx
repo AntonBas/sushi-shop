@@ -185,54 +185,57 @@ export default function AdminOrdersPage() {
         </div>
       ) : (
         <>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Method</th>
-                <th>Payment</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((order) => (
-                <>
-                  <tr
-                    key={order.id}
-                    className={styles.orderRow}
-                    onClick={() =>
-                      setExpandedId(expandedId === order.id ? null : order.id)
-                    }
-                  >
-                    <td>#{order.id}</td>
-                    <td>{order.customerName}</td>
-                    <td>
-                      {order.deliveryMethod === "DELIVERY"
-                        ? "Delivery"
-                        : "Pickup"}
-                    </td>
-                    <td>
-                      {PAYMENT_STATUS_LABELS[order.paymentStatus] ||
-                        order.paymentStatus}
-                    </td>
-                    <td>{order.totalAmount}₴</td>
-                    <td>
-                      <span
-                        className={styles.statusBadge}
-                        style={{
-                          background: ORDER_STATUS_COLORS[order.status],
-                        }}
-                      >
-                        {ORDER_STATUS_LABELS[order.status]}
-                      </span>
-                    </td>
-                    <td>
-                      <div className={styles.actions}>
-                        {getStatusFlow(order.status, order.deliveryMethod).map(
-                          (nextStatus) => (
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Method</th>
+                  <th>Payment</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <>
+                    <tr
+                      key={order.id}
+                      className={styles.orderRow}
+                      onClick={() =>
+                        setExpandedId(expandedId === order.id ? null : order.id)
+                      }
+                    >
+                      <td data-label="ID">#{order.id}</td>
+                      <td data-label="Customer">{order.customerName}</td>
+                      <td data-label="Method">
+                        {order.deliveryMethod === "DELIVERY"
+                          ? "Delivery"
+                          : "Pickup"}
+                      </td>
+                      <td data-label="Payment">
+                        {PAYMENT_STATUS_LABELS[order.paymentStatus] ||
+                          order.paymentStatus}
+                      </td>
+                      <td data-label="Total">{order.totalAmount}₴</td>
+                      <td data-label="Status">
+                        <span
+                          className={styles.statusBadge}
+                          style={{
+                            background: ORDER_STATUS_COLORS[order.status],
+                          }}
+                        >
+                          {ORDER_STATUS_LABELS[order.status]}
+                        </span>
+                      </td>
+                      <td data-label="Actions">
+                        <div className={styles.actions}>
+                          {getStatusFlow(
+                            order.status,
+                            order.deliveryMethod,
+                          ).map((nextStatus) => (
                             <button
                               key={nextStatus}
                               onClick={(e) => {
@@ -246,63 +249,63 @@ export default function AdminOrdersPage() {
                             >
                               {ORDER_STATUS_LABELS[nextStatus]}
                             </button>
-                          ),
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  {expandedId === order.id && (
-                    <tr className={styles.expandedRow}>
-                      <td colSpan={7}>
-                        <div className={styles.expandedContent}>
-                          <div className={styles.detailRow}>
-                            <span>Email:</span>
-                            <span>{order.userEmail}</span>
-                          </div>
-                          <div className={styles.detailRow}>
-                            <span>Phone:</span>
-                            <span>{order.phone}</span>
-                          </div>
-                          {order.address?.city && (
-                            <div className={styles.detailRow}>
-                              <span>Address:</span>
-                              <span>
-                                {order.address.city}, {order.address.street}{" "}
-                                {order.address.house}
-                                {order.address.apartment
-                                  ? `, apt. ${order.address.apartment}`
-                                  : ""}
-                              </span>
-                            </div>
-                          )}
-                          <div className={styles.itemsList}>
-                            {order.items.map((item) => (
-                              <div
-                                key={item.productId}
-                                className={styles.itemRow}
-                              >
-                                {item.mainImage && (
-                                  <img
-                                    src={item.mainImage}
-                                    alt={item.productName}
-                                    className={styles.itemImage}
-                                  />
-                                )}
-                                <span>
-                                  {item.productName} × {item.quantity}
-                                </span>
-                                <span>{item.unitPrice * item.quantity}₴</span>
-                              </div>
-                            ))}
-                          </div>
+                          ))}
                         </div>
                       </td>
                     </tr>
-                  )}
-                </>
-              ))}
-            </tbody>
-          </table>
+                    {expandedId === order.id && (
+                      <tr className={styles.expandedRow}>
+                        <td colSpan={7}>
+                          <div className={styles.expandedContent}>
+                            <div className={styles.detailRow}>
+                              <span>Email:</span>
+                              <span>{order.userEmail}</span>
+                            </div>
+                            <div className={styles.detailRow}>
+                              <span>Phone:</span>
+                              <span>{order.phone}</span>
+                            </div>
+                            {order.address?.city && (
+                              <div className={styles.detailRow}>
+                                <span>Address:</span>
+                                <span>
+                                  {order.address.city}, {order.address.street}{" "}
+                                  {order.address.house}
+                                  {order.address.apartment
+                                    ? `, apt. ${order.address.apartment}`
+                                    : ""}
+                                </span>
+                              </div>
+                            )}
+                            <div className={styles.itemsList}>
+                              {order.items.map((item) => (
+                                <div
+                                  key={item.productId}
+                                  className={styles.itemRow}
+                                >
+                                  {item.mainImage && (
+                                    <img
+                                      src={item.mainImage}
+                                      alt={item.productName}
+                                      className={styles.itemImage}
+                                    />
+                                  )}
+                                  <span>
+                                    {item.productName} × {item.quantity}
+                                  </span>
+                                  <span>{item.unitPrice * item.quantity}₴</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <Pagination
             currentPage={page}

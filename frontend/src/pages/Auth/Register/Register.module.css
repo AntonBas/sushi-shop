@@ -95,3 +95,14 @@
   color: var(--color-text-muted);
   margin-top: 12px;
 }
+
+@media (max-width: 768px) {
+  .container {
+    margin: 20px auto;
+    padding: 16px;
+  }
+
+  .addressGrid {
+    grid-template-columns: 1fr;
+  }
+}

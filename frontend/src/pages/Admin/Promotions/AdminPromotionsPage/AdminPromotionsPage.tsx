@@ -81,64 +81,68 @@ export default function AdminPromotionsPage() {
         </div>
       ) : (
         <>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Discount</th>
-                <th>Period</th>
-                <th>Products</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {promotions.map((promo) => (
-                <tr key={promo.id}>
-                  <td className={styles.name}>{promo.title}</td>
-                  <td>{promo.discountPercent}%</td>
-                  <td>
-                    {promo.startDate
-                      ? new Date(promo.startDate).toLocaleDateString()
-                      : "—"}{" "}
-                    –{" "}
-                    {promo.endDate
-                      ? new Date(promo.endDate).toLocaleDateString()
-                      : "—"}
-                  </td>
-                  <td>{promo.products.length}</td>
-                  <td>
-                    <span
-                      className={`${styles.statusBadge} ${promo.active ? styles.active : styles.inactive}`}
-                    >
-                      {promo.active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        onClick={() =>
-                          navigate(`/admin/promotions/${promo.id}/edit`)
-                        }
-                        className={styles.editBtn}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteId(promo.id);
-                          setDeleteTitle(promo.title);
-                        }}
-                        className={styles.deleteBtn}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Discount</th>
+                  <th>Period</th>
+                  <th>Products</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {promotions.map((promo) => (
+                  <tr key={promo.id}>
+                    <td data-label="Title" className={styles.name}>
+                      {promo.title}
+                    </td>
+                    <td data-label="Discount">{promo.discountPercent}%</td>
+                    <td data-label="Period">
+                      {promo.startDate
+                        ? new Date(promo.startDate).toLocaleDateString()
+                        : "—"}{" "}
+                      –{" "}
+                      {promo.endDate
+                        ? new Date(promo.endDate).toLocaleDateString()
+                        : "—"}
+                    </td>
+                    <td data-label="Products">{promo.products.length}</td>
+                    <td data-label="Status">
+                      <span
+                        className={`${styles.statusBadge} ${promo.active ? styles.active : styles.inactive}`}
+                      >
+                        {promo.active ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td data-label="Actions">
+                      <div className={styles.actions}>
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/promotions/${promo.id}/edit`)
+                          }
+                          className={styles.editBtn}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setDeleteId(promo.id);
+                            setDeleteTitle(promo.title);
+                          }}
+                          className={styles.deleteBtn}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Pagination
             currentPage={page}
             totalPages={data?.totalPages || 0}

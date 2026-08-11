@@ -107,34 +107,40 @@ export default function AdminAuditPage() {
         </div>
       ) : (
         <>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Action</th>
-                <th>Entity</th>
-                <th>Entity ID</th>
-                <th>Details</th>
-                <th>Performed By</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log) => (
-                <tr key={log.id}>
-                  <td>{log.id}</td>
-                  <td>
-                    <span className={styles.action}>{log.action}</span>
-                  </td>
-                  <td>{log.entityName}</td>
-                  <td>{log.entityId ?? "—"}</td>
-                  <td className={styles.details}>{log.details ?? "—"}</td>
-                  <td>{log.performedBy}</td>
-                  <td>{new Date(log.performedAt).toLocaleString()}</td>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Action</th>
+                  <th>Entity</th>
+                  <th>Entity ID</th>
+                  <th>Details</th>
+                  <th>Performed By</th>
+                  <th>Date</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log.id}>
+                    <td data-label="ID">{log.id}</td>
+                    <td data-label="Action">
+                      <span className={styles.action}>{log.action}</span>
+                    </td>
+                    <td data-label="Entity">{log.entityName}</td>
+                    <td data-label="Entity ID">{log.entityId ?? "—"}</td>
+                    <td data-label="Details" className={styles.details}>
+                      {log.details ?? "—"}
+                    </td>
+                    <td data-label="Performed By">{log.performedBy}</td>
+                    <td data-label="Date">
+                      {new Date(log.performedAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
           <Pagination
             currentPage={page}
