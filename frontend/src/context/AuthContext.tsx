@@ -8,6 +8,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isCourier: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<UserResponse>;
   logout: () => void;
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const token = localStorage.getItem("token");
   const isAuthenticated = !!user;
   const isAdmin = user?.userRole === "ADMIN";
+  const isCourier = user?.userRole === "COURIER";
 
   useEffect(() => {
     if (token && !fetchedRef.current) {
@@ -82,6 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         loading,
         isAuthenticated,
         isAdmin,
+        isCourier,
         login,
         register,
         logout,

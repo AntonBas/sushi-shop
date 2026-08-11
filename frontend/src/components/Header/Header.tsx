@@ -16,7 +16,7 @@ import {
 import styles from "./Header.module.css";
 
 export default function Header() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, isCourier, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { count } = useCart();
   const location = useLocation();
@@ -48,6 +48,8 @@ export default function Header() {
     setIsMobileOpen(false);
     navigate("/login");
   };
+
+  const adminLink = isCourier ? "/admin/orders" : "/admin";
 
   return (
     <header className={styles.header}>
@@ -104,9 +106,13 @@ export default function Header() {
                   >
                     <ShoppingCart size={14} /> My Orders
                   </Link>
-                  {isAdmin && (
-                    <Link to="/admin" onClick={() => setIsDropdownOpen(false)}>
-                      <Shield size={14} /> Admin Panel
+                  {(isAdmin || isCourier) && (
+                    <Link
+                      to={adminLink}
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      <Shield size={14} />{" "}
+                      {isCourier ? "Orders" : "Admin Panel"}
                     </Link>
                   )}
                   <hr />
@@ -147,12 +153,9 @@ export default function Header() {
               <Link to="/profile/orders" onClick={() => setIsMobileOpen(false)}>
                 My Orders
               </Link>
-              {isAdmin && (
-                <Link
-                  to="/admin/products"
-                  onClick={() => setIsMobileOpen(false)}
-                >
-                  Admin Panel
+              {(isAdmin || isCourier) && (
+                <Link to={adminLink} onClick={() => setIsMobileOpen(false)}>
+                  {isCourier ? "Orders" : "Admin Panel"}
                 </Link>
               )}
               <button onClick={handleLogout}>Logout</button>
