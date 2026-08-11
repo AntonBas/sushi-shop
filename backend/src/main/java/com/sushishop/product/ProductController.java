@@ -1,10 +1,10 @@
 package com.sushishop.product;
 
-import com.sushishop.shared.enums.Category;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.shared.enums.Category;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -112,6 +112,16 @@ public class ProductController {
         log.info("DELETE /api/products - {}", id);
         productService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/images/reorder")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Reorder product images")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<Void> reorderImages(@PathVariable Long id, @RequestBody List<Long> imageIds) {
+        log.info("PATCH /api/products/{}/images/reorder", id);
+        productService.reorderImages(id, imageIds);
+        return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}/toggle")

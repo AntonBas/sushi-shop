@@ -226,6 +226,25 @@ public class ProductService {
         log.debug("Deleted product with ID: {}", id);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "products", key = "#productId"),
+            @CacheEvict(value = "products", allEntries = true)
+    })
+    public void reorderImages(Long productId, List<Long> imageIds) {
+        var product = productRepository.findById(productId)
+                .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
+
+        for (int i = 0; i < imageIds.size(); i++) {
+            final int newOrder = i;
+            product.getProductImages().stream()
+                    .filter(img -> img.getId().equals(imageIds.get(newOrder)))
+                    .findFirst()
+                    .ifPresent(img -> img.setSortOrder(newOrder));
+        }
+        productRepository.save(product);
+        log.info("Images reordered for product: {}", productId);
+    }
+
     private void addImagesToProduct(Product product, List<MultipartFile> images) {
         if (images == null || images.isEmpty()) return;
         List<ProductImage> productImages = new ArrayList<>();
