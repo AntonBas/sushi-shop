@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -14,11 +14,15 @@ export default function Footer() {
         </div>
         <div className={styles.links}>
           <h4>Quick Links</h4>
+          <Link to="/">Home</Link>
           <Link to="/menu">Menu</Link>
           <Link to="/cart">Cart</Link>
         </div>
         <div className={styles.contact}>
           <h4>Contact</h4>
+          <span>
+            <Phone size={14} /> +380 96 179 4151
+          </span>
           <span>
             <Mail size={14} /> sushi.bas.shop@gmail.com
           </span>
