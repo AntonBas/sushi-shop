@@ -12,18 +12,18 @@
 .list {
   display: flex;
   gap: 16px;
-  overflow-x: auto;
   padding-bottom: 8px;
+  flex-wrap: wrap;
 }
 
 .card {
   display: flex;
   min-width: 400px;
+  flex: 1;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 16px;
   overflow: hidden;
-  flex-shrink: 0;
   text-decoration: none;
 }
 
@@ -108,8 +108,14 @@
 }
 
 @media (max-width: 768px) {
+  .list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
   .card {
     min-width: 300px;
+    flex: 0 0 auto;
   }
 
   .cardContent {
