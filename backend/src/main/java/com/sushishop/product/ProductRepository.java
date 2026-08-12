@@ -27,10 +27,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("""
                 SELECT p FROM Product p
-                LEFT JOIN p.reviews r
-                WHERE p.available = true
+                LEFT JOIN OrderItem oi ON oi.product = p
+                WHERE p.available = true AND p.category <> 'EXTRA'
                 GROUP BY p
-                ORDER BY AVG(r.rating) DESC, COUNT(r) DESC
+                ORDER BY COUNT(oi) DESC
             """)
     List<Product> findPopular(Pageable pageable);
 
