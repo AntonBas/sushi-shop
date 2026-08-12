@@ -22,8 +22,8 @@ public enum OrderStatus {
             throw new BadRequestException("Cannot set READY for DELIVERY order");
         }
 
-        if (newStatus == DELIVERED && deliveryMethod != DeliveryMethod.DELIVERY) {
-            throw new BadRequestException("Cannot set DELIVERED for PICKUP order");
+        if (newStatus == DELIVERED && this != READY && this != DELIVERING) {
+            throw new BadRequestException("Cannot set DELIVERED from status: " + this);
         }
     }
 }

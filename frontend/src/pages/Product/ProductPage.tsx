@@ -65,7 +65,7 @@ export default function ProductPage() {
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
-        <Link to="/" className={styles.breadcrumbLink}>
+        <Link to="/menu" className={styles.breadcrumbLink}>
           <MenuIcon size={14} /> Menu
         </Link>
         <span className={styles.separator}>/</span>
