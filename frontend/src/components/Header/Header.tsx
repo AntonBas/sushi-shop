@@ -49,7 +49,7 @@ export default function Header() {
     navigate("/login");
   };
 
-  const adminLink = isCourier ? "/admin/orders" : "/admin";
+  const adminLink = isCourier ? "/admin/orders" : "/admin/products";
 
   return (
     <header className={styles.header}>
