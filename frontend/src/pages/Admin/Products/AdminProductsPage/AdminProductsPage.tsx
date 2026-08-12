@@ -166,7 +166,11 @@ export default function AdminProductsPage() {
                       {CATEGORY_DISPLAY[product.category]}
                     </span>
                   </td>
-                  <td>{product.weight || "—"}</td>
+                  <td>
+                    {product.weight
+                      ? `${product.weight}${product.category === "DRINK" ? "ml" : "g"}`
+                      : "—"}
+                  </td>
                   <td>{product.pieces ? `${product.pieces} pcs` : "—"}</td>
                   <td>{product.price}₴</td>
                   <td>

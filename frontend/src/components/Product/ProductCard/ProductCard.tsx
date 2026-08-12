@@ -24,7 +24,10 @@ export default function ProductCard({ product }: Props) {
             {CATEGORY_DISPLAY[product.category]}
           </span>
           {product.weight && (
-            <span className={styles.weight}>{product.weight}g</span>
+            <span className={styles.weight}>
+              {product.weight}
+              {product.category === "DRINK" ? "ml" : "g"}
+            </span>
           )}
           {product.pieces && (
             <span className={styles.pieces}>{product.pieces} pcs</span>
