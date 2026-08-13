@@ -92,7 +92,7 @@ export default function MyOrdersPage() {
                   <div>
                     <span className={styles.orderId}>Order #{order.id}</span>
                     <span className={styles.orderDate}>
-                      {new Date(order.createdAt).toLocaleDateString("uk-UA", {
+                      {new Date(order.createdAt).toLocaleString("en-US", {
                         day: "numeric",
                         month: "long",
                         year: "numeric",
