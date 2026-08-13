@@ -62,8 +62,8 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Get all orders (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COURIER')")
+    @Operation(summary = "Get all orders (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
             @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
@@ -71,7 +71,7 @@ public class OrderController {
             @RequestParam(required = false) DeliveryMethod deliveryMethod,
             @RequestParam(required = false) PaymentMethod paymentMethod,
             @RequestParam(required = false) String search) {
-        log.info("GET /api/orders (admin)");
+        log.info("GET /api/orders (admin/courier)");
         return ResponseEntity.ok(orderService.getAll(pageable, status, deliveryMethod, paymentMethod, search));
     }
 
@@ -87,8 +87,8 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
-    @Operation(summary = "Update order status (admin)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'COURIER')")
+    @Operation(summary = "Update order status (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long id, @RequestParam OrderStatus status) {
         log.info("PATCH /api/orders/{}/status - {}", id, status);
