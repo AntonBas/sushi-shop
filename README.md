@@ -26,7 +26,7 @@ The system supports three roles:
 
 ## Demo
 
-[Watch demo on YouTube](https://youtu.be/nmPWEAX9Un8)
+[![Sushi Shop Demo](https://img.youtube.com/vi/nmPWEAX9Un8/maxresdefault.jpg)](https://youtu.be/nmPWEAX9Un8)
 
 ---
 
@@ -72,6 +72,7 @@ The system supports three roles:
 
 ## Architecture
 
+```
 React (Vite)
     ↓ REST
 Spring Boot API
@@ -80,6 +81,7 @@ Spring Boot API
     ├── WebSocket/STOMP (real-time order updates)
     ├── Stripe (payments)
     └── Google OAuth2 (login)
+```
 
 ---
 
