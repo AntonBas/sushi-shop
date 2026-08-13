@@ -192,6 +192,20 @@ public class OrderServiceTest {
     }
 
     @Test
+    void shouldUpdateStatusToDeliveredForPickup() {
+        var order = Order.builder().id(1L).status(OrderStatus.READY).deliveryMethod(DeliveryMethod.PICKUP).build();
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.DELIVERED, BigDecimal.ZERO, null, List.of());
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.toResponse(order)).thenReturn(expected);
+
+        var result = orderService.updateStatus(1L, OrderStatus.DELIVERED);
+
+        assertThat(result.status()).isEqualTo(OrderStatus.DELIVERED);
+    }
+
+    @Test
     void shouldThrowWhenDeliveringForPickup() {
         var order = Order.builder().id(1L).status(OrderStatus.COOKING).deliveryMethod(DeliveryMethod.PICKUP).build();
 
@@ -211,17 +225,6 @@ public class OrderServiceTest {
         assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.READY))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Cannot set READY for DELIVERY order");
-    }
-
-    @Test
-    void shouldThrowWhenDeliveredForPickup() {
-        var order = Order.builder().id(1L).status(OrderStatus.DELIVERING).deliveryMethod(DeliveryMethod.PICKUP).build();
-
-        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
-
-        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.DELIVERED))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Cannot set DELIVERED for PICKUP order");
     }
 
     @Test
