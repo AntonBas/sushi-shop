@@ -21,7 +21,7 @@ public class FileStorageServiceTest {
     Path tempDir;
 
     @BeforeEach
-    void setUp() throws Exception {
+    public void setUp() throws Exception {
         fileStorageService = new FileStorageService();
 
         var uploadDirField = FileStorageService.class.getDeclaredField("uploadDir");
@@ -44,7 +44,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    void shouldStoreFile() {
+    public void shouldStoreFile() {
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
 
         var result = fileStorageService.store(file);
@@ -54,13 +54,13 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    void shouldReturnNullForNullFile() {
+    public void shouldReturnNullForNullFile() {
         var result = fileStorageService.store(null);
         assertThat(result).isNull();
     }
 
     @Test
-    void shouldReturnNullForEmptyFile() {
+    public void shouldReturnNullForEmptyFile() {
         var file = new MockMultipartFile("empty.jpg", "empty.jpg", "image/jpeg", new byte[0]);
 
         var result = fileStorageService.store(file);
@@ -69,7 +69,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    void shouldThrowForInvalidType() {
+    public void shouldThrowForInvalidType() {
         var file = new MockMultipartFile("test.txt", "test.txt", "text/plain", "test".getBytes());
 
         assertThatThrownBy(() -> fileStorageService.store(file))
@@ -78,7 +78,7 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    void shouldThrowForTooLargeFile() {
+    public void shouldThrowForTooLargeFile() {
         var bytes = new byte[6_000_000];
         var file = new MockMultipartFile("large.jpg", "large.jpg", "image/jpeg", bytes);
 
@@ -88,7 +88,32 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    void shouldDeleteFile() throws Exception {
+    public void shouldLoadFile() throws Exception {
+        var fileName = "test-load.jpg";
+        var filePath = tempDir.resolve(fileName);
+        Files.write(filePath, "test".getBytes());
+
+        var resource = fileStorageService.load(fileName);
+
+        assertThat(resource).isNotNull();
+        assertThat(resource.exists()).isTrue();
+    }
+
+    @Test
+    public void shouldReturnNullForNonExistentFile() {
+        var resource = fileStorageService.load("nonexistent.jpg");
+        assertThat(resource).isNull();
+    }
+
+    @Test
+    public void shouldThrowForPathTraversal() {
+        assertThatThrownBy(() -> fileStorageService.load("../../etc/passwd"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid file path");
+    }
+
+    @Test
+    public void shouldDeleteFile() throws Exception {
         var fileName = "test-delete.jpg";
         var filePath = tempDir.resolve(fileName);
         Files.write(filePath, "test".getBytes());
@@ -99,12 +124,12 @@ public class FileStorageServiceTest {
     }
 
     @Test
-    void shouldNotThrowWhenDeleteNonExistentFile() {
+    public void shouldNotThrowWhenDeleteNonExistentFile() {
         fileStorageService.delete("/api/files/nonexistent.jpg");
     }
 
     @Test
-    void shouldNotDeleteWithInvalidUrl() throws Exception {
+    public void shouldNotDeleteWithInvalidUrl() throws Exception {
         var fileName = "test-invalid.jpg";
         var filePath = tempDir.resolve(fileName);
         Files.write(filePath, "test".getBytes());
