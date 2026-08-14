@@ -16,6 +16,7 @@ export interface UpdatePromotionRequest {
   startDate?: string
   endDate?: string
   productIds?: number[]
+  active?: boolean
 }
 
 export interface PromotionResponse {
@@ -27,5 +28,6 @@ export interface PromotionResponse {
   startDate: string
   endDate: string
   active: boolean
+  isCurrentlyActive: boolean
   products: ProductListResponse[]
 }

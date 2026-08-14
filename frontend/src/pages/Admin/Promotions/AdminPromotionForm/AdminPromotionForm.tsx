@@ -27,6 +27,7 @@ export default function AdminPromotionForm() {
   const [discountPercent, setDiscountPercent] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [active, setActive] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [selectedProductNames, setSelectedProductNames] = useState<
     Record<number, string>
@@ -45,20 +46,21 @@ export default function AdminPromotionForm() {
           setDiscountPercent(String(promo.discountPercent));
           setStartDate(promo.startDate?.slice(0, 16) || "");
           setEndDate(promo.endDate?.slice(0, 16) || "");
+          setActive(promo.active);
           setSelectedProductIds(promo.products.map((p) => p.id));
           setSelectedProductNames(
             Object.fromEntries(promo.products.map((p) => [p.id, p.name])),
           );
         });
     }
-  }, [id]);
+  }, [id, getApi.execute]);
 
   useEffect(() => {
     loadProducts(productPage, {
       search: productSearch || undefined,
       available: true,
     });
-  }, [productPage, productSearch]);
+  }, [productPage, productSearch, loadProducts]);
 
   const toggleProduct = (pid: number, name: string) => {
     setSelectedProductIds((prev) => {
@@ -94,6 +96,7 @@ export default function AdminPromotionForm() {
       startDate: new Date(startDate).toISOString(),
       endDate: new Date(endDate).toISOString(),
       productIds: selectedProductIds,
+      ...(isEdit && { active }),
     };
 
     try {
@@ -167,6 +170,27 @@ export default function AdminPromotionForm() {
             type="datetime-local"
           />
         </div>
+        {isEdit && (
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Status</label>
+            <div className={styles.toggleRow}>
+              <button
+                type="button"
+                onClick={() => setActive(true)}
+                className={`${styles.statusBtn} ${active ? styles.statusBtnActive : ""}`}
+              >
+                Active
+              </button>
+              <button
+                type="button"
+                onClick={() => setActive(false)}
+                className={`${styles.statusBtn} ${!active ? styles.statusBtnInactive : ""}`}
+              >
+                Inactive
+              </button>
+            </div>
+          </div>
+        )}
         <div className={styles.fieldGroup}>
           <label className={styles.label}>
             Products ({selectedProductIds.length} selected)

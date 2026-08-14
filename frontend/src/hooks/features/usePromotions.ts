@@ -8,7 +8,7 @@ export function usePromotions() {
 
   useEffect(() => {
     execute(() => promotionsApi.getActivePromotions())
-  }, [])
+  }, [execute])
 
   return { promotions: data || [], loading, error }
 }

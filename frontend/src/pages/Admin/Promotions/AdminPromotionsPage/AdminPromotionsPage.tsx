@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
@@ -16,21 +16,21 @@ export default function AdminPromotionsPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { data, loading, execute } = useApi<Page<PromotionResponse>>();
-  const [promotions, setPromotions] = useState<PromotionResponse[]>([]);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteTitle, setDeleteTitle] = useState("");
 
-  const loadPromotions = (p: number, s?: string) => {
-    execute(() => promotionsApi.getPromotions(p, 12, s)).then((res) =>
-      setPromotions(res.content),
-    );
-  };
+  const loadPromotions = useCallback(
+    (p: number, s?: string) => {
+      return execute(() => promotionsApi.getPromotions(p, 12, s));
+    },
+    [execute],
+  );
 
   useEffect(() => {
     loadPromotions(page, search || undefined);
-  }, [page, search]);
+  }, [page, search, loadPromotions]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -47,7 +47,9 @@ export default function AdminPromotionsPage() {
     }
   };
 
-  if (loading) return <Loading text="Loading promotions..." />;
+  if (loading && !data) return <Loading text="Loading promotions..." />;
+
+  const promotions = data?.content || [];
 
   return (
     <div className={styles.page}>
@@ -112,9 +114,9 @@ export default function AdminPromotionsPage() {
                     <td data-label="Products">{promo.products.length}</td>
                     <td data-label="Status">
                       <span
-                        className={`${styles.statusBadge} ${promo.active ? styles.active : styles.inactive}`}
+                        className={`${styles.statusBadge} ${promo.isCurrentlyActive ? styles.active : styles.inactive}`}
                       >
-                        {promo.active ? "Active" : "Inactive"}
+                        {promo.isCurrentlyActive ? "Active" : "Inactive"}
                       </span>
                     </td>
                     <td data-label="Actions">
