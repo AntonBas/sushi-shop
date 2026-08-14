@@ -1,15 +1,16 @@
 package com.sushishop.auth;
 
-import com.sushishop.mail.MailService;
-import com.sushishop.user.*;
-import com.sushishop.shared.enums.TokenType;
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.exception.core.BadRequestException;
-import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.security.jwt.JwtUtil;
+import com.sushishop.token.TokenService;
+import com.sushishop.user.User;
+import com.sushishop.user.UserMapper;
+import com.sushishop.user.UserRepository;
+import com.sushishop.user.UserService;
+import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,16 +20,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -52,21 +52,19 @@ public class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private TokenRepository tokenRepository;
-
-    @Mock
-    private MailService mailService;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
+    private TokenService tokenService;
 
     @InjectMocks
     private AuthService authService;
 
     @Test
-    void shouldLogin() {
+    public void shouldLogin() {
         var request = new LoginRequest("anton@example.com", "password123");
-        var user = User.builder().email("anton@example.com").emailVerified(true).tokenVersion(0).build();
+        var user = User.builder()
+                .email("anton@example.com")
+                .emailVerified(true)
+                .tokenVersion(0)
+                .build();
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var authority = new SimpleGrantedAuthority("ROLE_CUSTOMER");
 
@@ -82,9 +80,12 @@ public class AuthServiceTest {
     }
 
     @Test
-    void shouldThrowWhenEmailNotVerified() {
+    public void shouldThrowWhenEmailNotVerified() {
         var request = new LoginRequest("anton@example.com", "password123");
-        var user = User.builder().email("anton@example.com").emailVerified(false).build();
+        var user = User.builder()
+                .email("anton@example.com")
+                .emailVerified(false)
+                .build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
 
@@ -94,188 +95,29 @@ public class AuthServiceTest {
     }
 
     @Test
-    void shouldRegister() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
+    public void shouldRegister() {
+        var request = new RegisterRequest(
+                "Anton",
+                "anton@example.com",
+                "password123",
+                "password123",
+                "+380961791111",
+                null
+        );
+        var user = User.builder()
+                .email("anton@example.com")
+                .userRole(UserRole.CUSTOMER)
+                .tokenVersion(0)
+                .build();
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
-        var user = User.builder().email("anton@example.com").tokenVersion(0).build();
 
-        when(userService.create(request)).thenReturn(userResponse);
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userService.create(request)).thenReturn(user);
+        when(userMapper.toResponse(user)).thenReturn(userResponse);
         when(jwtUtil.generateToken("anton@example.com", "CUSTOMER", 0)).thenReturn("jwt-token");
 
         var result = authService.register(request);
 
         assertThat(result.token()).isEqualTo("jwt-token");
-    }
-
-    @Test
-    void shouldVerifyEmail() {
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.EMAIL_VERIFICATION)
-                .used(false)
-                .expiryDate(LocalDateTime.now().plusHours(1))
-                .user(User.builder().email("anton@example.com").emailVerified(false).build())
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-
-        authService.verifyEmail("token123");
-
-        assertThat(token.getUser().isEmailVerified()).isTrue();
-        assertThat(token.isUsed()).isTrue();
-        verify(tokenRepository).save(token);
-    }
-
-    @Test
-    void shouldThrowWhenVerifyEmailTokenExpired() {
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.EMAIL_VERIFICATION)
-                .used(false)
-                .expiryDate(LocalDateTime.now().minusHours(1))
-                .user(User.builder().email("anton@example.com").emailVerified(false).build())
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-
-        assertThatThrownBy(() -> authService.verifyEmail("token123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Token expired");
-    }
-
-    @Test
-    void shouldThrowWhenVerifyEmailTokenAlreadyUsed() {
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.EMAIL_VERIFICATION)
-                .used(true)
-                .expiryDate(LocalDateTime.now().plusHours(1))
-                .user(User.builder().email("anton@example.com").emailVerified(false).build())
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-
-        assertThatThrownBy(() -> authService.verifyEmail("token123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Token already used");
-    }
-
-    @Test
-    void shouldForgotPassword() {
-        var user = User.builder().id(1L).email("anton@example.com").emailVerified(true).build();
-
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
-
-        authService.forgotPassword("anton@example.com");
-
-        verify(tokenRepository).invalidateAllByUserAndType(1L, TokenType.PASSWORD_RESET);
-        verify(tokenRepository).save(any());
-        verify(mailService).sendPasswordResetEmail(eq("anton@example.com"), any());
-    }
-
-    @Test
-    void shouldThrowWhenForgotPasswordForUnverifiedUser() {
-        var user = User.builder().email("anton@example.com").emailVerified(false).build();
-
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
-
-        assertThatThrownBy(() -> authService.forgotPassword("anton@example.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Please verify your email first");
-    }
-
-    @Test
-    void shouldThrowWhenForgotPasswordForNonExistentUser() {
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> authService.forgotPassword("anton@example.com"))
-                .isInstanceOf(NotFoundException.class)
-                .hasMessageContaining("User not found");
-    }
-
-    @Test
-    void shouldResetPassword() {
-        var user = User.builder().id(1L).email("anton@example.com").password("oldHashed").tokenVersion(0).build();
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.PASSWORD_RESET)
-                .used(false)
-                .expiryDate(LocalDateTime.now().plusHours(1))
-                .user(user)
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("newPass123", "oldHashed")).thenReturn(false);
-        when(passwordEncoder.encode("newPass123")).thenReturn("hashed");
-
-        authService.resetPassword("token123", "newPass123", "newPass123");
-
-        assertThat(user.getPassword()).isEqualTo("hashed");
-        assertThat(user.getTokenVersion()).isEqualTo(1);
-        verify(userRepository).save(user);
-        verify(tokenRepository).invalidateAllByUserAndType(1L, TokenType.PASSWORD_RESET);
-    }
-
-    @Test
-    void shouldThrowWhenResetPasswordMismatch() {
-        assertThatThrownBy(() -> authService.resetPassword("token123", "newPass123", "differentPass"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Passwords don't match!");
-
-        verify(tokenRepository, never()).findByToken(any());
-    }
-
-    @Test
-    void shouldThrowWhenResetPasswordSameAsOld() {
-        var user = User.builder().id(1L).email("anton@example.com").password("oldHashed").tokenVersion(0).build();
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.PASSWORD_RESET)
-                .used(false)
-                .expiryDate(LocalDateTime.now().plusHours(1))
-                .user(user)
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-        when(passwordEncoder.matches("newPass123", "oldHashed")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.resetPassword("token123", "newPass123", "newPass123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("New password must be different from old password");
-    }
-
-    @Test
-    void shouldThrowWhenResetPasswordTokenExpired() {
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.PASSWORD_RESET)
-                .used(false)
-                .expiryDate(LocalDateTime.now().minusHours(1))
-                .user(User.builder().build())
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-
-        assertThatThrownBy(() -> authService.resetPassword("token123", "newPass123", "newPass123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Token expired");
-    }
-
-    @Test
-    void shouldThrowWhenResetPasswordWrongTokenType() {
-        var token = Token.builder()
-                .token("token123")
-                .tokenType(TokenType.EMAIL_VERIFICATION)
-                .used(false)
-                .expiryDate(LocalDateTime.now().plusHours(1))
-                .user(User.builder().build())
-                .build();
-
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
-
-        assertThatThrownBy(() -> authService.resetPassword("token123", "newPass123", "newPass123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Invalid token type");
+        verify(tokenService).createVerificationToken(user);
     }
 }
