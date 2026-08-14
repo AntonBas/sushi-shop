@@ -1,6 +1,6 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.config.ratelimit.RateLimit;
+import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.RegisterRequest;

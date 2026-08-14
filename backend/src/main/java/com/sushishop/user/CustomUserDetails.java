@@ -1,6 +1,5 @@
-package com.sushishop.shared.security.user;
+package com.sushishop.user;
 
-import com.sushishop.user.User;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;

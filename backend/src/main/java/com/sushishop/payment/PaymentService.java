@@ -1,10 +1,9 @@
 package com.sushishop.payment;
 
-import com.sushishop.annotation.Auditable;
+import com.sushishop.audit.Auditable;
 import com.sushishop.order.OrderService;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.PaymentStatus;
-import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;

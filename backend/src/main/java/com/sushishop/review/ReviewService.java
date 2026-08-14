@@ -1,6 +1,6 @@
 package com.sushishop.review;
 
-import com.sushishop.annotation.Auditable;
+import com.sushishop.audit.Auditable;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
@@ -14,7 +14,6 @@ import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

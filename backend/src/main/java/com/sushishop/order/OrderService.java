@@ -1,6 +1,6 @@
 package com.sushishop.order;
 
-import com.sushishop.annotation.Auditable;
+import com.sushishop.audit.Auditable;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.request.OrderItemRequest;
 import com.sushishop.order.dto.response.OrderResponse;
@@ -11,7 +11,7 @@ import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.shared.enums.PaymentMethod;
-import com.sushishop.shared.event.PaymentConfirmedEvent;
+import com.sushishop.payment.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;

@@ -1,6 +1,6 @@
 package com.sushishop.user;
 
-import com.sushishop.annotation.Auditable;
+import com.sushishop.audit.Auditable;
 import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.mail.MailService;
 import com.sushishop.shared.enums.AuditAction;

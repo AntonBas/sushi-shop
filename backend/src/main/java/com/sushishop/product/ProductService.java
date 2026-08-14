@@ -1,6 +1,6 @@
 package com.sushishop.product;
 
-import com.sushishop.annotation.Auditable;
+import com.sushishop.audit.Auditable;
 import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;

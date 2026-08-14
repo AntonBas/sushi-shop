@@ -1,4 +1,4 @@
-package com.sushishop.annotation;
+package com.sushishop.audit;
 
 import com.sushishop.shared.enums.AuditAction;
 

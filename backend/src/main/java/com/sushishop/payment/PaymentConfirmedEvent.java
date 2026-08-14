@@ -1,6 +1,5 @@
-package com.sushishop.shared.event;
+package com.sushishop.payment;
 
-import com.sushishop.payment.Payment;
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 

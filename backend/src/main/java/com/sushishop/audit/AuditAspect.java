@@ -1,7 +1,5 @@
-package com.sushishop.aspect;
+package com.sushishop.audit;
 
-import com.sushishop.annotation.Auditable;
-import com.sushishop.audit.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;

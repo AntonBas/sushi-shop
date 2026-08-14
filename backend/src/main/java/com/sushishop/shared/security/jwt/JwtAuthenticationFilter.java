@@ -1,6 +1,6 @@
 package com.sushishop.shared.security.jwt;
 
-import com.sushishop.shared.security.user.CustomUserDetails;
+import com.sushishop.user.CustomUserDetails;
 import com.sushishop.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
