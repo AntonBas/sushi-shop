@@ -1,6 +1,6 @@
 package com.sushishop.shared.exception.api;
 
-import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.shared.exception.core.SushiShopException;
 import jakarta.annotation.Nonnull;
 import jakarta.persistence.EntityNotFoundException;
@@ -31,6 +31,7 @@ import static org.springframework.http.HttpStatus.*;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 @Slf4j
+@SuppressWarnings("unused")
 public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Override
@@ -67,6 +68,15 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         return buildResponseEntity(apiError, request);
     }
 
+    @ExceptionHandler(RateLimitExceededException.class)
+    protected ResponseEntity<Object> handleRateLimit(@Nonnull RateLimitExceededException ex,
+                                                     @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(TOO_MANY_REQUESTS);
+        apiError.setMessage("Rate limit exceeded. Please try again later.");
+        log.warn("Rate limit exceeded: {}", ex.getMessage());
+        return buildResponseEntity(apiError, request);
+    }
+
     @ExceptionHandler(SushiShopException.class)
     protected ResponseEntity<Object> handleSushiShopException(@Nonnull SushiShopException ex,
                                                               @Nonnull WebRequest request) {
@@ -74,16 +84,6 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         apiError.setMessage(ex.getMessage());
         apiError.setDebugMessage(ex.getDebugMessage());
         log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
-        return buildResponseEntity(apiError, request);
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    protected ResponseEntity<Object> handleNotFoundException(@Nonnull NotFoundException ex,
-                                                             @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(NOT_FOUND);
-        apiError.setMessage(ex.getMessage());
-        apiError.setDebugMessage(ex.getDebugMessage());
-        log.warn("Not found: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
