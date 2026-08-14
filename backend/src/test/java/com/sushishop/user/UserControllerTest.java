@@ -33,13 +33,13 @@ public class UserControllerTest {
     private UserService userService;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    void shouldGetCurrentUser() throws Exception {
+    public void shouldGetCurrentUser() throws Exception {
         var response = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
@@ -51,7 +51,7 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    void shouldChangePassword() throws Exception {
+    public void shouldChangePassword() throws Exception {
         var request = """
                 {
                     "oldPassword": "oldPass",

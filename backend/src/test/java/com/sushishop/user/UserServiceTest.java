@@ -1,12 +1,11 @@
 package com.sushishop.user;
 
-import com.sushishop.mail.MailService;
-import com.sushishop.shared.enums.UserRole;
-import com.sushishop.user.dto.request.ChangePasswordRequest;
 import com.sushishop.auth.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
+import com.sushishop.user.dto.request.ChangePasswordRequest;
+import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,7 +18,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
@@ -28,42 +28,50 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private TokenRepository tokenRepository;
-
-    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
     private UserMapper userMapper;
 
-    @Mock
-    private MailService mailService;
-
     @InjectMocks
     private UserService userService;
 
     @Test
-    void shouldCreateUser() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var user = User.builder().email("anton@example.com").build();
-        var expected = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+    public void shouldCreateUser() {
+        var request = new RegisterRequest(
+                "Anton",
+                "anton@example.com",
+                "password123",
+                "password123",
+                "+380961791111",
+                null
+        );
+
+        var user = User.builder()
+                .email("anton@example.com")
+                .build();
 
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
+        when(userMapper.toEntity(request)).thenReturn(user);
         when(passwordEncoder.encode("password123")).thenReturn("hashed");
         when(userRepository.save(any())).thenReturn(user);
-        when(userMapper.toResponse(any())).thenReturn(expected);
 
         var result = userService.create(request);
 
-        assertThat(result.email()).isEqualTo("anton@example.com");
-        verify(userRepository).save(any());
-        verify(tokenRepository).save(any());
-        verify(mailService).sendVerificationEmail(eq("anton@example.com"), any());
+        assertThat(result).isEqualTo(user);
+        verify(userRepository).save(user);
     }
 
     @Test
-    void shouldThrowWhenEmailExists() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
+    public void shouldThrowWhenEmailExists() {
+        var request = new RegisterRequest(
+                "Anton",
+                "anton@example.com",
+                "password123",
+                "password123",
+                "+380961791111",
+                null
+        );
 
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(true);
 
@@ -72,8 +80,15 @@ public class UserServiceTest {
     }
 
     @Test
-    void shouldThrowWhenPasswordsDoNotMatch() {
-        var request = new RegisterRequest("Anton", "anton@example.com", "password123", "different", "+380961791111", null);
+    public void shouldThrowWhenPasswordsDoNotMatch() {
+        var request = new RegisterRequest(
+                "Anton",
+                "anton@example.com",
+                "password123",
+                "different",
+                "+380961791111",
+                null
+        );
 
         when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
 
@@ -82,24 +97,96 @@ public class UserServiceTest {
     }
 
     @Test
-    void shouldChangePassword() {
+    public void shouldGetByEmail() {
+        var user = User.builder()
+                .id(1L)
+                .name("Anton")
+                .email("anton@example.com")
+                .phone("+380961791111")
+                .userRole(UserRole.CUSTOMER)
+                .build();
+
+        var expected = new UserResponse(
+                1L,
+                "Anton",
+                "anton@example.com",
+                "+380961791111",
+                UserRole.CUSTOMER,
+                null
+        );
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userMapper.toResponse(user)).thenReturn(expected);
+
+        var result = userService.getByEmail("anton@example.com");
+
+        assertThat(result.email()).isEqualTo("anton@example.com");
+        verify(userMapper).toResponse(user);
+    }
+
+    @Test
+    public void shouldUpdateUser() {
+        var user = User.builder()
+                .id(1L)
+                .name("Old Name")
+                .email("anton@example.com")
+                .phone("+380961791111")
+                .build();
+
+        var request = new com.sushishop.user.dto.request.UpdateUserRequest(
+                "New Name",
+                "+380999999999",
+                null
+        );
+
+        var expected = new UserResponse(
+                1L,
+                "New Name",
+                "anton@example.com",
+                "+380999999999",
+                UserRole.CUSTOMER,
+                null
+        );
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(any())).thenReturn(user);
+        when(userMapper.toResponse(user)).thenReturn(expected);
+
+        var result = userService.update("anton@example.com", request);
+
+        assertThat(result.name()).isEqualTo("New Name");
+        assertThat(result.phone()).isEqualTo("+380999999999");
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    public void shouldChangePassword() {
         var request = new ChangePasswordRequest("oldPass", "newPass123");
-        var user = User.builder().email("anton@example.com").password("hashedOld").build();
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashedOld")
+                .tokenVersion(0)
+                .build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPass", "hashedOld")).thenReturn(true);
+        when(passwordEncoder.matches("newPass123", "hashedOld")).thenReturn(false);
         when(passwordEncoder.encode("newPass123")).thenReturn("hashedNew");
 
         userService.changePassword("anton@example.com", request);
 
         assertThat(user.getPassword()).isEqualTo("hashedNew");
+        assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
     }
 
     @Test
-    void shouldThrowWhenOldPasswordIncorrect() {
+    public void shouldThrowWhenOldPasswordIncorrect() {
         var request = new ChangePasswordRequest("wrongOld", "newPass123");
-        var user = User.builder().email("anton@example.com").password("hashedOld").build();
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashedOld")
+                .build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongOld", "hashedOld")).thenReturn(false);
