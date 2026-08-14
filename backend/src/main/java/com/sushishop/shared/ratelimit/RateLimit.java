@@ -1,4 +1,4 @@
-package com.sushishop.shared.config.ratelimit;
+package com.sushishop.shared.ratelimit;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
