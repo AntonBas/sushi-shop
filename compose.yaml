@@ -92,6 +92,26 @@ services:
       VITE_API_URL: http://backend:8080
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: sushi-prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - sushi-net
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: sushi-grafana
+    ports:
+      - '3000:3000'
+    networks:
+      - sushi-net
+    restart: unless-stopped
+
   ngrok:
     image: ngrok/ngrok:latest
     container_name: sushi-ngrok
