@@ -26,7 +26,7 @@ The system supports three roles:
 
 ## Demo
 
-[![Sushi Shop Demo](https://img.youtube.com/vi/nmPWEAX9Un8/maxresdefault.jpg)](https://youtu.be/nmPWEAX9Un8)
+[![Sushi Shop Demo](https://img.youtube.com/vi/RCVogRldj4Q/maxresdefault.jpg)](https://www.youtube.com/watch?v=RCVogRldj4Q)
 
 ---
 
@@ -80,7 +80,8 @@ Spring Boot API
     ├── Redis (caching)
     ├── WebSocket/STOMP (real-time order updates)
     ├── Stripe (payments)
-    └── Google OAuth2 (login)
+    ├── Google OAuth2 (login)
+    └── Prometheus + Grafana (monitoring)
 ```
 
 ---
@@ -120,6 +121,8 @@ Spring Boot API
 
 - Docker
 - Docker Compose
+- Prometheus
+- Grafana
 
 ---
 
@@ -141,6 +144,8 @@ See [`.env.example`](.env.example) for all available variables.
 | Frontend    | http://localhost:5173                 |
 | Backend API | http://localhost:8080                 |
 | Swagger     | http://localhost:8080/swagger-ui.html |
+| Prometheus  | http://localhost:9090                 |
+| Grafana     | http://localhost:3000                 |
 
 ---
 
