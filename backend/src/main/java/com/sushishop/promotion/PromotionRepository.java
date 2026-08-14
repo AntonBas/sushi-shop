@@ -16,7 +16,8 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     @Nonnull
     @EntityGraph(attributePaths = {"products", "products.productImages"})
-    List<Promotion> findByStartDateBeforeAndEndDateAfter(LocalDateTime start, LocalDateTime end);
+    @Query("SELECT p FROM Promotion p WHERE p.startDate <= :now AND p.endDate >= :now AND p.active = true")
+    List<Promotion> findActiveAt(@Param("now") LocalDateTime now);
 
     @Nonnull
     @EntityGraph(attributePaths = {"products"})
@@ -28,9 +29,15 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     @EntityGraph(attributePaths = {"products"})
     Page<Promotion> findAll(@Nonnull Pageable pageable);
 
+    @Override
+    @Nonnull
+    @EntityGraph(attributePaths = {"products", "products.productImages"})
+    Optional<Promotion> findById(@Nonnull Long id);
+
     @Nonnull
     @EntityGraph(attributePaths = {"products", "products.productImages"})
     Optional<Promotion> findBySlug(String slug);
 
+    @Nonnull
     Optional<Promotion> findByTitle(String title);
 }

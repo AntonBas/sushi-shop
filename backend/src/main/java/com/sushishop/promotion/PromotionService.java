@@ -1,16 +1,11 @@
 package com.sushishop.promotion;
 
 import com.sushishop.annotation.Auditable;
-import com.sushishop.product.Product;
-import com.sushishop.product.ProductEnrichmentService;
-import com.sushishop.product.ProductMapper;
 import com.sushishop.product.ProductRepository;
-import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -37,59 +29,62 @@ public class PromotionService {
 
     private final PromotionRepository promotionRepository;
     private final ProductRepository productRepository;
-    private final PromotionMapper promotionMapper;
-    private final ProductMapper productMapper;
-    private final ProductEnrichmentService productEnrichmentService;
+    private final PromotionValidator validator;
+    private final PromotionResponseAssembler assembler;
     private final SlugService slugService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {@CacheEvict(value = "promotions", allEntries = true), @CacheEvict(value = "products", allEntries = true)})
+    @Caching(evict = {
+            @CacheEvict(value = "promotions", allEntries = true),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public PromotionResponse create(CreatePromotionRequest request) {
-        validateDates(request.startDate(), request.endDate());
-        validateTitleUnique(request.title());
-        validateProductsExist(request.productIds());
-        validateProductsNotInOtherActivePromotions(request.productIds(), null);
+        validator.validateDates(request.startDate(), request.endDate());
+        validator.validateTitleUnique(request.title());
+        validator.validateProductsExist(request.productIds());
+        validator.validateProductsNotInOtherActivePromotions(request.productIds(), null);
 
         var products = new HashSet<>(productRepository.findAllById(request.productIds()));
 
         var promotion = Promotion.builder()
                 .title(request.title())
-                .slug(slugService.generateUniqueSlug(request.title(), slug -> promotionRepository.findBySlug(slug).isPresent()))
+                .slug(slugService.generateUniqueSlug(request.title(),
+                        slug -> promotionRepository.findBySlug(slug).isPresent()))
                 .description(request.description())
                 .discountPercent(request.discountPercent())
                 .startDate(request.startDate())
                 .endDate(request.endDate())
                 .products(products)
+                .active(true)
                 .build();
 
         var saved = promotionRepository.save(promotion);
-        log.info("Promotion created: {}", saved.getId());
-        return toResponse(saved);
+        log.info("Promotion created: id={}, title={}", saved.getId(), saved.getTitle());
+        return assembler.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public List<PromotionResponse> getActive() {
-        var now = LocalDateTime.now();
-        return promotionRepository.findByStartDateBeforeAndEndDateAfter(now, now)
+        return promotionRepository.findActiveAt(LocalDateTime.now())
                 .stream()
-                .map(this::toResponse)
+                .map(assembler::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Page<PromotionResponse> getAll(Pageable pageable, String search) {
         if (search != null && !search.isBlank()) {
-            return promotionRepository.findAllBySearch(search, pageable).map(this::toResponse);
+            return promotionRepository.findAllBySearch(search, pageable).map(assembler::toResponse);
         }
-        return promotionRepository.findAll(pageable).map(this::toResponse);
+        return promotionRepository.findAll(pageable).map(assembler::toResponse);
     }
 
     @Transactional(readOnly = true)
     @Cacheable(value = "promotions", key = "#id")
     public PromotionResponse getById(Long id) {
         return promotionRepository.findById(id)
-                .map(this::toResponse)
+                .map(assembler::toResponse)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
     }
 
@@ -97,138 +92,90 @@ public class PromotionService {
     @Cacheable(value = "promotions", key = "#slug")
     public PromotionResponse getBySlug(String slug) {
         return promotionRepository.findBySlug(slug)
-                .map(this::toResponse)
+                .map(assembler::toResponse)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + slug));
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {@CacheEvict(value = "promotions", allEntries = true), @CacheEvict(value = "products", allEntries = true)})
+    @Caching(evict = {
+            @CacheEvict(value = "promotions", allEntries = true),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public PromotionResponse update(Long id, UpdatePromotionRequest request) {
         var promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
 
-        if (request.title() != null && !request.title().equals(promotion.getTitle())) {
-            validateTitleUnique(request.title());
-            promotion.setTitle(request.title());
-            promotion.setSlug(slugService.generateUniqueSlug(request.title(), slug -> promotionRepository.findBySlug(slug).isPresent()));
-        }
-
-        if (request.description() != null) {
-            promotion.setDescription(request.description());
-        }
-
-        if (request.discountPercent() != null) {
-            promotion.setDiscountPercent(request.discountPercent());
-        }
-
-        if (request.startDate() != null && request.endDate() != null) {
-            validateDates(request.startDate(), request.endDate());
-            promotion.setStartDate(request.startDate());
-            promotion.setEndDate(request.endDate());
-        }
-
-        if (request.productIds() != null) {
-            validateProductsExist(request.productIds());
-            validateProductsNotInOtherActivePromotions(request.productIds(), id);
-            promotion.setProducts(new HashSet<>(productRepository.findAllById(request.productIds())));
-        }
+        updateTitle(promotion, request.title());
+        updateDescription(promotion, request.description());
+        updateDiscountPercent(promotion, request.discountPercent());
+        updateDates(promotion, request.startDate(), request.endDate());
+        updateProducts(promotion, request.productIds());
+        updateActive(promotion, request.active());
 
         var saved = promotionRepository.save(promotion);
-        log.info("Promotion updated: {}", saved.getId());
-        return toResponse(saved);
+        log.info("Promotion updated: id={}, title={}", saved.getId(), saved.getTitle());
+        return assembler.toResponse(saved);
     }
 
     @Auditable(action = AuditAction.DELETE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {@CacheEvict(value = "promotions", allEntries = true), @CacheEvict(value = "products", allEntries = true)})
+    @Caching(evict = {
+            @CacheEvict(value = "promotions", allEntries = true),
+            @CacheEvict(value = "products", allEntries = true)
+    })
     public void delete(Long id) {
         var promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
+
+        promotion.getProducts().clear();
+        promotionRepository.save(promotion);
         promotionRepository.delete(promotion);
-        log.info("Promotion deleted: {}", id);
+        log.info("Promotion deleted: id={}", id);
     }
 
-    private PromotionResponse toResponse(Promotion promotion) {
-        List<Long> productIds = promotion.getProducts().stream()
-                .map(Product::getId)
-                .toList();
-
-        Map<Long, Double> ratings = productEnrichmentService.getAverageRatings(productIds);
-
-        BigDecimal discount = promotion.isActive() && promotion.getEndDate().isAfter(LocalDateTime.now())
-                ? promotion.getDiscountPercent().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)
-                : null;
-
-        List<ProductListResponse> productResponses = promotion.getProducts().stream()
-                .map(product -> {
-                    BigDecimal discountedPrice = discount != null
-                            ? product.getPrice().multiply(BigDecimal.ONE.subtract(discount)).setScale(2, RoundingMode.HALF_UP)
-                            : null;
-                    return productMapper.toListResponse(product, ratings.get(product.getId()), discountedPrice);
-                })
-                .toList();
-
-        var response = promotionMapper.toResponse(promotion);
-        return new PromotionResponse(
-                response.id(),
-                response.slug(),
-                response.title(),
-                response.description(),
-                response.discountPercent(),
-                response.startDate(),
-                response.endDate(),
-                response.active(),
-                productResponses
-        );
-    }
-
-    private void validateDates(LocalDateTime startDate, LocalDateTime endDate) {
-        if (startDate.isAfter(endDate)) {
-            throw new BadRequestException("Start date must be before end date");
-        }
-        if (endDate.isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("End date cannot be in the past");
+    private void updateTitle(Promotion promotion, String newTitle) {
+        if (newTitle != null && !newTitle.equals(promotion.getTitle())) {
+            validator.validateTitleUnique(newTitle);
+            promotion.setTitle(newTitle);
+            promotion.setSlug(slugService.generateUniqueSlug(newTitle,
+                    slug -> promotionRepository.findBySlug(slug).isPresent()));
         }
     }
 
-    private void validateTitleUnique(String title) {
-        if (promotionRepository.findByTitle(title).isPresent()) {
-            throw new BadRequestException("Promotion with title '" + title + "' already exists");
+    private void updateDescription(Promotion promotion, String newDescription) {
+        if (newDescription != null) {
+            promotion.setDescription(newDescription);
         }
     }
 
-    private void validateProductsExist(List<Long> productIds) {
-        var products = productRepository.findAllById(productIds);
-        if (products.size() != productIds.size()) {
-            var foundIds = products.stream().map(p -> p.getId().toString()).toList();
-            var missingIds = productIds.stream()
-                    .filter(id -> !foundIds.contains(id.toString()))
-                    .map(String::valueOf)
-                    .toList();
-            throw new NotFoundException("Products not found: " + String.join(", ", missingIds));
+    private void updateDiscountPercent(Promotion promotion, java.math.BigDecimal newDiscountPercent) {
+        if (newDiscountPercent != null) {
+            promotion.setDiscountPercent(newDiscountPercent);
         }
     }
 
-    private void validateProductsNotInOtherActivePromotions(List<Long> productIds, Long excludePromotionId) {
-        var now = LocalDateTime.now();
-        var activePromotions = promotionRepository.findByStartDateBeforeAndEndDateAfter(now, now);
+    private void updateDates(Promotion promotion, LocalDateTime newStartDate, LocalDateTime newEndDate) {
+        if (newStartDate != null || newEndDate != null) {
+            var effectiveStart = newStartDate != null ? newStartDate : promotion.getStartDate();
+            var effectiveEnd = newEndDate != null ? newEndDate : promotion.getEndDate();
+            validator.validateDates(effectiveStart, effectiveEnd);
+            promotion.setStartDate(effectiveStart);
+            promotion.setEndDate(effectiveEnd);
+        }
+    }
 
-        for (var promotion : activePromotions) {
-            if (promotion.getId().equals(excludePromotionId)) {
-                continue;
-            }
-            var conflictingProducts = promotion.getProducts().stream()
-                    .map(Product::getId)
-                    .filter(productIds::contains)
-                    .toList();
+    private void updateProducts(Promotion promotion, List<Long> newProductIds) {
+        if (newProductIds != null) {
+            validator.validateProductsExist(newProductIds);
+            validator.validateProductsNotInOtherActivePromotions(newProductIds, promotion.getId());
+            promotion.setProducts(new HashSet<>(productRepository.findAllById(newProductIds)));
+        }
+    }
 
-            if (!conflictingProducts.isEmpty()) {
-                var productNames = productRepository.findAllById(conflictingProducts).stream()
-                        .map(Product::getName)
-                        .toList();
-                throw new BadRequestException("Products already in active promotion '" + promotion.getTitle() + "': " + String.join(", ", productNames));
-            }
+    private void updateActive(Promotion promotion, Boolean newActive) {
+        if (newActive != null) {
+            promotion.setActive(newActive);
         }
     }
 }
