@@ -23,11 +23,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = (String) attributes.get("name");
 
         var user = userRepository.findByEmail(email).orElseGet(() -> {
-            var newUser = User.builder().name(name).email(email).userRole(UserRole.CUSTOMER).build();
+            var newUser = User.builder()
+                    .name(name)
+                    .email(email)
+                    .phone("")
+                    .userRole(UserRole.CUSTOMER)
+                    .emailVerified(true)
+                    .tokenVersion(0)
+                    .build();
             return userRepository.save(newUser);
         });
 
+        if (!user.isEmailVerified()) {
+            user.setEmailVerified(true);
+            userRepository.save(user);
+        }
+
         return oauthUser;
     }
-
 }
