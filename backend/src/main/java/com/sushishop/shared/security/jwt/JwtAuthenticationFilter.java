@@ -21,6 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final UserCacheService userCacheService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
@@ -31,13 +32,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (jwtUtil.validateToken(token)) {
                 String email = jwtUtil.getEmail(token);
+                Integer tokenVersion = jwtUtil.getTokenVersion(token);
 
-                var user = userRepository.findByEmail(email).orElse(null);
+                var userResponse = userCacheService.getCachedUser(email, tokenVersion);
 
-                if (user != null) {
-                    var principal = new CustomUserDetails(user);
-                    var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                if (userResponse != null) {
+                    var user = userRepository.findByEmail(email).orElse(null);
+                    if (user != null) {
+                        var principal = new CustomUserDetails(user);
+                        var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+                        SecurityContextHolder.getContext().setAuthentication(auth);
+                    } else {
+                        SecurityContextHolder.clearContext();
+                    }
                 } else {
                     SecurityContextHolder.clearContext();
                 }
