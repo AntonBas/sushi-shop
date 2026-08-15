@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.util.ArrayList;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -16,7 +18,7 @@ public class ReviewMapperTest {
     private ReviewMapper reviewMapper;
 
     @Test
-    void shouldMapToResponse() {
+    public void shouldMapToResponse() {
         var user = User.builder().name("Anton").build();
         var review = Review.builder()
                 .id(1L)
@@ -24,6 +26,7 @@ public class ReviewMapperTest {
                 .rating(5)
                 .comment("Very tasty!")
                 .build();
+        review.setReplies(new ArrayList<>());
 
         var response = reviewMapper.toResponse(review);
 
@@ -35,7 +38,7 @@ public class ReviewMapperTest {
     }
 
     @Test
-    void shouldMapToReplyResponse() {
+    public void shouldMapToReplyResponse() {
         var user = User.builder().name("Admin").build();
         var reply = ReviewReply.builder()
                 .id(1L)

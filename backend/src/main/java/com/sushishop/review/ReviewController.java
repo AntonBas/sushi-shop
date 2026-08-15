@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewReplyService reviewReplyService;
 
     @PostMapping
     @Operation(summary = "Create a review")
@@ -61,7 +62,7 @@ public class ReviewController {
                                                            @Valid @RequestBody CreateReviewReplyRequest request,
                                                            @AuthenticationPrincipal UserDetails userDetails) {
         log.info("PUT /api/reviews/replies/{}", id);
-        return ResponseEntity.ok(reviewService.updateReply(id, request, userDetails.getUsername()));
+        return ResponseEntity.ok(reviewReplyService.updateReply(id, request, userDetails.getUsername()));
     }
 
     @GetMapping("/product/{productId}")
@@ -82,7 +83,7 @@ public class ReviewController {
                                                         @Valid @RequestBody CreateReviewReplyRequest request,
                                                         @AuthenticationPrincipal UserDetails userDetails) {
         log.info("POST /api/reviews/{}/replies", id);
-        return ResponseEntity.status(HttpStatus.CREATED).body(reviewService.addReply(id, request, userDetails.getUsername()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewReplyService.addReply(id, request, userDetails.getUsername()));
     }
 
     @DeleteMapping("/{id}")
@@ -104,7 +105,7 @@ public class ReviewController {
     public ResponseEntity<Void> deleteReply(@PathVariable Long id,
                                             @AuthenticationPrincipal UserDetails userDetails) {
         log.info("DELETE /api/reviews/replies/{}", id);
-        reviewService.deleteReply(id, userDetails.getUsername());
+        reviewReplyService.deleteReply(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
     }
 }

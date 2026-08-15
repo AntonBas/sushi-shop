@@ -37,14 +37,17 @@ public class ReviewControllerTest {
     @MockitoBean
     private ReviewService reviewService;
 
+    @MockitoBean
+    private ReviewReplyService reviewReplyService;
+
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    void shouldCreateReview() throws Exception {
+    public void shouldCreateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var response = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 
@@ -59,7 +62,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    void shouldUpdateReview() throws Exception {
+    public void shouldUpdateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 4, "Updated!");
         var response = new ReviewResponse(1L, 1L, "Anton", 4, "Updated!", null, null, null);
 
@@ -74,11 +77,11 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    void shouldAddReply() throws Exception {
+    public void shouldAddReply() throws Exception {
         var request = new CreateReviewReplyRequest("Thank you!");
         var response = new ReviewReplyResponse(1L, "Thank you!", "Admin", null);
 
-        when(reviewService.addReply(eq(1L), any(), eq("admin@example.com"))).thenReturn(response);
+        when(reviewReplyService.addReply(eq(1L), any(), eq("admin@example.com"))).thenReturn(response);
 
         mockMvc.perform(post("/api/reviews/1/replies")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,11 +92,11 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    void shouldUpdateReply() throws Exception {
+    public void shouldUpdateReply() throws Exception {
         var request = new CreateReviewReplyRequest("Updated reply");
         var response = new ReviewReplyResponse(1L, "Updated reply", "Admin", null);
 
-        when(reviewService.updateReply(eq(1L), any(), eq("admin@example.com"))).thenReturn(response);
+        when(reviewReplyService.updateReply(eq(1L), any(), eq("admin@example.com"))).thenReturn(response);
 
         mockMvc.perform(put("/api/reviews/replies/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,14 +107,14 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    void shouldDeleteReply() throws Exception {
+    public void shouldDeleteReply() throws Exception {
         mockMvc.perform(delete("/api/reviews/replies/1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    void shouldDeleteReview() throws Exception {
+    public void shouldDeleteReview() throws Exception {
         mockMvc.perform(delete("/api/reviews/1"))
                 .andExpect(status().isNoContent());
     }
