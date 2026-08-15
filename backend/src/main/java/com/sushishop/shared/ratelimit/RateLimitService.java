@@ -28,8 +28,8 @@ public class RateLimitService {
     public void cleanupBuckets() {
         buckets.entrySet().removeIf(entry -> {
             Bucket bucket = entry.getValue();
-            ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(0);
-            return probe.getRemainingTokens() == 0;
+            long availableTokens = bucket.getAvailableTokens();
+            return availableTokens > 0;
         });
     }
 }
