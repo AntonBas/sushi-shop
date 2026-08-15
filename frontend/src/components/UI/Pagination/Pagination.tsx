@@ -8,6 +8,24 @@ interface Props {
   loading?: boolean;
 }
 
+const MAX_VISIBLE_PAGES = 5;
+
+function getVisiblePages(currentPage: number, totalPages: number): number[] {
+  if (totalPages <= MAX_VISIBLE_PAGES) {
+    return Array.from({ length: totalPages }, (_, i) => i);
+  }
+
+  let start = Math.max(0, currentPage - Math.floor(MAX_VISIBLE_PAGES / 2));
+  let end = start + MAX_VISIBLE_PAGES;
+
+  if (end > totalPages) {
+    end = totalPages;
+    start = totalPages - MAX_VISIBLE_PAGES;
+  }
+
+  return Array.from({ length: end - start }, (_, i) => start + i);
+}
+
 export default function Pagination({
   currentPage,
   totalPages,
@@ -30,8 +48,18 @@ export default function Pagination({
     );
   }
 
+  const visiblePages = getVisiblePages(currentPage, totalPages);
+
   return (
     <div className={styles.pagination}>
+      <button
+        type="button"
+        className={styles.navButton}
+        onClick={() => onPageChange(0)}
+        disabled={currentPage === 0}
+      >
+        «
+      </button>
       <button
         type="button"
         className={styles.navButton}
@@ -40,7 +68,19 @@ export default function Pagination({
       >
         ←
       </button>
-      {Array.from({ length: totalPages }, (_, i) => (
+      {visiblePages[0] > 0 && (
+        <>
+          <button
+            type="button"
+            className={styles.pageButton}
+            onClick={() => onPageChange(0)}
+          >
+            1
+          </button>
+          {visiblePages[0] > 1 && <span className={styles.ellipsis}>…</span>}
+        </>
+      )}
+      {visiblePages.map((i) => (
         <button
           type="button"
           key={i}
@@ -50,6 +90,20 @@ export default function Pagination({
           {i + 1}
         </button>
       ))}
+      {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
+        <>
+          {visiblePages[visiblePages.length - 1] < totalPages - 2 && (
+            <span className={styles.ellipsis}>…</span>
+          )}
+          <button
+            type="button"
+            className={styles.pageButton}
+            onClick={() => onPageChange(totalPages - 1)}
+          >
+            {totalPages}
+          </button>
+        </>
+      )}
       <button
         type="button"
         className={styles.navButton}
@@ -57,6 +111,14 @@ export default function Pagination({
         disabled={currentPage === totalPages - 1}
       >
         →
+      </button>
+      <button
+        type="button"
+        className={styles.navButton}
+        onClick={() => onPageChange(totalPages - 1)}
+        disabled={currentPage === totalPages - 1}
+      >
+        »
       </button>
     </div>
   );

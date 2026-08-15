@@ -9,5 +9,5 @@ export function useAdminPromotions() {
   const loadPromotions = (page = 0, size = 12, search?: string) =>
     execute(() => promotionsApi.getPromotions(page, size, search))
 
-  return { promotions: data?.content || [], totalPages: data?.totalPages || 0, loading, error, loadPromotions }
+  return { promotions: data?.content || [], totalPages: data?.page.totalPages || 0, loading, error, loadPromotions }
 }

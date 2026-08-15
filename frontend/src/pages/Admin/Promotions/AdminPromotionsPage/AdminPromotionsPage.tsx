@@ -147,7 +147,7 @@ export default function AdminPromotionsPage() {
           </div>
           <Pagination
             currentPage={page}
-            totalPages={data?.totalPages || 0}
+            totalPages={data?.page.totalPages || 0}
             onPageChange={setPage}
           />
         </>

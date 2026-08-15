@@ -42,7 +42,7 @@ export function useProducts() {
     products,
     popular,
     related,
-    totalPages: listApi.data?.totalPages || 0,
+    totalPages: listApi.data?.page.totalPages || 0,
     loading: listApi.loading,
     error: listApi.error,
     loadProducts,

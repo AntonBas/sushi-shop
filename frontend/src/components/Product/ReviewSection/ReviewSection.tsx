@@ -39,7 +39,7 @@ export default function ReviewSection({ productId }: Props) {
   const loadReviews = (page: number) => {
     reviewsApi.getReviews(productId, page).then((res) => {
       setReviews(res.content);
-      setTotalReviewPages(res.totalPages);
+      setTotalReviewPages(res.page.totalPages);
     });
   };
 
