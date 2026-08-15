@@ -1,6 +1,5 @@
-package com.sushishop.shared.security.user;
+package com.sushishop.user;
 
-import com.sushishop.user.User;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,5 +30,10 @@ public class CustomUserDetails implements UserDetails {
     @Nonnull
     public String getUsername() {
         return user.getEmail();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return user.isEmailVerified();
     }
 }

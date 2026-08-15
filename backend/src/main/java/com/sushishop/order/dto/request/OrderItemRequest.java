@@ -12,6 +12,7 @@ public record OrderItemRequest(
         Long productId,
 
         @Schema(description = "Quantity must be greater than 0")
+        @NotNull(message = "Quantity is required")
         @Positive(message = "Quantity must be greater than 0")
         @Max(value = 99, message = "Quantity must be less than 100")
         Integer quantity

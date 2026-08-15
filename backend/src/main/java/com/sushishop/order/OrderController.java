@@ -33,6 +33,8 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderCreationService orderCreationService;
+    private final OrderQueryService orderQueryService;
 
     @PostMapping
     @Operation(summary = "Create new order")
@@ -45,7 +47,7 @@ public class OrderController {
                                                 @AuthenticationPrincipal UserDetails userDetails) {
         log.info("POST /api/orders - {}", request.customerName());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(orderService.create(request, userDetails.getUsername()));
+                .body(orderCreationService.create(request, userDetails.getUsername()));
     }
 
     @GetMapping("/my")
@@ -58,7 +60,7 @@ public class OrderController {
             @AuthenticationPrincipal UserDetails userDetails,
             @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/orders/my - user: {}", userDetails.getUsername());
-        return ResponseEntity.ok(orderService.getByUser(userDetails.getUsername(), pageable));
+        return ResponseEntity.ok(orderQueryService.getByUser(userDetails.getUsername(), pageable));
     }
 
     @GetMapping
@@ -72,7 +74,7 @@ public class OrderController {
             @RequestParam(required = false) PaymentMethod paymentMethod,
             @RequestParam(required = false) String search) {
         log.info("GET /api/orders (admin/courier)");
-        return ResponseEntity.ok(orderService.getAll(pageable, status, deliveryMethod, paymentMethod, search));
+        return ResponseEntity.ok(orderQueryService.getAll(pageable, status, deliveryMethod, paymentMethod, search));
     }
 
     @GetMapping("/{id}")

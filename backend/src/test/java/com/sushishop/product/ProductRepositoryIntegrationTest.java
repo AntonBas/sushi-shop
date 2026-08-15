@@ -1,11 +1,10 @@
-package com.sushishop.order;
+package com.sushishop.product;
 
-import com.sushishop.product.Product;
-import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.enums.Category;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -20,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("testcontainers")
-public class OrderServiceIntegrationTest {
+public class ProductRepositoryIntegrationTest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -36,7 +35,7 @@ public class OrderServiceIntegrationTest {
     private ProductRepository productRepository;
 
     @Test
-    void shouldSaveAndFindProduct() {
+    public void shouldSaveAndFindProduct() {
         var product = productRepository.save(Product.builder()
                 .name("Test Roll")
                 .slug("test-roll")
@@ -52,7 +51,7 @@ public class OrderServiceIntegrationTest {
     }
 
     @Test
-    void shouldFindPopularProductsExcludingExtraCategory() {
+    public void shouldFindPopularProductsExcludingExtraCategory() {
         productRepository.save(Product.builder()
                 .name("Wasabi")
                 .slug("wasabi-test")
@@ -71,14 +70,14 @@ public class OrderServiceIntegrationTest {
                 .pieces(8)
                 .build());
 
-        var popular = productRepository.findPopular(org.springframework.data.domain.Pageable.ofSize(10));
+        var popular = productRepository.findPopular(Pageable.ofSize(10));
 
         assertThat(popular).isNotEmpty();
         assertThat(popular).noneMatch(p -> p.getCategory() == Category.EXTRA);
     }
 
     @Test
-    void shouldFindBySlug() {
+    public void shouldFindBySlug() {
         productRepository.save(Product.builder()
                 .name("Philadelphia")
                 .slug("philadelphia-test")

@@ -16,21 +16,29 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     @Nonnull
     @EntityGraph(attributePaths = {"products", "products.productImages"})
-    List<Promotion> findByStartDateBeforeAndEndDateAfter(LocalDateTime start, LocalDateTime end);
+    @Query("SELECT p FROM Promotion p WHERE p.startDate <= :now AND p.endDate >= :now AND p.active = true")
+    List<Promotion> findActiveAt(@Param("now") LocalDateTime now);
+
+    @Query("SELECT p.id FROM Promotion p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Long> findIdsBySearch(@Param("search") String search, @Nonnull Pageable pageable);
+
+    @Query("SELECT p.id FROM Promotion p")
+    Page<Long> findIds(@Nonnull Pageable pageable);
 
     @Nonnull
     @EntityGraph(attributePaths = {"products"})
-    @Query("SELECT p FROM Promotion p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<Promotion> findAllBySearch(@Param("search") String search, @Nonnull Pageable pageable);
+    @Query("SELECT p FROM Promotion p WHERE p.id IN :ids")
+    List<Promotion> findPromotionsByIds(@Param("ids") List<Long> ids);
 
     @Override
     @Nonnull
-    @EntityGraph(attributePaths = {"products"})
-    Page<Promotion> findAll(@Nonnull Pageable pageable);
+    @EntityGraph(attributePaths = {"products", "products.productImages"})
+    Optional<Promotion> findById(@Nonnull Long id);
 
     @Nonnull
     @EntityGraph(attributePaths = {"products", "products.productImages"})
     Optional<Promotion> findBySlug(String slug);
 
+    @Nonnull
     Optional<Promotion> findByTitle(String title);
 }

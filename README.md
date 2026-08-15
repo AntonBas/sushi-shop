@@ -26,7 +26,7 @@ The system supports three roles:
 
 ## Demo
 
-[![Sushi Shop Demo](https://img.youtube.com/vi/nmPWEAX9Un8/maxresdefault.jpg)](https://youtu.be/nmPWEAX9Un8)
+[![Sushi Shop Demo](https://img.youtube.com/vi/RCVogRldj4Q/maxresdefault.jpg)](https://www.youtube.com/watch?v=RCVogRldj4Q)
 
 ---
 
@@ -67,6 +67,11 @@ The system supports three roles:
 - **Role-based access control** — separate workflows and permissions for User, Admin, and Courier roles
 - **API rate limiting** — configurable request throttling using Bucket4j
 - **Drag-and-drop image reordering** — admin can reorder product images
+- **Service layer separation** — split large services into focused services (OrderCreationService, OrderQueryService, ProductImageService, ReviewReplyService)
+- **Validation hierarchy** — custom exceptions for all HTTP error scenarios with centralized handling
+- **Token management** — separate TokenService for verification and password reset tokens
+- **Scheduled cleanup** — automated cleanup of expired tokens and rate-limit buckets
+- **Email verification flow** — async email sending with styled HTML templates
 
 ---
 
@@ -80,7 +85,10 @@ Spring Boot API
     ├── Redis (caching)
     ├── WebSocket/STOMP (real-time order updates)
     ├── Stripe (payments)
-    └── Google OAuth2 (login)
+    ├── Google OAuth2 (login)
+    ├── Mail (SMTP)
+    ├── Rate Limiting (Bucket4j)
+    └── Prometheus + Grafana (monitoring)
 ```
 
 ---
@@ -103,6 +111,9 @@ Spring Boot API
 - Google OAuth2
 - Bucket4j
 - Testcontainers
+- Spring AOP
+- Spring Scheduling
+- Spring Mail
 
 ### Frontend
 
@@ -120,6 +131,8 @@ Spring Boot API
 
 - Docker
 - Docker Compose
+- Prometheus
+- Grafana
 
 ---
 
@@ -141,14 +154,17 @@ See [`.env.example`](.env.example) for all available variables.
 | Frontend    | http://localhost:5173                 |
 | Backend API | http://localhost:8080                 |
 | Swagger     | http://localhost:8080/swagger-ui.html |
+| Prometheus  | http://localhost:9090                 |
+| Grafana     | http://localhost:3000                 |
 
 ---
 
 ## Testing
 
-- **Unit tests:** JUnit 5 + Mockito — services, mappers, validators
+- **Unit tests:** JUnit 5 + Mockito — services, mappers, validators, aspects
 - **Integration tests:** Testcontainers with real PostgreSQL — Flyway migrations, repository queries
 - **Controller tests:** MockMvc — REST API endpoints
+- **Rate limiting tests:** Bucket4j token bucket behavior
 
 ---
 

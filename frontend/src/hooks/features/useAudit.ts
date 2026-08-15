@@ -15,7 +15,7 @@ export function useAuditLogs() {
 
   return {
     logs,
-    totalPages: data?.totalPages || 0,
+    totalPages: data?.page.totalPages || 0,
     loading,
     error,
     loadLogs,

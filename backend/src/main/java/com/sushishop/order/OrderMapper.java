@@ -12,7 +12,7 @@ import org.mapstruct.Mapping;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring", imports = {ProductImageMapper.class})
+@Mapper(componentModel = "spring", uses = {ProductImageMapper.class})
 public interface OrderMapper {
 
     @Mapping(target = "address", expression = "java(mapAddress(order))")
@@ -28,7 +28,7 @@ public interface OrderMapper {
 
     @Mapping(target = "productId", source = "product.id")
     @Mapping(target = "productName", source = "product.name")
-    @Mapping(target = "mainImage", expression = "java(ProductImageMapper.getMainImage(item.getProduct()))")
+    @Mapping(target = "mainImage", source = "product.productImages", qualifiedByName = "mainImage")
     OrderItemResponse toItemResponse(OrderItem item);
 
     List<OrderItemResponse> toItemResponseList(List<OrderItem> items);

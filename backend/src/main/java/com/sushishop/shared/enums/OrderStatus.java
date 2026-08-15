@@ -6,6 +6,10 @@ public enum OrderStatus {
     NEW, CONFIRMED, COOKING, DELIVERING, DELIVERED, READY, CANCELLED;
 
     public void validateTransition(OrderStatus newStatus, DeliveryMethod deliveryMethod) {
+        if (deliveryMethod == null) {
+            throw new BadRequestException("Delivery method is required");
+        }
+
         if (this == newStatus) {
             throw new BadRequestException("Order already has status: " + this);
         }
@@ -25,5 +29,19 @@ public enum OrderStatus {
         if (newStatus == DELIVERED && this != READY && this != DELIVERING) {
             throw new BadRequestException("Cannot set DELIVERED from status: " + this);
         }
+
+        if (!isValidTransition(newStatus)) {
+            throw new BadRequestException("Cannot transition from " + this + " to " + newStatus);
+        }
+    }
+
+    private boolean isValidTransition(OrderStatus newStatus) {
+        return switch (this) {
+            case NEW -> newStatus == CONFIRMED || newStatus == CANCELLED;
+            case CONFIRMED -> newStatus == COOKING || newStatus == CANCELLED;
+            case COOKING -> newStatus == READY || newStatus == DELIVERING;
+            case DELIVERING, READY -> newStatus == DELIVERED;
+            case DELIVERED, CANCELLED -> false;
+        };
     }
 }

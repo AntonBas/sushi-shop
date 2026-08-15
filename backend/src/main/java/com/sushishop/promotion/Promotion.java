@@ -67,4 +67,13 @@ public class Promotion extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    public boolean isCurrentlyActive() {
+        var now = LocalDateTime.now();
+        return active
+                && startDate != null
+                && endDate != null
+                && startDate.isBefore(now)
+                && endDate.isAfter(now);
+    }
 }

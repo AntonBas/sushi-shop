@@ -36,7 +36,7 @@ public class User extends BaseEntity {
     private String email;
 
     @Size(max = 15)
-    @Column(nullable = false, length = 15)
+    @Column(length = 15)
     private String phone;
 
     @Column(length = 50)

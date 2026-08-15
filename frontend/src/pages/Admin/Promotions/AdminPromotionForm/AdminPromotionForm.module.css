@@ -74,6 +74,40 @@
   gap: 16px;
 }
 
+.toggleRow {
+  display: flex;
+  gap: 8px;
+}
+
+.statusBtn {
+  padding: 10px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-input-bg);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.statusBtn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.statusBtnActive {
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.2);
+}
+
+.statusBtnInactive {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
 .productList {
   display: flex;
   flex-direction: column;
@@ -174,5 +208,9 @@
 @media (max-width: 768px) {
   .row {
     grid-template-columns: 1fr;
+  }
+
+  .toggleRow {
+    flex-direction: column;
   }
 }

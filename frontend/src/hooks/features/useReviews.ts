@@ -37,7 +37,7 @@ export function useReviews() {
 
   return {
     reviews: listApi.data?.content || [],
-    totalPages: listApi.data?.totalPages || 0,
+    totalPages: listApi.data?.page.totalPages || 0,
     loading: listApi.loading,
     error: listApi.error,
     loadReviews,

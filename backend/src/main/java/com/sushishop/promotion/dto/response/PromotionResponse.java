@@ -30,8 +30,11 @@ public record PromotionResponse(
         @Schema(description = "End date")
         LocalDateTime endDate,
 
-        @Schema(description = "Is promotion active")
+        @Schema(description = "Is promotion active", example = "true")
         boolean active,
+
+        @Schema(description = "Is promotion currently active (active + dates)", example = "true")
+        boolean isCurrentlyActive,
 
         @Schema(description = "Products in promotion")
         List<ProductListResponse> products

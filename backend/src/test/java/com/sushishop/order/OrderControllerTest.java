@@ -47,14 +47,20 @@ public class OrderControllerTest {
     @MockitoBean
     private OrderService orderService;
 
+    @MockitoBean
+    private OrderCreationService orderCreationService;
+
+    @MockitoBean
+    private OrderQueryService orderQueryService;
+
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "test@test.com")
-    void shouldCreateOrder() throws Exception {
+    public void shouldCreateOrder() throws Exception {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY,
                 new AddressRequest("Lviv", "Zelena", "204", "280", "code 123"),
                 List.of(new OrderItemRequest(1L, 2)));
@@ -63,7 +69,7 @@ public class OrderControllerTest {
                 new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
                 DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
-        when(orderService.create(any(CreateOrderRequest.class), eq("test@test.com"))).thenReturn(response);
+        when(orderCreationService.create(any(CreateOrderRequest.class), eq("test@test.com"))).thenReturn(response);
 
         mockMvc.perform(post("/api/orders")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -73,7 +79,7 @@ public class OrderControllerTest {
     }
 
     @Test
-    void shouldReturn400WhenInvalidOrder() throws Exception {
+    public void shouldReturn400WhenInvalidOrder() throws Exception {
         var request = new CreateOrderRequest("", "", null, DeliveryMethod.DELIVERY, null, List.of());
 
         mockMvc.perform(post("/api/orders")
@@ -84,11 +90,11 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(username = "test@test.com")
-    void shouldGetMyOrders() throws Exception {
+    public void shouldGetMyOrders() throws Exception {
         var response = new UserOrderResponse(1L, "test@test.com", OrderStatus.NEW, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", BigDecimal.ZERO, null, List.of());
         Page<UserOrderResponse> page = new PageImpl<>(List.of(response));
 
-        when(orderService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);
+        when(orderQueryService.getByUser(eq("test@test.com"), any(Pageable.class))).thenReturn(page);
 
         mockMvc.perform(get("/api/orders/my"))
                 .andExpect(status().isOk())
@@ -98,11 +104,11 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
-    void shouldGetAllOrders() throws Exception {
+    public void shouldGetAllOrders() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
         Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
-        when(orderService.getAll(any(Pageable.class), isNull(), isNull(), isNull(), isNull())).thenReturn(page);
+        when(orderQueryService.getAll(any(Pageable.class), isNull(), isNull(), isNull(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/orders"))
                 .andExpect(status().isOk())
@@ -110,7 +116,7 @@ public class OrderControllerTest {
     }
 
     @Test
-    void shouldGetById() throws Exception {
+    public void shouldGetById() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
         when(orderService.getById(1L)).thenReturn(response);
@@ -122,7 +128,7 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
-    void shouldUpdateStatus() throws Exception {
+    public void shouldUpdateStatus() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.COOKING, BigDecimal.ZERO, null, List.of());
 
         when(orderService.updateStatus(eq(1L), any())).thenReturn(response);

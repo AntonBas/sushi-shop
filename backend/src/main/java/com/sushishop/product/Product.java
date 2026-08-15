@@ -58,10 +58,13 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private Category category;
 
+    @NotNull
     @Positive
     @Column(nullable = false)
     private Integer weight;
 
+    @Positive
+    @Column
     private Integer pieces;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)

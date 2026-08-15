@@ -14,7 +14,7 @@ export default function PromotionPage() {
 
   useEffect(() => {
     if (slug) execute(() => promotionsApi.getPromotionBySlug(slug));
-  }, [slug]);
+  }, [slug, execute]);
 
   if (loading) return <Loading text="Loading promotion..." />;
   if (!promotion) return null;

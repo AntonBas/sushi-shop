@@ -5,10 +5,13 @@ import com.sushishop.shared.exception.core.InternalServerException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,10 +34,13 @@ public class FileStorageService {
     @Value("${app.upload.url-prefix:/api/files/}")
     private String urlPrefix;
 
+    private Path uploadPath;
+
     @PostConstruct
     public void init() {
         try {
-            Files.createDirectories(Paths.get(uploadDir));
+            uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Files.createDirectories(uploadPath);
         } catch (IOException e) {
             throw new InternalServerException("Could not create upload directory: " + uploadDir, e);
         }
@@ -55,9 +61,14 @@ public class FileStorageService {
         }
 
         try {
-            String extension = getExtension(file.getOriginalFilename());
+            String extension = getExtension(contentType);
             String fileName = UUID.randomUUID() + extension;
-            Path filePath = Paths.get(uploadDir, fileName);
+            Path filePath = uploadPath.resolve(fileName).normalize();
+
+            if (!filePath.startsWith(uploadPath)) {
+                throw new BadRequestException("Invalid file path");
+            }
+
             Files.write(filePath, file.getBytes());
 
             log.info("File stored: {}", fileName);
@@ -67,13 +78,46 @@ public class FileStorageService {
         }
     }
 
+    public Resource load(String fileName) {
+        Path filePath = uploadPath.resolve(fileName).normalize();
+
+        if (!filePath.startsWith(uploadPath)) {
+            log.warn("Attempt to access file outside upload directory: {}", fileName);
+            throw new BadRequestException("Invalid file path");
+        }
+
+        try {
+            Resource resource = new UrlResource(filePath.toUri());
+            if (!resource.exists()) {
+                return null;
+            }
+            return resource;
+        } catch (MalformedURLException e) {
+            throw new BadRequestException("Invalid file path");
+        }
+    }
+
+    public String determineContentType(String fileName) {
+        String lower = fileName.toLowerCase();
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".webp")) return "image/webp";
+        return "application/octet-stream";
+    }
+
     public void delete(String fileUrl) {
         if (fileUrl == null || !fileUrl.startsWith(urlPrefix)) {
             log.warn("Invalid file URL for deletion: {}", fileUrl);
             return;
         }
+
         String fileName = fileUrl.substring(urlPrefix.length());
-        Path filePath = Paths.get(uploadDir, fileName);
+        Path filePath = uploadPath.resolve(fileName).normalize();
+
+        if (!filePath.startsWith(uploadPath)) {
+            log.warn("Attempt to delete file outside upload directory: {}", fileName);
+            return;
+        }
 
         try {
             Files.deleteIfExists(filePath);
@@ -83,11 +127,11 @@ public class FileStorageService {
         }
     }
 
-    private String getExtension(String originalFilename) {
-        if (originalFilename == null || !originalFilename.contains(".")) {
-            return ".jpg";
-        }
-        String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        return extension.isBlank() ? ".jpg" : extension;
+    private String getExtension(String contentType) {
+        return switch (contentType) {
+            case "image/png" -> ".png";
+            case "image/webp" -> ".webp";
+            default -> ".jpg";
+        };
     }
 }

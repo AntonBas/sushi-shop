@@ -1,6 +1,8 @@
 package com.sushishop.shared.security.jwt;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -34,10 +36,6 @@ public class JwtUtil {
 
     public String getEmail(String token) {
         return parseClaims(token).getSubject();
-    }
-
-    public String getRole(String token) {
-        return parseClaims(token).get("role", String.class);
     }
 
     public Integer getTokenVersion(String token) {

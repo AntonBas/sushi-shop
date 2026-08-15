@@ -21,7 +21,7 @@ public class PromotionMapperTest {
     private PromotionMapper promotionMapper;
 
     @Test
-    void shouldMapToResponse() {
+    public void shouldMapToResponse() {
         var product = Product.builder()
                 .id(1L)
                 .name("Maki")

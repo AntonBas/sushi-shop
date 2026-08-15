@@ -1,4 +1,4 @@
-package com.sushishop.user;
+package com.sushishop.token;
 
 import com.sushishop.shared.enums.TokenType;
 import org.springframework.data.jpa.repository.JpaRepository;

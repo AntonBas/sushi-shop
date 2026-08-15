@@ -1,18 +1,19 @@
 package com.sushishop.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
+import com.sushishop.shared.enums.UserRole;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,13 +40,19 @@ public class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
 
+    @MockitoBean
+    private EmailVerificationService emailVerificationService;
+
+    @MockitoBean
+    private PasswordResetService passwordResetService;
+
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
-    void shouldRegister() throws Exception {
+    public void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var authResponse = new AuthResponse("jwt-token", userResponse);
@@ -61,7 +68,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    void shouldReturn400WhenInvalidRegister() throws Exception {
+    public void shouldReturn400WhenInvalidRegister() throws Exception {
         var request = new RegisterRequest("", "invalid", "123", "123", "", null);
 
         mockMvc.perform(post("/api/auth/register")
@@ -71,7 +78,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    void shouldLogin() throws Exception {
+    public void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
         var authResponse = new AuthResponse("jwt-token", userResponse);
@@ -86,10 +93,10 @@ public class AuthControllerTest {
     }
 
     @Test
-    void shouldReturn401WhenInvalidCredentials() throws Exception {
+    public void shouldReturn401WhenInvalidCredentials() throws Exception {
         var request = new LoginRequest("anton@example.com", "wrong");
 
-        when(authService.login(any())).thenThrow(new org.springframework.security.authentication.BadCredentialsException("Bad credentials"));
+        when(authService.login(any())).thenThrow(new BadCredentialsException("Bad credentials"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,14 +105,14 @@ public class AuthControllerTest {
     }
 
     @Test
-    void shouldVerifyEmail() throws Exception {
+    public void shouldVerifyEmail() throws Exception {
         mockMvc.perform(get("/api/auth/verify")
                         .param("token", "token123"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void shouldForgotPassword() throws Exception {
+    public void shouldForgotPassword() throws Exception {
         var request = new ForgotPasswordRequest("anton@example.com");
 
         mockMvc.perform(post("/api/auth/password/forgot")
@@ -115,8 +122,9 @@ public class AuthControllerTest {
     }
 
     @Test
-    void shouldResetPassword() throws Exception {
+    public void shouldResetPassword() throws Exception {
         var request = new ResetPasswordRequest("token123", "NewPass123", "NewPass123");
+
         mockMvc.perform(post("/api/auth/password/reset")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

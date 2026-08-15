@@ -2,17 +2,18 @@ package com.sushishop.file;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.UrlResource;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -25,26 +26,29 @@ public class FileControllerTest {
     @Autowired
     private WebApplicationContext context;
 
-    @TempDir
-    Path tempDir;
+    @MockitoBean
+    private FileStorageService fileStorageService;
 
     @BeforeEach
-    void setUp() throws Exception {
+    public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
-        var field = FileController.class.getDeclaredField("uploadDir");
-        field.setAccessible(true);
-        field.set(context.getBean(FileController.class), tempDir.toString());
-        Files.writeString(tempDir.resolve("test.jpg"), "fake-image");
     }
 
     @Test
-    void shouldReturnFile() throws Exception {
+    public void shouldReturnFile() throws Exception {
+        var resource = new UrlResource(Path.of("build.gradle").toUri());
+
+        when(fileStorageService.load("test.jpg")).thenReturn(resource);
+        when(fileStorageService.determineContentType("test.jpg")).thenReturn("image/jpeg");
+
         mockMvc.perform(get("/api/files/test.jpg"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void shouldReturn404ForMissingFile() throws Exception {
+    public void shouldReturn404ForMissingFile() throws Exception {
+        when(fileStorageService.load("missing.jpg")).thenReturn(null);
+
         mockMvc.perform(get("/api/files/missing.jpg"))
                 .andExpect(status().isNotFound());
     }

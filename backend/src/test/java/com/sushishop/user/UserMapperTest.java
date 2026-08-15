@@ -1,5 +1,7 @@
 package com.sushishop.user;
 
+import com.sushishop.auth.dto.request.RegisterRequest;
+import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.shared.enums.UserRole;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
@@ -17,7 +19,7 @@ public class UserMapperTest {
     private UserMapper userMapper;
 
     @Test
-    void shouldMapToResponse() {
+    public void shouldMapToResponse() {
         User user = User.builder()
                 .id(1L)
                 .name("Anton")
@@ -43,5 +45,32 @@ public class UserMapperTest {
         assertThat(response.address().street()).isEqualTo("Zelena");
         assertThat(response.address().house()).isEqualTo("204");
         assertThat(response.address().apartment()).isEqualTo("280");
+    }
+
+    @Test
+    public void shouldMapToEntity() {
+        var request = new RegisterRequest(
+                "Anton",
+                "anton@example.com",
+                "password123",
+                "password123",
+                "+380961791111",
+                new AddressRequest("Lviv", "Zelena", "204", "280", null)
+        );
+
+        User user = userMapper.toEntity(request);
+
+        assertThat(user.getId()).isNull();
+        assertThat(user.getName()).isEqualTo("Anton");
+        assertThat(user.getEmail()).isEqualTo("anton@example.com");
+        assertThat(user.getPhone()).isEqualTo("+380961791111");
+        assertThat(user.getPassword()).isNull();
+        assertThat(user.getUserRole()).isEqualTo(UserRole.CUSTOMER);
+        assertThat(user.isEmailVerified()).isFalse();
+        assertThat(user.getTokenVersion()).isZero();
+        assertThat(user.getCity()).isEqualTo("Lviv");
+        assertThat(user.getStreet()).isEqualTo("Zelena");
+        assertThat(user.getHouse()).isEqualTo("204");
+        assertThat(user.getApartment()).isEqualTo("280");
     }
 }

@@ -9,5 +9,5 @@ export function useAdminOrders() {
   const loadOrders = (page = 0, size = 12, filters?: OrderFilters) => 
     execute(() => ordersApi.getAllOrders(page, size, filters))
 
-  return { orders: data?.content || [], totalPages: data?.totalPages || 0, loading, error, loadOrders }
+  return { orders: data?.content || [], totalPages: data?.page.totalPages || 0, loading, error, loadOrders }
 }

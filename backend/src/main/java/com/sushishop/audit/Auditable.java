@@ -1,4 +1,6 @@
-package com.sushishop.shared.config.ratelimit;
+package com.sushishop.audit;
+
+import com.sushishop.shared.enums.AuditAction;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,10 +9,8 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RateLimit {
-    int value() default 5;
+public @interface Auditable {
+    AuditAction action();
 
-    int duration() default 60;
-
-    String key() default "ip";
+    String entity();
 }

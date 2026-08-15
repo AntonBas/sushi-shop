@@ -1,10 +1,7 @@
 package com.sushishop.promotion.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,17 +20,22 @@ public record CreatePromotionRequest(
 
         @NotNull(message = "Discount is required")
         @Positive(message = "Discount must be greater than 0")
+        @DecimalMax(value = "90.00", message = "Discount cannot exceed 90%")
+        @Digits(integer = 3, fraction = 2, message = "Discount must have at most 2 decimal places")
         @Schema(description = "Discount percentage", example = "20.00")
         BigDecimal discountPercent,
 
         @NotNull(message = "Start date is required")
+        @FutureOrPresent(message = "Start date cannot be in the past")
         @Schema(description = "Start date")
         LocalDateTime startDate,
 
         @NotNull(message = "End date is required")
+        @Future(message = "End date must be in the future")
         @Schema(description = "End date")
         LocalDateTime endDate,
 
+        @Size(min = 1, message = "At least one product is required")
         @Schema(description = "Product IDs to include")
         List<Long> productIds
 ) {

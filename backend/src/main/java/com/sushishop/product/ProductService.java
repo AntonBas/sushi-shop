@@ -1,10 +1,8 @@
 package com.sushishop.product;
 
-import com.sushishop.annotation.Auditable;
-import com.sushishop.file.FileStorageService;
+import com.sushishop.audit.Auditable;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
-import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.Category;
@@ -14,17 +12,11 @@ import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -34,176 +26,66 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
-    private final FileStorageService fileStorageService;
     private final SlugService slugService;
-    private final ProductEnrichmentService productEnrichmentService;
+    private final ProductEnrichmentService enrichmentService;
+    private final ProductImageService productImageService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Product")
+    @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse create(CreateProductRequest request, List<MultipartFile> images) {
-        log.info("Creating product with {} images: {}", images != null ? images.size() : 0, request.name());
-        var product = productMapper.toEntity(request);
-        product.setSlug(slugService.generateUniqueSlug(request.name(), slug -> productRepository.findBySlug(slug).isPresent()));
-        addImagesToProduct(product, images);
-
         if (request.category() == Category.SET && request.pieces() == null) {
             throw new BadRequestException("Pieces is required for sets");
         }
 
+        var product = productMapper.toEntity(request);
+        product.setSlug(slugService.generateUniqueSlug(request.name(),
+                slug -> productRepository.findBySlug(slug).isPresent()));
+        productImageService.addImagesToProduct(product, images);
+
         var saved = productRepository.save(product);
         log.info("Created product with ID: {}", saved.getId());
-        return productMapper.toResponse(saved);
+        return toResponse(saved);
     }
 
-    public Page<ProductListResponse> getAll(Pageable pageable, String search, Category category, Boolean available) {
-        var spec = Specification.where(ProductSpecification.hasSearch(search))
-                .and(ProductSpecification.hasCategory(category))
-                .and(ProductSpecification.isAvailable(available));
-        log.info("Getting all products, page: {}", pageable.getPageNumber());
-
-        var page = productRepository.findAll(spec, pageable);
-        List<Product> products = page.getContent();
-
-        if (products.isEmpty()) {
-            return Page.empty(pageable);
-        }
-
-        productEnrichmentService.enrichProductsWithImagesAndPromotions(products);
-
-        var productIds = products.stream().map(Product::getId).toList();
-        var ratings = productEnrichmentService.getAverageRatings(productIds);
-
-        List<ProductListResponse> responses = products.stream()
-                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId()), productEnrichmentService.calculateDiscountedPrice(product)))
-                .toList();
-
-        return new PageImpl<>(responses, pageable, page.getTotalElements());
-    }
-
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "#id")
     public ProductResponse getById(Long id) {
-        log.info("Get product with ID: {}", id);
-        return productRepository.findById(id)
-                .map(productMapper::toResponse)
+        var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product with ID: " + id));
+        return toResponse(product);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "products", key = "#slug")
     public ProductResponse getBySlug(String slug) {
-        log.info("Get product by slug: {}", slug);
-        return productRepository.findBySlug(slug)
-                .map(productMapper::toResponse)
+        var product = productRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + slug));
-    }
-
-    public List<ProductListResponse> getPopular() {
-        List<Product> products = productRepository.findPopular(Pageable.ofSize(10));
-
-        if (products.isEmpty()) {
-            return List.of();
-        }
-
-        productEnrichmentService.enrichProductsWithImagesAndPromotions(products);
-
-        var productIds = products.stream().map(Product::getId).toList();
-        var ratings = productEnrichmentService.getAverageRatings(productIds);
-
-        return products.stream()
-                .map(product -> productMapper.toListResponse(product, ratings.get(product.getId()), productEnrichmentService.calculateDiscountedPrice(product)))
-                .toList();
-    }
-
-    public List<ProductListResponse> getRelated(Long id) {
-        var product = productRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-
-        List<Product> relatedProducts = productRepository.findRelated(product.getCategory(), id)
-                .stream()
-                .limit(4)
-                .toList();
-
-        if (relatedProducts.isEmpty()) {
-            return List.of();
-        }
-
-        productEnrichmentService.enrichProductsWithImagesAndPromotions(relatedProducts);
-
-        var productIds = relatedProducts.stream().map(Product::getId).toList();
-        var ratings = productEnrichmentService.getAverageRatings(productIds);
-
-        return relatedProducts.stream()
-                .map(p -> productMapper.toListResponse(p, ratings.get(p.getId()), productEnrichmentService.calculateDiscountedPrice(p)))
-                .toList();
+        return toResponse(product);
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Product")
-    @Caching(
-            put = @CachePut(value = "products", key = "#id"),
-            evict = @CacheEvict(value = "products", allEntries = true)
-    )
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse update(Long id, UpdateProductRequest request) {
-        log.info("Update product : {}", request.name());
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
 
         if (request.name() != null && !request.name().equals(product.getName())) {
-            product.setSlug(slugService.generateUniqueSlug(request.name(), slug -> productRepository.findBySlug(slug).isPresent()));
+            product.setSlug(slugService.generateUniqueSlug(request.name(),
+                    slug -> productRepository.findBySlug(slug).isPresent()));
         }
 
         productMapper.updateEntity(request, product);
 
         var updated = productRepository.save(product);
         log.info("Product updated: {}", updated.getId());
-        return productMapper.toResponse(updated);
-    }
-
-    @Caching(evict = {
-            @CacheEvict(value = "products", key = "#productId"),
-            @CacheEvict(value = "products", allEntries = true)
-    })
-    public void addImage(Long productId, MultipartFile file) {
-        var product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
-        String url = fileStorageService.store(file);
-        if (url == null) {
-            log.warn("Skipping empty image for product: {}", productId);
-            return;
-        }
-        int nextOrder = product.getProductImages().stream()
-                .mapToInt(ProductImage::getSortOrder)
-                .max()
-                .orElse(-1) + 1;
-        product.getProductImages().add(ProductImage.builder()
-                .url(url)
-                .sortOrder(nextOrder)
-                .product(product)
-                .build());
-        productRepository.save(product);
-        log.info("Image added to product: {}", productId);
-    }
-
-    @Caching(evict = {
-            @CacheEvict(value = "products", key = "#productId"),
-            @CacheEvict(value = "products", allEntries = true)
-    })
-    public void deleteImage(Long productId, Long imageId) {
-        var product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
-        var image = product.getProductImages().stream()
-                .filter(img -> img.getId().equals(imageId))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
-        fileStorageService.delete(image.getUrl());
-        product.getProductImages().remove(image);
-        productRepository.save(product);
-        log.info("Image {} deleted from product: {}", imageId, productId);
+        return toResponse(updated);
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Product")
-    @Caching(evict = {
-            @CacheEvict(value = "products", key = "#id"),
-            @CacheEvict(value = "products", allEntries = true)
-    })
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void toggleAvailability(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
@@ -213,51 +95,32 @@ public class ProductService {
     }
 
     @Auditable(action = AuditAction.DELETE, entity = "Product")
-    @Caching(evict = {
-            @CacheEvict(value = "products", key = "#id"),
-            @CacheEvict(value = "products", allEntries = true)
-    })
+    @Transactional
+    @CacheEvict(value = "products", allEntries = true)
     public void delete(Long id) {
-        log.info("Delete product with ID: {}", id);
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
-        product.getProductImages().forEach(img -> fileStorageService.delete(img.getUrl()));
+
+        product.getProductImages().forEach(img -> productImageService.deleteImage(id, img.getId()));
+        product.getPromotions().clear();
+        productRepository.save(product);
         productRepository.delete(product);
         log.debug("Deleted product with ID: {}", id);
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "products", key = "#productId"),
-            @CacheEvict(value = "products", allEntries = true)
-    })
-    public void reorderImages(Long productId, List<Long> imageIds) {
-        var product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
+    private ProductResponse toResponse(Product product) {
+        var base = productMapper.toResponse(product);
+        var discount = enrichmentService.calculateDiscountedPrice(product);
+        var discountPercent = enrichmentService.getDiscountPercent(product);
+        var promotionTitle = enrichmentService.getPromotionTitle(product);
+        var rating = enrichmentService.getAverageRatings(List.of(product.getId())).get(product.getId());
+        var reviewCount = product.getReviews() != null ? product.getReviews().size() : 0;
 
-        for (int i = 0; i < imageIds.size(); i++) {
-            final int newOrder = i;
-            product.getProductImages().stream()
-                    .filter(img -> img.getId().equals(imageIds.get(newOrder)))
-                    .findFirst()
-                    .ifPresent(img -> img.setSortOrder(newOrder));
-        }
-        productRepository.save(product);
-        log.info("Images reordered for product: {}", productId);
-    }
-
-    private void addImagesToProduct(Product product, List<MultipartFile> images) {
-        if (images == null || images.isEmpty()) return;
-        List<ProductImage> productImages = new ArrayList<>();
-        for (int i = 0; i < images.size(); i++) {
-            String url = fileStorageService.store(images.get(i));
-            if (url != null) {
-                productImages.add(ProductImage.builder()
-                        .url(url)
-                        .sortOrder(i)
-                        .product(product)
-                        .build());
-            }
-        }
-        product.setProductImages(productImages);
+        return new ProductResponse(
+                base.id(), base.slug(), base.name(), base.description(),
+                base.price(), discount, discountPercent, promotionTitle,
+                base.category(), base.images(), reviewCount, rating,
+                base.available(), base.weight(), base.pieces()
+        );
     }
 }

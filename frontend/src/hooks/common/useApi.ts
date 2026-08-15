@@ -19,7 +19,7 @@ export function useApi<T>() {
   const loading = useDelayedLoading(state.loading)
 
   const execute = useCallback(async (apiCall: () => Promise<T>, successMessage?: string) => {
-    setState({ data: null, loading: true, error: null })
+    setState(prev => ({ ...prev, loading: true, error: null }))
     try {
       const data = await apiCall()
       setState({ data, loading: false, error: null })
@@ -28,7 +28,7 @@ export function useApi<T>() {
     } catch (err) {
       const error = err as AxiosError<{ message: string }>
       const message = error.response?.data?.message || error.message || 'Something went wrong'
-      setState({ data: null, loading: false, error: message })
+      setState(prev => ({ ...prev, loading: false, error: message }))
       showNotification(message, 'error')
       throw error
     }

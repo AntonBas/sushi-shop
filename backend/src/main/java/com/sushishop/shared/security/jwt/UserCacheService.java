@@ -14,6 +14,7 @@ public class UserCacheService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
+    @SuppressWarnings("unused")
     @Cacheable(value = "userCache", key = "#email + ':' + #tokenVersion", unless = "#result == null")
     public UserResponse getCachedUser(String email, Integer tokenVersion) {
         return userRepository.findByEmail(email)

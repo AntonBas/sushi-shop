@@ -51,6 +51,15 @@ app:
     secret-key: ${STRIPE_SECRET_KEY}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    prometheus:
+      enabled: true
+
 logging:
   level:
-    com.sushishop: INFO÷
+    com.sushishop: INFO
