@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,12 +27,13 @@ public class OrderMapperTest {
     private OrderMapper orderMapper;
 
     @Test
-    void shouldMapToResponse() {
+    public void shouldMapToResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
                 .price(new BigDecimal("250.00"))
                 .build();
+        product.setProductImages(new ArrayList<>());
 
         OrderItem item = OrderItem.builder()
                 .id(1L)
@@ -79,12 +81,13 @@ public class OrderMapperTest {
     }
 
     @Test
-    void shouldMapToUserResponse() {
+    public void shouldMapToUserResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
                 .price(new BigDecimal("250.00"))
                 .build();
+        product.setProductImages(new ArrayList<>());
 
         OrderItem item = OrderItem.builder()
                 .id(1L)
@@ -121,12 +124,13 @@ public class OrderMapperTest {
     }
 
     @Test
-    void shouldMapToItemResponse() {
+    public void shouldMapToItemResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
                 .price(new BigDecimal("250.00"))
                 .build();
+        product.setProductImages(new ArrayList<>());
 
         OrderItem item = OrderItem.builder()
                 .id(1L)
@@ -142,14 +146,16 @@ public class OrderMapperTest {
         assertThat(response.productName()).isEqualTo("Maki");
         assertThat(response.quantity()).isEqualTo(2);
         assertThat(response.unitPrice()).isEqualByComparingTo(new BigDecimal("250.00"));
+        assertThat(response.mainImage()).isNull();
     }
 
     @Test
-    void shouldMapToItemResponseList() {
+    public void shouldMapToItemResponseList() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
                 .build();
+        product.setProductImages(new ArrayList<>());
 
         OrderItem item1 = OrderItem.builder()
                 .product(product)

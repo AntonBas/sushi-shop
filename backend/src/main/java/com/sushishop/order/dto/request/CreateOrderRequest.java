@@ -38,6 +38,7 @@ public record CreateOrderRequest(
         AddressRequest address,
 
         @Schema(description = "List of products to order")
+        @Valid
         @NotEmpty(message = "Order must contain at least one item")
         List<OrderItemRequest> items
 ) {

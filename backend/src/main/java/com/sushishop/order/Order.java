@@ -7,10 +7,7 @@ import com.sushishop.shared.enums.OrderStatus;
 import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.user.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -40,10 +37,12 @@ public class Order extends BaseEntity {
     private User user;
 
     @NotBlank
+    @Size(max = 50)
     @Column(nullable = false, length = 50)
     private String customerName;
 
     @NotBlank
+    @Size(max = 15)
     @Column(nullable = false, length = 15)
     private String phone;
 
@@ -67,6 +66,7 @@ public class Order extends BaseEntity {
     @Builder.Default
     private OrderStatus status = OrderStatus.NEW;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private PaymentMethod paymentMethod;
