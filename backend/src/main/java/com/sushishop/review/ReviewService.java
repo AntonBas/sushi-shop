@@ -13,9 +13,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -54,8 +57,19 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public Page<ReviewResponse> getByProduct(Long productId, Pageable pageable) {
-        return reviewRepository.findByProductId(productId, pageable)
-                .map(reviewMapper::toResponse);
+        var idsPage = reviewRepository.findReviewIdsByProductId(productId, pageable);
+        List<Long> ids = idsPage.getContent();
+
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        var reviews = reviewRepository.findReviewsByIds(ids);
+        var responses = reviews.stream()
+                .map(reviewMapper::toResponse)
+                .toList();
+
+        return new PageImpl<>(responses, pageable, idsPage.getTotalElements());
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Review")
