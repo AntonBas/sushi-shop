@@ -6,9 +6,11 @@ WHERE weight IS NULL
 ALTER TABLE products
     ALTER COLUMN weight SET NOT NULL;
 
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_weight_positive;
 ALTER TABLE products
     ADD CONSTRAINT chk_products_weight_positive CHECK (weight > 0);
 
+ALTER TABLE products DROP CONSTRAINT IF EXISTS chk_products_pieces_positive;
 ALTER TABLE products
     ADD CONSTRAINT chk_products_pieces_positive CHECK (pieces IS NULL OR pieces > 0);
 
@@ -28,12 +30,18 @@ ALTER TABLE orders
 ALTER TABLE orders
     ALTER COLUMN total_amount SET NOT NULL;
 
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS chk_orders_total_amount_positive;
 ALTER TABLE orders
     ADD CONSTRAINT chk_orders_total_amount_positive CHECK (total_amount > 0);
 
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS chk_order_items_unit_price_positive;
 ALTER TABLE order_items
     ADD CONSTRAINT chk_order_items_unit_price_positive CHECK (unit_price > 0);
+
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS chk_order_items_quantity_positive;
 ALTER TABLE order_items
     ADD CONSTRAINT chk_order_items_quantity_positive CHECK (quantity > 0);
+
+ALTER TABLE order_items DROP CONSTRAINT IF EXISTS chk_order_items_subtotal_positive;
 ALTER TABLE order_items
     ADD CONSTRAINT chk_order_items_subtotal_positive CHECK (subtotal > 0);
