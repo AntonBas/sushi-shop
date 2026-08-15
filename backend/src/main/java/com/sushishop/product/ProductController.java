@@ -33,6 +33,8 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductQueryService productQueryService;
+    private final ProductImageService productImageService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
@@ -43,16 +45,20 @@ public class ProductController {
             @ApiResponse(responseCode = "403", description = "Access denied")
     })
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<ProductResponse> create(@RequestPart("product") @Valid CreateProductRequest request, @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+    public ResponseEntity<ProductResponse> create(@RequestPart("product") @Valid CreateProductRequest request,
+                                                  @RequestPart(value = "images", required = false) List<MultipartFile> images) {
         log.info("POST /api/products - {}", request.name());
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(request, images));
     }
 
     @GetMapping
     @Operation(summary = "Get all products")
-    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = "name") Pageable pageable, @RequestParam(required = false) String search, @RequestParam(required = false) Category category, @RequestParam(required = false) Boolean available) {
+    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = "name") Pageable pageable,
+                                                            @RequestParam(required = false) String search,
+                                                            @RequestParam(required = false) Category category,
+                                                            @RequestParam(required = false) Boolean available) {
         log.info("GET /api/products - search: {}, category: {}, page: {}", search, category, pageable.getPageNumber());
-        return ResponseEntity.ok(productService.getAll(pageable, search, category, available));
+        return ResponseEntity.ok(productQueryService.getAll(pageable, search, category, available));
     }
 
     @GetMapping("/{id}")
@@ -83,7 +89,7 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "List of popular products")
     })
     public ResponseEntity<List<ProductListResponse>> getPopular() {
-        return ResponseEntity.ok(productService.getPopular());
+        return ResponseEntity.ok(productQueryService.getPopular());
     }
 
     @GetMapping("/{id}/related")
@@ -92,7 +98,7 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "List of related products")
     })
     public ResponseEntity<List<ProductListResponse>> getRelated(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getRelated(id));
+        return ResponseEntity.ok(productQueryService.getRelated(id));
     }
 
     @PutMapping("/{id}")
@@ -120,7 +126,7 @@ public class ProductController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> reorderImages(@PathVariable Long id, @RequestBody List<Long> imageIds) {
         log.info("PATCH /api/products/{}/images/reorder", id);
-        productService.reorderImages(id, imageIds);
+        productImageService.reorderImages(id, imageIds);
         return ResponseEntity.ok().build();
     }
 
@@ -140,7 +146,7 @@ public class ProductController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> addImage(@PathVariable Long id, @RequestParam("image") MultipartFile image) {
         log.info("POST /api/products/{}/images", id);
-        productService.addImage(id, image);
+        productImageService.addImage(id, image);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -150,7 +156,7 @@ public class ProductController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id, @PathVariable Long imageId) {
         log.info("DELETE /api/products/{}/images/{}", id, imageId);
-        productService.deleteImage(id, imageId);
+        productImageService.deleteImage(id, imageId);
         return ResponseEntity.noContent().build();
     }
 }

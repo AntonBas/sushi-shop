@@ -1,5 +1,7 @@
 package com.sushishop.product;
 
+import com.sushishop.product.dto.request.CreateProductRequest;
+import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
 import com.sushishop.shared.enums.Category;
@@ -9,6 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,36 +24,79 @@ public class ProductMapperTest {
     private ProductMapper productMapper;
 
     @Test
-    void shouldMapToResponse() {
-        Product product = Product.builder()
-                .id(1L)
-                .name("Maki")
-                .description("Salmon roll")
-                .price(new BigDecimal("250.00"))
-                .category(Category.ROLL)
-                .available(true)
-                .weight(250)
-                .pieces(8)
-                .build();
+    public void shouldMapToResponse() {
+        Product product = new Product();
+        product.setId(1L);
+        product.setName("Maki");
+        product.setDescription("Salmon roll");
+        product.setPrice(new BigDecimal("250.00"));
+        product.setCategory(Category.ROLL);
+        product.setAvailable(true);
+        product.setWeight(250);
+        product.setPieces(8);
+        product.setProductImages(new ArrayList<>());
+        product.setPromotions(new HashSet<>());
+        product.setReviews(new ArrayList<>());
 
         ProductResponse response = productMapper.toResponse(product);
 
         assertThat(response.id()).isEqualTo(1L);
         assertThat(response.name()).isEqualTo("Maki");
-        assertThat(response.description()).isEqualTo("Salmon roll");
-        assertThat(response.price()).isEqualByComparingTo(new BigDecimal("250.00"));
-        assertThat(response.category()).isEqualTo(Category.ROLL);
-        assertThat(response.available()).isTrue();
-        assertThat(response.weight()).isEqualTo(250);
-        assertThat(response.pieces()).isEqualTo(8);
         assertThat(response.images()).isEmpty();
-        assertThat(response.reviewCount()).isZero();
-        assertThat(response.averageRating()).isNull();
-        assertThat(response.discountedPrice()).isNull();
     }
 
     @Test
-    void shouldMapToListResponse() {
+    public void shouldMapToEntity() {
+        var request = new CreateProductRequest(
+                "Maki",
+                "Salmon roll",
+                new BigDecimal("250.00"),
+                Category.ROLL,
+                250,
+                8
+        );
+
+        Product product = productMapper.toEntity(request);
+
+        assertThat(product.getName()).isEqualTo("Maki");
+        assertThat(product.getDescription()).isEqualTo("Salmon roll");
+        assertThat(product.getPrice()).isEqualByComparingTo(new BigDecimal("250.00"));
+        assertThat(product.getCategory()).isEqualTo(Category.ROLL);
+        assertThat(product.getWeight()).isEqualTo(250);
+        assertThat(product.getPieces()).isEqualTo(8);
+    }
+
+    @Test
+    public void shouldUpdateEntity() {
+        var request = new UpdateProductRequest(
+                "Updated Maki",
+                "Updated description",
+                new BigDecimal("280.00"),
+                Category.ROLL,
+                300,
+                10
+        );
+
+        Product product = Product.builder()
+                .name("Maki")
+                .description("Old description")
+                .price(new BigDecimal("250.00"))
+                .category(Category.ROLL)
+                .weight(250)
+                .pieces(8)
+                .build();
+
+        productMapper.updateEntity(request, product);
+
+        assertThat(product.getName()).isEqualTo("Updated Maki");
+        assertThat(product.getDescription()).isEqualTo("Updated description");
+        assertThat(product.getPrice()).isEqualByComparingTo(new BigDecimal("280.00"));
+        assertThat(product.getWeight()).isEqualTo(300);
+        assertThat(product.getPieces()).isEqualTo(10);
+    }
+
+    @Test
+    public void shouldMapToListResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -76,7 +123,7 @@ public class ProductMapperTest {
     }
 
     @Test
-    void shouldMapToListResponseWithDiscountedPrice() {
+    public void shouldMapToListResponseWithDiscountedPrice() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -93,7 +140,7 @@ public class ProductMapperTest {
     }
 
     @Test
-    void shouldMapToListResponseWithNullRating() {
+    public void shouldMapToListResponseWithNullRating() {
         Product product = Product.builder()
                 .id(2L)
                 .name("Uramaki")

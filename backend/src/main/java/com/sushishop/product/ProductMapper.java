@@ -8,10 +8,9 @@ import com.sushishop.product.dto.response.ProductResponse;
 import org.mapstruct.*;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
 import java.util.List;
 
-@Mapper(componentModel = "spring", uses = {ProductEnrichmentService.class})
+@Mapper(componentModel = "spring", uses = {ProductImageMapper.class})
 public interface ProductMapper {
 
     @Mapping(target = "id", ignore = true)
@@ -32,24 +31,26 @@ public interface ProductMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "available", ignore = true)
     void updateEntity(UpdateProductRequest request, @MappingTarget Product entity);
 
-    @Mapping(target = "images", expression = "java(mapImages(product))")
-    @Mapping(target = "discountedPrice", source = "product", qualifiedByName = "discountedPrice")
-    @Mapping(target = "discountPercent", source = "product", qualifiedByName = "discountPercent")
-    @Mapping(target = "promotionTitle", source = "product", qualifiedByName = "promotionTitle")
-    @Mapping(target = "reviewCount", expression = "java(product.getReviews().size())")
-    @Mapping(target = "averageRating", expression = "java(product.getReviews().isEmpty() ? null : product.getReviews().stream().mapToInt(r -> r.getRating()).average().orElse(0.0))")
+    @Mapping(target = "images", expression = "java(mapImages(product.getProductImages()))")
+    @Mapping(target = "discountedPrice", ignore = true)
+    @Mapping(target = "discountPercent", ignore = true)
+    @Mapping(target = "promotionTitle", ignore = true)
+    @Mapping(target = "reviewCount", ignore = true)
+    @Mapping(target = "averageRating", ignore = true)
     ProductResponse toResponse(Product product);
 
-    @Mapping(target = "mainImage", expression = "java(ProductImageMapper.getMainImage(product))")
+    @Mapping(target = "mainImage", source = "product.productImages", qualifiedByName = "mainImage")
     @Mapping(target = "discountedPrice", source = "discountedPrice")
     @Mapping(target = "averageRating", source = "rating")
     ProductListResponse toListResponse(Product product, Double rating, BigDecimal discountedPrice);
 
-    default List<ProductImageResponse> mapImages(Product product) {
-        return product.getProductImages().stream()
-                .sorted(Comparator.comparingInt(ProductImage::getSortOrder))
+    default List<ProductImageResponse> mapImages(List<ProductImage> images) {
+        if (images == null) return List.of();
+        return images.stream()
+                .sorted(java.util.Comparator.comparingInt(ProductImage::getSortOrder))
                 .map(img -> new ProductImageResponse(img.getId(), img.getUrl()))
                 .toList();
     }

@@ -2,6 +2,7 @@ package com.sushishop.product.dto.request;
 
 import com.sushishop.shared.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
@@ -19,6 +20,7 @@ public record UpdateProductRequest(
 
         @Schema(description = "Product price", example = "280.00")
         @Positive(message = "Price must be greater than 0")
+        @Digits(integer = 8, fraction = 2, message = "Price must have at most 2 decimal places")
         BigDecimal price,
 
         @Schema(description = "Product category", example = "ROLL")

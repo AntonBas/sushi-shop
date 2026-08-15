@@ -24,13 +24,13 @@ public class ProductEnrichmentServiceTest {
     private ProductEnrichmentService productEnrichmentService;
 
     @Test
-    void shouldReturnEmptyMapForEmptyList() {
+    public void shouldReturnEmptyMapForEmptyList() {
         var result = productEnrichmentService.getAverageRatings(List.of());
         assertThat(result).isEmpty();
     }
 
     @Test
-    void shouldReturnRatingsMap() {
+    public void shouldReturnRatingsMap() {
         when(productRepository.findAverageRatingsByProductIds(List.of(1L, 2L)))
                 .thenReturn(List.of(new Object[]{1L, 4.5}, new Object[]{2L, 3.0}));
 
@@ -40,7 +40,7 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    void shouldEnrichProductsWithImagesAndPromotions() {
+    public void shouldEnrichProductsWithImagesAndPromotions() {
         Product product1 = Product.builder().id(1L).name("Product 1").build();
         Product product2 = Product.builder().id(2L).name("Product 2").build();
         List<Product> products = Arrays.asList(product1, product2);
@@ -75,7 +75,122 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    void shouldEnrichEmptyList() {
+    public void shouldEnrichEmptyList() {
         productEnrichmentService.enrichProductsWithImagesAndPromotions(List.of());
+    }
+
+    @Test
+    public void shouldCalculateDiscountedPrice() {
+        var promotion = Promotion.builder()
+                .id(1L)
+                .title("Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .active(true)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        var product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .promotions(Set.of(promotion))
+                .build();
+
+        var result = productEnrichmentService.calculateDiscountedPrice(product);
+
+        assertThat(result).isEqualByComparingTo(new BigDecimal("200.00"));
+    }
+
+    @Test
+    public void shouldReturnNullDiscountedPriceWhenNoActivePromo() {
+        var product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .promotions(Set.of())
+                .build();
+
+        var result = productEnrichmentService.calculateDiscountedPrice(product);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    public void shouldGetDiscountPercent() {
+        var promotion = Promotion.builder()
+                .id(1L)
+                .title("Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .active(true)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        var product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .promotions(Set.of(promotion))
+                .build();
+
+        var result = productEnrichmentService.getDiscountPercent(product);
+
+        assertThat(result).isEqualByComparingTo(new BigDecimal("20.00"));
+    }
+
+    @Test
+    public void shouldGetPromotionTitle() {
+        var promotion = Promotion.builder()
+                .id(1L)
+                .title("Weekend Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .active(true)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        var product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .promotions(Set.of(promotion))
+                .build();
+
+        var result = productEnrichmentService.getPromotionTitle(product);
+
+        assertThat(result).isEqualTo("Weekend Sale");
+    }
+
+    @Test
+    public void shouldGetBestPromoWithHighestDiscount() {
+        var promo20 = Promotion.builder()
+                .id(1L)
+                .title("20% Sale")
+                .discountPercent(new BigDecimal("20.00"))
+                .active(true)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        var promo30 = Promotion.builder()
+                .id(2L)
+                .title("30% Sale")
+                .discountPercent(new BigDecimal("30.00"))
+                .active(true)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        var product = Product.builder()
+                .id(1L)
+                .name("Maki")
+                .price(new BigDecimal("250.00"))
+                .promotions(Set.of(promo20, promo30))
+                .build();
+
+        var result = productEnrichmentService.getBestPromo(product);
+
+        assertThat(result.getDiscountPercent()).isEqualByComparingTo(new BigDecimal("30.00"));
     }
 }
