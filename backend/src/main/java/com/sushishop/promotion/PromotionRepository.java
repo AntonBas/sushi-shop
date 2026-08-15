@@ -19,15 +19,16 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     @Query("SELECT p FROM Promotion p WHERE p.startDate <= :now AND p.endDate >= :now AND p.active = true")
     List<Promotion> findActiveAt(@Param("now") LocalDateTime now);
 
-    @Nonnull
-    @EntityGraph(attributePaths = {"products"})
-    @Query("SELECT p FROM Promotion p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<Promotion> findAllBySearch(@Param("search") String search, @Nonnull Pageable pageable);
+    @Query("SELECT p.id FROM Promotion p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Long> findIdsBySearch(@Param("search") String search, @Nonnull Pageable pageable);
 
-    @Override
+    @Query("SELECT p.id FROM Promotion p")
+    Page<Long> findIds(@Nonnull Pageable pageable);
+
     @Nonnull
     @EntityGraph(attributePaths = {"products"})
-    Page<Promotion> findAll(@Nonnull Pageable pageable);
+    @Query("SELECT p FROM Promotion p WHERE p.id IN :ids")
+    List<Promotion> findPromotionsByIds(@Param("ids") List<Long> ids);
 
     @Override
     @Nonnull

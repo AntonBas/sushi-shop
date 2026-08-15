@@ -166,14 +166,17 @@ public class PromotionServiceTest {
 
         var mappedResponse = createPromotionResponse();
 
-        when(promotionRepository.findAllBySearch(eq("week"), any()))
-                .thenReturn(new PageImpl<>(List.of(promotion)));
+        when(promotionRepository.findIdsBySearch(eq("week"), any()))
+                .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
+        when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
+                .thenReturn(List.of(promotion));
         when(assembler.toResponse(any())).thenReturn(mappedResponse);
 
         var result = promotionService.getAll(Pageable.unpaged(), "week");
 
         assertThat(result.getContent()).hasSize(1);
-        verify(promotionRepository).findAllBySearch(eq("week"), any());
+        verify(promotionRepository).findIdsBySearch(eq("week"), any());
+        verify(promotionRepository).findPromotionsByIds(List.of(PROMOTION_ID));
     }
 
     @Test
@@ -191,14 +194,17 @@ public class PromotionServiceTest {
 
         var mappedResponse = createPromotionResponse();
 
-        when(promotionRepository.findAll(any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(promotion)));
+        when(promotionRepository.findIds(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
+        when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
+                .thenReturn(List.of(promotion));
         when(assembler.toResponse(any())).thenReturn(mappedResponse);
 
         var result = promotionService.getAll(Pageable.unpaged(), null);
 
         assertThat(result.getContent()).hasSize(1);
-        verify(promotionRepository).findAll(any(Pageable.class));
+        verify(promotionRepository).findIds(any(Pageable.class));
+        verify(promotionRepository).findPromotionsByIds(List.of(PROMOTION_ID));
     }
 
     @Test

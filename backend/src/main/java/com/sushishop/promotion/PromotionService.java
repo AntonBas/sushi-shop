@@ -14,10 +14,12 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -74,10 +76,24 @@ public class PromotionService {
 
     @Transactional(readOnly = true)
     public Page<PromotionResponse> getAll(Pageable pageable, String search) {
+        Page<Long> idsPage;
         if (search != null && !search.isBlank()) {
-            return promotionRepository.findAllBySearch(search, pageable).map(assembler::toResponse);
+            idsPage = promotionRepository.findIdsBySearch(search, pageable);
+        } else {
+            idsPage = promotionRepository.findIds(pageable);
         }
-        return promotionRepository.findAll(pageable).map(assembler::toResponse);
+
+        List<Long> ids = idsPage.getContent();
+        if (ids.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        var promotions = promotionRepository.findPromotionsByIds(ids);
+        var responses = promotions.stream()
+                .map(assembler::toResponse)
+                .toList();
+
+        return new PageImpl<>(responses, pageable, idsPage.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -149,7 +165,7 @@ public class PromotionService {
         }
     }
 
-    private void updateDiscountPercent(Promotion promotion, java.math.BigDecimal newDiscountPercent) {
+    private void updateDiscountPercent(Promotion promotion, BigDecimal newDiscountPercent) {
         if (newDiscountPercent != null) {
             promotion.setDiscountPercent(newDiscountPercent);
         }
