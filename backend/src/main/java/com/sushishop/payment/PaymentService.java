@@ -55,7 +55,8 @@ public class PaymentService {
                 .orElseThrow(() -> new NotFoundException("Payment not found"));
 
         if (payment.getStatus() == PaymentStatus.PAID) {
-            throw new BadRequestException("Payment already confirmed");
+            log.info("Payment already confirmed, skipping: {}", stripeSessionId);
+            return;
         }
 
         payment.setStatus(PaymentStatus.PAID);

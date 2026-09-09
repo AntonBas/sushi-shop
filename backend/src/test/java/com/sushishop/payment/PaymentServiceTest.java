@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -92,7 +93,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    void shouldThrowWhenConfirmAlreadyPaid() {
+    void shouldSkipWhenConfirmAlreadyPaid() {
         var payment = Payment.builder()
                 .stripeSessionId("sess_123")
                 .status(PaymentStatus.PAID)
@@ -100,9 +101,11 @@ class PaymentServiceTest {
 
         when(paymentRepository.findByStripeSessionId("sess_123")).thenReturn(Optional.of(payment));
 
-        assertThatThrownBy(() -> paymentService.confirmPayment("sess_123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Payment already confirmed");
+        paymentService.confirmPayment("sess_123");
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        verify(paymentRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test
