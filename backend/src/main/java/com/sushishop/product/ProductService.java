@@ -50,7 +50,7 @@ public class ProductService {
     @Cacheable(value = "products", key = "'id:' + #id")
     public ProductResponse getById(Long id) {
         var product = productRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Product with ID: " + id));
+                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         return toResponse(product);
     }
 
