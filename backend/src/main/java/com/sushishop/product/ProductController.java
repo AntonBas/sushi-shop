@@ -47,7 +47,7 @@ public class ProductController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ProductResponse> create(@RequestPart("product") @Valid CreateProductRequest request,
                                                   @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-        log.info("POST /api/products - {}", request.name());
+        log.info("POST /api/products - {}", LogSanitizer.sanitize(request.name()));
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(request, images));
     }
 
@@ -80,7 +80,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     public ResponseEntity<ProductResponse> getBySlug(@PathVariable String slug) {
-        log.info("GET /api/products/slug/{}", slug);
+        log.info("GET /api/products/slug/{}", LogSanitizer.sanitize(slug));
         return ResponseEntity.ok(productService.getBySlug(slug));
     }
 

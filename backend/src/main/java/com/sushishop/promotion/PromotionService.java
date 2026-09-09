@@ -9,6 +9,7 @@ import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +64,7 @@ public class PromotionService {
 
         var saved = promotionRepository.save(promotion);
         evictProductsCache(products);
-        log.info("Promotion created: id={}, title={}", saved.getId(), saved.getTitle());
+        log.info("Promotion created: id={}, title={}", saved.getId(), LogSanitizer.sanitize(saved.getTitle()));
         return assembler.toResponse(saved);
     }
 
@@ -138,7 +139,7 @@ public class PromotionService {
         affectedProducts.addAll(saved.getProducts());
         evictProductsCache(affectedProducts);
 
-        log.info("Promotion updated: id={}, title={}", saved.getId(), saved.getTitle());
+        log.info("Promotion updated: id={}, title={}", saved.getId(), LogSanitizer.sanitize(saved.getTitle()));
         return assembler.toResponse(saved);
     }
 

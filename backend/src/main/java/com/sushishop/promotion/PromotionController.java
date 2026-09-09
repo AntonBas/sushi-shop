@@ -3,6 +3,7 @@ package com.sushishop.promotion;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -42,7 +43,7 @@ public class PromotionController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<PromotionResponse> create(@Valid @RequestBody CreatePromotionRequest request) {
         var response = promotionService.create(request);
-        log.info("Promotion created: id={}, title={}", response.id(), response.title());
+        log.info("Promotion created: id={}, title={}", response.id(), LogSanitizer.sanitize(response.title()));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -102,7 +103,7 @@ public class PromotionController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<PromotionResponse> update(@PathVariable Long id, @Valid @RequestBody UpdatePromotionRequest request) {
         var response = promotionService.update(id, request);
-        log.info("Promotion updated: id={}, title={}", response.id(), response.title());
+        log.info("Promotion updated: id={}, title={}", response.id(), LogSanitizer.sanitize(response.title()));
         return ResponseEntity.ok(response);
     }
 
