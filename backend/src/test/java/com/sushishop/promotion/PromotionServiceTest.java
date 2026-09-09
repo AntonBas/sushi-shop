@@ -2,6 +2,7 @@ package com.sushishop.promotion;
 
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
@@ -53,6 +55,12 @@ public class PromotionServiceTest {
 
     @Mock
     private SlugService slugService;
+
+    @Mock
+    private ProductCacheService productCacheService;
+
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private PromotionService promotionService;

@@ -1,6 +1,7 @@
 package com.sushishop.review;
 
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewResponse;
@@ -36,6 +37,9 @@ public class ReviewServiceTest {
     @Mock
     private ReviewMapper reviewMapper;
 
+    @Mock
+    private ProductCacheService productCacheService;
+
     @InjectMocks
     private ReviewService reviewService;
 
@@ -61,7 +65,8 @@ public class ReviewServiceTest {
     @Test
     public void shouldUpdateReview() {
         var user = User.builder().id(1L).email("anton@example.com").build();
-        var review = Review.builder().id(1L).user(user).rating(4).comment("Good").build();
+        var product = Product.builder().id(1L).build();
+        var review = Review.builder().id(1L).user(user).product(product).rating(4).comment("Good").build();
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var expected = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 

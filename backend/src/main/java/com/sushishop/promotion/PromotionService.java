@@ -1,6 +1,8 @@
 package com.sushishop.promotion;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.product.Product;
+import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
@@ -10,9 +12,8 @@ import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -34,13 +36,11 @@ public class PromotionService {
     private final PromotionValidator validator;
     private final PromotionResponseAssembler assembler;
     private final SlugService slugService;
+    private final ProductCacheService productCacheService;
+    private final CacheManager cacheManager;
 
     @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "promotions", allEntries = true),
-            @CacheEvict(value = "products", allEntries = true)
-    })
     public PromotionResponse create(CreatePromotionRequest request) {
         validator.validateDates(request.startDate(), request.endDate());
         validator.validateTitleUnique(request.title());
@@ -62,6 +62,7 @@ public class PromotionService {
                 .build();
 
         var saved = promotionRepository.save(promotion);
+        evictProductsCache(products);
         log.info("Promotion created: id={}, title={}", saved.getId(), saved.getTitle());
         return assembler.toResponse(saved);
     }
@@ -114,13 +115,11 @@ public class PromotionService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "promotions", allEntries = true),
-            @CacheEvict(value = "products", allEntries = true)
-    })
     public PromotionResponse update(Long id, UpdatePromotionRequest request) {
         var promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
+        var oldSlug = promotion.getSlug();
+        var oldProducts = new HashSet<>(promotion.getProducts());
 
         updateTitle(promotion, request.title());
         updateDescription(promotion, request.description());
@@ -130,24 +129,47 @@ public class PromotionService {
         updateActive(promotion, request.active());
 
         var saved = promotionRepository.save(promotion);
+
+        evictPromotionCache(id, oldSlug);
+        if (!oldSlug.equals(saved.getSlug())) {
+            evictPromotionCache(id, saved.getSlug());
+        }
+        var affectedProducts = new HashSet<>(oldProducts);
+        affectedProducts.addAll(saved.getProducts());
+        evictProductsCache(affectedProducts);
+
         log.info("Promotion updated: id={}, title={}", saved.getId(), saved.getTitle());
         return assembler.toResponse(saved);
     }
 
     @Auditable(action = AuditAction.DELETE, entity = "Promotion")
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "promotions", allEntries = true),
-            @CacheEvict(value = "products", allEntries = true)
-    })
     public void delete(Long id) {
         var promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Promotion not found: " + id));
+        var slug = promotion.getSlug();
+        var products = new HashSet<>(promotion.getProducts());
 
         promotion.getProducts().clear();
         promotionRepository.save(promotion);
         promotionRepository.delete(promotion);
+
+        evictPromotionCache(id, slug);
+        evictProductsCache(products);
         log.info("Promotion deleted: id={}", id);
+    }
+
+    private void evictPromotionCache(Long id, String slug) {
+        var cache = cacheManager.getCache("promotions");
+        if (cache == null) {
+            return;
+        }
+        cache.evict("id:" + id);
+        cache.evict("slug:" + slug);
+    }
+
+    private void evictProductsCache(Set<Product> products) {
+        products.forEach(product -> productCacheService.evict(product.getId(), product.getSlug()));
     }
 
     private void updateTitle(Promotion promotion, String newTitle) {

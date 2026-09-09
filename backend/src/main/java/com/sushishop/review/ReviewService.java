@@ -1,6 +1,7 @@
 package com.sushishop.review;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewResponse;
@@ -11,7 +12,6 @@ import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -29,10 +29,10 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ReviewMapper reviewMapper;
+    private final ProductCacheService productCacheService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Review")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public ReviewResponse create(CreateReviewRequest request, String email) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -51,6 +51,7 @@ public class ReviewService {
                 .build();
 
         var saved = reviewRepository.save(review);
+        productCacheService.evict(product.getId(), product.getSlug());
         log.info("Review created: {}", saved.getId());
         return reviewMapper.toResponse(saved);
     }
@@ -74,7 +75,6 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "Review")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public ReviewResponse update(Long reviewId, CreateReviewRequest request, String email) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
@@ -86,13 +86,13 @@ public class ReviewService {
         review.setRating(request.rating());
         review.setComment(request.comment());
         var saved = reviewRepository.save(review);
+        productCacheService.evict(review.getProduct().getId(), review.getProduct().getSlug());
         log.info("Review updated: {}", saved.getId());
         return reviewMapper.toResponse(saved);
     }
 
     @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void delete(Long reviewId, String email) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
@@ -101,7 +101,9 @@ public class ReviewService {
             throw new BadRequestException("You can only delete your own reviews");
         }
 
+        var product = review.getProduct();
         reviewRepository.delete(review);
+        productCacheService.evict(product.getId(), product.getSlug());
         log.info("Review deleted: {}", reviewId);
     }
 }

@@ -26,6 +26,9 @@ public class ProductImageServiceTest {
     @Mock
     private FileStorageService fileStorageService;
 
+    @Mock
+    private ProductCacheService productCacheService;
+
     @InjectMocks
     private ProductImageService productImageService;
 
