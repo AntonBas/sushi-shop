@@ -3,12 +3,6 @@ spring:
     compose:
       enabled: false
 
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
-
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:sushi_db}
     username: ${DB_USER:postgres}
@@ -18,6 +12,9 @@ springdoc:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+
+  jpa:
+    show-sql: false
 
   mail:
     host: smtp.gmail.com
@@ -42,6 +39,12 @@ springdoc:
               - email
               - profile
             redirect-uri: "${APP_BASE_URL}/login/oauth2/code/google"
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
 
 app:
   jwt:
@@ -73,3 +76,5 @@ management:
 logging:
   level:
     com.sushishop: INFO
+    org.springframework.cache: WARN
+    org.springframework.data.redis: WARN

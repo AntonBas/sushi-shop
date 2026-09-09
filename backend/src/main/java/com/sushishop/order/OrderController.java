@@ -3,6 +3,7 @@ package com.sushishop.order;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -42,7 +43,7 @@ public class OrderController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
-        log.info("POST /api/orders - {}", request.customerName());
+        log.info("POST /api/orders - {}", LogSanitizer.sanitize(request.customerName()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(orderCreationService.create(request, userDetails.getUsername()));
     }

@@ -4,6 +4,7 @@ import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -56,7 +57,8 @@ public class ProductController {
                                                             @RequestParam(required = false) String search,
                                                             @RequestParam(required = false) Category category,
                                                             @RequestParam(required = false) Boolean available) {
-        log.info("GET /api/products - search: {}, category: {}, page: {}", search, category, pageable.getPageNumber());
+        log.info("GET /api/products - search: {}, category: {}, page: {}",
+                LogSanitizer.sanitize(search), category, pageable.getPageNumber());
         return ResponseEntity.ok(productQueryService.getAll(pageable, search, category, available));
     }
 

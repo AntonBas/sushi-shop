@@ -95,7 +95,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
             log.warn("Database constraint violation: {}", ex.getMessage());
             return buildResponseEntity(apiError, request);
         }
-        ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Database error", ex);
+        ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Database error");
         log.error("Database error: ", ex);
         return buildResponseEntity(apiError, request);
     }
@@ -141,7 +141,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<Object> handleAllExceptions(@Nonnull Exception ex, @Nonnull WebRequest request) {
-        ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Unexpected error occurred", ex);
+        ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Unexpected error occurred");
         log.error("Unexpected error: ", ex);
         return buildResponseEntity(apiError, request);
     }

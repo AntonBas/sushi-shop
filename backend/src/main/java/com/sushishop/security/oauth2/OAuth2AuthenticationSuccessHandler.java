@@ -42,13 +42,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String token = jwtUtil.generateToken(email, user.getUserRole().name(), user.getTokenVersion());
 
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("com/sushishop/token", token)
+                .queryParam("token", token)
                 .queryParam("email", email)
                 .build()
                 .toUriString();
 
-        log.info("FRONTEND URL: {}", frontendUrl);
-        log.info("TARGET URL: {}", targetUrl);
         log.info("OAuth2 login successful for user: {}", email);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
