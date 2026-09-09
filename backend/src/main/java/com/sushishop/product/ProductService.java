@@ -48,7 +48,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "products", key = "#id")
+    @Cacheable(value = "products", key = "'id:' + #id")
     public ProductResponse getById(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product with ID: " + id));
@@ -56,7 +56,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "products", key = "#slug")
+    @Cacheable(value = "products", key = "'slug:' + #slug")
     public ProductResponse getBySlug(String slug) {
         var product = productRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + slug));

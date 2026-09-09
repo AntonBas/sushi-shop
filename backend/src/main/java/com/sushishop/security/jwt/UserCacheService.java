@@ -18,6 +18,7 @@ public class UserCacheService {
     @Cacheable(value = "userCache", key = "#email + ':' + #tokenVersion", unless = "#result == null")
     public UserResponse getCachedUser(String email, Integer tokenVersion) {
         return userRepository.findByEmail(email)
+                .filter(user -> user.getTokenVersion().equals(tokenVersion))
                 .map(userMapper::toResponse)
                 .orElse(null);
     }

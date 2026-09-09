@@ -7,7 +7,6 @@ import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +21,6 @@ public class ReviewReplyService {
     private final ReviewMapper reviewMapper;
 
     @Transactional
-    @CacheEvict(value = "reviews", allEntries = true)
     public ReviewReplyResponse addReply(Long reviewId, CreateReviewReplyRequest request, String userEmail) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
@@ -41,7 +39,6 @@ public class ReviewReplyService {
     }
 
     @Transactional
-    @CacheEvict(value = "reviews", allEntries = true)
     public ReviewReplyResponse updateReply(Long replyId, CreateReviewReplyRequest request, String userEmail) {
         var reply = reviewReplyRepository.findById(replyId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
@@ -55,7 +52,6 @@ public class ReviewReplyService {
     }
 
     @Transactional
-    @CacheEvict(value = "reviews", allEntries = true)
     public void deleteReply(Long replyId, String email) {
         var reply = reviewReplyRepository.findById(replyId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + replyId));

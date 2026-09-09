@@ -97,7 +97,7 @@ public class PromotionService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "promotions", key = "#id")
+    @Cacheable(value = "promotions", key = "'id:' + #id")
     public PromotionResponse getById(Long id) {
         return promotionRepository.findById(id)
                 .map(assembler::toResponse)
@@ -105,7 +105,7 @@ public class PromotionService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "promotions", key = "#slug")
+    @Cacheable(value = "promotions", key = "'slug:' + #slug")
     public PromotionResponse getBySlug(String slug) {
         return promotionRepository.findBySlug(slug)
                 .map(assembler::toResponse)

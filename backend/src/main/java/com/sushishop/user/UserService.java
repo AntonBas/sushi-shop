@@ -79,7 +79,6 @@ public class UserService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "User")
     @Transactional
-    @CacheEvict(value = "userCache", key = "#email + ':*'")
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));

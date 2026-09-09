@@ -32,7 +32,7 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.CREATE, entity = "Review")
     @Transactional
-    @CacheEvict(value = {"products", "reviews"}, allEntries = true)
+    @CacheEvict(value = "products", allEntries = true)
     public ReviewResponse create(CreateReviewRequest request, String email) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found"));
@@ -74,7 +74,7 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "Review")
     @Transactional
-    @CacheEvict(value = {"products", "reviews"}, allEntries = true)
+    @CacheEvict(value = "products", allEntries = true)
     public ReviewResponse update(Long reviewId, CreateReviewRequest request, String email) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
@@ -92,7 +92,7 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
-    @CacheEvict(value = {"products", "reviews"}, allEntries = true)
+    @CacheEvict(value = "products", allEntries = true)
     public void delete(Long reviewId, String email) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
