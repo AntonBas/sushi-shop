@@ -19,6 +19,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProductQueryService {
 
+    private static final int POPULAR_PRODUCTS_LIMIT = 10;
+    private static final int RELATED_PRODUCTS_LIMIT = 4;
+
     private final ProductRepository productRepository;
     private final ProductEnrichmentService enrichmentService;
     private final ProductMapper productMapper;
@@ -42,7 +45,7 @@ public class ProductQueryService {
 
     @Transactional(readOnly = true)
     public List<ProductListResponse> getPopular() {
-        List<Product> products = productRepository.findPopular(Pageable.ofSize(10));
+        List<Product> products = productRepository.findPopular(Pageable.ofSize(POPULAR_PRODUCTS_LIMIT));
         return enrichProducts(products);
     }
 
@@ -53,7 +56,7 @@ public class ProductQueryService {
 
         List<Product> relatedProducts = productRepository.findRelated(product.getCategory(), id)
                 .stream()
-                .limit(4)
+                .limit(RELATED_PRODUCTS_LIMIT)
                 .toList();
 
         return enrichProducts(relatedProducts);

@@ -3,6 +3,7 @@ package com.sushishop.order;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.security.Roles;
 import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -62,7 +63,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'COURIER')")
+    @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "', '" + Roles.COURIER + "')")
     @Operation(summary = "Get all orders (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
@@ -87,7 +88,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COURIER')")
+    @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "', '" + Roles.COURIER + "')")
     @Operation(summary = "Update order status (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long id, @RequestParam OrderStatus status) {

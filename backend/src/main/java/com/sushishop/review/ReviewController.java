@@ -3,6 +3,7 @@ package com.sushishop.review;
 import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
+import com.sushishop.security.Roles;
 import com.sushishop.review.dto.response.ReviewResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -54,7 +55,7 @@ public class ReviewController {
     }
 
     @PutMapping("/replies/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Update a reply")
     @ApiResponse(responseCode = "200", description = "Reply updated")
     @SecurityRequirement(name = "bearerAuth")
@@ -75,7 +76,7 @@ public class ReviewController {
     }
 
     @PostMapping("/{id}/replies")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Add reply to review")
     @ApiResponse(responseCode = "201", description = "Reply created")
     @SecurityRequirement(name = "bearerAuth")
@@ -98,7 +99,7 @@ public class ReviewController {
     }
 
     @DeleteMapping("/replies/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Delete a reply")
     @ApiResponse(responseCode = "204", description = "Reply deleted")
     @SecurityRequirement(name = "bearerAuth")

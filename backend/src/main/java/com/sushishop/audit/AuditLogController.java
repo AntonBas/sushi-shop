@@ -1,6 +1,7 @@
 package com.sushishop.audit;
 
 import com.sushishop.audit.dto.AuditLogResponse;
+import com.sushishop.security.Roles;
 import com.sushishop.shared.enums.AuditAction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -23,7 +24,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/admin/audit")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('" + Roles.ADMIN + "')")
 @Tag(name = "Audit", description = "Audit log endpoints")
 @SecurityRequirement(name = "bearerAuth")
 public class AuditLogController {

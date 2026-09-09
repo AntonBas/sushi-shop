@@ -1,6 +1,7 @@
 package com.sushishop.security.jwt;
 
 import com.sushishop.order.OrderRepository;
+import com.sushishop.security.Roles;
 import com.sushishop.user.CustomUserDetails;
 import com.sushishop.user.UserRepository;
 import jakarta.annotation.Nonnull;
@@ -24,8 +25,8 @@ import java.util.regex.Pattern;
 public class JwtChannelInterceptor implements ChannelInterceptor {
 
     private static final Pattern ORDER_TOPIC_PATTERN = Pattern.compile("^/topic/orders/(\\d+)$");
-    private static final String ROLE_ADMIN = "ROLE_ADMIN";
-    private static final String ROLE_COURIER = "ROLE_COURIER";
+    private static final String ROLE_ADMIN = "ROLE_" + Roles.ADMIN;
+    private static final String ROLE_COURIER = "ROLE_" + Roles.COURIER;
 
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;

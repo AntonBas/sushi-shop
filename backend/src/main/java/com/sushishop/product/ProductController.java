@@ -3,6 +3,7 @@ package com.sushishop.product;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
+import com.sushishop.security.Roles;
 import com.sushishop.product.dto.response.ProductResponse;
 import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,7 +41,7 @@ public class ProductController {
     private final ProductImageService productImageService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Create product with images")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Product created"),
@@ -106,7 +107,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Update product")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateProductRequest request) {
@@ -115,7 +116,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Delete product")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
@@ -125,7 +126,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}/images/reorder")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Reorder product images")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> reorderImages(@PathVariable Long id,
@@ -136,7 +137,7 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}/toggle")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Toggle product availability")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> toggleStatus(@PathVariable Long id) {
@@ -146,7 +147,7 @@ public class ProductController {
     }
 
     @PostMapping("/{id}/images")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Add image to product")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> addImage(@PathVariable Long id, @RequestParam("image") MultipartFile image) {
@@ -156,7 +157,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}/images/{imageId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Delete product image")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id, @PathVariable Long imageId) {

@@ -1,5 +1,6 @@
 package com.sushishop.promotion.dto.request;
 
+import com.sushishop.promotion.PromotionConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
@@ -18,7 +19,7 @@ public record UpdatePromotionRequest(
         String description,
 
         @Positive(message = "Discount must be greater than 0")
-        @DecimalMax(value = "90.00", message = "Discount cannot exceed 90%")
+        @DecimalMax(value = PromotionConstants.MAX_DISCOUNT_PERCENT, message = "Discount cannot exceed 90%")
         @Digits(integer = 3, fraction = 2, message = "Discount must have at most 2 decimal places")
         @Schema(description = "Discount percentage", example = "20.00")
         BigDecimal discountPercent,

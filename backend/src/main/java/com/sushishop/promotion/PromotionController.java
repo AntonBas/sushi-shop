@@ -3,6 +3,7 @@ package com.sushishop.promotion;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.security.Roles;
 import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,7 +34,7 @@ public class PromotionController {
     private final PromotionService promotionService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Create promotion", description = "Admin only. Creates a new promotion with validated products and dates.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Promotion created"),
@@ -57,7 +58,7 @@ public class PromotionController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Get all promotions", description = "Admin only. Returns paginated list with optional search.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Paginated list of promotions")
@@ -80,7 +81,7 @@ public class PromotionController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Get promotion by ID", description = "Admin only. Used for editing and management.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Promotion found"),
@@ -93,7 +94,7 @@ public class PromotionController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Update promotion", description = "Admin only. Supports partial updates.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Promotion updated"),
@@ -108,7 +109,7 @@ public class PromotionController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Delete promotion", description = "Admin only. Removes promotion and clears product associations.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Promotion deleted"),
