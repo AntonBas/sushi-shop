@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useApi } from "../../../hooks/common/useApi";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
+import { getAuthToken } from "../../../api/authToken";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { UserOrderResponse } from "../../../types";
@@ -33,7 +34,7 @@ export default function MyOrdersPage() {
     const client = new Client({
       webSocketFactory: () => new SockJS("/ws"),
       connectHeaders: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${getAuthToken()}`,
       },
       onConnect: () => {
         orders.forEach((order) => {
@@ -59,11 +60,7 @@ export default function MyOrdersPage() {
   const handlePay = async (order: UserOrderResponse) => {
     setPayLoading(order.id);
     try {
-      const url = await paymentsApi.createCheckout(
-        order.id,
-        Math.round(order.totalAmount * 100),
-        order.userEmail,
-      );
+      const url = await paymentsApi.createCheckout(order.id);
       if (url) window.location.href = url;
     } finally {
       setPayLoading(null);

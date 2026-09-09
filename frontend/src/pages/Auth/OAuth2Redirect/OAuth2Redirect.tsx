@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { setAuthToken } from "../../../api/authToken";
 import Loading from "../../../components/UI/Loading/Loading";
 
 export default function OAuth2Redirect() {
@@ -12,7 +13,7 @@ export default function OAuth2Redirect() {
     const token = params.get("token");
 
     if (token) {
-      localStorage.setItem("token", token);
+      setAuthToken(token);
       refreshUser()
         .then(() => {
           window.location.href = "/";

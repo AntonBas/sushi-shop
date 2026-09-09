@@ -1,1 +1,0 @@
-export const getFileUrl = (fileName: string): string => `/api/files/${fileName}`

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
 import { useNotification } from "../../../context/NotificationContext";
 import * as ordersApi from "../../../api/orders";
+import { getAuthToken } from "../../../api/authToken";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import { Search } from "lucide-react";
@@ -67,7 +68,7 @@ export default function AdminOrdersPage() {
     const client = new Client({
       webSocketFactory: () => new SockJS("/ws"),
       connectHeaders: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${getAuthToken()}`,
       },
       onConnect: () => {
         client.subscribe("/topic/orders/new", () => {

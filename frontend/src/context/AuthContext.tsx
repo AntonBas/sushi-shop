@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
+import { clearAuthToken, getAuthToken, setAuthToken } from "../api/authToken";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
 
 interface AuthContextType {
@@ -25,7 +26,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchedRef = useRef(false);
   const loading = initialLoading;
 
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   const isAuthenticated = !!user;
   const isAdmin = user?.userRole === "ADMIN";
   const isCourier = user?.userRole === "COURIER";
@@ -37,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .getMe()
         .then(setUser)
         .catch(() => {
-          localStorage.removeItem("token");
+          clearAuthToken();
           setUser(null);
         })
         .finally(() => setInitialLoading(false));
@@ -48,21 +49,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);
-    localStorage.setItem("token", response.token);
+    setAuthToken(response.token);
     fetchedRef.current = true;
     setUser(response.user);
   };
 
   const register = async (userData: RegisterRequest) => {
     const response = await authApi.register(userData);
-    localStorage.setItem("token", response.token);
+    setAuthToken(response.token);
     fetchedRef.current = true;
     setUser(response.user);
     return response.user;
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    clearAuthToken();
     setUser(null);
     fetchedRef.current = false;
     window.location.href = "/login";

@@ -71,11 +71,7 @@ export default function CheckoutPage() {
       if (order) {
         if (paymentMethod === "ONLINE") {
           const url = await paymentApi.execute(() =>
-            paymentsApi.createCheckout(
-              order.id,
-              Math.round(order.totalAmount * 100),
-              user?.email || "",
-            ),
+            paymentsApi.createCheckout(order.id),
           );
           if (url) window.location.href = url;
         } else {
