@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +32,7 @@ import java.util.List;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 @Tag(name = "Products", description = "Product management endpoints")
+@Validated
 public class ProductController {
 
     private final ProductService productService;
@@ -125,7 +128,8 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Reorder product images")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> reorderImages(@PathVariable Long id, @RequestBody List<Long> imageIds) {
+    public ResponseEntity<Void> reorderImages(@PathVariable Long id,
+                                              @RequestBody @NotEmpty(message = "Image ID list must not be empty") List<Long> imageIds) {
         log.info("PATCH /api/products/{}/images/reorder", id);
         productImageService.reorderImages(id, imageIds);
         return ResponseEntity.ok().build();

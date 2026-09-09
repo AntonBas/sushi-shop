@@ -92,21 +92,12 @@ public class PasswordResetServiceTest {
         when(passwordEncoder.matches("newPass123", "oldHashed")).thenReturn(false);
         when(passwordEncoder.encode("newPass123")).thenReturn("hashed");
 
-        passwordResetService.resetPassword("token123", "newPass123", "newPass123");
+        passwordResetService.resetPassword("token123", "newPass123");
 
         assertThat(user.getPassword()).isEqualTo("hashed");
         assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
         verify(tokenService).invalidateAllByUserAndType(1L, TokenType.PASSWORD_RESET);
-    }
-
-    @Test
-    public void shouldThrowWhenResetPasswordMismatch() {
-        assertThatThrownBy(() -> passwordResetService.resetPassword("token123", "newPass123", "different"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Passwords don't match!");
-
-        verify(tokenService, never()).validateAndGetToken(any(), any());
     }
 
     @Test
@@ -128,7 +119,7 @@ public class PasswordResetServiceTest {
                 .thenReturn(token);
         when(passwordEncoder.matches("newPass123", "oldHashed")).thenReturn(true);
 
-        assertThatThrownBy(() -> passwordResetService.resetPassword("token123", "newPass123", "newPass123"))
+        assertThatThrownBy(() -> passwordResetService.resetPassword("token123", "newPass123"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("New password must be different from old password");
     }

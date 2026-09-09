@@ -79,23 +79,6 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenPasswordsDoNotMatch() {
-        var request = new RegisterRequest(
-                "Anton",
-                "anton@example.com",
-                "password123",
-                "different",
-                "+380961791111",
-                null
-        );
-
-        when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
-
-        assertThatThrownBy(() -> userService.create(request))
-                .isInstanceOf(BadRequestException.class);
-    }
-
-    @Test
     public void shouldGetByEmail() {
         var user = User.builder()
                 .id(1L)

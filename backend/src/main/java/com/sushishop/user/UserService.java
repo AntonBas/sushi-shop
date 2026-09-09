@@ -32,9 +32,6 @@ public class UserService {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists!");
         }
-        if (!request.password().equals(request.confirmPassword())) {
-            throw new BadRequestException("Passwords don't match!");
-        }
 
         var user = userMapper.toEntity(request);
         user.setPassword(passwordEncoder.encode(request.password()));

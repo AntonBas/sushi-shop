@@ -81,7 +81,7 @@ public class AuthController {
     @SecurityRequirements()
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         log.info("POST /api/auth/password/reset");
-        passwordResetService.resetPassword(request.token(), request.newPassword(), request.confirmPassword());
+        passwordResetService.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok().build();
     }
 }

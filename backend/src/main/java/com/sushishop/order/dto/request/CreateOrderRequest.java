@@ -40,6 +40,7 @@ public record CreateOrderRequest(
         @Schema(description = "List of products to order")
         @Valid
         @NotEmpty(message = "Order must contain at least one item")
+        @Size(max = 50, message = "Order cannot contain more than 50 items")
         List<OrderItemRequest> items
 ) {
 }

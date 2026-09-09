@@ -1,11 +1,13 @@
 package com.sushishop.user.dto.request;
 
 import com.sushishop.shared.address.AddressRequest;
+import com.sushishop.shared.validation.FieldsMatch;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 @Schema(description = "Registration data")
+@FieldsMatch(first = "password", second = "confirmPassword", message = "Passwords don't match!")
 public record RegisterRequest(
         @Schema(description = "Full name", example = "Anton Bas")
         @NotBlank(message = "Name is required")

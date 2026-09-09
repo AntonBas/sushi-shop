@@ -34,11 +34,7 @@ public class PasswordResetService {
     }
 
     @Transactional
-    public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
-        if (!newPassword.equals(confirmPassword)) {
-            throw new BadRequestException("Passwords don't match!");
-        }
-
+    public void resetPassword(String resetToken, String newPassword) {
         var tokenEntity = tokenService.validateAndGetToken(resetToken, TokenType.PASSWORD_RESET);
         var user = tokenEntity.getUser();
 

@@ -28,6 +28,9 @@ spring:
       port: ${REDIS_PORT:6379}
       timeout: 2000ms
       connect-timeout: 2000ms
+    web:
+      pageable:
+        max-page-size: 100
 
   flyway:
     enabled: true

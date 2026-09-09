@@ -3,6 +3,7 @@ package com.sushishop.product.dto.request;
 import com.sushishop.product.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -34,10 +35,12 @@ public record CreateProductRequest(
         @Schema(description = "Product weight", example = "250")
         @NotNull(message = "Weight is required")
         @Positive(message = "Weight must be greater than 0")
+        @Max(value = 5000, message = "Weight must not exceed 5000 grams")
         Integer weight,
 
         @Schema(description = "Pieces for sets", example = "8")
         @Positive(message = "Pieces must be greater than 0")
+        @Max(value = 200, message = "Pieces must not exceed 200")
         Integer pieces
 ) {
 }
