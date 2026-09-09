@@ -11,25 +11,26 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitService {
 
-    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private record BucketEntry(Bucket bucket, long capacity) {
+    }
+
+    private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
 
     public boolean tryConsume(String key, int tokens, int capacity, int durationInSeconds) {
         String bucketKey = key + ":" + capacity + ":" + durationInSeconds;
 
-        Bucket bucket = buckets.computeIfAbsent(bucketKey, k -> Bucket.builder()
-                .addLimit(limit -> limit.capacity(capacity)
-                        .refillIntervally(capacity, Duration.ofSeconds(durationInSeconds)))
-                .build());
+        BucketEntry entry = buckets.computeIfAbsent(bucketKey, k -> new BucketEntry(
+                Bucket.builder()
+                        .addLimit(limit -> limit.capacity(capacity)
+                                .refillIntervally(capacity, Duration.ofSeconds(durationInSeconds)))
+                        .build(),
+                capacity));
 
-        ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(tokens);
+        ConsumptionProbe probe = entry.bucket().tryConsumeAndReturnRemaining(tokens);
         return probe.isConsumed();
     }
 
     public void cleanupBuckets() {
-        buckets.entrySet().removeIf(entry -> {
-            Bucket bucket = entry.getValue();
-            long availableTokens = bucket.getAvailableTokens();
-            return availableTokens > 0;
-        });
+        buckets.entrySet().removeIf(entry -> entry.getValue().bucket().getAvailableTokens() >= entry.getValue().capacity());
     }
 }
