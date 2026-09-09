@@ -82,9 +82,17 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "Order found"),
             @ApiResponse(responseCode = "404", description = "Order not found")
     })
-    public ResponseEntity<OrderResponse> getById(@PathVariable Long id) {
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<OrderResponse> getById(@PathVariable Long id,
+                                                 @AuthenticationPrincipal UserDetails userDetails) {
         log.info("GET /api/orders/{} - by ID", id);
-        return ResponseEntity.ok(orderService.getById(id));
+        return ResponseEntity.ok(orderService.getById(id, userDetails.getUsername(), isStaff(userDetails)));
+    }
+
+    private boolean isStaff(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Roles.ADMIN)
+                        || authority.getAuthority().equals("ROLE_" + Roles.COURIER));
     }
 
     @PatchMapping("/{id}/status")

@@ -113,10 +113,11 @@ public class OrderControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test@test.com")
     public void shouldGetById() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
-        when(orderService.getById(1L)).thenReturn(response);
+        when(orderService.getById(1L, "test@test.com", false)).thenReturn(response);
 
         mockMvc.perform(get("/api/orders/1"))
                 .andExpect(status().isOk())

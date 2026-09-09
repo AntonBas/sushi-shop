@@ -23,17 +23,24 @@ public class OrderService {
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
-    public OrderResponse getById(Long id) {
+    public OrderResponse getById(Long id, String requesterEmail, boolean isStaff) {
         log.info("Getting order by id: {}", id);
-        return orderRepository.findById(id)
-                .map(orderMapper::toResponse)
-                .orElseThrow(() -> new NotFoundException("Order not found: " + id));
+        return orderMapper.toResponse(getOwnedOrder(id, requesterEmail, isStaff));
     }
 
     @Transactional(readOnly = true)
     public Order getOrderById(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public Order getOwnedOrder(Long id, String requesterEmail, boolean isStaff) {
+        var order = getOrderById(id);
+        if (!isStaff && !order.getUser().getEmail().equals(requesterEmail)) {
+            throw new NotFoundException("Order not found: " + id);
+        }
+        return order;
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Order")

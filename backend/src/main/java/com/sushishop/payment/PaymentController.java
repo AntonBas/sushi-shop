@@ -30,7 +30,7 @@ public class PaymentController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, String>> createCheckout(@PathVariable Long orderId,
                                                               @AuthenticationPrincipal UserDetails userDetails) {
-        var order = orderService.getOrderById(orderId);
+        var order = orderService.getOwnedOrder(orderId, userDetails.getUsername(), false);
         var amountInCents = order.getTotalAmount().movePointRight(2).longValueExact();
         var info = stripeService.createCheckoutSession(orderId, amountInCents, userDetails.getUsername());
         try {

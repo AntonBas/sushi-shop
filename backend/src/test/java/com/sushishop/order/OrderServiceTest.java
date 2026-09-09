@@ -3,6 +3,8 @@ package com.sushishop.order;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.user.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,8 +38,9 @@ public class OrderServiceTest {
     private OrderService orderService;
 
     @Test
-    public void shouldGetById() {
+    public void shouldGetByIdForOwner() {
         var order = new Order();
+        order.setUser(User.builder().email("anton@example.com").build());
         var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
                 DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW,
                 BigDecimal.ZERO, null, List.of());
@@ -45,9 +48,36 @@ public class OrderServiceTest {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderMapper.toResponse(order)).thenReturn(expected);
 
-        var result = orderService.getById(1L);
+        var result = orderService.getById(1L, "anton@example.com", false);
 
         assertThat(result.id()).isEqualTo(1L);
+    }
+
+    @Test
+    public void shouldGetByIdForStaffRegardlessOfOwner() {
+        var order = new Order();
+        order.setUser(User.builder().email("anton@example.com").build());
+        var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
+                DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW,
+                BigDecimal.ZERO, null, List.of());
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderMapper.toResponse(order)).thenReturn(expected);
+
+        var result = orderService.getById(1L, "admin@example.com", true);
+
+        assertThat(result.id()).isEqualTo(1L);
+    }
+
+    @Test
+    public void shouldThrowNotFoundWhenRequesterIsNotOwnerOrStaff() {
+        var order = new Order();
+        order.setUser(User.builder().email("anton@example.com").build());
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.getById(1L, "stranger@example.com", false))
+                .isInstanceOf(NotFoundException.class);
     }
 
     @Test

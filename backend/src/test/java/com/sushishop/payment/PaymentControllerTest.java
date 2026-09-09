@@ -55,7 +55,7 @@ public class PaymentControllerTest {
     @WithMockUser(username = "test@example.com")
     void shouldCreateCheckoutSession() throws Exception {
         var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
-        when(orderService.getOrderById(1L)).thenReturn(order);
+        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
         var info = new StripeService.CheckoutSessionInfo("sess_123", "https://checkout.stripe.com/session_123");
         when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
                 .thenReturn(info);
@@ -69,7 +69,7 @@ public class PaymentControllerTest {
     @WithMockUser(username = "test@example.com")
     void shouldExpireStripeSessionWhenPaymentCreationFails() throws Exception {
         var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
-        when(orderService.getOrderById(1L)).thenReturn(order);
+        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
         var info = new StripeService.CheckoutSessionInfo("sess_123", "https://checkout.stripe.com/session_123");
         when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
                 .thenReturn(info);
