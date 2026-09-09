@@ -27,4 +27,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @EntityGraph(attributePaths = {"items", "items.product", "user"})
     @Nonnull
     Optional<Order> findById(@Nonnull Long id);
+
+    @Query("SELECT o.user.email FROM Order o WHERE o.id = :id")
+    Optional<String> findOwnerEmailById(@Param("id") Long id);
 }

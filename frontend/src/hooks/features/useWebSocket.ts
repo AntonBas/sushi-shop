@@ -12,6 +12,9 @@ export function useOrderTracking(orderId: number | null) {
 
     const client = new Client({
       brokerURL: `ws://localhost:8080/ws`,
+      connectHeaders: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
       onConnect: () => {
         client.subscribe(`/topic/orders/${orderId}`, (msg) => {
           const update: OrderStatusUpdateResponse = JSON.parse(msg.body)

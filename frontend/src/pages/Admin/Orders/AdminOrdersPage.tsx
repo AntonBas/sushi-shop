@@ -66,6 +66,9 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     const client = new Client({
       webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      connectHeaders: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
       onConnect: () => {
         client.subscribe("/topic/orders/new", () => {
           loadOrders(page, 12, {
