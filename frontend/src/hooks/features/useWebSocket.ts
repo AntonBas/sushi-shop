@@ -11,7 +11,7 @@ export function useOrderTracking(orderId: number | null) {
     if (!orderId) return
 
     const client = new Client({
-      brokerURL: `ws://localhost:8080/ws`,
+      brokerURL: `${window.location.origin.replace(/^http/, 'ws')}/ws`,
       connectHeaders: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
