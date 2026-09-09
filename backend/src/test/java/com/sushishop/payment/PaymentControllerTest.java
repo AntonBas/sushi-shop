@@ -1,5 +1,6 @@
 package com.sushishop.payment;
 
+import com.sushishop.shared.exception.core.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,6 +52,23 @@ public class PaymentControllerTest {
                         .param("email", "test@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.url").value("https://checkout.stripe.com/session_123"));
+    }
+
+    @Test
+    @WithMockUser
+    void shouldExpireStripeSessionWhenPaymentCreationFails() throws Exception {
+        var info = new StripeService.CheckoutSessionInfo("sess_123", "https://checkout.stripe.com/session_123");
+        when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
+                .thenReturn(info);
+        doThrow(new BadRequestException("Order not found"))
+                .when(paymentService).create(eq(1L), eq("sess_123"), any());
+
+        mockMvc.perform(post("/api/payments/order/1")
+                        .param("amountInCents", "50000")
+                        .param("email", "test@example.com"))
+                .andExpect(status().isBadRequest());
+
+        verify(stripeService).expireCheckoutSession("sess_123");
     }
 
     @Test

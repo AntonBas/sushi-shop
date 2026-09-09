@@ -62,6 +62,15 @@ public class StripeService {
         }
     }
 
+    public void expireCheckoutSession(String sessionId) {
+        try {
+            Session.retrieve(sessionId).expire();
+            log.info("Expired orphaned Stripe session: {}", sessionId);
+        } catch (StripeException e) {
+            log.error("Failed to expire orphaned Stripe session: {}", sessionId, e);
+        }
+    }
+
     public String getSessionIdFromWebhook(String payload, String sigHeader) {
         try {
             var event = Webhook.constructEvent(payload, sigHeader, webhookSecret);

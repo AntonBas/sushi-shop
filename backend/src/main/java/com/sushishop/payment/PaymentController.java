@@ -26,7 +26,12 @@ public class PaymentController {
                                                               @RequestParam Long amountInCents,
                                                               @RequestParam String email) {
         var info = stripeService.createCheckoutSession(orderId, amountInCents, email);
-        paymentService.create(orderId, info.id(), BigDecimal.valueOf(amountInCents, 2));
+        try {
+            paymentService.create(orderId, info.id(), BigDecimal.valueOf(amountInCents, 2));
+        } catch (RuntimeException e) {
+            stripeService.expireCheckoutSession(info.id());
+            throw e;
+        }
         log.info("Checkout session created for order: {}", orderId);
         return ResponseEntity.ok(Map.of("url", info.url()));
     }
