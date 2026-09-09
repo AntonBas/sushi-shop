@@ -4,6 +4,7 @@ import com.sushishop.audit.Auditable;
 import com.sushishop.order.OrderService;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.PaymentStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -61,7 +62,7 @@ public class PaymentService {
 
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
-        eventPublisher.publishEvent(new PaymentConfirmedEvent(this, payment));
+        eventPublisher.publishEvent(new PaymentConfirmedEvent(this, payment.getOrder().getId()));
         log.info("Payment confirmed: {}", stripeSessionId);
     }
 }

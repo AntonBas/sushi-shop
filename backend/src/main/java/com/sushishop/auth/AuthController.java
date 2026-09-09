@@ -2,10 +2,10 @@ package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
-import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.shared.ratelimit.RateLimit;
+import com.sushishop.user.dto.request.RegisterRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

@@ -1,4 +1,4 @@
-package com.sushishop.shared.security.jwt;
+package com.sushishop.security.jwt;
 
 import com.sushishop.user.UserMapper;
 import com.sushishop.user.UserRepository;

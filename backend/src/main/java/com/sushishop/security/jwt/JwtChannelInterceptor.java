@@ -1,4 +1,4 @@
-package com.sushishop.shared.security.jwt;
+package com.sushishop.security.jwt;
 
 import com.sushishop.order.OrderRepository;
 import com.sushishop.user.CustomUserDetails;

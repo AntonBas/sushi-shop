@@ -1,4 +1,4 @@
-package com.sushishop.shared.security.jwt;
+package com.sushishop.security.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

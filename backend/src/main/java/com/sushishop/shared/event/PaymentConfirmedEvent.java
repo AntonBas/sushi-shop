@@ -1,14 +1,14 @@
-package com.sushishop.payment;
+package com.sushishop.shared.event;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
 @Getter
 public class PaymentConfirmedEvent extends ApplicationEvent {
-    private final Payment payment;
+    private final Long orderId;
 
-    public PaymentConfirmedEvent(Object source, Payment payment) {
+    public PaymentConfirmedEvent(Object source, Long orderId) {
         super(source);
-        this.payment = payment;
+        this.orderId = orderId;
     }
 }

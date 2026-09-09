@@ -1,8 +1,8 @@
-package com.sushishop.shared.config;
+package com.sushishop.security;
 
-import com.sushishop.shared.security.jwt.JwtAuthenticationFilter;
-import com.sushishop.shared.security.oauth2.CustomOAuth2UserService;
-import com.sushishop.shared.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.sushishop.security.jwt.JwtAuthenticationFilter;
+import com.sushishop.security.oauth2.CustomOAuth2UserService;
+import com.sushishop.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

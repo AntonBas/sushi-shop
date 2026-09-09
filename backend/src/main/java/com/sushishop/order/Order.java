@@ -1,6 +1,5 @@
 package com.sushishop.order;
 
-import com.sushishop.payment.Payment;
 import com.sushishop.shared.BaseEntity;
 import com.sushishop.shared.enums.DeliveryMethod;
 import com.sushishop.shared.enums.OrderStatus;
@@ -25,7 +24,7 @@ import java.util.List;
         @Index(name = "idx_order_status", columnList = "status"),
         @Index(name = "idx_order_created_at", columnList = "created_at")
 })
-@EqualsAndHashCode(callSuper = true, exclude = {"items", "payments"})
+@EqualsAndHashCode(callSuper = true, exclude = "items")
 public class Order extends BaseEntity {
 
     @Id
@@ -79,10 +78,6 @@ public class Order extends BaseEntity {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
-
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Payment> payments = new ArrayList<>();
 
     @NotNull
     @Positive

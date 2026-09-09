@@ -1,10 +1,10 @@
 package com.sushishop.user;
 
-import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
+import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

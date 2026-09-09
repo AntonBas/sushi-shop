@@ -1,6 +1,6 @@
-package com.sushishop.shared.config;
+package com.sushishop.security;
 
-import com.sushishop.shared.security.jwt.JwtChannelInterceptor;
+import com.sushishop.security.jwt.JwtChannelInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;

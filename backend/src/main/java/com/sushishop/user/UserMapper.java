@@ -1,7 +1,7 @@
 package com.sushishop.user;
 
-import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.shared.address.AddressConverter;
+import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

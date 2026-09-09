@@ -3,9 +3,9 @@ package com.sushishop.order;
 import com.sushishop.audit.Auditable;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
-import com.sushishop.payment.PaymentConfirmedEvent;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -56,7 +56,7 @@ public class OrderService {
 
     @EventListener
     public void onPaymentConfirmed(PaymentConfirmedEvent event) {
-        confirmOrder(event.getPayment().getOrder().getId());
+        confirmOrder(event.getOrderId());
     }
 
     @Transactional

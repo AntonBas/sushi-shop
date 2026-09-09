@@ -1,12 +1,12 @@
 package com.sushishop.user;
 
 import com.sushishop.audit.Auditable;
-import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
+import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.request.UpdateUserRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;

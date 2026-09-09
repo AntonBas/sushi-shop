@@ -1,4 +1,4 @@
-package com.sushishop.auth.dto.request;
+package com.sushishop.user.dto.request;
 
 import com.sushishop.shared.address.AddressRequest;
 import io.swagger.v3.oas.annotations.media.Schema;

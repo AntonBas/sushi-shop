@@ -1,4 +1,4 @@
-package com.sushishop.shared.security.oauth2;
+package com.sushishop.security.oauth2;
 
 import com.sushishop.user.User;
 import com.sushishop.shared.enums.UserRole;
