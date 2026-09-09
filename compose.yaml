@@ -93,13 +93,28 @@ services:
       VITE_API_URL: http://backend:8080
     restart: unless-stopped
 
+  prometheus-config:
+    image: alpine:3.20
+    container_name: sushi-prometheus-config
+    env_file:
+      - .env
+    volumes:
+      - ./prometheus.yml.template:/template/prometheus.yml.template:ro
+      - prometheus_config:/config
+    command: sh -c "apk add --no-cache gettext >/dev/null && envsubst < /template/prometheus.yml.template > /config/prometheus.yml"
+    networks:
+      - sushi-net
+
   prometheus:
     image: prom/prometheus:latest
     container_name: sushi-prometheus
+    depends_on:
+      prometheus-config:
+        condition: service_completed_successfully
     ports:
       - '9090:9090'
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_config:/etc/prometheus
     networks:
       - sushi-net
     restart: unless-stopped
@@ -134,3 +149,4 @@ networks:
 
 volumes:
   postgres_data:
+  prometheus_config:

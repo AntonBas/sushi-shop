@@ -51,6 +51,9 @@ app:
     secret-key: ${STRIPE_SECRET_KEY}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   seed-demo-users: true
+  monitoring:
+    username: ${PROMETHEUS_USER:prometheus}
+    password: ${PROMETHEUS_PASSWORD:changeme}
 
 management:
   endpoints:
