@@ -26,3 +26,4 @@ app:
     secret-key: sk_test_test
     webhook-secret: whsec_test
   base-url: http://localhost:8080
+  seed-demo-users: true
