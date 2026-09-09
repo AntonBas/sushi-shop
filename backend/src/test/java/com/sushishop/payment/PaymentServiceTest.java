@@ -2,7 +2,6 @@ package com.sushishop.payment;
 
 import com.sushishop.order.Order;
 import com.sushishop.order.OrderService;
-import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;

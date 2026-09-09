@@ -5,7 +5,7 @@ import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
-import com.sushishop.shared.enums.UserRole;
+import com.sushishop.user.UserRole;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;

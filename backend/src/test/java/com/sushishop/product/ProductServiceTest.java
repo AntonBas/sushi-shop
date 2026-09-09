@@ -3,7 +3,6 @@ package com.sushishop.product;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;

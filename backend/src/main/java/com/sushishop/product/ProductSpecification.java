@@ -1,6 +1,5 @@
 package com.sushishop.product;
 
-import com.sushishop.shared.enums.Category;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ProductSpecification {

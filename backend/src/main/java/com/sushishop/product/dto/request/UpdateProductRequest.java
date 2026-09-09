@@ -1,6 +1,6 @@
 package com.sushishop.product.dto.request;
 
-import com.sushishop.shared.enums.Category;
+import com.sushishop.product.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.Positive;

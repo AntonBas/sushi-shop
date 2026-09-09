@@ -1,6 +1,5 @@
 package com.sushishop.user;
 
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;

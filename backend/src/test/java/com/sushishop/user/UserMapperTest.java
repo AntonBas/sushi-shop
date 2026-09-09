@@ -1,7 +1,6 @@
 package com.sushishop.user;
 
 import com.sushishop.shared.address.AddressRequest;
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;

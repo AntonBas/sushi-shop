@@ -1,6 +1,5 @@
 package com.sushishop.user;
 
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -14,6 +14,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -34,6 +35,9 @@ public class PaymentControllerTest {
 
     @MockitoBean
     private PaymentService paymentService;
+
+    @MockitoBean
+    private WebhookIdempotencyService webhookIdempotencyService;
 
     @BeforeEach
     void setUp() {
@@ -73,12 +77,29 @@ public class PaymentControllerTest {
 
     @Test
     void shouldHandleWebhook() throws Exception {
-        when(stripeService.getSessionIdFromWebhook(anyString(), anyString()))
-                .thenReturn("sess_123");
+        when(stripeService.parseCheckoutCompletedEvent(anyString(), anyString()))
+                .thenReturn(new StripeService.WebhookEvent("evt_123", "sess_123"));
+        when(webhookIdempotencyService.markProcessed("evt_123")).thenReturn(true);
 
         mockMvc.perform(post("/api/payments/webhook")
                         .content("{}")
                         .header("Stripe-Signature", "sig_123"))
                 .andExpect(status().isOk());
+
+        verify(paymentService).confirmPayment("sess_123");
+    }
+
+    @Test
+    void shouldSkipDuplicateWebhookEvent() throws Exception {
+        when(stripeService.parseCheckoutCompletedEvent(anyString(), anyString()))
+                .thenReturn(new StripeService.WebhookEvent("evt_123", "sess_123"));
+        when(webhookIdempotencyService.markProcessed("evt_123")).thenReturn(false);
+
+        mockMvc.perform(post("/api/payments/webhook")
+                        .content("{}")
+                        .header("Stripe-Signature", "sig_123"))
+                .andExpect(status().isOk());
+
+        verify(paymentService, never()).confirmPayment(anyString());
     }
 }

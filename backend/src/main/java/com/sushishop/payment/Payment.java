@@ -1,8 +1,7 @@
 package com.sushishop.payment;
 
-import com.sushishop.shared.BaseEntity;
-import com.sushishop.shared.enums.PaymentStatus;
 import com.sushishop.order.Order;
+import com.sushishop.shared.BaseEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;

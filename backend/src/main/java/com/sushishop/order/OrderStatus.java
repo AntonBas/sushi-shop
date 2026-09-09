@@ -1,4 +1,4 @@
-package com.sushishop.shared.enums;
+package com.sushishop.order;
 
 import com.sushishop.shared.exception.core.BadRequestException;
 

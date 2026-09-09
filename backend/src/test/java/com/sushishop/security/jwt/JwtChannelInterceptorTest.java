@@ -1,10 +1,10 @@
 package com.sushishop.security.jwt;
 
 import com.sushishop.order.OrderRepository;
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.user.CustomUserDetails;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
+import com.sushishop.user.UserRole;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

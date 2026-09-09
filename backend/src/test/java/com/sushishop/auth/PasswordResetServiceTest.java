@@ -1,10 +1,10 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;
+import com.sushishop.token.TokenType;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import org.junit.jupiter.api.Test;

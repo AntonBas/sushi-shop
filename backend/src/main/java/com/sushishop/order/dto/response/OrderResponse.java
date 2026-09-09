@@ -1,8 +1,8 @@
 package com.sushishop.order.dto.response;
 
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
+import com.sushishop.order.DeliveryMethod;
+import com.sushishop.order.OrderStatus;
+import com.sushishop.order.PaymentMethod;
 import com.sushishop.shared.address.AddressResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 

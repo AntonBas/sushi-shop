@@ -1,4 +1,4 @@
-package com.sushishop.shared.enums;
+package com.sushishop.user;
 
 public enum UserRole {
     CUSTOMER,

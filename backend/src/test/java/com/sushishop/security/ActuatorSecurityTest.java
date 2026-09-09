@@ -1,4 +1,4 @@
-package com.sushishop.shared.config;
+package com.sushishop.security;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,5 +55,17 @@ class ActuatorSecurityTest {
                         throw new AssertionError("Expected /actuator/health to be publicly accessible, got " + status);
                     }
                 });
+    }
+
+    @Test
+    void shouldDisableSwaggerUiOutsideDockerProfile() throws Exception {
+        mockMvc.perform(get("/swagger-ui.html"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldDisableApiDocsOutsideDockerProfile() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isNotFound());
     }
 }

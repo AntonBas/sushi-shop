@@ -3,7 +3,6 @@ package com.sushishop.product;
 import com.sushishop.promotion.Promotion;
 import com.sushishop.review.Review;
 import com.sushishop.shared.BaseEntity;
-import com.sushishop.shared.enums.Category;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;

@@ -1,8 +1,5 @@
 package com.sushishop.order;
 
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
 import org.springframework.data.jpa.domain.Specification;
 
 public class OrderSpecification {

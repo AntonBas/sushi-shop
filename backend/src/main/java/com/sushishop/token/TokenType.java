@@ -1,4 +1,4 @@
-package com.sushishop.shared.enums;
+package com.sushishop.token;
 
 public enum TokenType {
     EMAIL_VERIFICATION,

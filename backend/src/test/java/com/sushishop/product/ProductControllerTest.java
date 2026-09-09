@@ -2,7 +2,6 @@ package com.sushishop.product;
 
 import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

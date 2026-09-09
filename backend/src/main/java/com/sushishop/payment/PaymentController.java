@@ -19,6 +19,7 @@ public class PaymentController {
 
     private final StripeService stripeService;
     private final PaymentService paymentService;
+    private final WebhookIdempotencyService webhookIdempotencyService;
 
     @PostMapping("/order/{orderId}")
     @Operation(summary = "Create Stripe checkout session for order")
@@ -40,9 +41,15 @@ public class PaymentController {
     @Operation(summary = "Stripe webhook endpoint")
     public ResponseEntity<Void> handleWebhook(@RequestBody String payload,
                                               @RequestHeader("Stripe-Signature") String sigHeader) {
-        var sessionId = stripeService.getSessionIdFromWebhook(payload, sigHeader);
-        if (sessionId != null) {
-            paymentService.confirmPayment(sessionId);
+        var event = stripeService.parseCheckoutCompletedEvent(payload, sigHeader);
+
+        if (!webhookIdempotencyService.markProcessed(event.eventId())) {
+            log.info("Duplicate Stripe webhook event ignored: {}", event.eventId());
+            return ResponseEntity.ok().build();
+        }
+
+        if (event.sessionId() != null) {
+            paymentService.confirmPayment(event.sessionId());
         }
         return ResponseEntity.ok().build();
     }

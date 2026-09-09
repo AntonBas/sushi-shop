@@ -1,4 +1,4 @@
-package com.sushishop.shared.enums;
+package com.sushishop.order;
 
 public enum DeliveryMethod {
     DELIVERY,

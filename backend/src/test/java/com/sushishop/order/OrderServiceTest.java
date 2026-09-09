@@ -2,9 +2,6 @@ package com.sushishop.order;
 
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.shared.exception.core.BadRequestException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

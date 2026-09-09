@@ -1,6 +1,5 @@
 package com.sushishop.user;
 
-import com.sushishop.shared.enums.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

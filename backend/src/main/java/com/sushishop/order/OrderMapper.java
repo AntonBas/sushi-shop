@@ -1,12 +1,10 @@
 package com.sushishop.order;
 
-import com.sushishop.product.ProductImageMapper;
-import com.sushishop.shared.address.AddressResponse;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.order.dto.response.OrderItemResponse;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.product.ProductImageMapper;
+import com.sushishop.shared.address.AddressResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

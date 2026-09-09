@@ -1,9 +1,9 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.token.TokenService;
+import com.sushishop.token.TokenType;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

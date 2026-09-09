@@ -2,12 +2,12 @@ package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.security.jwt.JwtUtil;
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
 import com.sushishop.user.User;
 import com.sushishop.user.UserMapper;
 import com.sushishop.user.UserRepository;
+import com.sushishop.user.UserRole;
 import com.sushishop.user.UserService;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;

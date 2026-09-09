@@ -1,11 +1,11 @@
 package com.sushishop.promotion;
 
+import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;

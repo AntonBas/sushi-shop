@@ -1,4 +1,4 @@
-package com.sushishop.shared.enums;
+package com.sushishop.payment;
 
 public enum PaymentStatus {
     PENDING,

@@ -1,6 +1,5 @@
 package com.sushishop.product;
 
-import com.sushishop.shared.enums.Category;
 import jakarta.annotation.Nonnull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

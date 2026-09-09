@@ -1,6 +1,5 @@
 package com.sushishop.user;
 
-import com.sushishop.shared.enums.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
