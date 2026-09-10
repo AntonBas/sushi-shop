@@ -158,6 +158,10 @@ See [`.env.example`](.env.example) for all available variables.
 | Prometheus  | http://localhost:9090                 |
 | Grafana     | http://localhost:3000                 |
 
+Swagger UI is enabled only under the `docker` Spring profile used by this
+Quick Start (local/demo). The default profile disables `springdoc`
+intentionally, so a stricter production deployment would not expose it.
+
 ---
 
 ## Testing
@@ -178,6 +182,15 @@ See [`.env.example`](.env.example) for all available variables.
   `frontend/coverage/index.html`. Test suite is a starting baseline, not
   full coverage yet — see `frontend/src/**/*.test.{ts,tsx}` for what's
   covered so far.
+
+---
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR: backend
+build + tests (Gradle), frontend tests + build (Vitest, `tsc -b`, Vite).
+There is no deployment step — this is CI only, deployment is manual via
+`docker compose up -d` (see Quick Start).
 
 ---
 
