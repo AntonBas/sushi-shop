@@ -8,6 +8,7 @@ Online sushi delivery shop with real-time order tracking.
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ---
 
@@ -177,3 +178,9 @@ These accounts are for demonstration purposes only.
 | User    | user@test.com     | user     |
 | Admin   | admin@test.com    | admin    |
 | Courier | courier@test.com  | courier  |
+
+---
+
+## License
+
+[MIT](LICENSE)
