@@ -45,7 +45,7 @@
 
 .pagination button.active {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   border-color: var(--color-primary);
 }
 
@@ -73,7 +73,7 @@
 
 .loadMore:hover:not(:disabled) {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .loadMore:disabled {

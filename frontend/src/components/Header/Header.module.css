@@ -63,7 +63,7 @@
   top: 2px;
   right: 2px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   font-size: 11px;
   min-width: 18px;
   height: 18px;
@@ -167,7 +167,7 @@
 .loginBtn {
   padding: 8px 20px;
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
   border-radius: 8px;
   text-decoration: none;
   font-size: 14px;
