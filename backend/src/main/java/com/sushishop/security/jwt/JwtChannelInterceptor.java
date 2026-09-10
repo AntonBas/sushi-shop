@@ -3,7 +3,6 @@ package com.sushishop.security.jwt;
 import com.sushishop.order.OrderRepository;
 import com.sushishop.security.Roles;
 import com.sushishop.user.CustomUserDetails;
-import com.sushishop.user.UserRepository;
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
@@ -29,7 +28,6 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private static final String ROLE_COURIER = "ROLE_" + Roles.COURIER;
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
     private final UserCacheService userCacheService;
     private final OrderRepository orderRepository;
 
@@ -65,14 +63,12 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
         var email = jwtUtil.getEmail(token);
         var tokenVersion = jwtUtil.getTokenVersion(token);
 
-        if (userCacheService.getCachedUser(email, tokenVersion) == null) {
+        var cachedUser = userCacheService.getCachedUser(email, tokenVersion);
+        if (cachedUser == null) {
             throw new BadCredentialsException("Unknown user for WebSocket authentication");
         }
 
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new BadCredentialsException("Unknown user for WebSocket authentication"));
-
-        var principal = new CustomUserDetails(user);
+        var principal = new CustomUserDetails(cachedUser);
         return new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
     }
 

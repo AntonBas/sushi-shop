@@ -1,7 +1,6 @@
 package com.sushishop.security.jwt;
 
 import com.sushishop.user.CustomUserDetails;
-import com.sushishop.user.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +19,6 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
     private final UserCacheService userCacheService;
 
     @Override
@@ -34,17 +32,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String email = jwtUtil.getEmail(token);
                 Integer tokenVersion = jwtUtil.getTokenVersion(token);
 
-                var userResponse = userCacheService.getCachedUser(email, tokenVersion);
+                var cachedUser = userCacheService.getCachedUser(email, tokenVersion);
 
-                if (userResponse != null) {
-                    var user = userRepository.findByEmail(email).orElse(null);
-                    if (user != null) {
-                        var principal = new CustomUserDetails(user);
-                        var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
-                        SecurityContextHolder.getContext().setAuthentication(auth);
-                    } else {
-                        SecurityContextHolder.clearContext();
-                    }
+                if (cachedUser != null) {
+                    var principal = new CustomUserDetails(cachedUser);
+                    var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
                 } else {
                     SecurityContextHolder.clearContext();
                 }

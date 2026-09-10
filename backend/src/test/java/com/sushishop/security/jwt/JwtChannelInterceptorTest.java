@@ -1,11 +1,10 @@
 package com.sushishop.security.jwt;
 
 import com.sushishop.order.OrderRepository;
+import com.sushishop.user.CachedAuthUser;
 import com.sushishop.user.CustomUserDetails;
 import com.sushishop.user.User;
-import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserRole;
-import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,9 +31,6 @@ class JwtChannelInterceptorTest {
 
     @Mock
     private JwtUtil jwtUtil;
-
-    @Mock
-    private UserRepository userRepository;
 
     @Mock
     private UserCacheService userCacheService;
@@ -97,8 +93,7 @@ class JwtChannelInterceptorTest {
         when(jwtUtil.getEmail("good")).thenReturn("user@test.com");
         when(jwtUtil.getTokenVersion("good")).thenReturn(0);
         when(userCacheService.getCachedUser("user@test.com", 0))
-                .thenReturn(new UserResponse(1L, "Test", "user@test.com", null, UserRole.CUSTOMER, null));
-        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+                .thenReturn(new CachedAuthUser(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified()));
 
         var result = interceptor.preSend(connectMessage("good"), channel);
 
