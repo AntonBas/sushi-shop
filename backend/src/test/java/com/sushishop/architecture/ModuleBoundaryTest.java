@@ -24,9 +24,6 @@ class ModuleBoundaryTest {
 
     @Test
     void topLevelPackagesShouldBeFreeOfCycles() {
-        // product <-> promotion and product <-> review are genuine, actively used bidirectional
-        // JPA associations (Product.promotions / Product.reviews are read in real business logic),
-        // not accidental coupling - accepted exceptions rather than erosion to prevent.
         ArchRule rule = SlicesRuleDefinition.slices()
                 .matching("com.sushishop.(*)..")
                 .should().beFreeOfCycles()
