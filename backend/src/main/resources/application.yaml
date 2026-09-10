@@ -116,3 +116,6 @@ management:
   endpoint:
     prometheus:
       enabled: true
+    health:
+      show-details: when-authorized
+      roles: MONITORING

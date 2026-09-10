@@ -58,12 +58,14 @@ public class SecurityConfig {
                         .build()
         );
 
-        http.securityMatcher("/actuator/prometheus")
+        http.securityMatcher("/actuator/prometheus", "/actuator/health")
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .userDetailsService(monitoringUsers)
                 .httpBasic(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/actuator/health").permitAll()
+                        .anyRequest().authenticated());
 
         return http.build();
     }
@@ -80,7 +82,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promotions/active").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/promotions/slug/**").permitAll()
