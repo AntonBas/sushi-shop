@@ -1,5 +1,6 @@
 :root {
   --color-primary: #C2410C;
+  --color-primary-rgb: 194, 65, 12;
   --color-primary-hover: #9A3412;
   --color-on-primary: #ffffff;
   --color-bg: #f1f5f9;
@@ -21,6 +22,7 @@
 
 .dark {
   --color-primary: #F97316;
+  --color-primary-rgb: 249, 115, 22;
   --color-primary-hover: #EA580C;
   --color-on-primary: #0f172a;
   --color-bg: #0F172A;
