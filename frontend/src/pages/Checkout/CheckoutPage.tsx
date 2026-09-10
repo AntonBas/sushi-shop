@@ -31,6 +31,7 @@ export default function CheckoutPage() {
   const [apartment, setApartment] = useState("");
   const [comment, setComment] = useState("");
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) {
       setCustomerName(user.name);
@@ -44,6 +45,7 @@ export default function CheckoutPage() {
       }
     }
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();

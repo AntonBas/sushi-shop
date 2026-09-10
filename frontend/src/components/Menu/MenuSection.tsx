@@ -13,18 +13,20 @@ export default function MenuSection() {
   const { products, totalPages, loading, loadMoreProducts } = useProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState<Category | "">("");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const categories: Category[] = Object.keys(CATEGORY_DISPLAY) as Category[];
 
-  useEffect(() => {
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [activeCategory, setActiveCategory] = useState<Category | "">(() => {
     const cat = searchParams.get("category") as Category | "";
-    const q = searchParams.get("search") || "";
-    if (cat && categories.includes(cat)) setActiveCategory(cat);
-    if (q) setSearch(q);
-    loadMoreProducts(0, { search: q || undefined, category: cat || undefined });
+    return cat && categories.includes(cat) ? cat : "";
+  });
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    loadMoreProducts(0, {
+      search: search || undefined,
+      category: activeCategory || undefined,
+    });
   }, []);
 
   const handleSearchChange = (value: string) => {

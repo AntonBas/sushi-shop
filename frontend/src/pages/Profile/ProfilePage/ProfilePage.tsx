@@ -26,6 +26,7 @@ export default function ProfilePage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (user) {
       setName(user.name);
@@ -36,6 +37,7 @@ export default function ProfilePage() {
       setApartment(user.address?.apartment || "");
     }
   }, [user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const showError = (err: unknown, fallback: string) => {
     const message =

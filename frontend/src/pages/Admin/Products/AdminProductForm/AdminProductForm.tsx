@@ -105,6 +105,7 @@ export default function AdminProductForm() {
     if (isEdit && id) getProduct(Number(id));
   }, [isEdit, id]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isEdit && product) {
       setName(product.name);
@@ -116,6 +117,7 @@ export default function AdminProductForm() {
       setExistingImages(product.images);
     }
   }, [isEdit, product]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

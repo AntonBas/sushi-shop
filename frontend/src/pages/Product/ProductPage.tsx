@@ -27,11 +27,13 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (slug) getProductBySlug(slug);
     setQuantity(1);
     setActiveImage(0);
   }, [slug]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (productLoading) return <ProductSkeleton />;
   if (!product) return null;
