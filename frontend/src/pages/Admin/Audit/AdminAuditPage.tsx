@@ -42,6 +42,7 @@ export default function AdminAuditPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by action"
         >
           <option value="">All Actions</option>
           <option value="CREATE">CREATE</option>

@@ -141,6 +141,7 @@ export default function AdminOrdersPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by status"
         >
           <option value="">All Statuses</option>
           {[
@@ -164,6 +165,7 @@ export default function AdminOrdersPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by delivery method"
         >
           <option value="">All Methods</option>
           <option value="DELIVERY">Delivery</option>
@@ -176,6 +178,7 @@ export default function AdminOrdersPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by payment method"
         >
           <option value="">All Payments</option>
           <option value="ONLINE">Online</option>

@@ -100,6 +100,7 @@ export default function AdminProductsPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by category"
         >
           <option value="">All Categories</option>
           {categories.map((c) => (
@@ -116,6 +117,7 @@ export default function AdminProductsPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by availability"
         >
           <option value="">All Status</option>
           <option value="true">Available</option>
