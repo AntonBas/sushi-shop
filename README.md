@@ -162,10 +162,22 @@ See [`.env.example`](.env.example) for all available variables.
 
 ## Testing
 
+### Backend
+
 - **Unit tests:** JUnit 5 + Mockito — services, mappers, validators, aspects
 - **Integration tests:** Testcontainers with real PostgreSQL — Flyway migrations, repository queries
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
+- **Coverage:** Jacoco (~78% instruction coverage). Run `./gradlew jacocoTestReport`
+  and open `backend/build/reports/jacoco/test/html/index.html`.
+
+### Frontend
+
+- **Unit/component tests:** Vitest + React Testing Library
+- **Coverage:** `npm run test:coverage` (v8 provider), report at
+  `frontend/coverage/index.html`. Test suite is a starting baseline, not
+  full coverage yet — see `frontend/src/**/*.test.{ts,tsx}` for what's
+  covered so far.
 
 ---
 
