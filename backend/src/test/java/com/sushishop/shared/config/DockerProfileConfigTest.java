@@ -36,9 +36,9 @@ public class DockerProfileConfigTest {
                         "springdoc.mail.host"
                 );
 
-        assertThat(properties.get("springdoc.api-docs.enabled")).isEqualTo(true);
-        assertThat(properties.get("logging.level.org.springframework.cache")).isEqualTo("WARN");
-        assertThat(properties.get("logging.level.org.springframework.data.redis")).isEqualTo("WARN");
+        assertThat(Objects.toString(properties.get("springdoc.api-docs.enabled"))).isEqualTo("true");
+        assertThat(Objects.toString(properties.get("logging.level.org.springframework.cache"))).isEqualTo("WARN");
+        assertThat(Objects.toString(properties.get("logging.level.org.springframework.data.redis"))).isEqualTo("WARN");
         assertThat(Objects.toString(properties.get("spring.jpa.show-sql"))).isEqualTo("false");
     }
 }
