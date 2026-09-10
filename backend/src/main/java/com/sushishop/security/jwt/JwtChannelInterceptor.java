@@ -56,14 +56,12 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
         }
 
         var token = header.substring(7);
-        if (!jwtUtil.validateToken(token)) {
+        var payload = jwtUtil.parseToken(token);
+        if (payload == null) {
             throw new BadCredentialsException("Invalid WebSocket authentication token");
         }
 
-        var email = jwtUtil.getEmail(token);
-        var tokenVersion = jwtUtil.getTokenVersion(token);
-
-        var cachedUser = userCacheService.getCachedUser(email, tokenVersion);
+        var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
         if (cachedUser == null) {
             throw new BadCredentialsException("Unknown user for WebSocket authentication");
         }

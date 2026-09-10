@@ -114,7 +114,7 @@ export default function ProductPage() {
                   onClick={() => setActiveImage(i)}
                   className={`${styles.thumb} ${i === activeImage ? styles.activeThumb : ""}`}
                 >
-                  <img src={img.url} alt="" />
+                  <img src={img.url} alt="" loading="lazy" />
                 </button>
               ))}
             </div>

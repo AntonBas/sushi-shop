@@ -34,20 +34,15 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String getEmail(String token) {
-        return parseClaims(token).getSubject();
+    public record JwtPayload(String email, Integer tokenVersion) {
     }
 
-    public Integer getTokenVersion(String token) {
-        return parseClaims(token).get("tokenVersion", Integer.class);
-    }
-
-    public boolean validateToken(String token) {
+    public JwtPayload parseToken(String token) {
         try {
-            parseClaims(token);
-            return true;
+            var claims = parseClaims(token);
+            return new JwtPayload(claims.getSubject(), claims.get("tokenVersion", Integer.class));
         } catch (JwtException e) {
-            return false;
+            return null;
         }
     }
 

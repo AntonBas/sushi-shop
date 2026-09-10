@@ -155,6 +155,7 @@ export default function AdminProductsPage() {
                         src={product.mainImage}
                         alt={product.name}
                         className={styles.thumb}
+                        loading="lazy"
                       />
                     ) : (
                       <div className={styles.noImage}>—</div>

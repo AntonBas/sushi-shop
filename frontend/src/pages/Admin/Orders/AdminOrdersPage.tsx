@@ -292,6 +292,7 @@ export default function AdminOrdersPage() {
                                       src={item.mainImage}
                                       alt={item.productName}
                                       className={styles.itemImage}
+                                      loading="lazy"
                                     />
                                   )}
                                   <span>

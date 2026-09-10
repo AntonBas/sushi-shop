@@ -40,6 +40,7 @@ export default function CartPage() {
                 src={item.mainImage}
                 alt={item.name}
                 className={styles.itemImage}
+                loading="lazy"
               />
             )}
             <div className={styles.itemInfo}>

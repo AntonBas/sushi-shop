@@ -54,10 +54,8 @@ public class ProductQueryService {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
 
-        List<Product> relatedProducts = productRepository.findRelated(product.getCategory(), id)
-                .stream()
-                .limit(RELATED_PRODUCTS_LIMIT)
-                .toList();
+        List<Product> relatedProducts = productRepository.findRelated(
+                product.getCategory(), id, Pageable.ofSize(RELATED_PRODUCTS_LIMIT));
 
         return enrichProducts(relatedProducts);
     }

@@ -79,7 +79,7 @@ class JwtChannelInterceptorTest {
 
     @Test
     void shouldRejectConnectWithInvalidToken() {
-        when(jwtUtil.validateToken("bad")).thenReturn(false);
+        when(jwtUtil.parseToken("bad")).thenReturn(null);
         var message = connectMessage("bad");
 
         assertThatThrownBy(() -> interceptor.preSend(message, channel))
@@ -89,9 +89,7 @@ class JwtChannelInterceptorTest {
     @Test
     void shouldAuthenticateConnectWithValidToken() {
         var user = buildUser("user@test.com", UserRole.CUSTOMER);
-        when(jwtUtil.validateToken("good")).thenReturn(true);
-        when(jwtUtil.getEmail("good")).thenReturn("user@test.com");
-        when(jwtUtil.getTokenVersion("good")).thenReturn(0);
+        when(jwtUtil.parseToken("good")).thenReturn(new JwtUtil.JwtPayload("user@test.com", 0));
         when(userCacheService.getCachedUser("user@test.com", 0))
                 .thenReturn(new CachedAuthUser(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified()));
 

@@ -28,11 +28,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
 
-            if (jwtUtil.validateToken(token)) {
-                String email = jwtUtil.getEmail(token);
-                Integer tokenVersion = jwtUtil.getTokenVersion(token);
+            var payload = jwtUtil.parseToken(token);
 
-                var cachedUser = userCacheService.getCachedUser(email, tokenVersion);
+            if (payload != null) {
+                var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
 
                 if (cachedUser != null) {
                     var principal = new CustomUserDetails(cachedUser);

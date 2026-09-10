@@ -12,7 +12,7 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link to={`/products/${product.slug}`} className={styles.card}>
       <div className={styles.image}>
-        <img src={product.mainImage || "/placeholder.jpg"} alt={product.name} />
+        <img src={product.mainImage || "/placeholder.jpg"} alt={product.name} loading="lazy" />
         {!product.available && (
           <span className={styles.badge}>Unavailable</span>
         )}

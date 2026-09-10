@@ -132,7 +132,7 @@ public class ProductQueryServiceTest {
         var listResponse = createListResponse(2L, "Related", 3.0);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.findRelated(Category.ROLL, 1L)).thenReturn(List.of(relatedProduct));
+        when(productRepository.findRelated(eq(Category.ROLL), eq(1L), any())).thenReturn(List.of(relatedProduct));
         when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(2L, 3.0));
         when(enrichmentService.calculateDiscountedPrice(relatedProduct)).thenReturn(null);
         when(productMapper.toListResponse(eq(relatedProduct), eq(3.0), any())).thenReturn(listResponse);
