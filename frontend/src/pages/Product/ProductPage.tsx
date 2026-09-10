@@ -94,14 +94,18 @@ export default function ProductPage() {
             {product.images.length > 1 && (
               <>
                 <button
+                  type="button"
                   onClick={prevImage}
                   className={`${styles.arrow} ${styles.arrowLeft}`}
+                  aria-label="Previous image"
                 >
                   <ChevronLeft size={24} />
                 </button>
                 <button
+                  type="button"
                   onClick={nextImage}
                   className={`${styles.arrow} ${styles.arrowRight}`}
+                  aria-label="Next image"
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -113,8 +117,10 @@ export default function ProductPage() {
               {product.images.map((img, i) => (
                 <button
                   key={img.id}
+                  type="button"
                   onClick={() => setActiveImage(i)}
                   className={`${styles.thumb} ${i === activeImage ? styles.activeThumb : ""}`}
+                  aria-label={`View image ${i + 1}`}
                 >
                   <img src={img.url} alt="" loading="lazy" />
                 </button>
@@ -175,11 +181,21 @@ export default function ProductPage() {
 
           <div className={styles.actions}>
             <div className={styles.quantity}>
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                aria-label="Decrease quantity"
+              >
                 −
               </button>
               <span>{quantity}</span>
-              <button onClick={() => setQuantity((q) => q + 1)}>+</button>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
             </div>
             <Button onClick={handleAddToCart} className={styles.addBtn}>
               <ShoppingCart size={18} /> Add to Cart —{" "}

@@ -124,8 +124,10 @@ export default function AdminPromotionForm() {
     <div className={styles.page}>
       <div className={styles.header}>
         <button
+          type="button"
           onClick={() => navigate("/admin/promotions")}
           className={styles.backBtn}
+          aria-label="Back to promotions"
         >
           <ArrowLeft size={20} />
         </button>

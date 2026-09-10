@@ -176,8 +176,10 @@ export default function AdminProductsPage() {
                   <td>{product.price}₴</td>
                   <td>
                     <button
+                      type="button"
                       onClick={() => handleToggle(product.id)}
                       className={styles.toggleBtn}
+                      aria-label={product.available ? "Mark unavailable" : "Mark available"}
                     >
                       {product.available ? (
                         <ToggleRight size={20} className={styles.on} />
@@ -189,19 +191,23 @@ export default function AdminProductsPage() {
                   <td>
                     <div className={styles.actions}>
                       <button
+                        type="button"
                         onClick={() =>
                           navigate(`/admin/products/${product.id}/edit`)
                         }
                         className={styles.editBtn}
+                        aria-label="Edit product"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setDeleteId(product.id);
                           setDeleteName(product.name);
                         }}
                         className={styles.deleteBtn}
+                        aria-label="Delete product"
                       >
                         <Trash2 size={16} />
                       </button>

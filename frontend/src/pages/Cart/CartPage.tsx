@@ -53,8 +53,10 @@ export default function CartPage() {
                 {item.price * item.quantity}₴
               </span>
               <button
+                type="button"
                 onClick={() => removeItem(item.productId)}
                 className={styles.removeBtn}
+                aria-label={`Remove ${item.name} from cart`}
               >
                 <Trash2 size={16} />
               </button>

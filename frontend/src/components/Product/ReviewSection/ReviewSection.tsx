@@ -167,6 +167,7 @@ export default function ReviewSection({ productId }: Props) {
                 type="button"
                 onClick={() => setNewRating(star)}
                 className={styles.starBtn}
+                aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
               >
                 <Star
                   size={20}
@@ -215,14 +216,18 @@ export default function ReviewSection({ productId }: Props) {
                 {review.userId === user?.id && (
                   <div className={styles.actions}>
                     <button
+                      type="button"
                       onClick={() => startEdit(review)}
                       className={styles.editBtn}
+                      aria-label="Edit review"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDeleteId(review.id)}
                       className={styles.deleteBtn}
+                      aria-label="Delete review"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -238,6 +243,7 @@ export default function ReviewSection({ productId }: Props) {
                         type="button"
                         onClick={() => setEditRating(star)}
                         className={styles.starBtn}
+                        aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
                       >
                         <Star
                           size={16}
@@ -288,14 +294,18 @@ export default function ReviewSection({ productId }: Props) {
                         {isAdmin && (
                           <div className={styles.actions}>
                             <button
+                              type="button"
                               onClick={() => startEditReply(reply)}
                               className={styles.editBtn}
+                              aria-label="Edit reply"
                             >
                               <Pencil size={12} />
                             </button>
                             <button
+                              type="button"
                               onClick={() => setDeleteReplyId(reply.id)}
                               className={styles.deleteBtn}
+                              aria-label="Delete reply"
                             >
                               <Trash2 size={12} />
                             </button>

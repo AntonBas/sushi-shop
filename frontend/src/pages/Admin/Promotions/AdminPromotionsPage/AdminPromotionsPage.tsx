@@ -122,19 +122,23 @@ export default function AdminPromotionsPage() {
                     <td data-label="Actions">
                       <div className={styles.actions}>
                         <button
+                          type="button"
                           onClick={() =>
                             navigate(`/admin/promotions/${promo.id}/edit`)
                           }
                           className={styles.editBtn}
+                          aria-label="Edit promotion"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
+                          type="button"
                           onClick={() => {
                             setDeleteId(promo.id);
                             setDeleteTitle(promo.title);
                           }}
                           className={styles.deleteBtn}
+                          aria-label="Delete promotion"
                         >
                           <Trash2 size={16} />
                         </button>
