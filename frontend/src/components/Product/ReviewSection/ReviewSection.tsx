@@ -171,8 +171,8 @@ export default function ReviewSection({ productId }: Props) {
               >
                 <Star
                   size={20}
-                  fill={star <= newRating ? "#fbbf24" : "none"}
-                  stroke="#fbbf24"
+                  fill={star <= newRating ? "var(--color-rating)" : "none"}
+                  stroke="var(--color-rating)"
                 />
               </button>
             ))}
@@ -201,8 +201,8 @@ export default function ReviewSection({ productId }: Props) {
                     <Star
                       key={i}
                       size={14}
-                      fill={i < review.rating ? "#fbbf24" : "none"}
-                      stroke="#fbbf24"
+                      fill={i < review.rating ? "var(--color-rating)" : "none"}
+                      stroke="var(--color-rating)"
                     />
                   ))}
                 </div>
@@ -247,8 +247,8 @@ export default function ReviewSection({ productId }: Props) {
                       >
                         <Star
                           size={16}
-                          fill={star <= editRating ? "#fbbf24" : "none"}
-                          stroke="#fbbf24"
+                          fill={star <= editRating ? "var(--color-rating)" : "none"}
+                          stroke="var(--color-rating)"
                         />
                       </button>
                     ))}
