@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useProducts } from "../../../../hooks/features/useProducts";
-import { useNotification } from "../../../../context/NotificationContext";
+import { useNotification } from "../../../../context/useNotification";
 import * as promotionsApi from "../../../../api/promotions";
 import Button from "../../../../components/UI/Button/Button";
 import Input from "../../../../components/UI/Input/Input";

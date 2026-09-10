@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
-import { useNotification } from "../../../context/NotificationContext";
+import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import { getAuthToken } from "../../../api/authToken";
 import Loading from "../../../components/UI/Loading/Loading";

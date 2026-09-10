@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../../context/AuthContext";
-import { useNotification } from "../../../context/NotificationContext";
+import { useAuth } from "../../../context/useAuth";
+import { useNotification } from "../../../context/useNotification";
 import { useApi } from "../../../hooks/common/useApi";
 import * as usersApi from "../../../api/user";
 import Button from "../../../components/UI/Button/Button";

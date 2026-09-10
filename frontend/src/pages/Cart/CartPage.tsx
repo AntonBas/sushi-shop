@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Trash2, ShoppingBag } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../context/useCart";
 import Button from "../../components/UI/Button/Button";
 import styles from "./CartPage.module.css";
 

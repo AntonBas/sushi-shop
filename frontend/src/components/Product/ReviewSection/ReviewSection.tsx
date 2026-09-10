@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { Star, Pencil, Trash2 } from "lucide-react";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../../context/useAuth";
 import { useApi } from "../../../hooks/common/useApi";
 import * as reviewsApi from "../../../api/reviews";
-import { useNotification } from "../../../context/NotificationContext";
+import { useNotification } from "../../../context/useNotification";
 import Button from "../../UI/Button/Button";
 import Pagination from "../../UI/Pagination/Pagination";
 import Modal from "../../UI/Modal/Modal";

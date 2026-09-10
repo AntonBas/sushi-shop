@@ -10,8 +10,8 @@ import {
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 import { useProducts } from "../../hooks/features/useProducts";
-import { useCart } from "../../context/CartContext";
-import { useNotification } from "../../context/NotificationContext";
+import { useCart } from "../../context/useCart";
+import { useNotification } from "../../context/useNotification";
 import { CATEGORY_DISPLAY } from "../../types/enums";
 import ProductSkeleton from "../../components/Product/ProductSkeleton/ProductSkeleton";
 import Button from "../../components/UI/Button/Button";

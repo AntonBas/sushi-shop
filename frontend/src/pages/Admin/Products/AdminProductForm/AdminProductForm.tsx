@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X, GripVertical } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
-import { useNotification } from "../../../../context/NotificationContext";
+import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
 import Button from "../../../../components/UI/Button/Button";
 import Input from "../../../../components/UI/Input/Input";

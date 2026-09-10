@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
-import { useNotification } from "../../../../context/NotificationContext";
+import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";

@@ -1,22 +1,9 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
 import { clearAuthToken, getAuthToken, setAuthToken } from "../api/authToken";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
-
-interface AuthContextType {
-  user: UserResponse | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  isCourier: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<UserResponse>;
-  logout: () => void;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from "./auth-context";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -95,10 +82,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
 };

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/useAuth";
+import { useCart } from "../../context/useCart";
 import { useOrders } from "../../hooks/features/useOrders";
 import { useApi } from "../../hooks/common/useApi";
-import { useNotification } from "../../context/NotificationContext";
+import { useNotification } from "../../context/useNotification";
 import * as paymentsApi from "../../api/payments";
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";

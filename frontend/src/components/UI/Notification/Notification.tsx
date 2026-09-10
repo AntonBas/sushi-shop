@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react'
 import clsx from 'clsx'
-import type { NotificationType } from '../../../context/NotificationContext'
+import type { NotificationType } from '../../../context/notification-context'
 import styles from './Notification.module.css'
 
 interface Props {
