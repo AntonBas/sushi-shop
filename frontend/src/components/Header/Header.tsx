@@ -42,6 +42,16 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setIsDropdownOpen(false);
+      setIsMobileOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const handleLogout = () => {
     logout();
     setIsDropdownOpen(false);
@@ -74,15 +84,23 @@ export default function Header() {
             {count > 0 && <span className={styles.badge}>{count}</span>}
           </Link>
 
-          <button onClick={toggleTheme} className={styles.iconBtn}>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={styles.iconBtn}
+            aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+          >
             {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
           </button>
 
           {isAuthenticated ? (
             <div className={styles.dropdown} ref={dropdownRef}>
               <button
+                type="button"
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className={styles.iconBtn}
+                aria-haspopup="menu"
+                aria-expanded={isDropdownOpen}
               >
                 <User size={18} />
                 <span className={styles.userName}>
@@ -91,18 +109,19 @@ export default function Header() {
                 <ChevronDown size={14} />
               </button>
               {isDropdownOpen && (
-                <div className={styles.dropdownMenu}>
+                <div className={styles.dropdownMenu} role="menu">
                   <div className={styles.dropdownUser}>
                     <strong>{user?.name}</strong>
                     <span>{user?.email}</span>
                   </div>
                   <hr />
-                  <Link to="/profile" onClick={() => setIsDropdownOpen(false)}>
+                  <Link to="/profile" onClick={() => setIsDropdownOpen(false)} role="menuitem">
                     <User size={14} /> My Profile
                   </Link>
                   <Link
                     to="/profile/orders"
                     onClick={() => setIsDropdownOpen(false)}
+                    role="menuitem"
                   >
                     <ShoppingCart size={14} /> My Orders
                   </Link>
@@ -110,13 +129,14 @@ export default function Header() {
                     <Link
                       to={adminLink}
                       onClick={() => setIsDropdownOpen(false)}
+                      role="menuitem"
                     >
                       <Shield size={14} />{" "}
                       {isCourier ? "Orders" : "Admin Panel"}
                     </Link>
                   )}
                   <hr />
-                  <button onClick={handleLogout}>
+                  <button type="button" onClick={handleLogout} role="menuitem">
                     <LogOut size={14} /> Logout
                   </button>
                 </div>
@@ -129,8 +149,11 @@ export default function Header() {
           )}
 
           <button
+            type="button"
             onClick={() => setIsMobileOpen(!isMobileOpen)}
             className={styles.mobileBtn}
+            aria-label="Toggle menu"
+            aria-expanded={isMobileOpen}
           >
             <MenuIcon size={24} />
           </button>
@@ -158,7 +181,7 @@ export default function Header() {
                   {isCourier ? "Orders" : "Admin Panel"}
                 </Link>
               )}
-              <button onClick={handleLogout}>Logout</button>
+              <button type="button" onClick={handleLogout}>Logout</button>
             </>
           ) : (
             <Link to="/login" onClick={() => setIsMobileOpen(false)}>

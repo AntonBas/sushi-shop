@@ -50,11 +50,13 @@ export default function Notification({ id, message, type, isVisible, onClose, du
       onAnimationEnd={() => {
         if (isHiding) onClose(id)
       }}
+      role="status"
+      aria-live="polite"
     >
       <div className={styles.content}>
         <span className={styles.icon}>{icons[type]}</span>
         <span className={styles.message}>{message}</span>
-        <button className={styles.close} onClick={() => onClose(id)}>×</button>
+        <button type="button" className={styles.close} onClick={() => onClose(id)} aria-label="Dismiss notification">×</button>
       </div>
       <div className={styles.progress}>
         <div className={styles.progressBar} style={{ animationDuration: `${duration}ms` }} />
