@@ -177,6 +177,10 @@
   font-size: 14px;
 }
 
+.searchBox:focus-within {
+  border-color: var(--color-primary);
+}
+
 .selectedList {
   display: flex;
   flex-wrap: wrap;
