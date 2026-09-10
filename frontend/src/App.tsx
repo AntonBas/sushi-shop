@@ -27,6 +27,7 @@ import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import MenuPage from "./pages/Menu/MenuPage";
 import OrderSuccessPage from "./pages/Order/Success/SuccessPage";
 import OrderCancelPage from "./pages/Order/Cancel/CancelPage";
+import NotFoundPage from "./pages/NotFound/NotFoundPage";
 
 function App() {
   const { loading } = useAuth();
@@ -80,6 +81,7 @@ function App() {
           <Route index element={<ProfilePage />} />
           <Route path="orders" element={<MyOrdersPage />} />
         </Route>
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="/verify-email" element={<EmailVerification />} />
       <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
