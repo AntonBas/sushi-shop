@@ -13,7 +13,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "review_replies")
+@Table(name = "review_replies", indexes = {
+        @Index(name = "idx_review_replies_review_id", columnList = "review_id"),
+        @Index(name = "idx_review_replies_user_id", columnList = "user_id")
+})
 @EqualsAndHashCode(callSuper = true, exclude = {"review", "user"})
 public class ReviewReply extends BaseEntity {
 

@@ -1,9 +1,11 @@
 package com.sushishop.product;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.review.ReviewRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
@@ -28,6 +30,8 @@ public class ProductService {
     private final ProductEnrichmentService enrichmentService;
     private final ProductImageService productImageService;
     private final ProductCacheService productCacheService;
+    private final FileStorageService fileStorageService;
+    private final ReviewRepository reviewRepository;
 
     @Auditable(action = AuditAction.CREATE, entity = "Product")
     @Transactional
@@ -104,7 +108,7 @@ public class ProductService {
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         var slug = product.getSlug();
 
-        product.getProductImages().forEach(img -> productImageService.deleteImage(id, img.getId()));
+        product.getProductImages().forEach(img -> fileStorageService.delete(img.getUrl()));
         product.getPromotions().clear();
         productRepository.save(product);
         productRepository.delete(product);
@@ -118,7 +122,7 @@ public class ProductService {
         var discountPercent = enrichmentService.getDiscountPercent(product);
         var promotionTitle = enrichmentService.getPromotionTitle(product);
         var rating = enrichmentService.getAverageRatings(List.of(product.getId())).get(product.getId());
-        var reviewCount = product.getReviews() != null ? product.getReviews().size() : 0;
+        var reviewCount = (int) reviewRepository.countByProductId(product.getId());
 
         return new ProductResponse(
                 base.id(), base.slug(), base.name(), base.description(),

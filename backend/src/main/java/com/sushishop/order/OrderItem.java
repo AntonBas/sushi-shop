@@ -13,7 +13,10 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "order_items")
+@Table(name = "order_items", indexes = {
+        @Index(name = "idx_order_items_order_id", columnList = "order_id"),
+        @Index(name = "idx_order_items_product_id", columnList = "product_id")
+})
 @EqualsAndHashCode(exclude = {"order", "product"})
 public class OrderItem {
 

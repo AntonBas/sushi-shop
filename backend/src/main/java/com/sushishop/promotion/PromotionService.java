@@ -70,10 +70,7 @@ public class PromotionService {
 
     @Transactional(readOnly = true)
     public List<PromotionResponse> getActive() {
-        return promotionRepository.findActiveAt(LocalDateTime.now())
-                .stream()
-                .map(assembler::toResponse)
-                .toList();
+        return assembler.toResponseList(promotionRepository.findActiveAt(LocalDateTime.now()));
     }
 
     @Transactional(readOnly = true)
@@ -91,9 +88,7 @@ public class PromotionService {
         }
 
         var promotions = promotionRepository.findPromotionsByIds(ids);
-        var responses = promotions.stream()
-                .map(assembler::toResponse)
-                .toList();
+        var responses = assembler.toResponseList(promotions);
 
         return new PageImpl<>(responses, pageable, idsPage.getTotalElements());
     }

@@ -64,7 +64,7 @@ public class OrderCreationServiceTest {
                 DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
         when(orderRepository.save(any())).thenReturn(order);
         when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
 
@@ -85,7 +85,7 @@ public class OrderCreationServiceTest {
         var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).available(false).build();
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
 
         assertThatThrownBy(() -> orderCreationService.create(request, "test@test.com"))
                 .isInstanceOf(BadRequestException.class)

@@ -151,7 +151,7 @@ public class PromotionServiceTest {
         var mappedResponse = createPromotionResponse();
 
         when(promotionRepository.findActiveAt(any(LocalDateTime.class))).thenReturn(List.of(promotion));
-        when(assembler.toResponse(any())).thenReturn(mappedResponse);
+        when(assembler.toResponseList(List.of(promotion))).thenReturn(List.of(mappedResponse));
 
         var result = promotionService.getActive();
 
@@ -178,7 +178,7 @@ public class PromotionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
         when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
                 .thenReturn(List.of(promotion));
-        when(assembler.toResponse(any())).thenReturn(mappedResponse);
+        when(assembler.toResponseList(List.of(promotion))).thenReturn(List.of(mappedResponse));
 
         var result = promotionService.getAll(Pageable.unpaged(), "week");
 
@@ -206,7 +206,7 @@ public class PromotionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
         when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
                 .thenReturn(List.of(promotion));
-        when(assembler.toResponse(any())).thenReturn(mappedResponse);
+        when(assembler.toResponseList(List.of(promotion))).thenReturn(List.of(mappedResponse));
 
         var result = promotionService.getAll(Pageable.unpaged(), null);
 

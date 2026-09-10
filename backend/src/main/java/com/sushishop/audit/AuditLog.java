@@ -16,7 +16,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "audit_logs")
+@Table(name = "audit_logs", indexes = {
+        @Index(name = "idx_audit_log_entity", columnList = "entity_name, entity_id"),
+        @Index(name = "idx_audit_log_performed_at", columnList = "performed_at")
+})
 public class AuditLog {
 
     @Id

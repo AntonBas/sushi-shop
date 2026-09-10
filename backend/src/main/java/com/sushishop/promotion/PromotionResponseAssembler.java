@@ -22,10 +22,24 @@ public class PromotionResponseAssembler {
     private final ProductEnrichmentService productEnrichmentService;
 
     public PromotionResponse toResponse(Promotion promotion) {
-        List<Long> productIds = promotion.getProducts().stream().map(Product::getId).toList();
+        return toResponseList(List.of(promotion)).get(0);
+    }
+
+    public List<PromotionResponse> toResponseList(List<Promotion> promotions) {
+        if (promotions.isEmpty()) return List.of();
+
+        List<Long> productIds = promotions.stream()
+                .flatMap(p -> p.getProducts().stream())
+                .map(Product::getId)
+                .distinct()
+                .toList();
 
         Map<Long, Double> ratings = productEnrichmentService.getAverageRatings(productIds);
 
+        return promotions.stream().map(promotion -> assemble(promotion, ratings)).toList();
+    }
+
+    private PromotionResponse assemble(Promotion promotion, Map<Long, Double> ratings) {
         BigDecimal discount = promotion.isCurrentlyActive() ? promotion.getDiscountPercent().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP) : null;
 
         List<ProductListResponse> productResponses = promotion.getProducts().stream().map(product -> {

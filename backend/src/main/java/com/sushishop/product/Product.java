@@ -75,7 +75,8 @@ public class Product extends BaseEntity {
     @JoinTable(
             name = "promotion_products",
             joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "promotion_id")
+            inverseJoinColumns = @JoinColumn(name = "promotion_id"),
+            indexes = @Index(name = "idx_promotion_products_product_id", columnList = "product_id")
     )
     @BatchSize(size = 20)
     @Builder.Default
