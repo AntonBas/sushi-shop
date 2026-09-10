@@ -80,6 +80,7 @@ public class SecurityConfig {
                                 "default-src 'self'; frame-ancestors 'none'; object-src 'none'"))
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
