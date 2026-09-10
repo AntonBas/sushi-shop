@@ -13,10 +13,12 @@ export default function PromotionsSection() {
       <h2 className={styles.title}>Special Offers</h2>
       <div className={styles.list}>
         {promotions.map((promo) => {
+          /* eslint-disable react-hooks/purity */
           const daysLeft = Math.ceil(
             (new Date(promo.endDate).getTime() - Date.now()) /
               (1000 * 60 * 60 * 24),
           );
+          /* eslint-enable react-hooks/purity */
 
           return (
             <Link

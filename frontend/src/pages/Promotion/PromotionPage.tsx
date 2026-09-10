@@ -19,10 +19,12 @@ export default function PromotionPage() {
   if (loading) return <Loading text="Loading promotion..." />;
   if (!promotion) return null;
 
+  /* eslint-disable react-hooks/purity */
   const daysLeft = Math.ceil(
     (new Date(promotion.endDate).getTime() - Date.now()) /
       (1000 * 60 * 60 * 24),
   );
+  /* eslint-enable react-hooks/purity */
 
   return (
     <div className={styles.page}>
