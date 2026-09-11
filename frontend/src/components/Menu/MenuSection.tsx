@@ -27,7 +27,8 @@ export default function MenuSection() {
       search: search || undefined,
       category: activeCategory || undefined,
     });
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadMoreProducts]);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);

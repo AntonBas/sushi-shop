@@ -19,7 +19,7 @@ export default function AdminPromotionForm() {
   const { showNotification } = useNotification();
   const createApi = useApi<PromotionResponse>();
   const updateApi = useApi<PromotionResponse>();
-  const getApi = useApi<PromotionResponse>();
+  const { loading: getLoading, execute: getPromotion } = useApi<PromotionResponse>();
   const { products, totalPages, loading, loadProducts } = useProducts();
 
   const [title, setTitle] = useState("");
@@ -37,8 +37,7 @@ export default function AdminPromotionForm() {
 
   useEffect(() => {
     if (isEdit) {
-      getApi
-        .execute(() => promotionsApi.getPromotionById(Number(id)))
+      getPromotion(() => promotionsApi.getPromotionById(Number(id)))
         .then((promo) => {
           if (!promo) return;
           setTitle(promo.title);
@@ -53,7 +52,7 @@ export default function AdminPromotionForm() {
           );
         });
     }
-  }, [id, getApi.execute]);
+  }, [id, isEdit, getPromotion]);
 
   useEffect(() => {
     loadProducts(productPage, {
@@ -118,7 +117,7 @@ export default function AdminPromotionForm() {
     }
   };
 
-  if (isEdit && getApi.loading) return <Loading text="Loading promotion..." />;
+  if (isEdit && getLoading) return <Loading text="Loading promotion..." />;
 
   return (
     <div className={styles.page}>

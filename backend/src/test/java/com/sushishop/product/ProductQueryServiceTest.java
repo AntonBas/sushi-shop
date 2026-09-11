@@ -89,6 +89,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReturnEmptyPageWhenNoProducts() {
         var pageable = PageRequest.of(0, 12);
         var page = new PageImpl<Product>(List.of(), pageable, 0);

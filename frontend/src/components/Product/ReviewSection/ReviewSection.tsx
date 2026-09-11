@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Star, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "../../../context/useAuth";
 import { useApi } from "../../../hooks/common/useApi";
@@ -36,16 +36,16 @@ export default function ReviewSection({ productId }: Props) {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
-  const loadReviews = (page: number) => {
+  const loadReviews = useCallback((page: number) => {
     reviewsApi.getReviews(productId, page).then((res) => {
       setReviews(res.content);
       setTotalReviewPages(res.page.totalPages);
     });
-  };
+  }, [productId]);
 
   useEffect(() => {
     loadReviews(0);
-  }, [productId]);
+  }, [loadReviews]);
 
   const showError = (err: unknown, fallback: string) => {
     const message =

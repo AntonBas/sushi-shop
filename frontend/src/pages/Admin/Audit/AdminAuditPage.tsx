@@ -24,7 +24,7 @@ export default function AdminAuditPage() {
       start: start || undefined,
       end: end || undefined,
     });
-  }, [page, action, entityName, entityId, performedBy, start, end]);
+  }, [page, action, entityName, entityId, performedBy, start, end, loadLogs]);
 
   if (loading) return <Loading text="Loading audit logs..." />;
 

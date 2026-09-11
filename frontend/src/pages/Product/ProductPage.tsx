@@ -32,7 +32,7 @@ export default function ProductPage() {
     if (slug) getProductBySlug(slug);
     setQuantity(1);
     setActiveImage(0);
-  }, [slug]);
+  }, [slug, getProductBySlug]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
   if (productLoading) return <ProductSkeleton />;

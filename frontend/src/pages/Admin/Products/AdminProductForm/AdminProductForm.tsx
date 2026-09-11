@@ -103,7 +103,7 @@ export default function AdminProductForm() {
 
   useEffect(() => {
     if (isEdit && id) getProduct(Number(id));
-  }, [isEdit, id]);
+  }, [isEdit, id, getProduct]);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {

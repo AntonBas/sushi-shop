@@ -23,7 +23,7 @@ export default function Notification({ id, message, type, isVisible, onClose, du
     if (!isVisible && !isHiding) {
       setIsHiding(true)
     }
-  }, [isVisible])
+  }, [isVisible, isHiding])
   /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {

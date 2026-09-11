@@ -74,6 +74,7 @@ public class OrderQueryServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReturnEmptyPageWhenNoOrders() {
         Pageable pageable = PageRequest.of(0, 20);
         var page = new PageImpl<Order>(List.of(), pageable, 0);

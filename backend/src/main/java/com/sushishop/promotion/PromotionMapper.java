@@ -8,5 +8,6 @@ import org.mapstruct.Mapping;
 public interface PromotionMapper {
 
     @Mapping(target = "products", ignore = true)
+    @Mapping(target = "isCurrentlyActive", source = "currentlyActive")
     PromotionResponse toResponse(Promotion promotion);
 }

@@ -29,7 +29,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [removeNotification]);
 
   useEffect(() => {
-    return () => timeoutsRef.current.forEach(timeout => clearTimeout(timeout));
+    const timeouts = timeoutsRef.current;
+    return () => timeouts.forEach(timeout => clearTimeout(timeout));
   }, []);
 
   return (

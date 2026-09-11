@@ -12,7 +12,7 @@ export default function OrderSuccessPage() {
 
   useEffect(() => {
     clearCart();
-  }, []);
+  }, [clearCart]);
 
   return (
     <div className={styles.page}>

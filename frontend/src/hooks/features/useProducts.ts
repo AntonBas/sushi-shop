@@ -6,52 +6,52 @@ import type { ProductFilters } from '../../types/product'
 import type { Page } from '../../types/common'
 
 export function useProducts() {
-  const listApi = useApi<Page<ProductListResponse>>()
-  const itemApi = useApi<ProductResponse>()
-  const popularApi = useApi<ProductListResponse[]>()
-  const relatedApi = useApi<ProductListResponse[]>()
+  const { data: listData, loading: listLoading, error: listError, execute: listExecute } = useApi<Page<ProductListResponse>>()
+  const { data: itemData, loading: itemLoading, execute: itemExecute } = useApi<ProductResponse>()
+  const { execute: popularExecute } = useApi<ProductListResponse[]>()
+  const { execute: relatedExecute } = useApi<ProductListResponse[]>()
   const [products, setProducts] = useState<ProductListResponse[]>([])
   const [popular, setPopular] = useState<ProductListResponse[]>([])
   const [related, setRelated] = useState<ProductListResponse[]>([])
 
   const loadProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
-    const data = await listApi.execute(() => productsApi.getProducts(page, 12, filters))
+    const data = await listExecute(() => productsApi.getProducts(page, 12, filters))
     setProducts(data.content)
-  }, [])
+  }, [listExecute])
 
   const loadMoreProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
-    const data = await listApi.execute(() => productsApi.getProducts(page, 12, filters))
+    const data = await listExecute(() => productsApi.getProducts(page, 12, filters))
     setProducts(prev => page === 0 ? data.content : [...prev, ...data.content])
-  }, [])
+  }, [listExecute])
 
   const loadPopular = useCallback(async () => {
-    const data = await popularApi.execute(() => productsApi.getPopularProducts())
+    const data = await popularExecute(() => productsApi.getPopularProducts())
     if (data) setPopular(data)
-  }, [])
+  }, [popularExecute])
 
   const loadRelated = useCallback(async (id: number) => {
-    const data = await relatedApi.execute(() => productsApi.getRelatedProducts(id))
+    const data = await relatedExecute(() => productsApi.getRelatedProducts(id))
     if (data) setRelated(data)
-  }, [])
+  }, [relatedExecute])
 
-  const getProduct = (id: number) => itemApi.execute(() => productsApi.getProduct(id))
+  const getProduct = useCallback((id: number) => itemExecute(() => productsApi.getProduct(id)), [itemExecute])
 
-  const getProductBySlug = (slug: string) => itemApi.execute(() => productsApi.getProductBySlug(slug))
+  const getProductBySlug = useCallback((slug: string) => itemExecute(() => productsApi.getProductBySlug(slug)), [itemExecute])
 
   return {
     products,
     popular,
     related,
-    totalPages: listApi.data?.page.totalPages || 0,
-    loading: listApi.loading,
-    error: listApi.error,
+    totalPages: listData?.page.totalPages || 0,
+    loading: listLoading,
+    error: listError,
     loadProducts,
     loadMoreProducts,
     loadPopular,
     loadRelated,
     getProduct,
     getProductBySlug,
-    product: itemApi.data,
-    productLoading: itemApi.loading
+    product: itemData,
+    productLoading: itemLoading
   }
 }

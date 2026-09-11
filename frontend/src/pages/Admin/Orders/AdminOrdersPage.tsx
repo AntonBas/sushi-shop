@@ -53,7 +53,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     loadOrders(0);
-  }, []);
+  }, [loadOrders]);
 
   useEffect(() => {
     loadOrders(page, 12, {
@@ -62,7 +62,7 @@ export default function AdminOrdersPage() {
       paymentMethod: paymentFilter || undefined,
       search: search || undefined,
     });
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
 
   useEffect(() => {
     const client = new Client({
@@ -87,7 +87,7 @@ export default function AdminOrdersPage() {
     return () => {
       client.deactivate();
     };
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
 
   const handleStatusChange = async (
     orderId: number,

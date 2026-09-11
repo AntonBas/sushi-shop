@@ -12,7 +12,7 @@ export default function RelatedProducts({ productId }: Props) {
 
   useEffect(() => {
     loadRelated(productId)
-  }, [productId])
+  }, [productId, loadRelated])
 
   if (loading || related.length === 0) return null
 

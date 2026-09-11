@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       setInitialLoading(false);
     }
-  }, []);
+  }, [token]);
 
   const login = async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);

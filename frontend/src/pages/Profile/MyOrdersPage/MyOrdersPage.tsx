@@ -23,12 +23,17 @@ export default function MyOrdersPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
+  const ordersRef = useRef<UserOrderResponse[]>([]);
 
   useEffect(() => {
     execute(() => ordersApi.getMyOrders(page)).then((res) =>
       setOrders(res.content),
     );
-  }, [page]);
+  }, [page, execute]);
+
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   useEffect(() => {
     const client = new Client({
@@ -37,7 +42,7 @@ export default function MyOrdersPage() {
         Authorization: `Bearer ${getAuthToken()}`,
       },
       onConnect: () => {
-        orders.forEach((order) => {
+        ordersRef.current.forEach((order) => {
           client.subscribe(`/topic/orders/${order.id}`, (message) => {
             const update = JSON.parse(message.body);
             setOrders((prev) =>
