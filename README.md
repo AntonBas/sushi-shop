@@ -89,34 +89,22 @@ The system supports three roles:
 flowchart TD
     A[React Frontend] --> B[Spring Boot API]
 
-    B --> PR["product/"]
-    B --> PM["promotion/"]
     B --> OR["order/"]
     B --> PY["payment/"]
-    B --> RV["review/"]
-    B --> AD["audit/"]
-    B --> ID["user/ · auth/ · token/"]
-    B -.background job.-> SCH["scheduler/"]
+    B --> RS["product/ · promotion/ · review/ · user/ · ..."]
 
-    PR --> DB[(PostgreSQL)]
-    PM --> DB
-    OR --> DB
+    OR --> DB[(PostgreSQL)]
     PY --> DB
-    RV --> DB
-    AD --> DB
-    ID --> DB
-    SCH --> DB
+    RS --> DB
 
-    PR --> CACHE[(Redis)]
-    PM --> CACHE
+    RS --> CACHE[(Redis)]
 
-    PR --> FILE[File Storage]
-    ID --> MAIL[Mail / SMTP]
+    OR --> WS[WebSocket / STOMP]
+    WS --> A
 
-    OR --> WS[WebSocket / STOMP] --> A
+    PY --> ST[Stripe API]
 
-    PY --> STRIPE[Stripe API]
-    ID --> OAUTH[Google OAuth2]
+    S["Schedulers (per domain)"] --> DB
 ```
 
 **Domain packages:**
