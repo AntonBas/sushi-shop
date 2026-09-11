@@ -96,6 +96,7 @@ flowchart TD
     B --> RV["review/"]
     B --> AD["audit/"]
     B --> ID["user/ · auth/ · token/"]
+    B -.background job.-> SCH["scheduler/"]
 
     PR --> DB[(PostgreSQL)]
     PM --> DB
@@ -104,17 +105,18 @@ flowchart TD
     RV --> DB
     AD --> DB
     ID --> DB
+    SCH --> DB
 
     PR --> CACHE[(Redis)]
     PM --> CACHE
 
-    OR --> WS[WebSocket / STOMP]
-    WS --> A
+    PR --> FILE[File Storage]
+    ID --> MAIL[Mail / SMTP]
+
+    OR --> WS[WebSocket / STOMP] --> A
 
     PY --> STRIPE[Stripe API]
     ID --> OAUTH[Google OAuth2]
-
-    SCH["scheduler/ (token & rate-limit cleanup)"] --> DB
 ```
 
 **Domain packages:**
