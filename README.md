@@ -292,7 +292,10 @@ is manual via `docker compose up -d` (see Getting Started).
 
 ## Test Users
 
-These accounts are for demonstration purposes only.
+Not seeded by default. Set `SEED_DEMO_USERS=true` in `.env` to have these
+accounts created on startup. **Never enable this on a publicly reachable
+deployment** (e.g. with the `ngrok` tunnel active) — the admin password is
+public in this repository.
 
 | Role    | Email             | Password |
 |---------|-------------------|----------|

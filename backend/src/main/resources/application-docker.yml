@@ -59,7 +59,7 @@ app:
   stripe:
     secret-key: ${STRIPE_SECRET_KEY}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET}
-  seed-demo-users: true
+  seed-demo-users: ${SEED_DEMO_USERS:false}
   monitoring:
     username: ${PROMETHEUS_USER:prometheus}
     password: ${PROMETHEUS_PASSWORD:changeme}
