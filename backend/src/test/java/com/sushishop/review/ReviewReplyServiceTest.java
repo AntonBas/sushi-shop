@@ -2,7 +2,6 @@ package com.sushishop.review;
 
 import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
@@ -11,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.Optional;
 
@@ -94,7 +94,7 @@ public class ReviewReplyServiceTest {
         when(reviewReplyRepository.findById(1L)).thenReturn(Optional.of(reply));
 
         assertThatThrownBy(() -> reviewReplyService.updateReply(1L, request, "other@example.com"))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test
@@ -105,7 +105,7 @@ public class ReviewReplyServiceTest {
         when(reviewReplyRepository.findById(1L)).thenReturn(Optional.of(reply));
 
         assertThatThrownBy(() -> reviewReplyService.deleteReply(1L, "other@example.com"))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @Test

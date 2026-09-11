@@ -6,7 +6,6 @@ import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewResponse;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
@@ -79,9 +78,7 @@ public class ReviewService {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
 
-        if (!review.getUser().getEmail().equals(email)) {
-            throw new BadRequestException("You can only edit your own reviews");
-        }
+        OwnershipGuard.requireOwner(review.getUser().getEmail(), email, "You can only edit your own reviews");
 
         review.setRating(request.rating());
         review.setComment(request.comment());
@@ -97,9 +94,7 @@ public class ReviewService {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
 
-        if (!review.getUser().getEmail().equals(email)) {
-            throw new BadRequestException("You can only delete your own reviews");
-        }
+        OwnershipGuard.requireOwner(review.getUser().getEmail(), email, "You can only delete your own reviews");
 
         var product = review.getProduct();
         reviewRepository.delete(review);

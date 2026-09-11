@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.Optional;
 
@@ -102,5 +103,28 @@ public class ReviewServiceTest {
 
         assertThatThrownBy(() -> reviewService.create(request, "unknown@example.com"))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    public void shouldThrowWhenUpdateReviewNotOwner() {
+        var user = User.builder().id(1L).email("anton@example.com").build();
+        var review = Review.builder().id(1L).user(user).build();
+        var request = new CreateReviewRequest(1L, 5, "Very tasty!");
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.update(1L, request, "other@example.com"))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    public void shouldThrowWhenDeleteReviewNotOwner() {
+        var user = User.builder().id(1L).email("anton@example.com").build();
+        var review = Review.builder().id(1L).user(user).build();
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+
+        assertThatThrownBy(() -> reviewService.delete(1L, "other@example.com"))
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

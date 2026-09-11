@@ -30,7 +30,7 @@ public class PaymentService {
             throw new BadRequestException("Amount must be greater than zero");
         }
 
-        var order = orderService.getOrderById(orderId);
+        var order = orderService.getOrderByIdInternal(orderId);
 
         var payment = Payment.builder()
                 .order(order)

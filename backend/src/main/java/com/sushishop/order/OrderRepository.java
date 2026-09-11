@@ -16,8 +16,10 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     @Nonnull
+    @EntityGraph(attributePaths = {"user"})
     Page<Order> findAll(@Nonnull Specification<Order> spec, @Nonnull Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user"})
     @Query("SELECT o FROM Order o WHERE o.user.email = :email ORDER BY o.createdAt DESC")
     Page<Order> findByUserEmail(@Param("email") String email, Pageable pageable);
 

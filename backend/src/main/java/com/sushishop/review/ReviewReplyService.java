@@ -2,7 +2,6 @@ package com.sushishop.review;
 
 import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,9 +42,7 @@ public class ReviewReplyService {
         var reply = reviewReplyRepository.findById(replyId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
 
-        if (!reply.getUser().getEmail().equals(userEmail)) {
-            throw new BadRequestException("You can only edit your own replies");
-        }
+        OwnershipGuard.requireOwner(reply.getUser().getEmail(), userEmail, "You can only edit your own replies");
 
         reply.setMessage(request.message());
         return reviewMapper.toReplyResponse(reviewReplyRepository.save(reply));
@@ -56,9 +53,7 @@ public class ReviewReplyService {
         var reply = reviewReplyRepository.findById(replyId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
 
-        if (!reply.getUser().getEmail().equals(email)) {
-            throw new BadRequestException("You can only delete your own replies");
-        }
+        OwnershipGuard.requireOwner(reply.getUser().getEmail(), email, "You can only delete your own replies");
 
         reviewReplyRepository.delete(reply);
     }

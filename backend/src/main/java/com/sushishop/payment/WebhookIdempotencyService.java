@@ -19,4 +19,8 @@ public class WebhookIdempotencyService {
         var wasAbsent = redisTemplate.opsForValue().setIfAbsent(KEY_PREFIX + eventId, "1", TTL);
         return Boolean.TRUE.equals(wasAbsent);
     }
+
+    public void unmark(String eventId) {
+        redisTemplate.delete(KEY_PREFIX + eventId);
+    }
 }

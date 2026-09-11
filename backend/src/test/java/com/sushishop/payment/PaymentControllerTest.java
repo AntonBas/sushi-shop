@@ -109,4 +109,20 @@ public class PaymentControllerTest {
 
         verify(paymentService, never()).confirmPayment(anyString());
     }
+
+    @Test
+    void shouldUnmarkIdempotencyKeyWhenConfirmPaymentFails() throws Exception {
+        when(stripeService.parseCheckoutCompletedEvent(anyString(), anyString()))
+                .thenReturn(new StripeService.WebhookEvent("evt_123", "sess_123"));
+        when(webhookIdempotencyService.markProcessed("evt_123")).thenReturn(true);
+        doThrow(new RuntimeException("transient DB error"))
+                .when(paymentService).confirmPayment("sess_123");
+
+        mockMvc.perform(post("/api/payments/webhook")
+                        .content("{}")
+                        .header("Stripe-Signature", "sig_123"))
+                .andExpect(status().isInternalServerError());
+
+        verify(webhookIdempotencyService).unmark("evt_123");
+    }
 }

@@ -42,7 +42,7 @@ class PaymentServiceTest {
         var order = new Order();
         order.setId(1L);
 
-        when(orderService.getOrderById(1L)).thenReturn(order);
+        when(orderService.getOrderByIdInternal(1L)).thenReturn(order);
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var result = paymentService.create(1L, "sess_123", new BigDecimal("500.00"));
@@ -67,7 +67,7 @@ class PaymentServiceTest {
 
     @Test
     void shouldThrowWhenOrderNotFound() {
-        when(orderService.getOrderById(99L)).thenThrow(new NotFoundException("Order not found: 99"));
+        when(orderService.getOrderByIdInternal(99L)).thenThrow(new NotFoundException("Order not found: 99"));
 
         assertThatThrownBy(() -> paymentService.create(99L, "sess_123", new BigDecimal("500.00")))
                 .isInstanceOf(NotFoundException.class);

@@ -28,15 +28,21 @@ public class OrderService {
         return orderMapper.toResponse(getOwnedOrder(id, requesterEmail, isStaff));
     }
 
+    /**
+     * Fetches an order by id without any ownership check. For internal/system
+     * use only (e.g. payment creation right after {@link #getOwnedOrder} has
+     * already verified access, or webhook-driven flows with no requester).
+     * User-facing endpoints must go through {@link #getOwnedOrder} instead.
+     */
     @Transactional(readOnly = true)
-    public Order getOrderById(Long id) {
+    public Order getOrderByIdInternal(Long id) {
         return orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
     @Transactional(readOnly = true)
     public Order getOwnedOrder(Long id, String requesterEmail, boolean isStaff) {
-        var order = getOrderById(id);
+        var order = getOrderByIdInternal(id);
         if (!isStaff && !order.getUser().getEmail().equals(requesterEmail)) {
             throw new NotFoundException("Order not found: " + id);
         }

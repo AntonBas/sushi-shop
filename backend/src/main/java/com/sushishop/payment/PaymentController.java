@@ -54,8 +54,13 @@ public class PaymentController {
             return ResponseEntity.ok().build();
         }
 
-        if (event.sessionId() != null) {
-            paymentService.confirmPayment(event.sessionId());
+        try {
+            if (event.sessionId() != null) {
+                paymentService.confirmPayment(event.sessionId());
+            }
+        } catch (RuntimeException e) {
+            webhookIdempotencyService.unmark(event.eventId());
+            throw e;
         }
         return ResponseEntity.ok().build();
     }

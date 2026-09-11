@@ -41,4 +41,9 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
 
     @Nonnull
     Optional<Promotion> findByTitle(String title);
+
+    @Nonnull
+    @EntityGraph(attributePaths = {"products"})
+    @Query("SELECT p FROM Promotion p WHERE p.endDate > :from AND p.endDate <= :to")
+    List<Promotion> findEndingBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
 }

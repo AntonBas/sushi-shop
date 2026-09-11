@@ -1,7 +1,6 @@
 package com.sushishop.shared.ratelimit;
 
 import com.sushishop.shared.exception.core.RateLimitExceededException;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
@@ -40,11 +39,6 @@ public class RateLimitAspect {
         if (attributes == null) {
             return "unknown";
         }
-        HttpServletRequest request = attributes.getRequest();
-        String forwardedFor = request.getHeader("X-Forwarded-For");
-        if (forwardedFor != null && !forwardedFor.isBlank()) {
-            return forwardedFor.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        return attributes.getRequest().getRemoteAddr();
     }
 }
