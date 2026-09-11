@@ -21,7 +21,8 @@ payment, and real-time delivery tracking.
 The system supports three roles:
 - **User** — browsing, ordering, tracking
 - **Admin** — managing products, promotions, orders, audit logs
-- **Courier** — managing assigned deliveries and updating delivery statuses
+- **Courier** — order management and delivery status updates (shares the admin
+  order view, without product/promotion access)
 
 ---
 
@@ -51,9 +52,9 @@ The system supports three roles:
 - Real-time order updates via WebSocket
 - Audit logs with filtering
 
-### Courier Panel
-- Order management dashboard
-- Delivery status transitions
+### Courier Access
+- Reuses the admin order management view — update order status, filter/search orders
+- No product or promotion management access
 
 ---
 
@@ -73,6 +74,14 @@ The system supports three roles:
 - **Token management** — separate TokenService for verification and password reset tokens
 - **Scheduled cleanup** — automated cleanup of expired tokens and rate-limit buckets
 - **Email verification flow** — async email sending with styled HTML templates
+- **Accessibility (WCAG AA)** — dedicated audit and fixes: color-contrast across
+  light/dark themes, focus-visible styles, focus trap/restoration in modals,
+  ARIA labels on icon-only controls, full keyboard navigation
+- **Security hardening** — CSP/HSTS/X-Frame-Options headers via Nginx,
+  Dependabot dependency scanning (npm/Gradle/GitHub Actions), authenticated
+  WebSocket subscriptions
+- **Resilience** — root `ErrorBoundary` to prevent white-screen crashes,
+  custom 404 handling
 
 ---
 
@@ -166,6 +175,10 @@ intentionally, so a stricter production deployment would not expose it.
 
 ## Testing
 
+Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
+(fails the build on any warning), and the Java compiler is warning-free
+(unchecked operations, MapStruct unmapped properties).
+
 ### Backend
 
 - **Unit tests:** JUnit 5 + Mockito — services, mappers, validators, aspects
@@ -188,9 +201,9 @@ intentionally, so a stricter production deployment would not expose it.
 ## CI/CD
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR: backend
-build + tests (Gradle), frontend tests + build (Vitest, `tsc -b`, Vite).
-There is no deployment step — this is CI only, deployment is manual via
-`docker compose up -d` (see Quick Start).
+build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
+`tsc -b`, Vite). There is no deployment step — this is CI only, deployment
+is manual via `docker compose up -d` (see Quick Start).
 
 ---
 
