@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Online sushi delivery shop with real-time order tracking.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 233 backend tests across 48 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.7-green)
@@ -224,6 +224,13 @@ Redis stay in Docker.
 
 ```bash
 cp .env.example .env
+```
+
+Fill in the required values (same variables as Option 1 — JWT_SECRET,
+EMAIL_*, GOOGLE_*, STRIPE_*, APP_BASE_URL — the app fails to start without
+them, there are no defaults for secrets).
+
+```bash
 docker compose up -d postgres redis
 cd backend
 cp ../.env .env
@@ -232,8 +239,8 @@ cp ../.env .env
 
 The default (non-`docker`) Spring profile already reads `DB_HOST`/`DB_PORT`/
 `REDIS_HOST`/`REDIS_PORT` with `localhost` defaults matching the values in
-`.env.example`, so no extra config is needed. Backend available at
-http://localhost:8080.
+`.env.example`, so only Postgres/Redis need no extra config. Backend
+available at http://localhost:8080.
 
 **Frontend**
 
