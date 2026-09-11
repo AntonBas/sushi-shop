@@ -169,4 +169,11 @@ public class PromotionControllerTest {
 
         verify(promotionService).delete(PROMOTION_ID);
     }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void shouldRejectNonAdminUser() throws Exception {
+        mockMvc.perform(delete("/api/promotions/{id}", PROMOTION_ID))
+                .andExpect(status().isForbidden());
+    }
 }

@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -93,9 +94,17 @@ public class ProductControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     public void shouldDeleteProduct() throws Exception {
         mockMvc.perform(delete("/api/products/1"))
                 .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    public void shouldRejectNonAdminUser() throws Exception {
+        mockMvc.perform(delete("/api/products/1"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

@@ -114,6 +114,13 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(username = "test@test.com")
+    public void shouldRejectNonStaffUserFromGetAllOrders() throws Exception {
+        mockMvc.perform(get("/api/orders"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "test@test.com")
     public void shouldGetById() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
@@ -135,5 +142,13 @@ public class OrderControllerTest {
                         .param("status", "COOKING"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COOKING"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@test.com")
+    public void shouldRejectNonStaffUserFromUpdateStatus() throws Exception {
+        mockMvc.perform(patch("/api/orders/1/status")
+                        .param("status", "COOKING"))
+                .andExpect(status().isForbidden());
     }
 }

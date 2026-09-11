@@ -118,4 +118,15 @@ public class ReviewControllerTest {
         mockMvc.perform(delete("/api/reviews/1"))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser(username = "anton@example.com")
+    public void shouldRejectNonAdminUserFromAddReply() throws Exception {
+        var request = new CreateReviewReplyRequest("Thank you!");
+
+        mockMvc.perform(post("/api/reviews/1/replies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
 }

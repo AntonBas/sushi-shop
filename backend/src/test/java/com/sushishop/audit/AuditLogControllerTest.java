@@ -72,4 +72,11 @@ public class AuditLogControllerTest {
                         .param("performedBy", "admin@example.com"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(roles = {"USER"})
+    void shouldRejectNonAdminUser() throws Exception {
+        mockMvc.perform(get("/api/admin/audit"))
+                .andExpect(status().isForbidden());
+    }
 }
