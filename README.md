@@ -8,6 +8,7 @@ Online sushi delivery shop with real-time order tracking.
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
+![CI](https://github.com/AntonBas/sushi-shop/workflows/CI/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ---
@@ -66,8 +67,6 @@ The system supports three roles:
 - **Promotion conflict prevention** — prevents a product from being assigned to multiple active promotions
 - **Real-time order tracking** — WebSocket/STOMP updates order status automatically across clients
 - **Cross-cutting audit logging** — implemented with a custom `@Auditable` annotation and AOP
-- **Role-based access control** — separate workflows and permissions for User, Admin, and Courier roles
-- **API rate limiting** — configurable request throttling using Bucket4j
 - **Drag-and-drop image reordering** — admin can reorder product images
 - **Service layer separation** — split large services into focused services (OrderCreationService, OrderQueryService, ProductImageService, ReviewReplyService)
 - **Validation hierarchy** — custom exceptions for all HTTP error scenarios with centralized handling
@@ -77,9 +76,6 @@ The system supports three roles:
 - **Accessibility (WCAG AA)** — dedicated audit and fixes: color-contrast across
   light/dark themes, focus-visible styles, focus trap/restoration in modals,
   ARIA labels on icon-only controls, full keyboard navigation
-- **Security hardening** — CSP/HSTS/X-Frame-Options headers via Nginx,
-  Dependabot dependency scanning (npm/Gradle/GitHub Actions), authenticated
-  WebSocket subscriptions
 - **Resilience** — root `ErrorBoundary` to prevent white-screen crashes,
   custom 404 handling
 
@@ -87,19 +83,65 @@ The system supports three roles:
 
 ## Architecture
 
+**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`) is a self-contained package with its own `controller/service/repository/dto/mapper`, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/`, `file/`, and `scheduler/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
+
+```mermaid
+flowchart TD
+    A[React Frontend] --> B[Spring Boot API]
+
+    B --> PR["product/"]
+    B --> PM["promotion/"]
+    B --> OR["order/"]
+    B --> PY["payment/"]
+    B --> RV["review/"]
+    B --> AD["audit/"]
+    B --> ID["user/ · auth/ · token/"]
+
+    PR --> DB[(PostgreSQL)]
+    PM --> DB
+    OR --> DB
+    PY --> DB
+    RV --> DB
+    AD --> DB
+    ID --> DB
+
+    PR --> CACHE[(Redis)]
+    PM --> CACHE
+
+    OR --> WS[WebSocket / STOMP]
+    WS --> A
+
+    PY --> STRIPE[Stripe API]
+    ID --> OAUTH[Google OAuth2]
+
+    SCH["scheduler/ (token & rate-limit cleanup)"] --> DB
 ```
-React (Vite)
-    ↓ REST
-Spring Boot API
-    ├── PostgreSQL (data)
-    ├── Redis (caching)
-    ├── WebSocket/STOMP (real-time order updates)
-    ├── Stripe (payments)
-    ├── Google OAuth2 (login)
-    ├── Mail (SMTP)
-    ├── Rate Limiting (Bucket4j)
-    └── Prometheus + Grafana (monitoring)
-```
+
+**Domain packages:**
+
+| Package                     | Responsibility                                                    |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `product/`                   | Catalog, categories, images                                        |
+| `promotion/`                 | Promotions, discount rules, conflict prevention                    |
+| `order/`                     | Order lifecycle, checkout, real-time status via WebSocket/STOMP    |
+| `payment/`                   | Stripe payment processing                                          |
+| `review/`                    | Product reviews, ratings, admin replies                            |
+| `audit/`                     | `@Auditable` AOP change log across admin actions                   |
+| `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
+| `mail/`                      | Async email sending (verification, notifications)                  |
+| `file/`                      | Product image storage                                              |
+| `scheduler/`                 | Expired-token and rate-limit-bucket cleanup                        |
+| `security/`                  | JWT filter, WebSocket auth, rate-limit config                      |
+| `shared/`                    | Cross-cutting config, exceptions, validation, enums, events        |
+
+---
+
+## Security Highlights
+
+- **Role-Based Access Control (RBAC):** separate workflows and permissions for User, Admin, and Courier, enforced at both API and UI level.
+- **API rate limiting:** configurable per-endpoint throttling via Bucket4j, with scheduled cleanup of expired buckets.
+- **Security hardening:** CSP/HSTS/X-Frame-Options headers via Nginx, Dependabot dependency scanning across npm/Gradle/GitHub Actions, authenticated WebSocket subscriptions.
+- **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing.
 
 ---
 
@@ -107,46 +149,56 @@ Spring Boot API
 
 ### Backend
 
-- Java 21
-- Spring Boot 4.0.7
-- Spring Security
-- Spring Data JPA / Hibernate
-- PostgreSQL 16
-- Redis
-- Flyway
-- JWT
-- MapStruct
-- WebSocket / STOMP
-- Stripe
-- Google OAuth2
-- Bucket4j
-- Testcontainers
-- Spring AOP
-- Spring Scheduling
-- Spring Mail
+| Technology                  | Version               |
+| ----------------------------- | ------------------------ |
+| Java                         | 21                     |
+| Spring Boot                  | 4.0.7                  |
+| Spring Security               | Spring Boot-managed     |
+| Spring Data JPA / Hibernate   | Spring Boot-managed     |
+| PostgreSQL                   | 16                     |
+| Redis                         | 7                      |
+| Flyway                        | Spring Boot-managed     |
+| JWT (jjwt)                    | 0.12.6                 |
+| MapStruct                     | 1.6.3                  |
+| WebSocket / STOMP              | Spring Boot-managed     |
+| Stripe                        | 33.1.1                 |
+| Google OAuth2 Client           | Spring Boot-managed     |
+| Bucket4j                      | 8.10.1                 |
+| Testcontainers                | 1.20.6                 |
+| Spring AOP                    | Spring Boot-managed     |
+| Spring Scheduling              | Spring Boot-managed     |
+| Spring Mail                   | Spring Boot-managed     |
 
 ### Frontend
 
-- React 19
-- TypeScript 6
-- Vite 8
-- React Router 7
-- Axios
-- STOMP.js / SockJS
-- dnd-kit
-- Tailwind CSS 4
-- CSS Modules
+| Technology         | Version        |
+| -------------------- | ---------------- |
+| React                | 19.2.7          |
+| TypeScript            | 6.0.2           |
+| Vite                  | 8.1.1           |
+| React Router DOM       | 7.18.1          |
+| Axios                 | 1.18.1          |
+| STOMP.js              | 7.3.0           |
+| SockJS Client          | 1.6.1           |
+| dnd-kit               | 6.3.1           |
+| Tailwind CSS           | 4.3.2           |
+| CSS Modules            | native (Vite)   |
 
-### DevOps
+### DevOps & Tools
 
-- Docker
-- Docker Compose
-- Prometheus
-- Grafana
+| Technology     | Description                   |
+| :------------- | :----------------------------- |
+| Docker         | Containerization                |
+| Docker Compose | Multi-container orchestration  |
+| Prometheus     | Metrics collection              |
+| Grafana        | Metrics dashboards              |
+| GitHub Actions | CI/CD pipeline                  |
 
 ---
 
-## Quick Start
+## Getting Started
+
+### Option 1: Docker Setup (Recommended)
 
 ```bash
 git clone https://github.com/AntonBas/sushi-shop.git
@@ -158,7 +210,6 @@ docker compose up -d
 Fill in the required values in `.env`.
 See [`.env.example`](.env.example) for all available variables.
 
-
 | Service     | URL                                   |
 | ----------- | ------------------------------------- |
 | Frontend    | http://localhost:5173                 |
@@ -167,9 +218,41 @@ See [`.env.example`](.env.example) for all available variables.
 | Prometheus  | http://localhost:9090                 |
 | Grafana     | http://localhost:3000                 |
 
-Swagger UI is enabled only under the `docker` Spring profile used by this
-Quick Start (local/demo). The default profile disables `springdoc`
-intentionally, so a stricter production deployment would not expose it.
+Swagger UI is enabled only under the `docker` Spring profile used here
+(local/demo). The default profile disables `springdoc` intentionally, so a
+stricter production deployment would not expose it.
+
+### Option 2: Local Development Setup
+
+Run backend and frontend separately for faster iteration; only Postgres and
+Redis stay in Docker.
+
+**Backend**
+
+```bash
+cp .env.example .env
+docker compose up -d postgres redis
+cd backend
+cp ../.env .env
+./gradlew bootRun
+```
+
+The default (non-`docker`) Spring profile already reads `DB_HOST`/`DB_PORT`/
+`REDIS_HOST`/`REDIS_PORT` with `localhost` defaults matching the values in
+`.env.example`, so no extra config is needed. Backend available at
+http://localhost:8080.
+
+**Frontend**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend available at http://localhost:5173. Vite proxies `/api`, `/ws`,
+`/oauth2`, and `/login/oauth2` to `http://localhost:8080` — no CORS
+configuration or `VITE_API_URL` setup needed.
 
 ---
 
@@ -203,7 +286,7 @@ Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR: backend
 build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
 `tsc -b`, Vite). There is no deployment step — this is CI only, deployment
-is manual via `docker compose up -d` (see Quick Start).
+is manual via `docker compose up -d` (see Getting Started).
 
 ---
 
