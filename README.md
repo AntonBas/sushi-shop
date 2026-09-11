@@ -93,18 +93,21 @@ flowchart TD
     B --> PY["payment/"]
     B --> RS["product/ · promotion/ · review/ · user/ · ..."]
 
+    PY -->|reads order · payment-confirmed event| OR
+
     OR --> DB[(PostgreSQL)]
     PY --> DB
     RS --> DB
 
     RS --> CACHE[(Redis)]
 
+    PY --> ST[Stripe API]
+    ST -->|webhook| PY
+
     OR --> WS[WebSocket / STOMP]
     WS --> A
 
-    PY --> ST[Stripe API]
-
-    S["Schedulers (per domain)"] --> DB
+    S["Scheduled token cleanup"] --> DB
 ```
 
 **Domain packages:**
