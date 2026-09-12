@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 233 backend tests across 48 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 244 backend tests across 50 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.7-green)
@@ -71,7 +71,7 @@ The system supports three roles:
 - **Service layer separation** — split large services into focused services (OrderCreationService, OrderQueryService, ProductImageService, ReviewReplyService)
 - **Validation hierarchy** — custom exceptions for all HTTP error scenarios with centralized handling
 - **Token management** — separate TokenService for verification and password reset tokens
-- **Scheduled cleanup** — automated cleanup of expired tokens and rate-limit buckets
+- **Scheduled cleanup** — automated cleanup of expired tokens, rate-limit buckets, and product-cache entries for just-expired promotions
 - **Email verification flow** — async email sending with styled HTML templates
 - **Accessibility (WCAG AA)** — dedicated audit and fixes: color-contrast across
   light/dark themes, focus-visible styles, focus trap/restoration in modals,
@@ -123,7 +123,7 @@ flowchart TD
 | `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
 | `mail/`                      | Async email sending (verification, notifications)                  |
 | `file/`                      | Product image storage                                              |
-| `scheduler/`                 | Expired-token and rate-limit-bucket cleanup                        |
+| `scheduler/`                 | Expired-token, rate-limit-bucket, and expired-promotion-cache cleanup |
 | `security/`                  | JWT filter, WebSocket auth, rate-limit config                      |
 | `shared/`                    | Cross-cutting config, exceptions, validation, enums, events        |
 
@@ -268,7 +268,7 @@ Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
 - **Integration tests:** Testcontainers with real PostgreSQL — Flyway migrations, repository queries
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
-- **Coverage:** Jacoco (~78% instruction coverage). Run `./gradlew jacocoTestReport`
+- **Coverage:** Jacoco (~79% instruction coverage). Run `./gradlew jacocoTestReport`
   and open `backend/build/reports/jacoco/test/html/index.html`.
 
 ### Frontend
