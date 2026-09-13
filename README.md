@@ -211,9 +211,9 @@ See [`.env.example`](.env.example) for all available variables.
 | Prometheus  | http://localhost:9090                 |
 | Grafana     | http://localhost:3000                 |
 
-Swagger UI is enabled only under the `docker` Spring profile used here
-(local/demo). The default profile disables `springdoc` intentionally, so a
-stricter production deployment would not expose it.
+Swagger UI is enabled under the `local` and `docker` Spring profiles used
+for development. The `prod` profile (see [Cloud Deployment](#cloud-deployment-free-tier))
+disables `springdoc` intentionally, so a public deployment doesn't expose it.
 
 ### Option 2: Local Development Setup
 
@@ -237,8 +237,9 @@ cp ../.env .env
 ./gradlew bootRun
 ```
 
-The default (non-`docker`) Spring profile already reads `DB_HOST`/`DB_PORT`/
-`REDIS_HOST`/`REDIS_PORT` with `localhost` defaults matching the values in
+`./gradlew bootRun` activates the `local` Spring profile by default (see
+`build.gradle`), which already reads `DB_HOST`/`DB_PORT`/`REDIS_HOST`/
+`REDIS_PORT` with `localhost` defaults matching the values in
 `.env.example`, so only Postgres/Redis need no extra config. Backend
 available at http://localhost:8080.
 
@@ -253,6 +254,29 @@ npm run dev
 Frontend available at http://localhost:5173. Vite proxies `/api`, `/ws`,
 `/oauth2`, and `/login/oauth2` to `http://localhost:8080` — no CORS
 configuration or `VITE_API_URL` setup needed.
+
+### Cloud Deployment (Free Tier)
+
+Backend and frontend are on different domains here, unlike Options 1/2, so
+the frontend talks to the backend over CORS via an absolute `VITE_API_URL`
+instead of a same-origin proxy.
+
+| Component  | Service                    |
+| ---------- | --------------------------- |
+| Frontend   | Vercel (root dir: `frontend`) |
+| Backend    | Render — Free Web Service, Docker (root dir: `backend`) |
+| PostgreSQL | Neon (free tier)             |
+| Redis      | Upstash (free tier, TLS)     |
+
+On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "required everywhere"
+and "prod only" variables from [`.env.example`](.env.example). On Vercel,
+set `VITE_API_URL` to the Render backend's URL. Add
+`<Render URL>/login/oauth2/code/google` to Google Cloud Console's Authorized
+redirect URIs, and point the Stripe webhook at `<Render URL>/api/payments/webhook`.
+
+Render's free tier sleeps after 15 minutes of inactivity; ping
+`/actuator/health` periodically (e.g. UptimeRobot or a GitHub Actions cron)
+to keep it warm.
 
 ---
 

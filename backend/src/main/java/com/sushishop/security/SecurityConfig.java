@@ -76,6 +76,7 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers
                         .contentSecurityPolicy(csp -> csp.policyDirectives(

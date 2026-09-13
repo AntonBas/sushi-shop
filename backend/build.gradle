@@ -72,6 +72,10 @@ tasks.named('test') {
     finalizedBy jacocoTestReport
 }
 
+tasks.named('bootRun') {
+    systemProperty 'spring.profiles.active', System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+}
+
 jacocoTestReport {
     dependsOn test
     reports {

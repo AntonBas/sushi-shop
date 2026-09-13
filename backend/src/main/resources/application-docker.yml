@@ -1,20 +1,20 @@
 spring:
-  docker:
-    compose:
-      enabled: false
+  config:
+    activate:
+      on-profile: docker
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:sushi_db}
     username: ${DB_USER:postgres}
     password: ${DB_PASSWORD}
 
+  jpa:
+    show-sql: false
+
   data:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
-
-  jpa:
-    show-sql: false
 
   mail:
     host: smtp.gmail.com
@@ -47,31 +47,7 @@ springdoc:
     enabled: true
 
 app:
-  jwt:
-    secret: ${JWT_SECRET}
-    expiration: 86400000
-  upload:
-    dir: uploads
-    allowed-types: image/jpeg,image/png,image/webp
-    max-size: 5242880
-    url-prefix: /api/files/
-  base-url: ${APP_BASE_URL}
-  stripe:
-    secret-key: ${STRIPE_SECRET_KEY}
-    webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   seed-demo-users: ${SEED_DEMO_USERS:false}
-  monitoring:
-    username: ${PROMETHEUS_USER:prometheus}
-    password: ${PROMETHEUS_PASSWORD:changeme}
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  endpoint:
-    prometheus:
-      enabled: true
 
 logging:
   level:

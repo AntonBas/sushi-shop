@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/useAuth'
+import { API_BASE_URL } from '../../../config/env'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import styles from './Login.module.css'
@@ -30,7 +31,7 @@ export default function Login() {
   }
 
   const handleGoogleLogin = () => {
-    window.location.href = '/oauth2/authorization/google'
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/google`
   }
 
   return (
