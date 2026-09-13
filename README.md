@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 244 backend tests across 50 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 246 backend tests across 50 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.7-green)
@@ -133,7 +133,7 @@ flowchart TD
 
 - **Role-Based Access Control (RBAC):** separate workflows and permissions for User, Admin, and Courier, enforced at both API and UI level.
 - **API rate limiting:** configurable per-endpoint throttling via Bucket4j, with scheduled cleanup of expired buckets.
-- **Security hardening:** CSP/HSTS/X-Frame-Options headers via Nginx, Dependabot dependency scanning across npm/Gradle/GitHub Actions, authenticated WebSocket subscriptions.
+- **Security hardening:** CSP/HSTS/X-Frame-Options headers (via Nginx in the Docker Compose setup), Dependabot dependency scanning across npm/Gradle/GitHub Actions, authenticated WebSocket subscriptions.
 - **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing.
 
 ---
@@ -186,6 +186,7 @@ flowchart TD
 | Prometheus     | Metrics collection              |
 | Grafana        | Metrics dashboards              |
 | GitHub Actions | CI/CD pipeline                  |
+| Render / Vercel / Neon / Upstash | Free-tier cloud deployment (backend / frontend / PostgreSQL / Redis) |
 
 ---
 
@@ -208,8 +209,11 @@ See [`.env.example`](.env.example) for all available variables.
 | Frontend    | http://localhost:5173                 |
 | Backend API | http://localhost:8080                 |
 | Swagger     | http://localhost:8080/swagger-ui.html |
-| Prometheus  | http://localhost:9090                 |
-| Grafana     | http://localhost:3000                 |
+
+Prometheus and Grafana are opt-in dev extras, not started by the command
+above — run `docker compose --profile dev up -d` to include them (plus
+ngrok, for local Stripe webhook testing) at http://localhost:9090 and
+http://localhost:3000 respectively.
 
 Swagger UI is enabled under the `local` and `docker` Spring profiles used
 for development. The `prod` profile (see [Cloud Deployment](#cloud-deployment-free-tier))
@@ -310,7 +314,8 @@ Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR: backend
 build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
 `tsc -b`, Vite). There is no deployment step — this is CI only, deployment
-is manual via `docker compose up -d` (see Getting Started).
+is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +
+Neon + Upstash (see [Getting Started](#getting-started)).
 
 ---
 
