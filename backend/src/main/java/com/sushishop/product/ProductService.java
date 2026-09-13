@@ -1,17 +1,17 @@
 package com.sushishop.product;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.review.ReviewRepository;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +29,12 @@ public class ProductService {
     private final SlugService slugService;
     private final ProductEnrichmentService enrichmentService;
     private final ProductImageService productImageService;
+    private final ProductCacheService productCacheService;
+    private final FileStorageService fileStorageService;
+    private final ReviewRepository reviewRepository;
 
     @Auditable(action = AuditAction.CREATE, entity = "Product")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse create(CreateProductRequest request, List<MultipartFile> images) {
         if (request.category() == Category.SET && request.pieces() == null) {
             throw new BadRequestException("Pieces is required for sets");
@@ -49,15 +51,15 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "products", key = "#id")
+    @Cacheable(value = "products", key = "'id:' + #id")
     public ProductResponse getById(Long id) {
         var product = productRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Product with ID: " + id));
+                .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         return toResponse(product);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "products", key = "#slug")
+    @Cacheable(value = "products", key = "'slug:' + #slug")
     public ProductResponse getBySlug(String slug) {
         var product = productRepository.findBySlug(slug)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + slug));
@@ -66,10 +68,10 @@ public class ProductService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "Product")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public ProductResponse update(Long id, UpdateProductRequest request) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
+        var oldSlug = product.getSlug();
 
         if (request.name() != null && !request.name().equals(product.getName())) {
             product.setSlug(slugService.generateUniqueSlug(request.name(),
@@ -80,31 +82,37 @@ public class ProductService {
 
         var updated = productRepository.save(product);
         log.info("Product updated: {}", updated.getId());
+
+        productCacheService.evict(id, oldSlug);
+        if (!oldSlug.equals(updated.getSlug())) {
+            productCacheService.evict(id, updated.getSlug());
+        }
         return toResponse(updated);
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Product")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void toggleAvailability(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
         product.setAvailable(!product.isAvailable());
         productRepository.save(product);
+        productCacheService.evict(id, product.getSlug());
         log.info("Product {} is now {}", id, product.isAvailable() ? "available" : "unavailable");
     }
 
     @Auditable(action = AuditAction.DELETE, entity = "Product")
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void delete(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
+        var slug = product.getSlug();
 
-        product.getProductImages().forEach(img -> productImageService.deleteImage(id, img.getId()));
+        product.getProductImages().forEach(img -> fileStorageService.delete(img.getUrl()));
         product.getPromotions().clear();
         productRepository.save(product);
         productRepository.delete(product);
+        productCacheService.evict(id, slug);
         log.debug("Deleted product with ID: {}", id);
     }
 
@@ -114,7 +122,7 @@ public class ProductService {
         var discountPercent = enrichmentService.getDiscountPercent(product);
         var promotionTitle = enrichmentService.getPromotionTitle(product);
         var rating = enrichmentService.getAverageRatings(List.of(product.getId())).get(product.getId());
-        var reviewCount = product.getReviews() != null ? product.getReviews().size() : 0;
+        var reviewCount = (int) reviewRepository.countByProductId(product.getId());
 
         return new ProductResponse(
                 base.id(), base.slug(), base.name(), base.description(),

@@ -16,8 +16,10 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
     @Nonnull
+    @EntityGraph(attributePaths = {"user"})
     Page<Order> findAll(@Nonnull Specification<Order> spec, @Nonnull Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user"})
     @Query("SELECT o FROM Order o WHERE o.user.email = :email ORDER BY o.createdAt DESC")
     Page<Order> findByUserEmail(@Param("email") String email, Pageable pageable);
 
@@ -27,4 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @EntityGraph(attributePaths = {"items", "items.product", "user"})
     @Nonnull
     Optional<Order> findById(@Nonnull Long id);
+
+    @Query("SELECT o.user.email FROM Order o WHERE o.id = :id")
+    Optional<String> findOwnerEmailById(@Param("id") Long id);
 }

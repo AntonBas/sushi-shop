@@ -62,17 +62,29 @@ public class StripeService {
         }
     }
 
-    public String getSessionIdFromWebhook(String payload, String sigHeader) {
+    public void expireCheckoutSession(String sessionId) {
+        try {
+            Session.retrieve(sessionId).expire();
+            log.info("Expired orphaned Stripe session: {}", sessionId);
+        } catch (StripeException e) {
+            log.error("Failed to expire orphaned Stripe session: {}", sessionId, e);
+        }
+    }
+
+    public record WebhookEvent(String eventId, String sessionId) {
+    }
+
+    public WebhookEvent parseCheckoutCompletedEvent(String payload, String sigHeader) {
         try {
             var event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
+            String sessionId = null;
             if ("checkout.session.completed".equals(event.getType())) {
                 var deserializer = event.getDataObjectDeserializer();
                 if (deserializer.getObject().isPresent()) {
-                    var session = (Session) deserializer.getObject().get();
-                    return session.getId();
+                    sessionId = ((Session) deserializer.getObject().get()).getId();
                 }
             }
-            return null;
+            return new WebhookEvent(event.getId(), sessionId);
         } catch (SignatureVerificationException e) {
             throw new BadRequestException("Invalid Stripe signature");
         }

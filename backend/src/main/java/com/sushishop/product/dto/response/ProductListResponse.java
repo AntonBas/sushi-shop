@@ -1,6 +1,6 @@
 package com.sushishop.product.dto.response;
 
-import com.sushishop.shared.enums.Category;
+import com.sushishop.product.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;

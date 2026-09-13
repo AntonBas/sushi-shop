@@ -1,12 +1,12 @@
 package com.sushishop.user;
 
 import com.sushishop.audit.Auditable;
-import com.sushishop.auth.dto.request.RegisterRequest;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
+import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.request.UpdateUserRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +31,6 @@ public class UserService {
     public User create(RegisterRequest request) {
         if (userRepository.existsByEmail(request.email())) {
             throw new ConflictException("Email already exists!");
-        }
-        if (!request.password().equals(request.confirmPassword())) {
-            throw new BadRequestException("Passwords don't match!");
         }
 
         var user = userMapper.toEntity(request);
@@ -79,7 +76,6 @@ public class UserService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "User")
     @Transactional
-    @CacheEvict(value = "userCache", key = "#email + ':*'")
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));

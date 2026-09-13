@@ -8,7 +8,7 @@ export default function PopularSection() {
 
   useEffect(() => {
     loadPopular()
-  }, [])
+  }, [loadPopular])
 
   if (popular.length === 0) return null
 

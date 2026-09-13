@@ -1,7 +1,7 @@
 package com.sushishop.user.dto.response;
 
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.address.AddressResponse;
+import com.sushishop.user.UserRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "User response")

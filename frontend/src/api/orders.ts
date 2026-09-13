@@ -18,11 +18,6 @@ export const getAllOrders = async (page = 0, size = 12, filters?: OrderFilters):
   return data
 }
 
-export const getOrder = async (id: number): Promise<OrderResponse> => {
-  const { data } = await api.get(`/orders/${id}`)
-  return data
-}
-
 export const updateOrderStatus = async (id: number, status: OrderStatus): Promise<OrderResponse> => {
   const { data } = await api.patch(`/orders/${id}/status`, null, { params: { status } })
   return data

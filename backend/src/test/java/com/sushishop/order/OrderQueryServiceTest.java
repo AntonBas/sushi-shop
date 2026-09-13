@@ -2,9 +2,6 @@ package com.sushishop.order;
 
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,7 +16,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,6 +76,7 @@ public class OrderQueryServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReturnEmptyPageWhenNoOrders() {
         Pageable pageable = PageRequest.of(0, 20);
         var page = new PageImpl<Order>(List.of(), pageable, 0);

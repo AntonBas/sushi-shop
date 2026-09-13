@@ -45,6 +45,10 @@
   font-size: 14px;
 }
 
+.searchBox:focus-within {
+  border-color: var(--color-primary);
+}
+
 .empty {
   text-align: center;
   padding: 60px 20px;

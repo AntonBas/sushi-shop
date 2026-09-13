@@ -15,7 +15,7 @@
 
 .primary {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .primary:hover:not(:disabled) {
@@ -34,7 +34,7 @@
 
 .danger {
   background: var(--color-error);
-  color: #fff;
+  color: var(--color-on-error);
 }
 
 .danger:hover:not(:disabled) {

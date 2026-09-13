@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AxiosError } from 'axios'
-import { useAuth } from '../../../context/AuthContext'
+import { useAuth } from '../../../context/useAuth'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import Modal from '../../../components/UI/Modal/Modal'
@@ -57,7 +57,7 @@ export default function Register() {
           <Input label="Password" type="password" value={password} onChange={setPassword} placeholder="Min 8 characters" />
           <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
 
-          <button type="button" className={styles.toggle} onClick={() => setShowAddress(!showAddress)}>
+          <button type="button" className={styles.toggle} onClick={() => setShowAddress(!showAddress)} aria-expanded={showAddress}>
             Delivery Address (optional)
             {showAddress ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>

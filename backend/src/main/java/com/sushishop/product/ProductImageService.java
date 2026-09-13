@@ -4,7 +4,6 @@ import com.sushishop.file.FileStorageService;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,9 +18,9 @@ public class ProductImageService {
 
     private final ProductRepository productRepository;
     private final FileStorageService fileStorageService;
+    private final ProductCacheService productCacheService;
 
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void addImage(Long productId, MultipartFile file) {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
@@ -43,11 +42,11 @@ public class ProductImageService {
                 .product(product)
                 .build());
         productRepository.save(product);
+        productCacheService.evict(productId, product.getSlug());
         log.info("Image added to product: {}", productId);
     }
 
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void deleteImage(Long productId, Long imageId) {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
@@ -60,11 +59,11 @@ public class ProductImageService {
         fileStorageService.delete(image.getUrl());
         product.getProductImages().remove(image);
         productRepository.save(product);
+        productCacheService.evict(productId, product.getSlug());
         log.info("Image {} deleted from product: {}", imageId, productId);
     }
 
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void reorderImages(Long productId, List<Long> imageIds) {
         var product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + productId));
@@ -77,6 +76,7 @@ public class ProductImageService {
                     .ifPresent(img -> img.setSortOrder(newOrder));
         }
         productRepository.save(product);
+        productCacheService.evict(productId, product.getSlug());
         log.info("Images reordered for product: {}", productId);
     }
 

@@ -2,7 +2,7 @@ package com.sushishop.payment;
 
 import com.sushishop.order.Order;
 import com.sushishop.order.OrderService;
-import com.sushishop.shared.enums.PaymentStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import org.junit.jupiter.api.Test;
@@ -18,6 +18,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,7 +42,7 @@ class PaymentServiceTest {
         var order = new Order();
         order.setId(1L);
 
-        when(orderService.getOrderById(1L)).thenReturn(order);
+        when(orderService.getOrderByIdInternal(1L)).thenReturn(order);
         when(paymentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var result = paymentService.create(1L, "sess_123", new BigDecimal("500.00"));
@@ -66,7 +67,7 @@ class PaymentServiceTest {
 
     @Test
     void shouldThrowWhenOrderNotFound() {
-        when(orderService.getOrderById(99L)).thenThrow(new NotFoundException("Order not found: 99"));
+        when(orderService.getOrderByIdInternal(99L)).thenThrow(new NotFoundException("Order not found: 99"));
 
         assertThatThrownBy(() -> paymentService.create(99L, "sess_123", new BigDecimal("500.00")))
                 .isInstanceOf(NotFoundException.class);
@@ -92,7 +93,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    void shouldThrowWhenConfirmAlreadyPaid() {
+    void shouldSkipWhenConfirmAlreadyPaid() {
         var payment = Payment.builder()
                 .stripeSessionId("sess_123")
                 .status(PaymentStatus.PAID)
@@ -100,9 +101,11 @@ class PaymentServiceTest {
 
         when(paymentRepository.findByStripeSessionId("sess_123")).thenReturn(Optional.of(payment));
 
-        assertThatThrownBy(() -> paymentService.confirmPayment("sess_123"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Payment already confirmed");
+        paymentService.confirmPayment("sess_123");
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        verify(paymentRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test

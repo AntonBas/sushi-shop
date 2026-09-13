@@ -1,7 +1,7 @@
 package com.sushishop.promotion;
 
+import com.sushishop.product.Category;
 import com.sushishop.product.Product;
-import com.sushishop.shared.enums.Category;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Star, Pencil, Trash2 } from "lucide-react";
-import { useAuth } from "../../../context/AuthContext";
+import { useAuth } from "../../../context/useAuth";
 import { useApi } from "../../../hooks/common/useApi";
 import * as reviewsApi from "../../../api/reviews";
-import { useNotification } from "../../../context/NotificationContext";
+import { useNotification } from "../../../context/useNotification";
 import Button from "../../UI/Button/Button";
 import Pagination from "../../UI/Pagination/Pagination";
 import Modal from "../../UI/Modal/Modal";
@@ -36,16 +36,16 @@ export default function ReviewSection({ productId }: Props) {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
-  const loadReviews = (page: number) => {
+  const loadReviews = useCallback((page: number) => {
     reviewsApi.getReviews(productId, page).then((res) => {
       setReviews(res.content);
       setTotalReviewPages(res.page.totalPages);
     });
-  };
+  }, [productId]);
 
   useEffect(() => {
     loadReviews(0);
-  }, [productId]);
+  }, [loadReviews]);
 
   const showError = (err: unknown, fallback: string) => {
     const message =
@@ -167,11 +167,12 @@ export default function ReviewSection({ productId }: Props) {
                 type="button"
                 onClick={() => setNewRating(star)}
                 className={styles.starBtn}
+                aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
               >
                 <Star
                   size={20}
-                  fill={star <= newRating ? "#fbbf24" : "none"}
-                  stroke="#fbbf24"
+                  fill={star <= newRating ? "var(--color-rating)" : "none"}
+                  stroke="var(--color-rating)"
                 />
               </button>
             ))}
@@ -200,8 +201,8 @@ export default function ReviewSection({ productId }: Props) {
                     <Star
                       key={i}
                       size={14}
-                      fill={i < review.rating ? "#fbbf24" : "none"}
-                      stroke="#fbbf24"
+                      fill={i < review.rating ? "var(--color-rating)" : "none"}
+                      stroke="var(--color-rating)"
                     />
                   ))}
                 </div>
@@ -215,14 +216,18 @@ export default function ReviewSection({ productId }: Props) {
                 {review.userId === user?.id && (
                   <div className={styles.actions}>
                     <button
+                      type="button"
                       onClick={() => startEdit(review)}
                       className={styles.editBtn}
+                      aria-label="Edit review"
                     >
                       <Pencil size={14} />
                     </button>
                     <button
+                      type="button"
                       onClick={() => setDeleteId(review.id)}
                       className={styles.deleteBtn}
+                      aria-label="Delete review"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -238,11 +243,12 @@ export default function ReviewSection({ productId }: Props) {
                         type="button"
                         onClick={() => setEditRating(star)}
                         className={styles.starBtn}
+                        aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
                       >
                         <Star
                           size={16}
-                          fill={star <= editRating ? "#fbbf24" : "none"}
-                          stroke="#fbbf24"
+                          fill={star <= editRating ? "var(--color-rating)" : "none"}
+                          stroke="var(--color-rating)"
                         />
                       </button>
                     ))}
@@ -288,14 +294,18 @@ export default function ReviewSection({ productId }: Props) {
                         {isAdmin && (
                           <div className={styles.actions}>
                             <button
+                              type="button"
                               onClick={() => startEditReply(reply)}
                               className={styles.editBtn}
+                              aria-label="Edit reply"
                             >
                               <Pencil size={12} />
                             </button>
                             <button
+                              type="button"
                               onClick={() => setDeleteReplyId(reply.id)}
                               className={styles.deleteBtn}
+                              aria-label="Delete reply"
                             >
                               <Trash2 size={12} />
                             </button>

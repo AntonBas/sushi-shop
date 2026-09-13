@@ -1,10 +1,9 @@
 package com.sushishop.user;
 
-import com.sushishop.auth.dto.request.RegisterRequest;
-import com.sushishop.shared.enums.UserRole;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
+import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,23 +76,6 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.create(request))
                 .isInstanceOf(ConflictException.class);
-    }
-
-    @Test
-    public void shouldThrowWhenPasswordsDoNotMatch() {
-        var request = new RegisterRequest(
-                "Anton",
-                "anton@example.com",
-                "password123",
-                "different",
-                "+380961791111",
-                null
-        );
-
-        when(userRepository.existsByEmail("anton@example.com")).thenReturn(false);
-
-        assertThatThrownBy(() -> userService.create(request))
-                .isInstanceOf(BadRequestException.class);
     }
 
     @Test

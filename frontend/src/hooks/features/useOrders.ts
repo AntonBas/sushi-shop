@@ -4,16 +4,16 @@ import * as ordersApi from '../../api/orders'
 import type { CreateOrderRequest, OrderResponse } from '../../types'
 
 export function useOrders() {
-  const createApi = useApi<OrderResponse>()
+  const { data, loading, error, execute } = useApi<OrderResponse>()
 
   const createOrder = useCallback((data: CreateOrderRequest) => {
-    return createApi.execute(() => ordersApi.createOrder(data))
-  }, [])
+    return execute(() => ordersApi.createOrder(data))
+  }, [execute])
 
   return {
     createOrder,
-    order: createApi.data,
-    loading: createApi.loading,
-    error: createApi.error
+    order: data,
+    loading,
+    error
   }
 }

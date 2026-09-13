@@ -1,11 +1,13 @@
 package com.sushishop.auth.dto.request;
 
+import com.sushishop.shared.validation.FieldsMatch;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Reset password request")
+@FieldsMatch(first = "newPassword", second = "confirmPassword", message = "Passwords don't match!")
 public record ResetPasswordRequest(
         @NotBlank(message = "Token is required")
         @Schema(description = "Reset token")

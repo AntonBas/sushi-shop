@@ -20,7 +20,8 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Table(name = "reviews", indexes = {
-        @Index(name = "idx_review_product_id", columnList = "product_id")
+        @Index(name = "idx_review_product_id", columnList = "product_id"),
+        @Index(name = "idx_review_user_id", columnList = "user_id")
 })
 @EqualsAndHashCode(callSuper = true, exclude = {"user", "product", "replies"})
 public class Review extends BaseEntity {

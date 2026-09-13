@@ -1,7 +1,6 @@
 package com.sushishop.user;
 
 import com.sushishop.shared.BaseEntity;
-import com.sushishop.shared.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

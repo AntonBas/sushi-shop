@@ -10,8 +10,8 @@ import {
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 import { useProducts } from "../../hooks/features/useProducts";
-import { useCart } from "../../context/CartContext";
-import { useNotification } from "../../context/NotificationContext";
+import { useCart } from "../../context/useCart";
+import { useNotification } from "../../context/useNotification";
 import { CATEGORY_DISPLAY } from "../../types/enums";
 import ProductSkeleton from "../../components/Product/ProductSkeleton/ProductSkeleton";
 import Button from "../../components/UI/Button/Button";
@@ -27,11 +27,13 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (slug) getProductBySlug(slug);
     setQuantity(1);
     setActiveImage(0);
-  }, [slug]);
+  }, [slug, getProductBySlug]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (productLoading) return <ProductSkeleton />;
   if (!product) return null;
@@ -92,14 +94,18 @@ export default function ProductPage() {
             {product.images.length > 1 && (
               <>
                 <button
+                  type="button"
                   onClick={prevImage}
                   className={`${styles.arrow} ${styles.arrowLeft}`}
+                  aria-label="Previous image"
                 >
                   <ChevronLeft size={24} />
                 </button>
                 <button
+                  type="button"
                   onClick={nextImage}
                   className={`${styles.arrow} ${styles.arrowRight}`}
+                  aria-label="Next image"
                 >
                   <ChevronRight size={24} />
                 </button>
@@ -111,10 +117,12 @@ export default function ProductPage() {
               {product.images.map((img, i) => (
                 <button
                   key={img.id}
+                  type="button"
                   onClick={() => setActiveImage(i)}
                   className={`${styles.thumb} ${i === activeImage ? styles.activeThumb : ""}`}
+                  aria-label={`View image ${i + 1}`}
                 >
-                  <img src={img.url} alt="" />
+                  <img src={img.url} alt="" loading="lazy" />
                 </button>
               ))}
             </div>
@@ -173,11 +181,21 @@ export default function ProductPage() {
 
           <div className={styles.actions}>
             <div className={styles.quantity}>
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))}>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                aria-label="Decrease quantity"
+              >
                 −
               </button>
               <span>{quantity}</span>
-              <button onClick={() => setQuantity((q) => q + 1)}>+</button>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
             </div>
             <Button onClick={handleAddToCart} className={styles.addBtn}>
               <ShoppingCart size={18} /> Add to Cart —{" "}

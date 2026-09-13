@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { AxiosError } from 'axios'
-import { useNotification } from '../../context/NotificationContext'
+import { useNotification } from '../../context/useNotification'
 import { useDelayedLoading } from './useDelayedLoading'
 
 interface ApiState<T> {

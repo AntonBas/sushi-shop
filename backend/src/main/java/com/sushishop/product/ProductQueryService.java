@@ -1,7 +1,6 @@
 package com.sushishop.product;
 
 import com.sushishop.product.dto.response.ProductListResponse;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +18,9 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class ProductQueryService {
+
+    private static final int POPULAR_PRODUCTS_LIMIT = 10;
+    private static final int RELATED_PRODUCTS_LIMIT = 4;
 
     private final ProductRepository productRepository;
     private final ProductEnrichmentService enrichmentService;
@@ -43,7 +45,7 @@ public class ProductQueryService {
 
     @Transactional(readOnly = true)
     public List<ProductListResponse> getPopular() {
-        List<Product> products = productRepository.findPopular(Pageable.ofSize(10));
+        List<Product> products = productRepository.findPopular(Pageable.ofSize(POPULAR_PRODUCTS_LIMIT));
         return enrichProducts(products);
     }
 
@@ -52,10 +54,8 @@ public class ProductQueryService {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
 
-        List<Product> relatedProducts = productRepository.findRelated(product.getCategory(), id)
-                .stream()
-                .limit(4)
-                .toList();
+        List<Product> relatedProducts = productRepository.findRelated(
+                product.getCategory(), id, Pageable.ofSize(RELATED_PRODUCTS_LIMIT));
 
         return enrichProducts(relatedProducts);
     }

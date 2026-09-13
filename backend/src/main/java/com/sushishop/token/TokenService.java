@@ -1,7 +1,6 @@
 package com.sushishop.token;
 
 import com.sushishop.mail.MailService;
-import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.user.User;
 import lombok.RequiredArgsConstructor;

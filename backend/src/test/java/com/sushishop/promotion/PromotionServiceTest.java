@@ -1,11 +1,12 @@
 package com.sushishop.promotion;
 
+import com.sushishop.product.Category;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.dto.request.CreatePromotionRequest;
 import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
@@ -53,6 +55,12 @@ public class PromotionServiceTest {
 
     @Mock
     private SlugService slugService;
+
+    @Mock
+    private ProductCacheService productCacheService;
+
+    @Mock
+    private CacheManager cacheManager;
 
     @InjectMocks
     private PromotionService promotionService;
@@ -143,7 +151,7 @@ public class PromotionServiceTest {
         var mappedResponse = createPromotionResponse();
 
         when(promotionRepository.findActiveAt(any(LocalDateTime.class))).thenReturn(List.of(promotion));
-        when(assembler.toResponse(any())).thenReturn(mappedResponse);
+        when(assembler.toResponseList(List.of(promotion))).thenReturn(List.of(mappedResponse));
 
         var result = promotionService.getActive();
 
@@ -170,7 +178,7 @@ public class PromotionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
         when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
                 .thenReturn(List.of(promotion));
-        when(assembler.toResponse(any())).thenReturn(mappedResponse);
+        when(assembler.toResponseList(List.of(promotion))).thenReturn(List.of(mappedResponse));
 
         var result = promotionService.getAll(Pageable.unpaged(), "week");
 
@@ -198,7 +206,7 @@ public class PromotionServiceTest {
                 .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
         when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
                 .thenReturn(List.of(promotion));
-        when(assembler.toResponse(any())).thenReturn(mappedResponse);
+        when(assembler.toResponseList(List.of(promotion))).thenReturn(List.of(mappedResponse));
 
         var result = promotionService.getAll(Pageable.unpaged(), null);
 

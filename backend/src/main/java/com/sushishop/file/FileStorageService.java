@@ -63,9 +63,8 @@ public class FileStorageService {
         try {
             String extension = getExtension(contentType);
             String fileName = UUID.randomUUID() + extension;
-            Path filePath = uploadPath.resolve(fileName).normalize();
-
-            if (!filePath.startsWith(uploadPath)) {
+            Path filePath = resolveWithinUploadDir(fileName);
+            if (filePath == null) {
                 throw new BadRequestException("Invalid file path");
             }
 
@@ -79,9 +78,8 @@ public class FileStorageService {
     }
 
     public Resource load(String fileName) {
-        Path filePath = uploadPath.resolve(fileName).normalize();
-
-        if (!filePath.startsWith(uploadPath)) {
+        Path filePath = resolveWithinUploadDir(fileName);
+        if (filePath == null) {
             log.warn("Attempt to access file outside upload directory: {}", fileName);
             throw new BadRequestException("Invalid file path");
         }
@@ -112,9 +110,8 @@ public class FileStorageService {
         }
 
         String fileName = fileUrl.substring(urlPrefix.length());
-        Path filePath = uploadPath.resolve(fileName).normalize();
-
-        if (!filePath.startsWith(uploadPath)) {
+        Path filePath = resolveWithinUploadDir(fileName);
+        if (filePath == null) {
             log.warn("Attempt to delete file outside upload directory: {}", fileName);
             return;
         }
@@ -125,6 +122,11 @@ public class FileStorageService {
         } catch (IOException e) {
             log.error("Failed to delete file: {}", fileName, e);
         }
+    }
+
+    private Path resolveWithinUploadDir(String fileName) {
+        Path filePath = uploadPath.resolve(fileName).normalize();
+        return filePath.startsWith(uploadPath) ? filePath : null;
     }
 
     private String getExtension(String contentType) {

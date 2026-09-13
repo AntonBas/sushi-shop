@@ -147,7 +147,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #fbbf24;
+  color: var(--color-rating);
   font-size: 15px;
 }
 

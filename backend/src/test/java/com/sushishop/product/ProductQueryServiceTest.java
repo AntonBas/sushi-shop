@@ -1,7 +1,6 @@
 package com.sushishop.product;
 
 import com.sushishop.product.dto.response.ProductListResponse;
-import com.sushishop.shared.enums.Category;
 import com.sushishop.shared.exception.core.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,11 +13,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -90,6 +95,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void shouldReturnEmptyPageWhenNoProducts() {
         var pageable = PageRequest.of(0, 12);
         var page = new PageImpl<Product>(List.of(), pageable, 0);
@@ -133,7 +139,7 @@ public class ProductQueryServiceTest {
         var listResponse = createListResponse(2L, "Related", 3.0);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(productRepository.findRelated(Category.ROLL, 1L)).thenReturn(List.of(relatedProduct));
+        when(productRepository.findRelated(eq(Category.ROLL), eq(1L), any())).thenReturn(List.of(relatedProduct));
         when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(2L, 3.0));
         when(enrichmentService.calculateDiscountedPrice(relatedProduct)).thenReturn(null);
         when(productMapper.toListResponse(eq(relatedProduct), eq(3.0), any())).thenReturn(listResponse);

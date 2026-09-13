@@ -24,7 +24,7 @@ export default function AdminAuditPage() {
       start: start || undefined,
       end: end || undefined,
     });
-  }, [page, action, entityName, entityId, performedBy, start, end]);
+  }, [page, action, entityName, entityId, performedBy, start, end, loadLogs]);
 
   if (loading) return <Loading text="Loading audit logs..." />;
 
@@ -42,6 +42,7 @@ export default function AdminAuditPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by action"
         >
           <option value="">All Actions</option>
           <option value="CREATE">CREATE</option>

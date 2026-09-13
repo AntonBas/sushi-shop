@@ -3,9 +3,8 @@ package com.sushishop.order;
 import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
+import com.sushishop.security.Roles;
+import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -45,7 +44,7 @@ public class OrderController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request,
                                                 @AuthenticationPrincipal UserDetails userDetails) {
-        log.info("POST /api/orders - {}", request.customerName());
+        log.info("POST /api/orders - {}", LogSanitizer.sanitize(request.customerName()));
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(orderCreationService.create(request, userDetails.getUsername()));
     }
@@ -64,7 +63,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'COURIER')")
+    @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "', '" + Roles.COURIER + "')")
     @Operation(summary = "Get all orders (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
@@ -83,13 +82,21 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "Order found"),
             @ApiResponse(responseCode = "404", description = "Order not found")
     })
-    public ResponseEntity<OrderResponse> getById(@PathVariable Long id) {
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<OrderResponse> getById(@PathVariable Long id,
+                                                 @AuthenticationPrincipal UserDetails userDetails) {
         log.info("GET /api/orders/{} - by ID", id);
-        return ResponseEntity.ok(orderService.getById(id));
+        return ResponseEntity.ok(orderService.getById(id, userDetails.getUsername(), isStaff(userDetails)));
+    }
+
+    private boolean isStaff(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Roles.ADMIN)
+                        || authority.getAuthority().equals("ROLE_" + Roles.COURIER));
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN', 'COURIER')")
+    @PreAuthorize("hasAnyRole('" + Roles.ADMIN + "', '" + Roles.COURIER + "')")
     @Operation(summary = "Update order status (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<OrderResponse> updateStatus(@PathVariable Long id, @RequestParam OrderStatus status) {

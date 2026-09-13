@@ -4,14 +4,11 @@ import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.request.OrderItemRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.shared.address.AddressResponse;
-import com.sushishop.shared.enums.Category;
-import com.sushishop.shared.enums.DeliveryMethod;
-import com.sushishop.shared.enums.OrderStatus;
-import com.sushishop.shared.enums.PaymentMethod;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
@@ -30,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class OrderCreationServiceTest {
@@ -67,7 +65,7 @@ public class OrderCreationServiceTest {
                 DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, new BigDecimal("500.00"), null, List.of());
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
         when(orderRepository.save(any())).thenReturn(order);
         when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
 
@@ -88,7 +86,7 @@ public class OrderCreationServiceTest {
         var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).available(false).build();
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
 
         assertThatThrownBy(() -> orderCreationService.create(request, "test@test.com"))
                 .isInstanceOf(BadRequestException.class)

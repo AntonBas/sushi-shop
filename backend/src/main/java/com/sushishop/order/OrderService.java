@@ -3,9 +3,8 @@ package com.sushishop.order;
 import com.sushishop.audit.Auditable;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
-import com.sushishop.payment.PaymentConfirmedEvent;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.enums.OrderStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,17 +23,30 @@ public class OrderService {
     private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional(readOnly = true)
-    public OrderResponse getById(Long id) {
+    public OrderResponse getById(Long id, String requesterEmail, boolean isStaff) {
         log.info("Getting order by id: {}", id);
+        return orderMapper.toResponse(getOwnedOrder(id, requesterEmail, isStaff));
+    }
+
+    /**
+     * Fetches an order by id without any ownership check. For internal/system
+     * use only (e.g. payment creation right after {@link #getOwnedOrder} has
+     * already verified access, or webhook-driven flows with no requester).
+     * User-facing endpoints must go through {@link #getOwnedOrder} instead.
+     */
+    @Transactional(readOnly = true)
+    public Order getOrderByIdInternal(Long id) {
         return orderRepository.findById(id)
-                .map(orderMapper::toResponse)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
     }
 
     @Transactional(readOnly = true)
-    public Order getOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Order not found: " + id));
+    public Order getOwnedOrder(Long id, String requesterEmail, boolean isStaff) {
+        var order = getOrderByIdInternal(id);
+        if (!isStaff && !order.getUser().getEmail().equals(requesterEmail)) {
+            throw new NotFoundException("Order not found: " + id);
+        }
+        return order;
     }
 
     @Auditable(action = AuditAction.UPDATE, entity = "Order")
@@ -56,7 +68,7 @@ public class OrderService {
 
     @EventListener
     public void onPaymentConfirmed(PaymentConfirmedEvent event) {
-        confirmOrder(event.getPayment().getOrder().getId());
+        confirmOrder(event.getOrderId());
     }
 
     @Transactional

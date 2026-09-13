@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '${DB_PORT}:5432'
+      - '127.0.0.1:${DB_PORT}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -23,7 +23,7 @@ services:
     image: 'redis:7-alpine'
     container_name: sushi-redis
     ports:
-      - '${REDIS_PORT}:6379'
+      - '127.0.0.1:${REDIS_PORT}:6379'
     networks:
       - sushi-net
     healthcheck:
@@ -46,6 +46,7 @@ services:
     env_file:
       - .env
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: ${DB_NAME}
@@ -63,7 +64,7 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       APP_BASE_URL: ${APP_BASE_URL}
     ports:
-      - '8080:8080'
+      - '127.0.0.1:8080:8080'
     networks:
       - sushi-net
     volumes:
@@ -85,20 +86,35 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - '5173:5173'
+      - '5173:80'
     networks:
       - sushi-net
-    environment:
-      VITE_API_URL: http://backend:8080
     restart: unless-stopped
+
+  prometheus-config:
+    image: alpine:3.20
+    container_name: sushi-prometheus-config
+    profiles: [dev]
+    env_file:
+      - .env
+    volumes:
+      - ./prometheus.yml.template:/template/prometheus.yml.template:ro
+      - prometheus_config:/config
+    command: sh -c "apk add --no-cache gettext >/dev/null && envsubst < /template/prometheus.yml.template > /config/prometheus.yml"
+    networks:
+      - sushi-net
 
   prometheus:
     image: prom/prometheus:latest
     container_name: sushi-prometheus
+    profiles: [dev]
+    depends_on:
+      prometheus-config:
+        condition: service_completed_successfully
     ports:
       - '9090:9090'
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_config:/etc/prometheus
     networks:
       - sushi-net
     restart: unless-stopped
@@ -106,6 +122,7 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: sushi-grafana
+    profiles: [dev]
     ports:
       - '3000:3000'
     networks:
@@ -115,6 +132,7 @@ services:
   ngrok:
     image: ngrok/ngrok:latest
     container_name: sushi-ngrok
+    profiles: [dev]
     depends_on:
       backend:
         condition: service_healthy
@@ -133,3 +151,4 @@ networks:
 
 volumes:
   postgres_data:
+  prometheus_config:

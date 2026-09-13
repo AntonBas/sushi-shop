@@ -30,7 +30,7 @@
   top: 8px;
   right: 8px;
   background: var(--color-error);
-  color: #fff;
+  color: var(--color-on-error);
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 12px;
@@ -89,6 +89,6 @@
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: #fbbf24;
+  color: var(--color-rating);
   margin-top: 4px;
 }

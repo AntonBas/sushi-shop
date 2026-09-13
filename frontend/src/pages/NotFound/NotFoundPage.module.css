@@ -1,0 +1,46 @@
+.page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+  padding: 24px;
+}
+
+.card {
+  text-align: center;
+  padding: 48px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  max-width: 480px;
+}
+
+.icon {
+  color: var(--color-primary);
+  margin-bottom: 16px;
+}
+
+.code {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.card h1 {
+  font-size: 24px;
+  color: var(--color-text);
+  margin: 8px 0;
+}
+
+.card p {
+  color: var(--color-text-muted);
+  margin: 0 0 4px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}

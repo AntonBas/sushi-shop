@@ -1,8 +1,8 @@
 package com.sushishop.order.dto.request;
 
-import com.sushishop.shared.enums.DeliveryMethod;
+import com.sushishop.order.DeliveryMethod;
+import com.sushishop.order.PaymentMethod;
 import com.sushishop.shared.address.AddressRequest;
-import com.sushishop.shared.enums.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -40,6 +40,7 @@ public record CreateOrderRequest(
         @Schema(description = "List of products to order")
         @Valid
         @NotEmpty(message = "Order must contain at least one item")
+        @Size(max = 50, message = "Order cannot contain more than 50 items")
         List<OrderItemRequest> items
 ) {
 }

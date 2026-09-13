@@ -1,21 +1,9 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
+import { clearAuthToken, getAuthToken, setAuthToken } from "../api/authToken";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
-
-interface AuthContextType {
-  user: UserResponse | null;
-  loading: boolean;
-  isAuthenticated: boolean;
-  isAdmin: boolean;
-  isCourier: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<UserResponse>;
-  logout: () => void;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from "./auth-context";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -25,7 +13,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const fetchedRef = useRef(false);
   const loading = initialLoading;
 
-  const token = localStorage.getItem("token");
+  const token = getAuthToken();
   const isAuthenticated = !!user;
   const isAdmin = user?.userRole === "ADMIN";
   const isCourier = user?.userRole === "COURIER";
@@ -37,32 +25,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .getMe()
         .then(setUser)
         .catch(() => {
-          localStorage.removeItem("token");
+          clearAuthToken();
           setUser(null);
         })
         .finally(() => setInitialLoading(false));
     } else {
       setInitialLoading(false);
     }
-  }, []);
+  }, [token]);
 
   const login = async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);
-    localStorage.setItem("token", response.token);
+    setAuthToken(response.token);
     fetchedRef.current = true;
     setUser(response.user);
   };
 
   const register = async (userData: RegisterRequest) => {
     const response = await authApi.register(userData);
-    localStorage.setItem("token", response.token);
+    setAuthToken(response.token);
     fetchedRef.current = true;
     setUser(response.user);
     return response.user;
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    clearAuthToken();
     setUser(null);
     fetchedRef.current = false;
     window.location.href = "/login";
@@ -94,10 +82,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
-  return context;
 };

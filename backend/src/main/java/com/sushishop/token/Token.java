@@ -1,7 +1,6 @@
 package com.sushishop.token;
 
 import com.sushishop.shared.BaseEntity;
-import com.sushishop.shared.enums.TokenType;
 import com.sushishop.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Future;

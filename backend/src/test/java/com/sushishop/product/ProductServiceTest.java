@@ -1,9 +1,10 @@
 package com.sushishop.product;
 
+import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
-import com.sushishop.shared.enums.Category;
+import com.sushishop.review.ReviewRepository;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,15 @@ public class ProductServiceTest {
 
     @Mock
     private ProductImageService productImageService;
+
+    @Mock
+    private ProductCacheService productCacheService;
+
+    @Mock
+    private FileStorageService fileStorageService;
+
+    @Mock
+    private ReviewRepository reviewRepository;
 
     @InjectMocks
     private ProductService productService;
@@ -81,6 +91,7 @@ public class ProductServiceTest {
         when(enrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
         when(enrichmentService.getDiscountPercent(product)).thenReturn(null);
         when(enrichmentService.getPromotionTitle(product)).thenReturn(null);
+        when(reviewRepository.countByProductId(1L)).thenReturn(0L);
 
         var result = productService.create(request, null);
 
@@ -100,6 +111,7 @@ public class ProductServiceTest {
         when(enrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
         when(enrichmentService.getDiscountPercent(product)).thenReturn(null);
         when(enrichmentService.getPromotionTitle(product)).thenReturn(null);
+        when(reviewRepository.countByProductId(1L)).thenReturn(0L);
 
         var result = productService.getById(1L);
 
@@ -128,6 +140,7 @@ public class ProductServiceTest {
         when(enrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
         when(enrichmentService.getDiscountPercent(product)).thenReturn(null);
         when(enrichmentService.getPromotionTitle(product)).thenReturn(null);
+        when(reviewRepository.countByProductId(1L)).thenReturn(0L);
 
         var result = productService.update(1L, request);
 

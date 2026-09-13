@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
-import { useNotification } from "../../../../context/NotificationContext";
+import { useNotification } from "../../../../context/useNotification";
 import * as promotionsApi from "../../../../api/promotions";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
@@ -122,19 +122,23 @@ export default function AdminPromotionsPage() {
                     <td data-label="Actions">
                       <div className={styles.actions}>
                         <button
+                          type="button"
                           onClick={() =>
                             navigate(`/admin/promotions/${promo.id}/edit`)
                           }
                           className={styles.editBtn}
+                          aria-label="Edit promotion"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
+                          type="button"
                           onClick={() => {
                             setDeleteId(promo.id);
                             setDeleteTitle(promo.title);
                           }}
                           className={styles.deleteBtn}
+                          aria-label="Delete promotion"
                         >
                           <Trash2 size={16} />
                         </button>

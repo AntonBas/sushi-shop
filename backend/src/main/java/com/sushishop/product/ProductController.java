@@ -3,14 +3,16 @@ package com.sushishop.product;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductListResponse;
+import com.sushishop.security.Roles;
 import com.sushishop.product.dto.response.ProductResponse;
-import com.sushishop.shared.enums.Category;
+import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -20,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -30,6 +33,7 @@ import java.util.List;
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
 @Tag(name = "Products", description = "Product management endpoints")
+@Validated
 public class ProductController {
 
     private final ProductService productService;
@@ -37,7 +41,7 @@ public class ProductController {
     private final ProductImageService productImageService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Create product with images")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Product created"),
@@ -47,7 +51,7 @@ public class ProductController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ProductResponse> create(@RequestPart("product") @Valid CreateProductRequest request,
                                                   @RequestPart(value = "images", required = false) List<MultipartFile> images) {
-        log.info("POST /api/products - {}", request.name());
+        log.info("POST /api/products - {}", LogSanitizer.sanitize(request.name()));
         return ResponseEntity.status(HttpStatus.CREATED).body(productService.create(request, images));
     }
 
@@ -57,7 +61,8 @@ public class ProductController {
                                                             @RequestParam(required = false) String search,
                                                             @RequestParam(required = false) Category category,
                                                             @RequestParam(required = false) Boolean available) {
-        log.info("GET /api/products - search: {}, category: {}, page: {}", search, category, pageable.getPageNumber());
+        log.info("GET /api/products - search: {}, category: {}, page: {}",
+                LogSanitizer.sanitize(search), category, pageable.getPageNumber());
         return ResponseEntity.ok(productQueryService.getAll(pageable, search, category, available));
     }
 
@@ -79,7 +84,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     public ResponseEntity<ProductResponse> getBySlug(@PathVariable String slug) {
-        log.info("GET /api/products/slug/{}", slug);
+        log.info("GET /api/products/slug/{}", LogSanitizer.sanitize(slug));
         return ResponseEntity.ok(productService.getBySlug(slug));
     }
 
@@ -102,7 +107,7 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Update product")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<ProductResponse> update(@PathVariable Long id, @Valid @RequestBody UpdateProductRequest request) {
@@ -111,7 +116,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Delete product")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
@@ -121,17 +126,18 @@ public class ProductController {
     }
 
     @PatchMapping("/{id}/images/reorder")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Reorder product images")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> reorderImages(@PathVariable Long id, @RequestBody List<Long> imageIds) {
+    public ResponseEntity<Void> reorderImages(@PathVariable Long id,
+                                              @RequestBody @NotEmpty(message = "Image ID list must not be empty") List<Long> imageIds) {
         log.info("PATCH /api/products/{}/images/reorder", id);
         productImageService.reorderImages(id, imageIds);
         return ResponseEntity.ok().build();
     }
 
     @PatchMapping("/{id}/toggle")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Toggle product availability")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> toggleStatus(@PathVariable Long id) {
@@ -141,7 +147,7 @@ public class ProductController {
     }
 
     @PostMapping("/{id}/images")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Add image to product")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> addImage(@PathVariable Long id, @RequestParam("image") MultipartFile image) {
@@ -151,7 +157,7 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}/images/{imageId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('" + Roles.ADMIN + "')")
     @Operation(summary = "Delete product image")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id, @PathVariable Long imageId) {

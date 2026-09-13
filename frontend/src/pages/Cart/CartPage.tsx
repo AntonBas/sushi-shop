@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Trash2, ShoppingBag } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../context/useCart";
 import Button from "../../components/UI/Button/Button";
 import styles from "./CartPage.module.css";
 
@@ -40,6 +40,7 @@ export default function CartPage() {
                 src={item.mainImage}
                 alt={item.name}
                 className={styles.itemImage}
+                loading="lazy"
               />
             )}
             <div className={styles.itemInfo}>
@@ -52,8 +53,10 @@ export default function CartPage() {
                 {item.price * item.quantity}₴
               </span>
               <button
+                type="button"
                 onClick={() => removeItem(item.productId)}
                 className={styles.removeBtn}
+                aria-label={`Remove ${item.name} from cart`}
               >
                 <Trash2 size={16} />
               </button>

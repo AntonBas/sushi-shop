@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
-import { useNotification } from "../../../../context/NotificationContext";
+import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
@@ -31,7 +31,7 @@ export default function AdminProductsPage() {
       category: categoryFilter || undefined,
       available: availableFilter === "" ? undefined : availableFilter,
     });
-  }, [page, search, categoryFilter, availableFilter]);
+  }, [page, search, categoryFilter, availableFilter, loadProducts]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -100,6 +100,7 @@ export default function AdminProductsPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by category"
         >
           <option value="">All Categories</option>
           {categories.map((c) => (
@@ -116,6 +117,7 @@ export default function AdminProductsPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by availability"
         >
           <option value="">All Status</option>
           <option value="true">Available</option>
@@ -155,6 +157,7 @@ export default function AdminProductsPage() {
                         src={product.mainImage}
                         alt={product.name}
                         className={styles.thumb}
+                        loading="lazy"
                       />
                     ) : (
                       <div className={styles.noImage}>—</div>
@@ -175,8 +178,10 @@ export default function AdminProductsPage() {
                   <td>{product.price}₴</td>
                   <td>
                     <button
+                      type="button"
                       onClick={() => handleToggle(product.id)}
                       className={styles.toggleBtn}
+                      aria-label={product.available ? "Mark unavailable" : "Mark available"}
                     >
                       {product.available ? (
                         <ToggleRight size={20} className={styles.on} />
@@ -188,19 +193,23 @@ export default function AdminProductsPage() {
                   <td>
                     <div className={styles.actions}>
                       <button
+                        type="button"
                         onClick={() =>
                           navigate(`/admin/products/${product.id}/edit`)
                         }
                         className={styles.editBtn}
+                        aria-label="Edit product"
                       >
                         <Pencil size={16} />
                       </button>
                       <button
+                        type="button"
                         onClick={() => {
                           setDeleteId(product.id);
                           setDeleteName(product.name);
                         }}
                         className={styles.deleteBtn}
+                        aria-label="Delete product"
                       >
                         <Trash2 size={16} />
                       </button>

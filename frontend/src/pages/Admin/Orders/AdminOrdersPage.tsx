@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
-import { useNotification } from "../../../context/NotificationContext";
+import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
+import { getAuthToken } from "../../../api/authToken";
+import { API_BASE_URL } from "../../../config/env";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import { Search } from "lucide-react";
@@ -52,7 +54,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     loadOrders(0);
-  }, []);
+  }, [loadOrders]);
 
   useEffect(() => {
     loadOrders(page, 12, {
@@ -61,11 +63,14 @@ export default function AdminOrdersPage() {
       paymentMethod: paymentFilter || undefined,
       search: search || undefined,
     });
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
 
   useEffect(() => {
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+      connectHeaders: {
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
       onConnect: () => {
         client.subscribe("/topic/orders/new", () => {
           loadOrders(page, 12, {
@@ -83,7 +88,7 @@ export default function AdminOrdersPage() {
     return () => {
       client.deactivate();
     };
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
 
   const handleStatusChange = async (
     orderId: number,
@@ -137,6 +142,7 @@ export default function AdminOrdersPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by status"
         >
           <option value="">All Statuses</option>
           {[
@@ -160,6 +166,7 @@ export default function AdminOrdersPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by delivery method"
         >
           <option value="">All Methods</option>
           <option value="DELIVERY">Delivery</option>
@@ -172,6 +179,7 @@ export default function AdminOrdersPage() {
             setPage(0);
           }}
           className={styles.filterSelect}
+          aria-label="Filter by payment method"
         >
           <option value="">All Payments</option>
           <option value="ONLINE">Online</option>
@@ -288,6 +296,7 @@ export default function AdminOrdersPage() {
                                       src={item.mainImage}
                                       alt={item.productName}
                                       className={styles.itemImage}
+                                      loading="lazy"
                                     />
                                   )}
                                   <span>

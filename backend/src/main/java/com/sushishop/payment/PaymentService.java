@@ -3,7 +3,7 @@ package com.sushishop.payment;
 import com.sushishop.audit.Auditable;
 import com.sushishop.order.OrderService;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.enums.PaymentStatus;
+import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class PaymentService {
             throw new BadRequestException("Amount must be greater than zero");
         }
 
-        var order = orderService.getOrderById(orderId);
+        var order = orderService.getOrderByIdInternal(orderId);
 
         var payment = Payment.builder()
                 .order(order)
@@ -55,12 +55,13 @@ public class PaymentService {
                 .orElseThrow(() -> new NotFoundException("Payment not found"));
 
         if (payment.getStatus() == PaymentStatus.PAID) {
-            throw new BadRequestException("Payment already confirmed");
+            log.info("Payment already confirmed, skipping: {}", stripeSessionId);
+            return;
         }
 
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
-        eventPublisher.publishEvent(new PaymentConfirmedEvent(this, payment));
+        eventPublisher.publishEvent(new PaymentConfirmedEvent(this, payment.getOrder().getId()));
         log.info("Payment confirmed: {}", stripeSessionId);
     }
 }

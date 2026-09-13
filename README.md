@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Online sushi delivery shop with real-time order tracking.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 246 backend tests across 50 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.7-green)
@@ -8,6 +8,8 @@ Online sushi delivery shop with real-time order tracking.
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
+![CI](https://github.com/AntonBas/sushi-shop/workflows/CI/badge.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 ---
 
@@ -20,7 +22,8 @@ payment, and real-time delivery tracking.
 The system supports three roles:
 - **User** — browsing, ordering, tracking
 - **Admin** — managing products, promotions, orders, audit logs
-- **Courier** — managing assigned deliveries and updating delivery statuses
+- **Courier** — order management and delivery status updates (shares the admin
+  order view, without product/promotion access)
 
 ---
 
@@ -50,9 +53,9 @@ The system supports three roles:
 - Real-time order updates via WebSocket
 - Audit logs with filtering
 
-### Courier Panel
-- Order management dashboard
-- Delivery status transitions
+### Courier Access
+- Reuses the admin order management view — update order status, filter/search orders
+- No product or promotion management access
 
 ---
 
@@ -64,32 +67,74 @@ The system supports three roles:
 - **Promotion conflict prevention** — prevents a product from being assigned to multiple active promotions
 - **Real-time order tracking** — WebSocket/STOMP updates order status automatically across clients
 - **Cross-cutting audit logging** — implemented with a custom `@Auditable` annotation and AOP
-- **Role-based access control** — separate workflows and permissions for User, Admin, and Courier roles
-- **API rate limiting** — configurable request throttling using Bucket4j
 - **Drag-and-drop image reordering** — admin can reorder product images
 - **Service layer separation** — split large services into focused services (OrderCreationService, OrderQueryService, ProductImageService, ReviewReplyService)
 - **Validation hierarchy** — custom exceptions for all HTTP error scenarios with centralized handling
 - **Token management** — separate TokenService for verification and password reset tokens
-- **Scheduled cleanup** — automated cleanup of expired tokens and rate-limit buckets
+- **Scheduled cleanup** — automated cleanup of expired tokens, rate-limit buckets, and product-cache entries for just-expired promotions
 - **Email verification flow** — async email sending with styled HTML templates
+- **Accessibility (WCAG AA)** — dedicated audit and fixes: color-contrast across
+  light/dark themes, focus-visible styles, focus trap/restoration in modals,
+  ARIA labels on icon-only controls, full keyboard navigation
+- **Resilience** — root `ErrorBoundary` to prevent white-screen crashes,
+  custom 404 handling
 
 ---
 
 ## Architecture
 
+**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`) is a self-contained package with its own `controller/service/repository/dto/mapper`, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/`, `file/`, and `scheduler/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
+
+```mermaid
+flowchart TD
+    A[React Frontend] --> B[Spring Boot API]
+
+    B --> OR["order/"]
+    B --> PY["payment/"]
+    B --> RS["product/ · promotion/ · review/ · user/ · ..."]
+
+    PY -->|reads order · payment-confirmed event| OR
+
+    OR --> DB[(PostgreSQL)]
+    PY --> DB
+    RS --> DB
+
+    RS --> CACHE[(Redis)]
+
+    PY --> ST[Stripe API]
+    ST -->|webhook| PY
+
+    OR --> WS[WebSocket / STOMP]
+    WS --> A
+
+    S["Scheduled token cleanup"] --> DB
 ```
-React (Vite)
-    ↓ REST
-Spring Boot API
-    ├── PostgreSQL (data)
-    ├── Redis (caching)
-    ├── WebSocket/STOMP (real-time order updates)
-    ├── Stripe (payments)
-    ├── Google OAuth2 (login)
-    ├── Mail (SMTP)
-    ├── Rate Limiting (Bucket4j)
-    └── Prometheus + Grafana (monitoring)
-```
+
+**Domain packages:**
+
+| Package                     | Responsibility                                                    |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `product/`                   | Catalog, categories, images                                        |
+| `promotion/`                 | Promotions, discount rules, conflict prevention                    |
+| `order/`                     | Order lifecycle, checkout, real-time status via WebSocket/STOMP    |
+| `payment/`                   | Stripe payment processing                                          |
+| `review/`                    | Product reviews, ratings, admin replies                            |
+| `audit/`                     | `@Auditable` AOP change log across admin actions                   |
+| `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
+| `mail/`                      | Async email sending (verification, notifications)                  |
+| `file/`                      | Product image storage                                              |
+| `scheduler/`                 | Expired-token, rate-limit-bucket, and expired-promotion-cache cleanup |
+| `security/`                  | JWT filter, WebSocket auth, rate-limit config                      |
+| `shared/`                    | Cross-cutting config, exceptions, validation, enums, events        |
+
+---
+
+## Security Highlights
+
+- **Role-Based Access Control (RBAC):** separate workflows and permissions for User, Admin, and Courier, enforced at both API and UI level.
+- **API rate limiting:** configurable per-endpoint throttling via Bucket4j, with scheduled cleanup of expired buckets.
+- **Security hardening:** CSP/HSTS/X-Frame-Options headers (via Nginx in the Docker Compose setup), Dependabot dependency scanning across npm/Gradle/GitHub Actions, authenticated WebSocket subscriptions.
+- **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing.
 
 ---
 
@@ -97,46 +142,57 @@ Spring Boot API
 
 ### Backend
 
-- Java 21
-- Spring Boot 4.0.7
-- Spring Security
-- Spring Data JPA / Hibernate
-- PostgreSQL 16
-- Redis
-- Flyway
-- JWT
-- MapStruct
-- WebSocket / STOMP
-- Stripe
-- Google OAuth2
-- Bucket4j
-- Testcontainers
-- Spring AOP
-- Spring Scheduling
-- Spring Mail
+| Technology                  | Version               |
+| ----------------------------- | ------------------------ |
+| Java                         | 21                     |
+| Spring Boot                  | 4.0.7                  |
+| Spring Security               | Spring Boot-managed     |
+| Spring Data JPA / Hibernate   | Spring Boot-managed     |
+| PostgreSQL                   | 16                     |
+| Redis                         | 7                      |
+| Flyway                        | Spring Boot-managed     |
+| JWT (jjwt)                    | 0.12.6                 |
+| MapStruct                     | 1.6.3                  |
+| WebSocket / STOMP              | Spring Boot-managed     |
+| Stripe                        | 33.1.1                 |
+| Google OAuth2 Client           | Spring Boot-managed     |
+| Bucket4j                      | 8.10.1                 |
+| Testcontainers                | 1.20.6                 |
+| Spring AOP                    | Spring Boot-managed     |
+| Spring Scheduling              | Spring Boot-managed     |
+| Spring Mail                   | Spring Boot-managed     |
 
 ### Frontend
 
-- React 19
-- TypeScript 6
-- Vite 8
-- React Router 7
-- Axios
-- STOMP.js / SockJS
-- dnd-kit
-- Tailwind CSS 4
-- CSS Modules
+| Technology         | Version        |
+| -------------------- | ---------------- |
+| React                | 19.2.7          |
+| TypeScript            | 6.0.2           |
+| Vite                  | 8.1.1           |
+| React Router DOM       | 7.18.1          |
+| Axios                 | 1.18.1          |
+| STOMP.js              | 7.3.0           |
+| SockJS Client          | 1.6.1           |
+| dnd-kit               | 6.3.1           |
+| Tailwind CSS           | 4.3.2           |
+| CSS Modules            | native (Vite)   |
 
-### DevOps
+### DevOps & Tools
 
-- Docker
-- Docker Compose
-- Prometheus
-- Grafana
+| Technology     | Description                   |
+| :------------- | :----------------------------- |
+| Docker         | Containerization                |
+| Docker Compose | Multi-container orchestration  |
+| Prometheus     | Metrics collection              |
+| Grafana        | Metrics dashboards              |
+| GitHub Actions | CI/CD pipeline                  |
+| Render / Vercel / Neon / Upstash | Free-tier cloud deployment (backend / frontend / PostgreSQL / Redis) |
 
 ---
 
-## Quick Start
+## Getting Started
+
+### Option 1: Docker Setup (Recommended)
 
 ```bash
 git clone https://github.com/AntonBas/sushi-shop.git
@@ -148,32 +204,136 @@ docker compose up -d
 Fill in the required values in `.env`.
 See [`.env.example`](.env.example) for all available variables.
 
-
 | Service     | URL                                   |
 | ----------- | ------------------------------------- |
 | Frontend    | http://localhost:5173                 |
 | Backend API | http://localhost:8080                 |
 | Swagger     | http://localhost:8080/swagger-ui.html |
-| Prometheus  | http://localhost:9090                 |
-| Grafana     | http://localhost:3000                 |
+
+Prometheus and Grafana are opt-in dev extras, not started by the command
+above — run `docker compose --profile dev up -d` to include them (plus
+ngrok, for local Stripe webhook testing) at http://localhost:9090 and
+http://localhost:3000 respectively.
+
+Swagger UI is enabled under the `local` and `docker` Spring profiles used
+for development. The `prod` profile (see [Cloud Deployment](#cloud-deployment-free-tier))
+disables `springdoc` intentionally, so a public deployment doesn't expose it.
+
+### Option 2: Local Development Setup
+
+Run backend and frontend separately for faster iteration; only Postgres and
+Redis stay in Docker.
+
+**Backend**
+
+```bash
+cp .env.example .env
+```
+
+Fill in the required values (same variables as Option 1 — JWT_SECRET,
+EMAIL_*, GOOGLE_*, STRIPE_*, APP_BASE_URL — the app fails to start without
+them, there are no defaults for secrets).
+
+```bash
+docker compose up -d postgres redis
+cd backend
+cp ../.env .env
+./gradlew bootRun
+```
+
+`./gradlew bootRun` activates the `local` Spring profile by default (see
+`build.gradle`), which already reads `DB_HOST`/`DB_PORT`/`REDIS_HOST`/
+`REDIS_PORT` with `localhost` defaults matching the values in
+`.env.example`, so only Postgres/Redis need no extra config. Backend
+available at http://localhost:8080.
+
+**Frontend**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend available at http://localhost:5173. Vite proxies `/api`, `/ws`,
+`/oauth2`, and `/login/oauth2` to `http://localhost:8080` — no CORS
+configuration or `VITE_API_URL` setup needed.
+
+### Cloud Deployment (Free Tier)
+
+Backend and frontend are on different domains here, unlike Options 1/2, so
+the frontend talks to the backend over CORS via an absolute `VITE_API_URL`
+instead of a same-origin proxy.
+
+| Component  | Service                    |
+| ---------- | --------------------------- |
+| Frontend   | Vercel (root dir: `frontend`) |
+| Backend    | Render — Free Web Service, Docker (root dir: `backend`) |
+| PostgreSQL | Neon (free tier)             |
+| Redis      | Upstash (free tier, TLS)     |
+
+On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "required everywhere"
+and "prod only" variables from [`.env.example`](.env.example). On Vercel,
+set `VITE_API_URL` to the Render backend's URL. Add
+`<Render URL>/login/oauth2/code/google` to Google Cloud Console's Authorized
+redirect URIs, and point the Stripe webhook at `<Render URL>/api/payments/webhook`.
+
+Render's free tier sleeps after 15 minutes of inactivity; ping
+`/actuator/health` periodically (e.g. UptimeRobot or a GitHub Actions cron)
+to keep it warm.
 
 ---
 
 ## Testing
 
+Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
+(fails the build on any warning), and the Java compiler is warning-free
+(unchecked operations, MapStruct unmapped properties).
+
+### Backend
+
 - **Unit tests:** JUnit 5 + Mockito — services, mappers, validators, aspects
 - **Integration tests:** Testcontainers with real PostgreSQL — Flyway migrations, repository queries
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
+- **Coverage:** Jacoco (~79% instruction coverage). Run `./gradlew jacocoTestReport`
+  and open `backend/build/reports/jacoco/test/html/index.html`.
+
+### Frontend
+
+- **Unit/component tests:** Vitest + React Testing Library
+- **Coverage:** `npm run test:coverage` (v8 provider), report at
+  `frontend/coverage/index.html`. Test suite is a starting baseline, not
+  full coverage yet — see `frontend/src/**/*.test.{ts,tsx}` for what's
+  covered so far.
+
+---
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR: backend
+build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
+`tsc -b`, Vite). There is no deployment step — this is CI only, deployment
+is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +
+Neon + Upstash (see [Getting Started](#getting-started)).
 
 ---
 
 ## Test Users
 
-These accounts are for demonstration purposes only.
+Not seeded by default. Set `SEED_DEMO_USERS=true` in `.env` to have these
+accounts created on startup. **Never enable this on a publicly reachable
+deployment** (e.g. with the `ngrok` tunnel active) — the admin password is
+public in this repository.
 
 | Role    | Email             | Password |
 |---------|-------------------|----------|
 | User    | user@test.com     | user     |
 | Admin   | admin@test.com    | admin    |
 | Courier | courier@test.com  | courier  |
+
+---
+
+## License
+
+[MIT](LICENSE)

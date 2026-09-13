@@ -1,9 +1,9 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.enums.TokenType;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.token.TokenService;
+import com.sushishop.token.TokenType;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,11 +34,7 @@ public class PasswordResetService {
     }
 
     @Transactional
-    public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
-        if (!newPassword.equals(confirmPassword)) {
-            throw new BadRequestException("Passwords don't match!");
-        }
-
+    public void resetPassword(String resetToken, String newPassword) {
         var tokenEntity = tokenService.validateAndGetToken(resetToken, TokenType.PASSWORD_RESET);
         var user = tokenEntity.getUser();
 

@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { useApi } from "../../../hooks/common/useApi";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
+import { getAuthToken } from "../../../api/authToken";
+import { API_BASE_URL } from "../../../config/env";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { UserOrderResponse } from "../../../types";
@@ -22,18 +24,26 @@ export default function MyOrdersPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
+  const ordersRef = useRef<UserOrderResponse[]>([]);
 
   useEffect(() => {
     execute(() => ordersApi.getMyOrders(page)).then((res) =>
       setOrders(res.content),
     );
-  }, [page]);
+  }, [page, execute]);
+
+  useEffect(() => {
+    ordersRef.current = orders;
+  }, [orders]);
 
   useEffect(() => {
     const client = new Client({
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
+      connectHeaders: {
+        Authorization: `Bearer ${getAuthToken()}`,
+      },
       onConnect: () => {
-        orders.forEach((order) => {
+        ordersRef.current.forEach((order) => {
           client.subscribe(`/topic/orders/${order.id}`, (message) => {
             const update = JSON.parse(message.body);
             setOrders((prev) =>
@@ -56,11 +66,7 @@ export default function MyOrdersPage() {
   const handlePay = async (order: UserOrderResponse) => {
     setPayLoading(order.id);
     try {
-      const url = await paymentsApi.createCheckout(
-        order.id,
-        Math.round(order.totalAmount * 100),
-        order.userEmail,
-      );
+      const url = await paymentsApi.createCheckout(order.id);
       if (url) window.location.href = url;
     } finally {
       setPayLoading(null);
@@ -151,6 +157,7 @@ export default function MyOrdersPage() {
                               src={item.mainImage}
                               alt={item.productName}
                               className={styles.itemImage}
+                              loading="lazy"
                             />
                           )}
                           <span>

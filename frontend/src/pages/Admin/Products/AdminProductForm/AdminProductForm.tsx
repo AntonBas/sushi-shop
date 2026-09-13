@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X, GripVertical } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
-import { useNotification } from "../../../../context/NotificationContext";
+import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
 import Button from "../../../../components/UI/Button/Button";
 import Input from "../../../../components/UI/Input/Input";
@@ -15,6 +15,7 @@ import {
 import {
   DndContext,
   closestCenter,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -22,6 +23,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   useSortable,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
@@ -30,10 +32,11 @@ import styles from "./AdminProductForm.module.css";
 
 interface SortableImageProps {
   img: ProductImageResponse;
+  index: number;
   onRemove: (id: number) => void;
 }
 
-function SortableImage({ img, onRemove }: SortableImageProps) {
+function SortableImage({ img, index, onRemove }: SortableImageProps) {
   const {
     attributes,
     listeners,
@@ -51,10 +54,11 @@ function SortableImage({ img, onRemove }: SortableImageProps) {
 
   return (
     <div ref={setNodeRef} style={style} className={styles.imageItem}>
-      <img src={img.url} alt="" />
+      <img src={img.url} alt={`Product image ${index + 1}`} />
       <button
         type="button"
         className={styles.dragHandle}
+        aria-label={`Reorder image ${index + 1}`}
         {...attributes}
         {...listeners}
       >
@@ -64,6 +68,7 @@ function SortableImage({ img, onRemove }: SortableImageProps) {
         type="button"
         onClick={() => onRemove(img.id)}
         className={styles.removeBtn}
+        aria-label={`Remove image ${index + 1}`}
       >
         <X size={14} />
       </button>
@@ -93,12 +98,14 @@ export default function AdminProductForm() {
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   useEffect(() => {
     if (isEdit && id) getProduct(Number(id));
-  }, [isEdit, id]);
+  }, [isEdit, id, getProduct]);
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isEdit && product) {
       setName(product.name);
@@ -110,6 +117,7 @@ export default function AdminProductForm() {
       setExistingImages(product.images);
     }
   }, [isEdit, product]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -229,20 +237,22 @@ export default function AdminProductForm() {
                 strategy={rectSortingStrategy}
               >
                 <div className={styles.imageGrid}>
-                  {existingImages.map((img) => (
+                  {existingImages.map((img, index) => (
                     <SortableImage
                       key={img.id}
                       img={img}
+                      index={index}
                       onRemove={handleRemoveExistingImage}
                     />
                   ))}
                   {images.map((file, index) => (
                     <div key={`new-${index}`} className={styles.imageItem}>
-                      <img src={URL.createObjectURL(file)} alt="" />
+                      <img src={URL.createObjectURL(file)} alt={`New image ${index + 1}`} />
                       <button
                         type="button"
                         onClick={() => handleRemoveNewImage(index)}
                         className={styles.removeBtn}
+                        aria-label={`Remove new image ${index + 1}`}
                       >
                         <X size={14} />
                       </button>
