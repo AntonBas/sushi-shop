@@ -34,18 +34,6 @@ spring:
   cache:
     type: redis
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${EMAIL_USERNAME}
-    password: ${EMAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
   security:
     oauth2:
       client:
@@ -89,6 +77,10 @@ app:
   stripe:
     secret-key: ${STRIPE_SECRET_KEY}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  mail:
+    api-key: ${BREVO_API_KEY}
+    from-email: ${MAIL_FROM_EMAIL}
+    from-name: ${MAIL_FROM_NAME:Sushi Bas Shop}
   seed-demo-users: false
   monitoring:
     username: ${PROMETHEUS_USER:prometheus}

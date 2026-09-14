@@ -231,8 +231,8 @@ cp .env.example .env
 ```
 
 Fill in the required values (same variables as Option 1 — JWT_SECRET,
-EMAIL_*, GOOGLE_*, STRIPE_*, APP_BASE_URL — the app fails to start without
-them, there are no defaults for secrets).
+BREVO_API_KEY, MAIL_FROM_EMAIL, GOOGLE_*, STRIPE_*, APP_BASE_URL — the
+app fails to start without them, there are no defaults for secrets).
 
 ```bash
 docker compose up -d postgres redis

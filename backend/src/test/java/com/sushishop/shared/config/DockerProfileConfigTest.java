@@ -23,17 +23,15 @@ public class DockerProfileConfigTest {
         Map<String, Object> properties = (Map<String, Object>) source.getSource();
 
         assertThat(properties)
-                .as("datasource, redis, mail and oauth2 must live under spring.*, not springdoc.*")
+                .as("datasource, redis and oauth2 must live under spring.*, not springdoc.*")
                 .containsKeys(
                         "spring.datasource.url",
                         "spring.data.redis.host",
-                        "spring.mail.host",
                         "spring.security.oauth2.client.registration.google.client-id"
                 )
                 .doesNotContainKeys(
                         "springdoc.datasource.url",
-                        "springdoc.data.redis.host",
-                        "springdoc.mail.host"
+                        "springdoc.data.redis.host"
                 );
 
         assertThat(Objects.toString(properties.get("springdoc.api-docs.enabled"))).isEqualTo("true");

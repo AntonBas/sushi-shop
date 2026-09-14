@@ -1,23 +1,35 @@
 package com.sushishop.mail;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.mail.javamail.MimeMessagePreparator;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MailService {
 
-    private final JavaMailSender mailSender;
+    private final RestClient restClient;
+    private final String fromEmail;
+    private final String fromName;
 
     @Value("${app.frontend-url}")
     private String baseUrl;
+
+    public MailService(@Value("${app.mail.api-key}") String apiKey,
+                        @Value("${app.mail.from-email}") String fromEmail,
+                        @Value("${app.mail.from-name}") String fromName) {
+        this.fromEmail = fromEmail;
+        this.fromName = fromName;
+        this.restClient = RestClient.builder()
+                .baseUrl("https://api.brevo.com/v3/smtp/email")
+                .defaultHeader("api-key", apiKey)
+                .build();
+    }
 
     @Async
     public void sendVerificationEmail(String to, String token) {
@@ -38,27 +50,32 @@ public class MailService {
     }
 
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {
-        var message = (MimeMessagePreparator) mimeMessage -> {
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText("""
-                    <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
-                      <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
-                        <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
-                      </div>
-                      <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-                        <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
-                        <p style="margin:0 0 24px;color:#6b7280;font-size:15px;line-height:1.5">%s</p>
-                        <a href="%s" style="display:block;background:#F97316;color:#fff;text-align:center;padding:14px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">%s</a>
-                        <p style="margin:24px 0 0;color:#9ca3af;font-size:13px">If you didn't request this, you can ignore this email.</p>
-                      </div>
-                    </div>
-                    """.formatted(title, body, buttonUrl, buttonText), true);
-        };
+        String html = """
+                <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
+                  <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+                    <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
+                  </div>
+                  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                    <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
+                    <p style="margin:0 0 24px;color:#6b7280;font-size:15px;line-height:1.5">%s</p>
+                    <a href="%s" style="display:block;background:#F97316;color:#fff;text-align:center;padding:14px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">%s</a>
+                    <p style="margin:24px 0 0;color:#9ca3af;font-size:13px">If you didn't request this, you can ignore this email.</p>
+                  </div>
+                </div>
+                """.formatted(title, body, buttonUrl, buttonText);
+
+        var payload = Map.of(
+                "sender", Map.of("name", fromName, "email", fromEmail),
+                "to", List.of(Map.of("email", to)),
+                "subject", subject,
+                "htmlContent", html
+        );
 
         try {
-            mailSender.send(message);
+            restClient.post()
+                    .body(payload)
+                    .retrieve()
+                    .toBodilessEntity();
             log.info("{} email sent to {}", subject, to);
         } catch (Exception e) {
             log.error("Failed to send {} email to {}", subject, to, e);
