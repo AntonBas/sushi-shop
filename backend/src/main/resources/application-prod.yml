@@ -37,6 +37,11 @@ app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
   seed-demo-users: false
+  upload:
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME}
+      api-key: ${CLOUDINARY_API_KEY}
+      api-secret: ${CLOUDINARY_API_SECRET}
 
 logging:
   level:

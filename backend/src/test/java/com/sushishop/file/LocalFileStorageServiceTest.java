@@ -13,30 +13,30 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class FileStorageServiceTest {
+public class LocalFileStorageServiceTest {
 
-    private FileStorageService fileStorageService;
+    private LocalFileStorageService fileStorageService;
 
     @TempDir
     Path tempDir;
 
     @BeforeEach
     public void setUp() throws Exception {
-        fileStorageService = new FileStorageService();
+        fileStorageService = new LocalFileStorageService();
 
-        var uploadDirField = FileStorageService.class.getDeclaredField("uploadDir");
+        var uploadDirField = LocalFileStorageService.class.getDeclaredField("uploadDir");
         uploadDirField.setAccessible(true);
         uploadDirField.set(fileStorageService, tempDir.toString());
 
-        var allowedTypesField = FileStorageService.class.getDeclaredField("allowedTypes");
+        var allowedTypesField = LocalFileStorageService.class.getDeclaredField("allowedTypes");
         allowedTypesField.setAccessible(true);
         allowedTypesField.set(fileStorageService, Set.of("image/jpeg", "image/png", "image/webp"));
 
-        var maxFileSizeField = FileStorageService.class.getDeclaredField("maxFileSize");
+        var maxFileSizeField = LocalFileStorageService.class.getDeclaredField("maxFileSize");
         maxFileSizeField.setAccessible(true);
         maxFileSizeField.set(fileStorageService, 5242880L);
 
-        var urlPrefixField = FileStorageService.class.getDeclaredField("urlPrefix");
+        var urlPrefixField = LocalFileStorageService.class.getDeclaredField("urlPrefix");
         urlPrefixField.setAccessible(true);
         urlPrefixField.set(fileStorageService, "/api/files/");
 

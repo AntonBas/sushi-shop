@@ -271,6 +271,7 @@ instead of a same-origin proxy.
 | Backend    | Render — Free Web Service, Docker (root dir: `backend`) |
 | PostgreSQL | Neon (free tier)             |
 | Redis      | Upstash (free tier, TLS)     |
+| Product images | Cloudinary (free tier) — Render's disk is wiped on every redeploy, so `prod` uploads go to Cloudinary instead of local disk (`local`/`docker` still use local disk) |
 
 On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "required everywhere"
 and "prod only" variables from [`.env.example`](.env.example). On Vercel,
