@@ -40,9 +40,23 @@
   --color-rating: #fbbf24;
 }
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: system-ui, sans-serif;
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
 }
