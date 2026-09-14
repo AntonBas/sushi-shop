@@ -20,7 +20,7 @@ public class StripeService {
     @Value("${app.stripe.secret-key}")
     private String secretKey;
 
-    @Value("${app.base-url}")
+    @Value("${app.frontend-url}")
     private String baseUrl;
 
     @Value("${app.stripe.webhook-secret}")
