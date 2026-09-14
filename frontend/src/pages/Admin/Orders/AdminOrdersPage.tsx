@@ -52,6 +52,7 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
+  const connectionIssueNotifiedRef = useRef(false);
 
   useEffect(() => {
     loadOrders(0);
@@ -67,12 +68,23 @@ export default function AdminOrdersPage() {
   }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
 
   useEffect(() => {
+    const notifyConnectionIssue = () => {
+      if (connectionIssueNotifiedRef.current) return;
+      connectionIssueNotifiedRef.current = true;
+      showNotification(
+        "Live order updates unavailable, reconnecting...",
+        "warning",
+      );
+    };
+
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       connectHeaders: {
         Authorization: `Bearer ${getAuthToken()}`,
       },
+      reconnectDelay: 5000,
       onConnect: () => {
+        connectionIssueNotifiedRef.current = false;
         client.subscribe("/topic/orders/new", () => {
           loadOrders(page, 12, {
             status: statusFilter || undefined,
@@ -82,14 +94,23 @@ export default function AdminOrdersPage() {
           });
         });
       },
+      onStompError: (frame) => {
+        console.error("WebSocket STOMP error:", frame.headers.message);
+        notifyConnectionIssue();
+      },
+      onWebSocketError: (event) => {
+        console.error("WebSocket connection error:", event);
+        notifyConnectionIssue();
+      },
     });
     client.activate();
     stompRef.current = client;
 
     return () => {
       client.deactivate();
+      stompRef.current = null;
     };
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders, showNotification]);
 
   const handleStatusChange = async (
     orderId: number,

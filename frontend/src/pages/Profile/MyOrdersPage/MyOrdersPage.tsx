@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useApi } from "../../../hooks/common/useApi";
+import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
 import { getAuthToken } from "../../../api/authToken";
@@ -13,18 +14,21 @@ import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
-import { Client } from "@stomp/stompjs";
+import { Client, type StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
   const { data, loading, execute } = useApi<Page<UserOrderResponse>>();
+  const { showNotification } = useNotification();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
   const ordersRef = useRef<UserOrderResponse[]>([]);
+  const subscriptionsRef = useRef<Map<number, StompSubscription>>(new Map());
+  const connectionIssueNotifiedRef = useRef(false);
 
   useEffect(() => {
     execute(() => ordersApi.getMyOrders(page)).then((res) =>
@@ -32,36 +36,78 @@ export default function MyOrdersPage() {
     );
   }, [page, execute]);
 
-  useEffect(() => {
-    ordersRef.current = orders;
-  }, [orders]);
+  const syncSubscriptions = useCallback(() => {
+    const client = stompRef.current;
+    if (!client || !client.connected) return;
+
+    const currentIds = new Set(ordersRef.current.map((order) => order.id));
+
+    subscriptionsRef.current.forEach((subscription, id) => {
+      if (!currentIds.has(id)) {
+        subscription.unsubscribe();
+        subscriptionsRef.current.delete(id);
+      }
+    });
+
+    currentIds.forEach((id) => {
+      if (subscriptionsRef.current.has(id)) return;
+      const subscription = client.subscribe(`/topic/orders/${id}`, (message) => {
+        const update = JSON.parse(message.body);
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === update.orderId ? { ...o, status: update.status } : o,
+          ),
+        );
+      });
+      subscriptionsRef.current.set(id, subscription);
+    });
+  }, []);
 
   useEffect(() => {
+    ordersRef.current = orders;
+    syncSubscriptions();
+  }, [orders, syncSubscriptions]);
+
+  useEffect(() => {
+    const notifyConnectionIssue = () => {
+      if (connectionIssueNotifiedRef.current) return;
+      connectionIssueNotifiedRef.current = true;
+      showNotification(
+        "Live order updates unavailable, reconnecting...",
+        "warning",
+      );
+    };
+
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       connectHeaders: {
         Authorization: `Bearer ${getAuthToken()}`,
       },
+      reconnectDelay: 5000,
       onConnect: () => {
-        ordersRef.current.forEach((order) => {
-          client.subscribe(`/topic/orders/${order.id}`, (message) => {
-            const update = JSON.parse(message.body);
-            setOrders((prev) =>
-              prev.map((o) =>
-                o.id === update.orderId ? { ...o, status: update.status } : o,
-              ),
-            );
-          });
-        });
+        connectionIssueNotifiedRef.current = false;
+        subscriptionsRef.current.clear();
+        syncSubscriptions();
+      },
+      onStompError: (frame) => {
+        console.error("WebSocket STOMP error:", frame.headers.message);
+        notifyConnectionIssue();
+      },
+      onWebSocketError: (event) => {
+        console.error("WebSocket connection error:", event);
+        notifyConnectionIssue();
       },
     });
     client.activate();
     stompRef.current = client;
+    const subscriptions = subscriptionsRef.current;
 
     return () => {
       client.deactivate();
+      stompRef.current = null;
+      subscriptions.clear();
     };
-  }, [orders.length]);
+  }, [showNotification, syncSubscriptions]);
 
   const handlePay = async (order: UserOrderResponse) => {
     setPayLoading(order.id);
