@@ -4,7 +4,7 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require&prepareThreshold=0
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require&prepareThreshold=0&currentSchema=public
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
