@@ -1,0 +1,31 @@
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:sushi_db}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    show-sql: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      connect-timeout: 2000ms
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+
+logging:
+  level:
+    com.sushishop: DEBUG
+    org.springframework.cache: TRACE
+    org.springframework.data.redis: DEBUG
