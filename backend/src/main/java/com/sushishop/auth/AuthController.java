@@ -2,6 +2,7 @@ package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
+import com.sushishop.auth.dto.request.OAuth2ExchangeRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.shared.ratelimit.RateLimit;
@@ -54,6 +55,18 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         log.info("POST /api/auth/login - email: {}", request.email());
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @RateLimit(value = 10)
+    @PostMapping("/oauth2/exchange")
+    @Operation(summary = "Exchange OAuth2 one-time code for a JWT")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Exchange successful"),
+            @ApiResponse(responseCode = "400", description = "Invalid or expired code")
+    })
+    @SecurityRequirements()
+    public ResponseEntity<AuthResponse> exchangeOAuth2Code(@Valid @RequestBody OAuth2ExchangeRequest request) {
+        return ResponseEntity.ok(authService.exchangeOAuth2Code(request.code()));
     }
 
     @RateLimit(value = 10)

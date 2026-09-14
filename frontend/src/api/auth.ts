@@ -11,6 +11,11 @@ export const register = async (data: RegisterRequest): Promise<AuthResponse> => 
   return res
 }
 
+export const exchangeOAuth2Code = async (code: string): Promise<AuthResponse> => {
+  const { data: res } = await api.post('/auth/oauth2/exchange', { code })
+  return res
+}
+
 export const verifyEmail = async (token: string): Promise<void> => {
   await api.get('/auth/verify', { params: { token } })
 }

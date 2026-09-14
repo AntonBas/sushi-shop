@@ -2,6 +2,7 @@ package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.security.jwt.JwtUtil;
+import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
 import com.sushishop.user.User;
@@ -53,6 +54,9 @@ public class AuthServiceTest {
 
     @Mock
     private TokenService tokenService;
+
+    @Mock
+    private OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
 
     @InjectMocks
     private AuthService authService;
@@ -119,5 +123,33 @@ public class AuthServiceTest {
 
         assertThat(result.token()).isEqualTo("jwt-token");
         verify(tokenService).createVerificationToken(user);
+    }
+
+    @Test
+    public void shouldExchangeOAuth2Code() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .userRole(UserRole.CUSTOMER)
+                .tokenVersion(0)
+                .build();
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+
+        when(oAuth2ExchangeCodeService.consume("valid-code")).thenReturn(Optional.of("anton@example.com"));
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken("anton@example.com", "CUSTOMER", 0)).thenReturn("jwt-token");
+        when(userMapper.toResponse(user)).thenReturn(userResponse);
+
+        var result = authService.exchangeOAuth2Code("valid-code");
+
+        assertThat(result.token()).isEqualTo("jwt-token");
+    }
+
+    @Test
+    public void shouldThrowWhenExchangeCodeInvalidOrExpired() {
+        when(oAuth2ExchangeCodeService.consume("bad-code")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.exchangeOAuth2Code("bad-code"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid or expired code");
     }
 }

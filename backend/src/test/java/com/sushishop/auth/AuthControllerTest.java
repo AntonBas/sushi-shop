@@ -3,8 +3,10 @@ package com.sushishop.auth;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
+import com.sushishop.auth.dto.request.OAuth2ExchangeRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.user.UserRole;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
@@ -102,6 +104,33 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void shouldExchangeOAuth2Code() throws Exception {
+        var request = new OAuth2ExchangeRequest("valid-code");
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var authResponse = new AuthResponse("jwt-token", userResponse);
+
+        when(authService.exchangeOAuth2Code("valid-code")).thenReturn(authResponse);
+
+        mockMvc.perform(post("/api/auth/oauth2/exchange")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("jwt-token"));
+    }
+
+    @Test
+    public void shouldReturn400WhenOAuth2CodeInvalid() throws Exception {
+        var request = new OAuth2ExchangeRequest("bad-code");
+
+        when(authService.exchangeOAuth2Code("bad-code")).thenThrow(new BadRequestException("Invalid or expired code"));
+
+        mockMvc.perform(post("/api/auth/oauth2/exchange")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

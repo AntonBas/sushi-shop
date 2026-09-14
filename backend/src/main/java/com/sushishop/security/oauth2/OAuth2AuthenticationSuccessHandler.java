@@ -1,7 +1,5 @@
 package com.sushishop.security.oauth2;
 
-import com.sushishop.security.jwt.JwtUtil;
-import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,8 +21,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
-    private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final OAuth2ExchangeCodeService exchangeCodeService;
 
     @Value("${app.frontend-url}")
     private String frontendUrl;
@@ -36,14 +34,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = Objects.requireNonNull(oAuth2User).getAttribute("email");
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("User not found with email: " + email));
 
-        String token = jwtUtil.generateToken(email, user.getUserRole().name(), user.getTokenVersion());
+        String code = exchangeCodeService.issueCode(email);
 
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("token", token)
-                .queryParam("email", email)
+                .queryParam("code", code)
                 .build()
                 .toUriString();
 

@@ -3,6 +3,7 @@ package com.sushishop.auth;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.security.jwt.JwtUtil;
+import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
 import com.sushishop.user.UserMapper;
@@ -27,6 +28,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final TokenService tokenService;
+    private final OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
@@ -62,6 +64,21 @@ public class AuthService {
         var userResponse = userMapper.toResponse(user);
 
         log.info("Register successful for email: {}", request.email());
+        return new AuthResponse(jwt, userResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public AuthResponse exchangeOAuth2Code(String code) {
+        String email = oAuth2ExchangeCodeService.consume(code)
+                .orElseThrow(() -> new BadRequestException("Invalid or expired code"));
+
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Invalid or expired code"));
+
+        String jwt = jwtUtil.generateToken(user.getEmail(), user.getUserRole().name(), user.getTokenVersion());
+        var userResponse = userMapper.toResponse(user);
+
+        log.info("OAuth2 code exchange successful for email: {}", email);
         return new AuthResponse(jwt, userResponse);
     }
 }

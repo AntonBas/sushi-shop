@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
 import { setAuthToken } from "../../../api/authToken";
+import { exchangeOAuth2Code } from "../../../api/auth";
 import Loading from "../../../components/UI/Loading/Loading";
 
 export default function OAuth2Redirect() {
@@ -10,11 +11,15 @@ export default function OAuth2Redirect() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
+    const code = params.get("code");
+    window.history.replaceState(null, "", window.location.pathname);
 
-    if (token) {
-      setAuthToken(token);
-      refreshUser()
+    if (code) {
+      exchangeOAuth2Code(code)
+        .then(({ token }) => {
+          setAuthToken(token);
+          return refreshUser();
+        })
         .then(() => {
           window.location.href = "/";
         })
