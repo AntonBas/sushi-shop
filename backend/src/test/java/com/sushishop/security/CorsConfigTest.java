@@ -6,6 +6,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class CorsConfigTest {
 
@@ -37,5 +38,12 @@ public class CorsConfigTest {
         CorsConfiguration config = configFor("https://a.com, https://b.com");
 
         assertThat(config.checkOrigin("https://b.com")).isNotNull();
+    }
+
+    @Test
+    public void shouldFailFastWhenAllowedOriginsIsBlank() {
+        assertThatThrownBy(() -> configFor(""))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("app.cors.allowed-origins");
     }
 }
