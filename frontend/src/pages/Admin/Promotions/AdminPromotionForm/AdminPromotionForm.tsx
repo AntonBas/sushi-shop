@@ -98,23 +98,16 @@ export default function AdminPromotionForm() {
       ...(isEdit && { active }),
     };
 
-    try {
-      if (isEdit) {
-        await updateApi.execute(() =>
-          promotionsApi.updatePromotion(Number(id), payload),
-        );
-        showNotification("Promotion updated", "success");
-      } else {
-        await createApi.execute(() => promotionsApi.createPromotion(payload));
-        showNotification("Promotion created", "success");
-      }
-      navigate("/admin/promotions");
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || `Failed to ${isEdit ? "update" : "create"} promotion`;
-      showNotification(message, "error");
+    if (isEdit) {
+      await updateApi.execute(() =>
+        promotionsApi.updatePromotion(Number(id), payload),
+      );
+      showNotification("Promotion updated", "success");
+    } else {
+      await createApi.execute(() => promotionsApi.createPromotion(payload));
+      showNotification("Promotion created", "success");
     }
+    navigate("/admin/promotions");
   };
 
   if (isEdit && getLoading) return <Loading text="Loading promotion..." />;

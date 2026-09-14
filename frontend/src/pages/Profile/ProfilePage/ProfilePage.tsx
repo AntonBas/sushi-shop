@@ -39,62 +39,43 @@ export default function ProfilePage() {
   }, [user]);
   /* eslint-enable react-hooks/set-state-in-effect */
 
-  const showError = (err: unknown, fallback: string) => {
-    const message =
-      (err as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message || fallback;
-    showNotification(message, "error");
-  };
-
   const handleUpdateProfile = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    try {
-      const updated = await updateApi.execute(() =>
-        usersApi.updateProfile({
-          name: name || undefined,
-          phone: phone || undefined,
-        }),
-      );
-      if (updated) {
-        await refreshUser();
-        showNotification("Profile updated", "success");
-      }
-    } catch (err: unknown) {
-      showError(err, "Failed to update profile");
+    const updated = await updateApi.execute(() =>
+      usersApi.updateProfile({
+        name: name || undefined,
+        phone: phone || undefined,
+      }),
+    );
+    if (updated) {
+      await refreshUser();
+      showNotification("Profile updated", "success");
     }
   };
 
   const handleUpdateAddress = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    try {
-      const updated = await updateApi.execute(() =>
-        usersApi.updateProfile({
-          address: city
-            ? { city, street, house, apartment: apartment || undefined }
-            : undefined,
-        }),
-      );
-      if (updated) {
-        await refreshUser();
-        showNotification("Address updated", "success");
-      }
-    } catch (err: unknown) {
-      showError(err, "Failed to update address");
+    const updated = await updateApi.execute(() =>
+      usersApi.updateProfile({
+        address: city
+          ? { city, street, house, apartment: apartment || undefined }
+          : undefined,
+      }),
+    );
+    if (updated) {
+      await refreshUser();
+      showNotification("Address updated", "success");
     }
   };
 
   const handleChangePassword = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    try {
-      await passwordApi.execute(() =>
-        usersApi.changePassword({ oldPassword, newPassword }),
-      );
-      setOldPassword("");
-      setNewPassword("");
-      showNotification("Password changed", "success");
-    } catch (err: unknown) {
-      showError(err, "Failed to change password");
-    }
+    await passwordApi.execute(() =>
+      usersApi.changePassword({ oldPassword, newPassword }),
+    );
+    setOldPassword("");
+    setNewPassword("");
+    showNotification("Password changed", "success");
   };
 
   return (

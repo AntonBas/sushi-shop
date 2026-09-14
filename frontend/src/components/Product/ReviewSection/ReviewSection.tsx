@@ -56,38 +56,30 @@ export default function ReviewSection({ productId }: Props) {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    try {
-      await createApi.execute(() =>
-        reviewsApi.createReview({
-          productId,
-          rating: newRating,
-          comment: newComment || undefined,
-        }),
-      );
-      setNewComment("");
-      setNewRating(5);
-      showNotification("Review submitted", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to submit review");
-    }
+    await createApi.execute(() =>
+      reviewsApi.createReview({
+        productId,
+        rating: newRating,
+        comment: newComment || undefined,
+      }),
+    );
+    setNewComment("");
+    setNewRating(5);
+    showNotification("Review submitted", "success");
+    loadReviews(reviewPage);
   };
 
   const handleUpdate = async (reviewId: number) => {
-    try {
-      await updateApi.execute(() =>
-        reviewsApi.updateReview(reviewId, {
-          productId,
-          rating: editRating,
-          comment: editComment || undefined,
-        }),
-      );
-      setEditingId(null);
-      showNotification("Review updated", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to update review");
-    }
+    await updateApi.execute(() =>
+      reviewsApi.updateReview(reviewId, {
+        productId,
+        rating: editRating,
+        comment: editComment || undefined,
+      }),
+    );
+    setEditingId(null);
+    showNotification("Review updated", "success");
+    loadReviews(reviewPage);
   };
 
   const handleDelete = async () => {
@@ -104,32 +96,24 @@ export default function ReviewSection({ productId }: Props) {
 
   const handleReply = async (reviewId: number) => {
     if (!replyMessage.trim()) return;
-    try {
-      await replyApi.execute(() =>
-        reviewsApi.addReply(reviewId, { message: replyMessage }),
-      );
-      setReplyMessage("");
-      setReplyingId(null);
-      showNotification("Reply added", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to add reply");
-    }
+    await replyApi.execute(() =>
+      reviewsApi.addReply(reviewId, { message: replyMessage }),
+    );
+    setReplyMessage("");
+    setReplyingId(null);
+    showNotification("Reply added", "success");
+    loadReviews(reviewPage);
   };
 
   const handleUpdateReply = async () => {
     if (!editingReplyId || !editReplyMessage.trim()) return;
-    try {
-      await updateReplyApi.execute(() =>
-        reviewsApi.updateReply(editingReplyId, { message: editReplyMessage }),
-      );
-      setEditingReplyId(null);
-      setEditReplyMessage("");
-      showNotification("Reply updated", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to update reply");
-    }
+    await updateReplyApi.execute(() =>
+      reviewsApi.updateReply(editingReplyId, { message: editReplyMessage }),
+    );
+    setEditingReplyId(null);
+    setEditReplyMessage("");
+    showNotification("Reply updated", "success");
+    loadReviews(reviewPage);
   };
 
   const handleDeleteReply = async () => {
