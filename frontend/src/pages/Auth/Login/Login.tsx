@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/useAuth'
 import { API_BASE_URL } from '../../../config/env'
@@ -7,13 +7,29 @@ import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import styles from './Login.module.css'
 
+const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
+  access_denied: 'Google login was cancelled.',
+  unverified_email: 'Your Google account email is not verified. Please verify it with Google first.',
+  oauth2_failed: 'Google login failed. Please try again.',
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [error, setError] = useState(() => {
+    const oauthError = searchParams.get('error')
+    return oauthError ? (OAUTH2_ERROR_MESSAGES[oauthError] || OAUTH2_ERROR_MESSAGES.oauth2_failed) : ''
+  })
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (searchParams.get('error')) {
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
