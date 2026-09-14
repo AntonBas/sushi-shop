@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
 import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
+import { getErrorMessage } from "../../../api/errorMessage";
 import { getAuthToken } from "../../../api/authToken";
 import { API_BASE_URL } from "../../../config/env";
 import Loading from "../../../components/UI/Loading/Loading";
@@ -107,10 +108,7 @@ export default function AdminOrdersPage() {
         search: search || undefined,
       });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to update status";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to update status"), "error");
     }
   };
 

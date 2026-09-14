@@ -4,6 +4,7 @@ import { ArrowLeft, Upload, X, GripVertical } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
 import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
+import { getErrorMessage } from "../../../../api/errorMessage";
 import Button from "../../../../components/UI/Button/Button";
 import Input from "../../../../components/UI/Input/Input";
 import Loading from "../../../../components/UI/Loading/Loading";
@@ -135,10 +136,7 @@ export default function AdminProductForm() {
         setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
         showNotification("Image removed", "success");
       } catch (err: unknown) {
-        const message =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Failed to remove image";
-        showNotification(message, "error");
+        showNotification(getErrorMessage(err, "Failed to remove image"), "error");
       }
     }
   };
@@ -198,10 +196,7 @@ export default function AdminProductForm() {
       }
       navigate("/admin/products");
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to save product";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to save product"), "error");
     } finally {
       setIsSubmitting(false);
     }

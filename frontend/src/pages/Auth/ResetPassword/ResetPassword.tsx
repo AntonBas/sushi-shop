@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { AxiosError } from 'axios'
 import { CheckCircle2 } from 'lucide-react'
 import * as authApi from '../../../api/auth'
+import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import Modal from '../../../components/UI/Modal/Modal'
@@ -27,8 +27,7 @@ export default function ResetPassword() {
       await authApi.resetPassword({ token: token!, newPassword, confirmPassword })
       setShowSuccess(true)
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Something went wrong')
+      setError(getErrorMessage(err, 'Something went wrong'))
     } finally {
       setLoading(false)
     }

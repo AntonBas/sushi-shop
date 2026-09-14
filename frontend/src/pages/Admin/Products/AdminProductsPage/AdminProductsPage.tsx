@@ -4,6 +4,7 @@ import { Pencil, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
 import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
+import { getErrorMessage } from "../../../../api/errorMessage";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
@@ -45,10 +46,7 @@ export default function AdminProductsPage() {
         available: availableFilter === "" ? undefined : availableFilter,
       });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to delete product";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to delete product"), "error");
     }
   };
 
@@ -62,10 +60,7 @@ export default function AdminProductsPage() {
         available: availableFilter === "" ? undefined : availableFilter,
       });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to update product";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to update product"), "error");
     }
   };
 

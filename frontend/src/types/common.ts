@@ -7,3 +7,15 @@ export interface Page<T> {
     totalPages: number
   }
 }
+
+export interface ApiSubError {
+  object: string
+  field?: string | null
+  rejectedValue?: unknown
+  message: string
+}
+
+export interface ApiErrorResponse {
+  message?: string
+  subErrors?: ApiSubError[]
+}

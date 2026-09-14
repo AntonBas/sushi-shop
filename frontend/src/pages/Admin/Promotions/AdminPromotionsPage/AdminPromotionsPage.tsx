@@ -4,6 +4,7 @@ import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useNotification } from "../../../../context/useNotification";
 import * as promotionsApi from "../../../../api/promotions";
+import { getErrorMessage } from "../../../../api/errorMessage";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
@@ -40,10 +41,7 @@ export default function AdminPromotionsPage() {
       showNotification("Promotion deleted", "success");
       loadPromotions(page, search || undefined);
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to delete promotion";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to delete promotion"), "error");
     }
   };
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/useAuth'
+import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import Modal from '../../../components/UI/Modal/Modal'
@@ -36,8 +36,7 @@ export default function Register() {
       })
       setShowSuccess(true)
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Registration failed')
+      setError(getErrorMessage(err, 'Registration failed'))
     } finally {
       setLoading(false)
     }

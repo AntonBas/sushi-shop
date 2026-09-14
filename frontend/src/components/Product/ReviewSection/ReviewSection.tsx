@@ -4,6 +4,7 @@ import { useAuth } from "../../../context/useAuth";
 import { useApi } from "../../../hooks/common/useApi";
 import * as reviewsApi from "../../../api/reviews";
 import { useNotification } from "../../../context/useNotification";
+import { getErrorMessage } from "../../../api/errorMessage";
 import Button from "../../UI/Button/Button";
 import Pagination from "../../UI/Pagination/Pagination";
 import Modal from "../../UI/Modal/Modal";
@@ -48,10 +49,7 @@ export default function ReviewSection({ productId }: Props) {
   }, [loadReviews]);
 
   const showError = (err: unknown, fallback: string) => {
-    const message =
-      (err as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message || fallback;
-    showNotification(message, "error");
+    showNotification(getErrorMessage(err, fallback), "error");
   };
 
   const handleSubmit = async (e: React.SyntheticEvent) => {

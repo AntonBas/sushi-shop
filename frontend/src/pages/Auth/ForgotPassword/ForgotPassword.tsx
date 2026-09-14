@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AxiosError } from 'axios'
 import { Mail } from 'lucide-react'
 import * as authApi from '../../../api/auth'
+import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import Modal from '../../../components/UI/Modal/Modal'
@@ -22,8 +22,7 @@ export default function ForgotPassword() {
       await authApi.forgotPassword({ email })
       setShowSuccess(true)
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Something went wrong')
+      setError(getErrorMessage(err, 'Something went wrong'))
     } finally {
       setLoading(false)
     }

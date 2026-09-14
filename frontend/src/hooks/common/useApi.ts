@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
-import { AxiosError } from 'axios'
 import { useNotification } from '../../context/useNotification'
 import { useDelayedLoading } from './useDelayedLoading'
+import { getErrorMessage } from '../../api/errorMessage'
 
 interface ApiState<T> {
   data: T | null
@@ -26,11 +26,10 @@ export function useApi<T>() {
       if (successMessage) showNotification(successMessage, 'success')
       return data
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      const message = error.response?.data?.message || error.message || 'Something went wrong'
+      const message = getErrorMessage(err, 'Something went wrong')
       setState(prev => ({ ...prev, loading: false, error: message }))
       showNotification(message, 'error')
-      throw error
+      throw err
     }
   }, [showNotification])
 

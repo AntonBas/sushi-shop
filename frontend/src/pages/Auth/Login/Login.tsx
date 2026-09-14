@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { AxiosError } from 'axios'
 import { useAuth } from '../../../context/useAuth'
 import { API_BASE_URL } from '../../../config/env'
+import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import styles from './Login.module.css'
@@ -39,8 +39,7 @@ export default function Login() {
       await login({ email, password })
       navigate('/')
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Invalid email or password')
+      setError(getErrorMessage(err, 'Invalid email or password'))
     } finally {
       setLoading(false)
     }
