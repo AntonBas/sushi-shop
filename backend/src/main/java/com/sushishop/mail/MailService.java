@@ -16,7 +16,7 @@ public class MailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${app.base-url}")
+    @Value("${app.frontend-url}")
     private String baseUrl;
 
     @Async
