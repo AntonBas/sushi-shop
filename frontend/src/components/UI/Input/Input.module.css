@@ -1,6 +1,7 @@
 .container { display: flex; flex-direction: column; gap: 4px; }
 .label { font-size: 14px; color: var(--color-text-secondary); }
 .input {
+  width: 100%;
   padding: 12px 16px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
