@@ -1,7 +1,7 @@
 .page {
   max-width: 1000px;
   margin: 0 auto;
-  padding-top: 24px;
+  padding: 24px 20px 0;
 }
 
 .breadcrumbs {
@@ -252,6 +252,10 @@
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 0;
+  }
+
   .layout {
     grid-template-columns: 1fr;
     gap: 24px;

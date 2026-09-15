@@ -1,7 +1,13 @@
 .page {
   max-width: 700px;
   margin: 0 auto;
-  padding-bottom: 60px;
+  padding: 0 20px 60px;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 0 16px 60px;
+  }
 }
 
 .title {
