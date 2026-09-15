@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useApi } from '.././common/useApi'
 import * as productsApi from '../../api/products'
 import type { ProductListResponse, ProductResponse } from '../../types'
@@ -13,14 +13,19 @@ export function useProducts() {
   const [products, setProducts] = useState<ProductListResponse[]>([])
   const [popular, setPopular] = useState<ProductListResponse[]>([])
   const [related, setRelated] = useState<ProductListResponse[]>([])
+  const latestListRequestId = useRef(0)
 
   const loadProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
+    const requestId = ++latestListRequestId.current
     const data = await listExecute(() => productsApi.getProducts(page, 12, filters))
+    if (requestId !== latestListRequestId.current) return
     setProducts(data.content)
   }, [listExecute])
 
   const loadMoreProducts = useCallback(async (page = 0, filters?: ProductFilters) => {
+    const requestId = ++latestListRequestId.current
     const data = await listExecute(() => productsApi.getProducts(page, 12, filters))
+    if (requestId !== latestListRequestId.current) return
     setProducts(prev => page === 0 ? data.content : [...prev, ...data.content])
   }, [listExecute])
 
