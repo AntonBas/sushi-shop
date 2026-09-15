@@ -33,12 +33,10 @@ public class PaymentController {
         var order = orderService.getOwnedOrder(orderId, userDetails.getUsername(), false);
         var amountInCents = order.getTotalAmount().movePointRight(2).longValueExact();
         var info = stripeService.createCheckoutSession(orderId, amountInCents, userDetails.getUsername());
-        try {
-            paymentService.create(orderId, info.id(), order.getTotalAmount());
-        } catch (RuntimeException e) {
-            stripeService.expireCheckoutSession(info.id());
-            throw e;
-        }
+        runWithCompensation(
+                () -> paymentService.create(orderId, info.id(), order.getTotalAmount()),
+                () -> stripeService.expireCheckoutSession(info.id())
+        );
         log.info("Checkout session created for order: {}", orderId);
         return ResponseEntity.ok(Map.of("url", info.url()));
     }
@@ -54,14 +52,23 @@ public class PaymentController {
             return ResponseEntity.ok().build();
         }
 
+        runWithCompensation(
+                () -> {
+                    if (event.sessionId() != null) {
+                        paymentService.confirmPayment(event.sessionId());
+                    }
+                },
+                () -> webhookIdempotencyService.unmark(event.eventId())
+        );
+        return ResponseEntity.ok().build();
+    }
+
+    private void runWithCompensation(Runnable action, Runnable compensation) {
         try {
-            if (event.sessionId() != null) {
-                paymentService.confirmPayment(event.sessionId());
-            }
+            action.run();
         } catch (RuntimeException e) {
-            webhookIdempotencyService.unmark(event.eventId());
+            compensation.run();
             throw e;
         }
-        return ResponseEntity.ok().build();
     }
 }
