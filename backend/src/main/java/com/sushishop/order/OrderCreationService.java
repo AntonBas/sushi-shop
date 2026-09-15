@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -64,6 +65,10 @@ public class OrderCreationService {
 
     private List<OrderItem> createOrderItems(List<OrderItemRequest> items) {
         var productIds = items.stream().map(OrderItemRequest::productId).toList();
+        if (new HashSet<>(productIds).size() != productIds.size()) {
+            throw new BadRequestException("Duplicate product IDs are not allowed");
+        }
+
         Map<Long, Product> productsById = productRepository.findAllById(productIds).stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 

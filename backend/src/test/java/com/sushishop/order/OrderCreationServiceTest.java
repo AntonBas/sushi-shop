@@ -105,6 +105,20 @@ public class OrderCreationServiceTest {
     }
 
     @Test
+    public void shouldThrowWhenDuplicateProductIds() {
+        var itemRequest1 = new OrderItemRequest(1L, 2);
+        var itemRequest2 = new OrderItemRequest(1L, 3);
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of(itemRequest1, itemRequest2));
+
+        var user = User.builder().id(1L).email("test@test.com").build();
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> orderCreationService.create(request, "test@test.com"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Duplicate product IDs");
+    }
+
+    @Test
     public void shouldThrowWhenUserNotFound() {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of());
 
