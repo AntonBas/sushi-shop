@@ -1,11 +1,20 @@
 import { useState, useCallback, type ReactNode } from "react";
 import { CartContext, type CartItem } from "./cart-context";
 
+function loadStoredCart(): CartItem[] {
+  const saved = localStorage.getItem("cart");
+  if (!saved) return [];
+  try {
+    const parsed = JSON.parse(saved);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    localStorage.removeItem("cart");
+    return [];
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    const saved = localStorage.getItem("cart");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [items, setItems] = useState<CartItem[]>(loadStoredCart);
 
   const addItem = useCallback((item: CartItem) => {
     setItems((prev) => {
