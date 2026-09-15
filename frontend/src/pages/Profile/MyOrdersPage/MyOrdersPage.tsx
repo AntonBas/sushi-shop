@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useApi } from "../../../hooks/common/useApi";
-import { useNotification } from "../../../context/useNotification";
+import { useOrderSocket } from "../../../hooks/features/useOrderSocket";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
-import { issueWsTicket } from "../../../api/auth";
-import { API_BASE_URL } from "../../../config/env";
 import { formatPrice } from "../../../utils/formatPrice";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
@@ -15,21 +13,17 @@ import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
-import { Client, type StompSubscription } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import type { Client, StompSubscription } from "@stomp/stompjs";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
   const { data, loading, execute } = useApi<Page<UserOrderResponse>>();
-  const { showNotification } = useNotification();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
-  const stompRef = useRef<Client | null>(null);
   const ordersRef = useRef<UserOrderResponse[]>([]);
   const subscriptionsRef = useRef<Map<number, StompSubscription>>(new Map());
-  const connectionIssueNotifiedRef = useRef(false);
 
   useEffect(() => {
     execute(() => ordersApi.getMyOrders(page)).then((res) =>
@@ -37,9 +31,8 @@ export default function MyOrdersPage() {
     );
   }, [page, execute]);
 
-  const syncSubscriptions = useCallback(() => {
-    const client = stompRef.current;
-    if (!client || !client.connected) return;
+  const syncSubscriptions = useCallback((client: Client) => {
+    if (!client.connected) return;
 
     const currentIds = new Set(ordersRef.current.map((order) => order.id));
 
@@ -64,73 +57,16 @@ export default function MyOrdersPage() {
     });
   }, []);
 
+  const stompRef = useOrderSocket((client: Client) => {
+    subscriptionsRef.current.clear();
+    syncSubscriptions(client);
+  });
+
   useEffect(() => {
     ordersRef.current = orders;
-    syncSubscriptions();
-  }, [orders, syncSubscriptions]);
-
-  useEffect(() => {
-    const notifyConnectionIssue = () => {
-      if (connectionIssueNotifiedRef.current) return;
-      connectionIssueNotifiedRef.current = true;
-      showNotification(
-        "Live order updates unavailable, reconnecting...",
-        "warning",
-      );
-    };
-
-    let watchdogId: number | null = null;
-    const clearWatchdog = () => {
-      if (watchdogId !== null) {
-        window.clearTimeout(watchdogId);
-        watchdogId = null;
-      }
-    };
-    const armWatchdog = (client: Client) => {
-      clearWatchdog();
-      watchdogId = window.setTimeout(() => {
-        notifyConnectionIssue();
-        client.deactivate().then(() => client.activate());
-      }, 15000);
-    };
-
-    const client = new Client({
-      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      beforeConnect: async (client) => {
-        const ticket = await issueWsTicket();
-        client.connectHeaders = { Authorization: `Bearer ${ticket}` };
-        armWatchdog(client);
-      },
-      reconnectDelay: 5000,
-      onConnect: () => {
-        clearWatchdog();
-        connectionIssueNotifiedRef.current = false;
-        subscriptionsRef.current.clear();
-        syncSubscriptions();
-      },
-      onStompError: (frame) => {
-        clearWatchdog();
-        console.error("WebSocket STOMP error:", frame.headers.message);
-        notifyConnectionIssue();
-      },
-      onWebSocketError: (event) => {
-        clearWatchdog();
-        console.error("WebSocket connection error:", event);
-        notifyConnectionIssue();
-      },
-      onWebSocketClose: () => clearWatchdog(),
-    });
-    client.activate();
-    stompRef.current = client;
-    const subscriptions = subscriptionsRef.current;
-
-    return () => {
-      clearWatchdog();
-      client.deactivate();
-      stompRef.current = null;
-      subscriptions.clear();
-    };
-  }, [showNotification, syncSubscriptions]);
+    const client = stompRef.current;
+    if (client) syncSubscriptions(client);
+  }, [orders, syncSubscriptions, stompRef]);
 
   const handlePay = async (order: UserOrderResponse) => {
     setPayLoading(order.id);

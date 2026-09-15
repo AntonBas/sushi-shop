@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
+import { useOrderSocket } from "../../../hooks/features/useOrderSocket";
 import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import { getErrorMessage } from "../../../api/errorMessage";
 import { formatPrice } from "../../../utils/formatPrice";
-import { issueWsTicket } from "../../../api/auth";
-import { API_BASE_URL } from "../../../config/env";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import { Search } from "lucide-react";
@@ -19,8 +18,7 @@ import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import type { Client } from "@stomp/stompjs";
 import styles from "./AdminOrdersPage.module.css";
 
 const getStatusFlow = (
@@ -52,8 +50,6 @@ export default function AdminOrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "">("");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const stompRef = useRef<Client | null>(null);
-  const connectionIssueNotifiedRef = useRef(false);
   const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search });
 
   useEffect(() => {
@@ -73,73 +69,17 @@ export default function AdminOrdersPage() {
     });
   }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
 
-  useEffect(() => {
-    const notifyConnectionIssue = () => {
-      if (connectionIssueNotifiedRef.current) return;
-      connectionIssueNotifiedRef.current = true;
-      showNotification(
-        "Live order updates unavailable, reconnecting...",
-        "warning",
-      );
-    };
-
-    let watchdogId: number | null = null;
-    const clearWatchdog = () => {
-      if (watchdogId !== null) {
-        window.clearTimeout(watchdogId);
-        watchdogId = null;
-      }
-    };
-    const armWatchdog = (client: Client) => {
-      clearWatchdog();
-      watchdogId = window.setTimeout(() => {
-        notifyConnectionIssue();
-        client.deactivate().then(() => client.activate());
-      }, 15000);
-    };
-
-    const client = new Client({
-      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      beforeConnect: async (client) => {
-        const ticket = await issueWsTicket();
-        client.connectHeaders = { Authorization: `Bearer ${ticket}` };
-        armWatchdog(client);
-      },
-      reconnectDelay: 5000,
-      onConnect: () => {
-        clearWatchdog();
-        connectionIssueNotifiedRef.current = false;
-        client.subscribe("/topic/orders/new", () => {
-          const f = filtersRef.current;
-          loadOrders(f.page, 12, {
-            status: f.statusFilter || undefined,
-            deliveryMethod: f.deliveryFilter || undefined,
-            paymentMethod: f.paymentFilter || undefined,
-            search: f.search || undefined,
-          });
-        });
-      },
-      onStompError: (frame) => {
-        clearWatchdog();
-        console.error("WebSocket STOMP error:", frame.headers.message);
-        notifyConnectionIssue();
-      },
-      onWebSocketError: (event) => {
-        clearWatchdog();
-        console.error("WebSocket connection error:", event);
-        notifyConnectionIssue();
-      },
-      onWebSocketClose: () => clearWatchdog(),
+  useOrderSocket((client: Client) => {
+    client.subscribe("/topic/orders/new", () => {
+      const f = filtersRef.current;
+      loadOrders(f.page, 12, {
+        status: f.statusFilter || undefined,
+        deliveryMethod: f.deliveryFilter || undefined,
+        paymentMethod: f.paymentFilter || undefined,
+        search: f.search || undefined,
+      });
     });
-    client.activate();
-    stompRef.current = client;
-
-    return () => {
-      clearWatchdog();
-      client.deactivate();
-      stompRef.current = null;
-    };
-  }, [loadOrders, showNotification]);
+  });
 
   const handleStatusChange = async (
     orderId: number,
