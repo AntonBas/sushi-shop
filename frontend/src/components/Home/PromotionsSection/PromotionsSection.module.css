@@ -109,13 +109,12 @@
 
 @media (max-width: 768px) {
   .list {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-direction: column;
   }
 
   .card {
-    min-width: 300px;
-    flex: 0 0 auto;
+    min-width: 0;
+    width: 100%;
   }
 
   .cardContent {
