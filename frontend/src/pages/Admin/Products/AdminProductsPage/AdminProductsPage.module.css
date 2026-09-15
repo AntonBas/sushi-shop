@@ -85,12 +85,20 @@
   margin: 0 0 20px 0;
 }
 
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+  background: var(--color-bg-card);
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
   background: var(--color-bg-card);
   border-radius: 12px;
   overflow: hidden;
+  min-width: 800px;
 }
 
 .table th {

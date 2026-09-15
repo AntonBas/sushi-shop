@@ -131,90 +131,92 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Weight</th>
-                <th>Pieces</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr key={product.id}>
-                  <td>
-                    {product.mainImage ? (
-                      <img
-                        src={product.mainImage}
-                        alt={product.name}
-                        className={styles.thumb}
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className={styles.noImage}>—</div>
-                    )}
-                  </td>
-                  <td className={styles.name}>{product.name}</td>
-                  <td>
-                    <span className={styles.badge}>
-                      {CATEGORY_DISPLAY[product.category]}
-                    </span>
-                  </td>
-                  <td>
-                    {product.weight
-                      ? `${product.weight}${product.category === "DRINK" ? "ml" : "g"}`
-                      : "—"}
-                  </td>
-                  <td>{product.pieces ? `${product.pieces} pcs` : "—"}</td>
-                  <td>{formatPrice(product.price)}₴</td>
-                  <td>
-                    <button
-                      type="button"
-                      onClick={() => handleToggle(product.id)}
-                      className={styles.toggleBtn}
-                      aria-label={product.available ? "Mark unavailable" : "Mark available"}
-                    >
-                      {product.available ? (
-                        <ToggleRight size={20} className={styles.on} />
-                      ) : (
-                        <ToggleLeft size={20} className={styles.off} />
-                      )}
-                    </button>
-                  </td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          navigate(`/admin/products/${product.id}/edit`)
-                        }
-                        className={styles.editBtn}
-                        aria-label="Edit product"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDeleteId(product.id);
-                          setDeleteName(product.name);
-                        }}
-                        className={styles.deleteBtn}
-                        aria-label="Delete product"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Weight</th>
+                  <th>Pieces</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr key={product.id}>
+                    <td>
+                      {product.mainImage ? (
+                        <img
+                          src={product.mainImage}
+                          alt={product.name}
+                          className={styles.thumb}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className={styles.noImage}>—</div>
+                      )}
+                    </td>
+                    <td className={styles.name}>{product.name}</td>
+                    <td>
+                      <span className={styles.badge}>
+                        {CATEGORY_DISPLAY[product.category]}
+                      </span>
+                    </td>
+                    <td>
+                      {product.weight
+                        ? `${product.weight}${product.category === "DRINK" ? "ml" : "g"}`
+                        : "—"}
+                    </td>
+                    <td>{product.pieces ? `${product.pieces} pcs` : "—"}</td>
+                    <td>{formatPrice(product.price)}₴</td>
+                    <td>
+                      <button
+                        type="button"
+                        onClick={() => handleToggle(product.id)}
+                        className={styles.toggleBtn}
+                        aria-label={product.available ? "Mark unavailable" : "Mark available"}
+                      >
+                        {product.available ? (
+                          <ToggleRight size={20} className={styles.on} />
+                        ) : (
+                          <ToggleLeft size={20} className={styles.off} />
+                        )}
+                      </button>
+                    </td>
+                    <td>
+                      <div className={styles.actions}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/admin/products/${product.id}/edit`)
+                          }
+                          className={styles.editBtn}
+                          aria-label="Edit product"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteId(product.id);
+                            setDeleteName(product.name);
+                          }}
+                          className={styles.deleteBtn}
+                          aria-label="Delete product"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
           <Pagination
             currentPage={page}
             totalPages={totalPages}
