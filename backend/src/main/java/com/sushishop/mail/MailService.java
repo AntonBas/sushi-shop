@@ -13,6 +13,9 @@ import java.util.Map;
 @Service
 public class MailService {
 
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long RETRY_DELAY_MS = 200;
+
     private final RestClient restClient;
     private final String fromEmail;
     private final String fromName;
@@ -71,14 +74,30 @@ public class MailService {
                 "htmlContent", html
         );
 
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                restClient.post()
+                        .body(payload)
+                        .retrieve()
+                        .toBodilessEntity();
+                log.info("{} email sent to {}", subject, to);
+                return;
+            } catch (Exception e) {
+                if (attempt == MAX_ATTEMPTS) {
+                    log.error("Failed to send {} email to {} after {} attempts", subject, to, MAX_ATTEMPTS, e);
+                    return;
+                }
+                log.warn("Attempt {}/{} failed to send {} email to {}, retrying", attempt, MAX_ATTEMPTS, subject, to, e);
+                sleepBeforeRetry();
+            }
+        }
+    }
+
+    private void sleepBeforeRetry() {
         try {
-            restClient.post()
-                    .body(payload)
-                    .retrieve()
-                    .toBodilessEntity();
-            log.info("{} email sent to {}", subject, to);
-        } catch (Exception e) {
-            log.error("Failed to send {} email to {}", subject, to, e);
+            Thread.sleep(RETRY_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -62,9 +63,21 @@ class MailServiceTest {
     }
 
     @Test
-    void shouldNotThrowWhenBrevoRequestFails() {
+    void shouldRetryUpToThreeTimesThenGiveUpWithoutThrowing() {
+        mockServer.expect(ExpectedCount.times(3), requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withServerError());
+
+        mailService.sendVerificationEmail("anton@example.com", "token123");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldSendSuccessfullyAfterATransientFailure() {
         mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
                 .andRespond(withServerError());
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
 
         mailService.sendVerificationEmail("anton@example.com", "token123");
 
