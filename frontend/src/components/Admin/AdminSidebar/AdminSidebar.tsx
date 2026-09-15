@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   UtensilsCrossed,
@@ -65,10 +65,41 @@ export default function AdminSidebar({
     if (isMobile) onClose();
   };
 
+  const overlayTouchStart = useRef<{ x: number; y: number } | null>(null);
+  const overlayDragged = useRef(false);
+
+  const handleOverlayTouchStart = (e: React.TouchEvent) => {
+    overlayTouchStart.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    overlayDragged.current = false;
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent) => {
+    if (!overlayTouchStart.current) return;
+    const dx = e.touches[0].clientX - overlayTouchStart.current.x;
+    const dy = e.touches[0].clientY - overlayTouchStart.current.y;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) overlayDragged.current = true;
+  };
+
+  const handleOverlayClick = () => {
+    if (overlayDragged.current) {
+      overlayDragged.current = false;
+      return;
+    }
+    onClose();
+  };
+
   return (
     <>
       {isOpen && isMobile && (
-        <div className={styles.overlay} onClick={onClose} />
+        <div
+          className={styles.overlay}
+          onClick={handleOverlayClick}
+          onTouchStart={handleOverlayTouchStart}
+          onTouchMove={handleOverlayTouchMove}
+        />
       )}
 
       <aside
