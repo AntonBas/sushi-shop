@@ -22,6 +22,22 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) {
         var oauthUser = super.loadUser(request);
+        linkOrCreateUser(oauthUser);
+        return oauthUser;
+    }
+
+    /**
+     * A user row can already exist under this email with emailVerified=false —
+     * e.g. someone registered with this address via the password flow but never
+     * owned the inbox (attacker pre-registration), or the account is mid
+     * email-verification. Google just proved whoever is signing in now DOES own
+     * this inbox, so this claims that row. Since the row's existing password
+     * may have been set by someone else entirely, it's cleared and tokenVersion
+     * bumped (same as password reset) to invalidate it and any of its sessions —
+     * otherwise whoever set that password keeps standing access to this account
+     * after the real owner starts using Google sign-in.
+     */
+    void linkOrCreateUser(OAuth2User oauthUser) {
         var attributes = oauthUser.getAttributes();
         String email = (String) attributes.get("email");
         String name = (String) attributes.get("name");
@@ -45,9 +61,9 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         if (!user.isEmailVerified()) {
             user.setEmailVerified(true);
+            user.setPassword(null);
+            user.setTokenVersion(user.getTokenVersion() + 1);
             userRepository.save(user);
         }
-
-        return oauthUser;
     }
 }
