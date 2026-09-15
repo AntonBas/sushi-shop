@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isAxiosError } from "axios";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
@@ -45,8 +46,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const data = await usersApi.getMe();
       setUser(data);
-    } catch {
-      logout();
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 401) {
+        setUser(null);
+      }
+      throw error;
     }
   };
 
