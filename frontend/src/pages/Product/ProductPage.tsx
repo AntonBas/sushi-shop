@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Star,
@@ -27,6 +27,11 @@ export default function ProductPage() {
   const { showNotification } = useNotification();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const touchStartRef = useRef<{
+    x: number | null;
+    y: number | null;
+    swiped: boolean;
+  }>({ x: null, y: null, swiped: false });
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -65,6 +70,42 @@ export default function ProductPage() {
     );
   };
 
+  const touchStart = touchStartRef.current;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.x = e.touches[0].clientX;
+    touchStart.y = e.touches[0].clientY;
+    touchStart.swiped = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart.x === null || touchStart.y === null) return;
+    const dx = e.touches[0].clientX - touchStart.x;
+    const dy = e.touches[0].clientY - touchStart.y;
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      touchStart.swiped = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.x === null || touchStart.y === null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    touchStart.x = null;
+    touchStart.y = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) prevImage();
+      else nextImage();
+    }
+  };
+
+  const handleImageClickCapture = (e: React.MouseEvent) => {
+    if (touchStart.swiped) {
+      e.preventDefault();
+      e.stopPropagation();
+      touchStart.swiped = false;
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
@@ -84,7 +125,13 @@ export default function ProductPage() {
 
       <div className={styles.layout}>
         <div className={styles.images}>
-          <div className={styles.mainImageWrapper}>
+          <div
+            className={styles.mainImageWrapper}
+            onTouchStart={product.images.length > 1 ? handleTouchStart : undefined}
+            onTouchMove={product.images.length > 1 ? handleTouchMove : undefined}
+            onTouchEnd={product.images.length > 1 ? handleTouchEnd : undefined}
+            onClickCapture={product.images.length > 1 ? handleImageClickCapture : undefined}
+          >
             <Zoom>
               <img
                 src={product.images[activeImage]?.url || "/placeholder.jpg"}
