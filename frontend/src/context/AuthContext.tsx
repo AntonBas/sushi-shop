@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
+import { setUnauthorizedHandler } from "../api/client";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
 import { AuthContext } from "./auth-context";
 
@@ -22,6 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .then(setUser)
       .catch(() => setUser(null))
       .finally(() => setInitialLoading(false));
+  }, []);
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
   }, []);
 
   const login = async (credentials: LoginRequest) => {

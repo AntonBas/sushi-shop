@@ -6,6 +6,7 @@ import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
 import * as usersApi from "../api/user";
 import * as authApi from "../api/auth";
+import { handleResponseError } from "../api/client";
 import type { UserResponse } from "../types";
 
 vi.mock("../api/user");
@@ -71,5 +72,22 @@ describe("AuthContext refreshUser", () => {
       AxiosError,
     );
     expect(result.current.user).toEqual(user);
+  });
+});
+
+describe("AuthContext unauthorized handler registration", () => {
+  beforeEach(() => {
+    vi.mocked(usersApi.getMe).mockReset();
+  });
+
+  it("clears the user when any other request gets a 401", async () => {
+    vi.mocked(usersApi.getMe).mockResolvedValueOnce(user);
+
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await waitFor(() => expect(result.current.user).toEqual(user));
+
+    handleResponseError(axiosErrorWithStatus(401)).catch(() => {});
+
+    await waitFor(() => expect(result.current.user).toBeNull());
   });
 });

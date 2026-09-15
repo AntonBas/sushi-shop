@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosError } from "axios";
 import { API_BASE_URL } from "../config/env";
 
 declare module "axios" {
@@ -6,6 +6,12 @@ declare module "axios" {
         skipAuthRedirect?: boolean;
     }
 }
+
+let onUnauthorized: (() => void) | null = null;
+
+export const setUnauthorizedHandler = (handler: (() => void) | null) => {
+    onUnauthorized = handler;
+};
 
 const api = axios.create({
     baseURL: `${API_BASE_URL}/api`,
@@ -15,14 +21,13 @@ const api = axios.create({
     },
 });
 
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
-            window.location.href = "/login";
-        }
-        return Promise.reject(error);
+export const handleResponseError = (error: AxiosError) => {
+    if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
+        onUnauthorized?.();
     }
-);
+    return Promise.reject(error);
+};
+
+api.interceptors.response.use((response) => response, handleResponseError);
 
 export default api;
