@@ -1,8 +1,8 @@
 package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.LoginRequest;
-import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.security.jwt.JwtUtil;
+import com.sushishop.security.jwt.WsTicketService;
 import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
@@ -10,6 +10,7 @@ import com.sushishop.user.UserMapper;
 import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserService;
 import com.sushishop.user.dto.request.RegisterRequest;
+import com.sushishop.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,9 +30,13 @@ public class AuthService {
     private final UserRepository userRepository;
     private final TokenService tokenService;
     private final OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
+    private final WsTicketService wsTicketService;
+
+    public record AuthResult(String token, UserResponse user) {
+    }
 
     @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
+    public AuthResult login(LoginRequest request) {
         log.info("Login attempt for email: {}", request.email());
 
         var user = userRepository.findByEmail(request.email())
@@ -50,11 +55,11 @@ public class AuthService {
 
         var userResponse = userMapper.toResponse(user);
         log.info("Login successful for email: {}", request.email());
-        return new AuthResponse(jwt, userResponse);
+        return new AuthResult(jwt, userResponse);
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest request) {
+    public AuthResult register(RegisterRequest request) {
         log.info("Register attempt for email: {}", request.email());
 
         var user = userService.create(request);
@@ -64,11 +69,11 @@ public class AuthService {
         var userResponse = userMapper.toResponse(user);
 
         log.info("Register successful for email: {}", request.email());
-        return new AuthResponse(jwt, userResponse);
+        return new AuthResult(jwt, userResponse);
     }
 
     @Transactional(readOnly = true)
-    public AuthResponse exchangeOAuth2Code(String code) {
+    public AuthResult exchangeOAuth2Code(String code) {
         String email = oAuth2ExchangeCodeService.consume(code)
                 .orElseThrow(() -> new BadRequestException("Invalid or expired code"));
 
@@ -79,6 +84,13 @@ public class AuthService {
         var userResponse = userMapper.toResponse(user);
 
         log.info("OAuth2 code exchange successful for email: {}", email);
-        return new AuthResponse(jwt, userResponse);
+        return new AuthResult(jwt, userResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public String issueWsTicket(String email) {
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BadRequestException("Unknown user"));
+        return wsTicketService.issueTicket(email, user.getTokenVersion());
     }
 }

@@ -65,6 +65,8 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
+    cookie-secure: false
+    cookie-same-site: Lax
   upload:
     dir: uploads
     allowed-types: image/jpeg,image/png,image/webp

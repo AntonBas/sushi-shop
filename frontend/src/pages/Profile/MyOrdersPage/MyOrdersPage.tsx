@@ -3,7 +3,7 @@ import { useApi } from "../../../hooks/common/useApi";
 import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
-import { getAuthToken } from "../../../api/authToken";
+import { issueWsTicket } from "../../../api/auth";
 import { API_BASE_URL } from "../../../config/env";
 import { formatPrice } from "../../../utils/formatPrice";
 import Loading from "../../../components/UI/Loading/Loading";
@@ -81,8 +81,9 @@ export default function MyOrdersPage() {
 
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      connectHeaders: {
-        Authorization: `Bearer ${getAuthToken()}`,
+      beforeConnect: async (client) => {
+        const ticket = await issueWsTicket();
+        client.connectHeaders = { Authorization: `Bearer ${ticket}` };
       },
       reconnectDelay: 5000,
       onConnect: () => {

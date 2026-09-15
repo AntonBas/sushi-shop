@@ -16,6 +16,15 @@ export const exchangeOAuth2Code = async (code: string): Promise<AuthResponse> =>
   return res
 }
 
+export const logout = async (): Promise<void> => {
+  await api.post('/auth/logout')
+}
+
+export const issueWsTicket = async (): Promise<string> => {
+  const { data } = await api.get('/auth/ws-ticket')
+  return data
+}
+
 export const verifyEmail = async (token: string): Promise<void> => {
   await api.get('/auth/verify', { params: { token } })
 }

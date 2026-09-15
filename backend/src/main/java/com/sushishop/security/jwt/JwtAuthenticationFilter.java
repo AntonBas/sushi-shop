@@ -20,14 +20,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserCacheService userCacheService;
+    private final JwtCookieService jwtCookieService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
+        String token = jwtCookieService.extractToken(request);
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-
+        if (token != null) {
             var payload = jwtUtil.parseToken(token);
 
             if (payload != null) {

@@ -5,6 +5,7 @@ import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.OAuth2ExchangeRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
+import com.sushishop.security.jwt.JwtCookieService;
 import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.user.dto.request.RegisterRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,11 +13,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -29,6 +32,7 @@ public class AuthController {
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
+    private final JwtCookieService jwtCookieService;
 
     @RateLimit(value = 3)
     @PostMapping("/register")
@@ -39,9 +43,11 @@ public class AuthController {
             @ApiResponse(responseCode = "409", description = "Email already registered")
     })
     @SecurityRequirements()
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
         log.info("POST /api/auth/register - email: {}", request.email());
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+        var result = authService.register(request);
+        jwtCookieService.addTokenCookie(response, result.token());
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(result.user()));
     }
 
     @RateLimit
@@ -52,9 +58,11 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid email or password")
     })
     @SecurityRequirements()
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         log.info("POST /api/auth/login - email: {}", request.email());
-        return ResponseEntity.ok(authService.login(request));
+        var result = authService.login(request);
+        jwtCookieService.addTokenCookie(response, result.token());
+        return ResponseEntity.ok(new AuthResponse(result.user()));
     }
 
     @RateLimit(value = 10)
@@ -65,8 +73,32 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid or expired code")
     })
     @SecurityRequirements()
-    public ResponseEntity<AuthResponse> exchangeOAuth2Code(@Valid @RequestBody OAuth2ExchangeRequest request) {
-        return ResponseEntity.ok(authService.exchangeOAuth2Code(request.code()));
+    public ResponseEntity<AuthResponse> exchangeOAuth2Code(@Valid @RequestBody OAuth2ExchangeRequest request, HttpServletResponse response) {
+        var result = authService.exchangeOAuth2Code(request.code());
+        jwtCookieService.addTokenCookie(response, result.token());
+        return ResponseEntity.ok(new AuthResponse(result.user()));
+    }
+
+    @RateLimit(value = 10)
+    @PostMapping("/logout")
+    @Operation(summary = "Log out the current user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Logout successful")
+    })
+    @SecurityRequirements()
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        jwtCookieService.clearTokenCookie(response);
+        return ResponseEntity.ok().build();
+    }
+
+    @RateLimit(value = 20)
+    @GetMapping("/ws-ticket")
+    @Operation(summary = "Issue a one-time ticket for WebSocket authentication")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Ticket issued")
+    })
+    public ResponseEntity<String> issueWsTicket(Authentication authentication) {
+        return ResponseEntity.ok(authService.issueWsTicket(authentication.getName()));
     }
 
     @RateLimit(value = 10)

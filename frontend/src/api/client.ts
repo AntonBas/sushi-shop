@@ -1,24 +1,24 @@
 import axios from "axios";
 import { API_BASE_URL } from "../config/env";
-import { clearAuthToken, getAuthToken } from "./authToken";
+
+declare module "axios" {
+    export interface AxiosRequestConfig {
+        skipAuthRedirect?: boolean;
+    }
+}
 
 const api = axios.create({
     baseURL: `${API_BASE_URL}/api`,
-});
-
-api.interceptors.request.use((config) => {
-    const token = getAuthToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+    withCredentials: true,
+    headers: {
+        "X-Requested-With": "XMLHttpRequest",
+    },
 });
 
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
-            clearAuthToken();
+        if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
             window.location.href = "/login";
         }
         return Promise.reject(error);

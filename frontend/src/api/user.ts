@@ -2,7 +2,7 @@ import api from './client'
 import type { UserResponse, UpdateUserRequest, ChangePasswordRequest } from '../types'
 
 export const getMe = async (): Promise<UserResponse> => {
-  const { data } = await api.get('/users/me')
+  const { data } = await api.get('/users/me', { skipAuthRedirect: true })
   return data
 }
 

@@ -4,7 +4,7 @@ import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import { getErrorMessage } from "../../../api/errorMessage";
 import { formatPrice } from "../../../utils/formatPrice";
-import { getAuthToken } from "../../../api/authToken";
+import { issueWsTicket } from "../../../api/auth";
 import { API_BASE_URL } from "../../../config/env";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
@@ -80,8 +80,9 @@ export default function AdminOrdersPage() {
 
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      connectHeaders: {
-        Authorization: `Bearer ${getAuthToken()}`,
+      beforeConnect: async (client) => {
+        const ticket = await issueWsTicket();
+        client.connectHeaders = { Authorization: `Bearer ${ticket}` };
       },
       reconnectDelay: 5000,
       onConnect: () => {

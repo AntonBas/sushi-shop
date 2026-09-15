@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 class JwtChannelInterceptorTest {
 
     @Mock
-    private JwtUtil jwtUtil;
+    private WsTicketService wsTicketService;
 
     @Mock
     private UserCacheService userCacheService;
@@ -79,7 +79,7 @@ class JwtChannelInterceptorTest {
 
     @Test
     void shouldRejectConnectWithInvalidToken() {
-        when(jwtUtil.parseToken("bad")).thenReturn(null);
+        when(wsTicketService.consume("bad")).thenReturn(Optional.empty());
         var message = connectMessage("bad");
 
         assertThatThrownBy(() -> interceptor.preSend(message, channel))
@@ -89,7 +89,7 @@ class JwtChannelInterceptorTest {
     @Test
     void shouldAuthenticateConnectWithValidToken() {
         var user = buildUser("user@test.com", UserRole.CUSTOMER);
-        when(jwtUtil.parseToken("good")).thenReturn(new JwtUtil.JwtPayload("user@test.com", 0));
+        when(wsTicketService.consume("good")).thenReturn(Optional.of(new WsTicketService.WsTicketPayload("user@test.com", 0)));
         when(userCacheService.getCachedUser("user@test.com", 0))
                 .thenReturn(new CachedAuthUser(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified()));
 

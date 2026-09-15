@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
-import { setAuthToken } from "../../../api/authToken";
 import { exchangeOAuth2Code } from "../../../api/auth";
 import Loading from "../../../components/UI/Loading/Loading";
 
@@ -16,10 +15,7 @@ export default function OAuth2Redirect() {
 
     if (code) {
       exchangeOAuth2Code(code)
-        .then(({ token }) => {
-          setAuthToken(token);
-          return refreshUser();
-        })
+        .then(() => refreshUser())
         .then(() => {
           window.location.href = "/";
         })

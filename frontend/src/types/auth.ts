@@ -26,7 +26,5 @@ export interface ResetPasswordRequest {
 }
 
 export interface AuthResponse {
-  token: string
-  tokenType: string
   user: UserResponse
 }

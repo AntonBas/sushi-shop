@@ -27,7 +27,7 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private static final String ROLE_ADMIN = "ROLE_" + Roles.ADMIN;
     private static final String ROLE_COURIER = "ROLE_" + Roles.COURIER;
 
-    private final JwtUtil jwtUtil;
+    private final WsTicketService wsTicketService;
     private final UserCacheService userCacheService;
     private final OrderRepository orderRepository;
 
@@ -52,14 +52,12 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private UsernamePasswordAuthenticationToken authenticate(StompHeaderAccessor accessor) {
         var header = accessor.getFirstNativeHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Missing WebSocket authentication token");
+            throw new BadCredentialsException("Missing WebSocket authentication ticket");
         }
 
-        var token = header.substring(7);
-        var payload = jwtUtil.parseToken(token);
-        if (payload == null) {
-            throw new BadCredentialsException("Invalid WebSocket authentication token");
-        }
+        var ticket = header.substring(7);
+        var payload = wsTicketService.consume(ticket)
+                .orElseThrow(() -> new BadCredentialsException("Invalid or expired WebSocket authentication ticket"));
 
         var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
         if (cachedUser == null) {

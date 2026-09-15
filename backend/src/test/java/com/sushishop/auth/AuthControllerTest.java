@@ -5,7 +5,6 @@ import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.OAuth2ExchangeRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
-import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.user.UserRole;
 import com.sushishop.user.dto.request.RegisterRequest;
@@ -26,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,15 +57,15 @@ public class AuthControllerTest {
     public void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
-        var authResponse = new AuthResponse("jwt-token", userResponse);
+        var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
-        when(authService.register(any())).thenReturn(authResponse);
+        when(authService.register(any())).thenReturn(authResult);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("jwt-token"))
+                .andExpect(cookie().value("jwt", "jwt-token"))
                 .andExpect(jsonPath("$.user.email").value("anton@example.com"));
     }
 
@@ -83,15 +83,16 @@ public class AuthControllerTest {
     public void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
-        var authResponse = new AuthResponse("jwt-token", userResponse);
+        var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
-        when(authService.login(any())).thenReturn(authResponse);
+        when(authService.login(any())).thenReturn(authResult);
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(cookie().value("jwt", "jwt-token"))
+                .andExpect(jsonPath("$.user.email").value("anton@example.com"));
     }
 
     @Test
@@ -110,15 +111,15 @@ public class AuthControllerTest {
     public void shouldExchangeOAuth2Code() throws Exception {
         var request = new OAuth2ExchangeRequest("valid-code");
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
-        var authResponse = new AuthResponse("jwt-token", userResponse);
+        var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
-        when(authService.exchangeOAuth2Code("valid-code")).thenReturn(authResponse);
+        when(authService.exchangeOAuth2Code("valid-code")).thenReturn(authResult);
 
         mockMvc.perform(post("/api/auth/oauth2/exchange")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt-token"));
+                .andExpect(cookie().value("jwt", "jwt-token"));
     }
 
     @Test
@@ -158,5 +159,12 @@ public class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldLogout() throws Exception {
+        mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("jwt", 0));
     }
 }
