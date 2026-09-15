@@ -57,10 +57,6 @@ export default function AdminOrdersPage() {
   }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
 
   useEffect(() => {
-    loadOrders(0);
-  }, [loadOrders]);
-
-  useEffect(() => {
     loadOrders(page, 12, {
       status: statusFilter || undefined,
       deliveryMethod: deliveryFilter || undefined,
