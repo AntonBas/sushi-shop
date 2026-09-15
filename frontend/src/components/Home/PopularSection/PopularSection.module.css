@@ -11,11 +11,27 @@
 
 .grid {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 6px;
 }
 
 .grid > a {
-  flex: 0 1 220px;
+  flex: 0 0 200px;
+  scroll-snap-align: start;
+}
+
+.grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.grid::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
 }
