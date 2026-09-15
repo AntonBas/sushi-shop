@@ -10,7 +10,12 @@
 }
 
 .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 16px;
+}
+
+.grid > a {
+  flex: 0 1 220px;
 }
