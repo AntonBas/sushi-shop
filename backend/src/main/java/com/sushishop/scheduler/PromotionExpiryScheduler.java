@@ -17,13 +17,17 @@ public class PromotionExpiryScheduler {
     private final PromotionRepository promotionRepository;
     private final ProductCacheService productCacheService;
 
+    private volatile LocalDateTime lastRun = LocalDateTime.now();
+
     @Scheduled(fixedRate = INTERVAL_MS)
     public void evictExpiredPromotionsCache() {
         var now = LocalDateTime.now();
-        var from = now.minusNanos(INTERVAL_MS * 1_000_000);
+        var from = lastRun;
 
         promotionRepository.findEndingBetween(from, now).forEach(promotion ->
                 promotion.getProducts().forEach(product ->
                         productCacheService.evict(product.getId(), product.getSlug())));
+
+        lastRun = now;
     }
 }
