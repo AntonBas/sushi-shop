@@ -5,6 +5,7 @@ import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
 import { getAuthToken } from "../../../api/authToken";
 import { API_BASE_URL } from "../../../config/env";
+import { formatPrice } from "../../../utils/formatPrice";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { UserOrderResponse } from "../../../types";
@@ -164,7 +165,7 @@ export default function MyOrdersPage() {
                         order.paymentStatus}
                     </span>
                     <span className={styles.orderTotal}>
-                      {order.totalAmount}₴
+                      {formatPrice(order.totalAmount)}₴
                     </span>
                     <span
                       className={styles.statusBadge}
@@ -209,7 +210,7 @@ export default function MyOrdersPage() {
                           <span>
                             {item.productName} × {item.quantity}
                           </span>
-                          <span>{item.unitPrice * item.quantity}₴</span>
+                          <span>{formatPrice(item.unitPrice * item.quantity)}₴</span>
                         </div>
                       ))}
                     </div>

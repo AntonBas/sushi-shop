@@ -3,6 +3,7 @@ import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
 import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import { getErrorMessage } from "../../../api/errorMessage";
+import { formatPrice } from "../../../utils/formatPrice";
 import { getAuthToken } from "../../../api/authToken";
 import { API_BASE_URL } from "../../../config/env";
 import Loading from "../../../components/UI/Loading/Loading";
@@ -246,7 +247,7 @@ export default function AdminOrdersPage() {
                         {PAYMENT_STATUS_LABELS[order.paymentStatus] ||
                           order.paymentStatus}
                       </td>
-                      <td data-label="Total">{order.totalAmount}₴</td>
+                      <td data-label="Total">{formatPrice(order.totalAmount)}₴</td>
                       <td data-label="Status">
                         <span
                           className={styles.statusBadge}
@@ -321,7 +322,7 @@ export default function AdminOrdersPage() {
                                   <span>
                                     {item.productName} × {item.quantity}
                                   </span>
-                                  <span>{item.unitPrice * item.quantity}₴</span>
+                                  <span>{formatPrice(item.unitPrice * item.quantity)}₴</span>
                                 </div>
                               ))}
                             </div>

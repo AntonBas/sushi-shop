@@ -13,6 +13,7 @@ import { useProducts } from "../../hooks/features/useProducts";
 import { useCart } from "../../context/useCart";
 import { useNotification } from "../../context/useNotification";
 import { CATEGORY_DISPLAY } from "../../types/enums";
+import { formatPrice } from "../../utils/formatPrice";
 import ProductSkeleton from "../../components/Product/ProductSkeleton/ProductSkeleton";
 import Button from "../../components/UI/Button/Button";
 import ReviewSection from "../../components/Product/ReviewSection/ReviewSection";
@@ -148,14 +149,14 @@ export default function ProductPage() {
           <div className={styles.priceRow}>
             {discounted && (
               <>
-                <span className={styles.oldPrice}>{product.price}₴</span>
+                <span className={styles.oldPrice}>{formatPrice(product.price)}₴</span>
                 <span className={styles.discount}>
                   -{product.discountPercent}%
                 </span>
               </>
             )}
             <span className={styles.price}>
-              {product.discountedPrice || product.price}₴
+              {formatPrice(product.discountedPrice || product.price)}₴
             </span>
           </div>
 
@@ -199,7 +200,7 @@ export default function ProductPage() {
             </div>
             <Button onClick={handleAddToCart} className={styles.addBtn}>
               <ShoppingCart size={18} /> Add to Cart —{" "}
-              {(product.discountedPrice || product.price) * quantity}₴
+              {formatPrice((product.discountedPrice || product.price) * quantity)}₴
             </Button>
           </div>
         </div>

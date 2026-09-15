@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { CATEGORY_DISPLAY } from "../../../types/enums";
 import type { ProductListResponse } from "../../../types";
+import { formatPrice } from "../../../utils/formatPrice";
 import styles from "./ProductCard.module.css";
 
 interface Props {
@@ -36,11 +37,11 @@ export default function ProductCard({ product }: Props) {
         <div className={styles.priceRow}>
           {product.discountedPrice ? (
             <>
-              <span className={styles.oldPrice}>{product.price}₴</span>
-              <span className={styles.price}>{product.discountedPrice}₴</span>
+              <span className={styles.oldPrice}>{formatPrice(product.price)}₴</span>
+              <span className={styles.price}>{formatPrice(product.discountedPrice)}₴</span>
             </>
           ) : (
-            <span className={styles.price}>{product.price}₴</span>
+            <span className={styles.price}>{formatPrice(product.price)}₴</span>
           )}
         </div>
         {product.averageRating && (

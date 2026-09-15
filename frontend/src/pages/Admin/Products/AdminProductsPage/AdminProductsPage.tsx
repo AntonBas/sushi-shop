@@ -5,6 +5,7 @@ import { useProducts } from "../../../../hooks/features/useProducts";
 import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
 import { getErrorMessage } from "../../../../api/errorMessage";
+import { formatPrice } from "../../../../utils/formatPrice";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
@@ -170,7 +171,7 @@ export default function AdminProductsPage() {
                       : "—"}
                   </td>
                   <td>{product.pieces ? `${product.pieces} pcs` : "—"}</td>
-                  <td>{product.price}₴</td>
+                  <td>{formatPrice(product.price)}₴</td>
                   <td>
                     <button
                       type="button"

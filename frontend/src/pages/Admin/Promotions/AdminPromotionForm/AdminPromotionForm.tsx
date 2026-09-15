@@ -10,6 +10,7 @@ import Input from "../../../../components/UI/Input/Input";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
 import type { PromotionResponse } from "../../../../types";
+import { formatPrice } from "../../../../utils/formatPrice";
 import styles from "./AdminPromotionForm.module.css";
 
 export default function AdminPromotionForm() {
@@ -229,7 +230,7 @@ export default function AdminPromotionForm() {
                   >
                     <span>{product.name}</span>
                     <span className={styles.productPrice}>
-                      ₴{product.price}
+                      ₴{formatPrice(product.price)}
                     </span>
                   </button>
                 ))}
