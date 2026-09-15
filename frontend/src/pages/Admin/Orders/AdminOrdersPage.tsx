@@ -54,6 +54,11 @@ export default function AdminOrdersPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const stompRef = useRef<Client | null>(null);
   const connectionIssueNotifiedRef = useRef(false);
+  const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search });
+
+  useEffect(() => {
+    filtersRef.current = { page, statusFilter, deliveryFilter, paymentFilter, search };
+  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
 
   useEffect(() => {
     loadOrders(0);
@@ -78,41 +83,63 @@ export default function AdminOrdersPage() {
       );
     };
 
+    let watchdogId: number | null = null;
+    const clearWatchdog = () => {
+      if (watchdogId !== null) {
+        window.clearTimeout(watchdogId);
+        watchdogId = null;
+      }
+    };
+    const armWatchdog = (client: Client) => {
+      clearWatchdog();
+      watchdogId = window.setTimeout(() => {
+        notifyConnectionIssue();
+        client.deactivate().then(() => client.activate());
+      }, 15000);
+    };
+
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       beforeConnect: async (client) => {
         const ticket = await issueWsTicket();
         client.connectHeaders = { Authorization: `Bearer ${ticket}` };
+        armWatchdog(client);
       },
       reconnectDelay: 5000,
       onConnect: () => {
+        clearWatchdog();
         connectionIssueNotifiedRef.current = false;
         client.subscribe("/topic/orders/new", () => {
-          loadOrders(page, 12, {
-            status: statusFilter || undefined,
-            deliveryMethod: deliveryFilter || undefined,
-            paymentMethod: paymentFilter || undefined,
-            search: search || undefined,
+          const f = filtersRef.current;
+          loadOrders(f.page, 12, {
+            status: f.statusFilter || undefined,
+            deliveryMethod: f.deliveryFilter || undefined,
+            paymentMethod: f.paymentFilter || undefined,
+            search: f.search || undefined,
           });
         });
       },
       onStompError: (frame) => {
+        clearWatchdog();
         console.error("WebSocket STOMP error:", frame.headers.message);
         notifyConnectionIssue();
       },
       onWebSocketError: (event) => {
+        clearWatchdog();
         console.error("WebSocket connection error:", event);
         notifyConnectionIssue();
       },
+      onWebSocketClose: () => clearWatchdog(),
     });
     client.activate();
     stompRef.current = client;
 
     return () => {
+      clearWatchdog();
       client.deactivate();
       stompRef.current = null;
     };
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders, showNotification]);
+  }, [loadOrders, showNotification]);
 
   const handleStatusChange = async (
     orderId: number,

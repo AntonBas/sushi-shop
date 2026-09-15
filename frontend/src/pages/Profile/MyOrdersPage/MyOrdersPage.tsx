@@ -79,32 +79,53 @@ export default function MyOrdersPage() {
       );
     };
 
+    let watchdogId: number | null = null;
+    const clearWatchdog = () => {
+      if (watchdogId !== null) {
+        window.clearTimeout(watchdogId);
+        watchdogId = null;
+      }
+    };
+    const armWatchdog = (client: Client) => {
+      clearWatchdog();
+      watchdogId = window.setTimeout(() => {
+        notifyConnectionIssue();
+        client.deactivate().then(() => client.activate());
+      }, 15000);
+    };
+
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       beforeConnect: async (client) => {
         const ticket = await issueWsTicket();
         client.connectHeaders = { Authorization: `Bearer ${ticket}` };
+        armWatchdog(client);
       },
       reconnectDelay: 5000,
       onConnect: () => {
+        clearWatchdog();
         connectionIssueNotifiedRef.current = false;
         subscriptionsRef.current.clear();
         syncSubscriptions();
       },
       onStompError: (frame) => {
+        clearWatchdog();
         console.error("WebSocket STOMP error:", frame.headers.message);
         notifyConnectionIssue();
       },
       onWebSocketError: (event) => {
+        clearWatchdog();
         console.error("WebSocket connection error:", event);
         notifyConnectionIssue();
       },
+      onWebSocketClose: () => clearWatchdog(),
     });
     client.activate();
     stompRef.current = client;
     const subscriptions = subscriptionsRef.current;
 
     return () => {
+      clearWatchdog();
       client.deactivate();
       stompRef.current = null;
       subscriptions.clear();
