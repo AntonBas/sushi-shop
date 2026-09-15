@@ -54,13 +54,17 @@ export default function ReviewSection({ productId }: Props) {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    await createApi.execute(() =>
-      reviewsApi.createReview({
-        productId,
-        rating: newRating,
-        comment: newComment || undefined,
-      }),
-    );
+    try {
+      await createApi.execute(() =>
+        reviewsApi.createReview({
+          productId,
+          rating: newRating,
+          comment: newComment || undefined,
+        }),
+      );
+    } catch {
+      return;
+    }
     setNewComment("");
     setNewRating(5);
     showNotification("Review submitted", "success");
@@ -68,13 +72,17 @@ export default function ReviewSection({ productId }: Props) {
   };
 
   const handleUpdate = async (reviewId: number) => {
-    await updateApi.execute(() =>
-      reviewsApi.updateReview(reviewId, {
-        productId,
-        rating: editRating,
-        comment: editComment || undefined,
-      }),
-    );
+    try {
+      await updateApi.execute(() =>
+        reviewsApi.updateReview(reviewId, {
+          productId,
+          rating: editRating,
+          comment: editComment || undefined,
+        }),
+      );
+    } catch {
+      return;
+    }
     setEditingId(null);
     showNotification("Review updated", "success");
     loadReviews(reviewPage);
@@ -94,9 +102,13 @@ export default function ReviewSection({ productId }: Props) {
 
   const handleReply = async (reviewId: number) => {
     if (!replyMessage.trim()) return;
-    await replyApi.execute(() =>
-      reviewsApi.addReply(reviewId, { message: replyMessage }),
-    );
+    try {
+      await replyApi.execute(() =>
+        reviewsApi.addReply(reviewId, { message: replyMessage }),
+      );
+    } catch {
+      return;
+    }
     setReplyMessage("");
     setReplyingId(null);
     showNotification("Reply added", "success");
@@ -105,9 +117,13 @@ export default function ReviewSection({ productId }: Props) {
 
   const handleUpdateReply = async () => {
     if (!editingReplyId || !editReplyMessage.trim()) return;
-    await updateReplyApi.execute(() =>
-      reviewsApi.updateReply(editingReplyId, { message: editReplyMessage }),
-    );
+    try {
+      await updateReplyApi.execute(() =>
+        reviewsApi.updateReply(editingReplyId, { message: editReplyMessage }),
+      );
+    } catch {
+      return;
+    }
     setEditingReplyId(null);
     setEditReplyMessage("");
     showNotification("Reply updated", "success");

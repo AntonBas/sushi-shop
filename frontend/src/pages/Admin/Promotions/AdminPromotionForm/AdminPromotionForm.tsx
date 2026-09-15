@@ -99,14 +99,18 @@ export default function AdminPromotionForm() {
       ...(isEdit && { active }),
     };
 
-    if (isEdit) {
-      await updateApi.execute(() =>
-        promotionsApi.updatePromotion(Number(id), payload),
-      );
-      showNotification("Promotion updated", "success");
-    } else {
-      await createApi.execute(() => promotionsApi.createPromotion(payload));
-      showNotification("Promotion created", "success");
+    try {
+      if (isEdit) {
+        await updateApi.execute(() =>
+          promotionsApi.updatePromotion(Number(id), payload),
+        );
+        showNotification("Promotion updated", "success");
+      } else {
+        await createApi.execute(() => promotionsApi.createPromotion(payload));
+        showNotification("Promotion created", "success");
+      }
+    } catch {
+      return;
     }
     navigate("/admin/promotions");
   };

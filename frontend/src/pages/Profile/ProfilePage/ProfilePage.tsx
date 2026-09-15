@@ -41,38 +41,46 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    const updated = await updateApi.execute(() =>
-      usersApi.updateProfile({
-        name: name || undefined,
-        phone: phone || undefined,
-      }),
-    );
-    if (updated) {
+    try {
+      await updateApi.execute(() =>
+        usersApi.updateProfile({
+          name: name || undefined,
+          phone: phone || undefined,
+        }),
+      );
       await refreshUser();
       showNotification("Profile updated", "success");
+    } catch {
+      return;
     }
   };
 
   const handleUpdateAddress = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    const updated = await updateApi.execute(() =>
-      usersApi.updateProfile({
-        address: city
-          ? { city, street, house, apartment: apartment || undefined }
-          : undefined,
-      }),
-    );
-    if (updated) {
+    try {
+      await updateApi.execute(() =>
+        usersApi.updateProfile({
+          address: city
+            ? { city, street, house, apartment: apartment || undefined }
+            : undefined,
+        }),
+      );
       await refreshUser();
       showNotification("Address updated", "success");
+    } catch {
+      return;
     }
   };
 
   const handleChangePassword = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    await passwordApi.execute(() =>
-      usersApi.changePassword({ oldPassword, newPassword }),
-    );
+    try {
+      await passwordApi.execute(() =>
+        usersApi.changePassword({ oldPassword, newPassword }),
+      );
+    } catch {
+      return;
+    }
     setOldPassword("");
     setNewPassword("");
     showNotification("Password changed", "success");

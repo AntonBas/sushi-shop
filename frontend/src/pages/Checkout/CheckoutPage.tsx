@@ -50,27 +50,27 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
-    const order = await createOrder({
-      customerName,
-      phone,
-      paymentMethod,
-      deliveryMethod,
-      address:
-        deliveryMethod === "DELIVERY"
-          ? {
-              city,
-              street,
-              house,
-              apartment: apartment || undefined,
-              comment: comment || undefined,
-            }
-          : undefined,
-      items: items.map((i) => ({
-        productId: i.productId,
-        quantity: i.quantity,
-      })),
-    });
-    if (order) {
+    try {
+      const order = await createOrder({
+        customerName,
+        phone,
+        paymentMethod,
+        deliveryMethod,
+        address:
+          deliveryMethod === "DELIVERY"
+            ? {
+                city,
+                street,
+                house,
+                apartment: apartment || undefined,
+                comment: comment || undefined,
+              }
+            : undefined,
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+        })),
+      });
       if (paymentMethod === "ONLINE") {
         const url = await paymentApi.execute(() =>
           paymentsApi.createCheckout(order.id),
@@ -81,6 +81,8 @@ export default function CheckoutPage() {
         showNotification("Order placed successfully!", "success");
         navigate("/profile/orders");
       }
+    } catch {
+      return;
     }
   };
 
