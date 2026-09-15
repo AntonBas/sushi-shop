@@ -13,11 +13,6 @@ import org.testcontainers.utility.DockerImageName;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Verifies the {@link RateLimitRedisConfig} bean graph itself wires up in a real Spring
- * context (not just the raw bucket4j/Lettuce calls it makes), the way it will in the
- * "local"/"docker"/"prod" profiles.
- */
 @Testcontainers
 class RateLimitRedisConfigTest {
 

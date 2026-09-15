@@ -11,10 +11,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Plain-JVM stand-in for the Redis-backed {@code ProxyManager} used in the {@code test}
- * profile, so {@code @SpringBootTest} contexts don't need a live Redis instance.
- */
 class InMemoryProxyManager extends AbstractCompareAndSwapBasedProxyManager<String> {
 
     private final ConcurrentHashMap<String, byte[]> storage = new ConcurrentHashMap<>();
