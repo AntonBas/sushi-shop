@@ -96,6 +96,7 @@
 
   .nav {
     flex-direction: row;
+    justify-content: center;
     padding: 8px 16px;
   }
 
