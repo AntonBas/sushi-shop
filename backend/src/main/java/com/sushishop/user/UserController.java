@@ -53,17 +53,4 @@ public class UserController {
         userService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.ok().build();
     }
-
-    @PostMapping("/me/google-unlink")
-    @Operation(summary = "Disable Google sign-in for the current account")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Google sign-in disabled"),
-            @ApiResponse(responseCode = "400", description = "No password set, or Google sign-in already disabled")
-    })
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Void> disableGoogleSignIn(@AuthenticationPrincipal UserDetails userDetails) {
-        log.info("POST /api/users/me/google-unlink - {}", userDetails.getUsername());
-        userService.disableGoogleSignIn(userDetails.getUsername());
-        return ResponseEntity.ok().build();
-    }
 }

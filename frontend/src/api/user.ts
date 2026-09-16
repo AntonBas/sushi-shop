@@ -23,7 +23,3 @@ export const confirmEmailChange = async (token: string): Promise<UserResponse> =
   const { data } = await api.get('/auth/email-change/confirm', { params: { token } })
   return data
 }
-
-export const disableGoogleSignIn = async (): Promise<void> => {
-  await api.post('/users/me/google-unlink')
-}

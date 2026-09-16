@@ -101,24 +101,4 @@ public class UserService {
         mailService.sendPasswordChangedNotification(email);
         log.info("Password changed for {}", email);
     }
-
-    @Auditable(action = AuditAction.UPDATE, entity = "User")
-    @Transactional
-    public void disableGoogleSignIn(String email) {
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found: " + email));
-
-        if (user.getPassword() == null) {
-            throw new BadRequestException("Set a password before disabling Google sign-in, otherwise you won't be able to log in.");
-        }
-
-        if (!user.isGoogleSignInEnabled()) {
-            throw new BadRequestException("Google sign-in is already disabled for this account");
-        }
-
-        user.setGoogleSignInEnabled(false);
-        userRepository.save(user);
-        mailService.sendGoogleSignInDisabledNotification(email);
-        log.info("Google sign-in disabled for {}", email);
-    }
 }
