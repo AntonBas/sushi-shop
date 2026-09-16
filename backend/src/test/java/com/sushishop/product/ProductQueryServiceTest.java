@@ -132,6 +132,28 @@ public class ProductQueryServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void shouldSortProductsByEffectivePriceAccountingForDiscount() {
+        var expensive = createProduct(1L, "Expensive");
+        expensive.setPrice(new BigDecimal("300.00"));
+        var mid = createProduct(2L, "Mid");
+        mid.setPrice(new BigDecimal("200.00"));
+        var pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "price"));
+
+        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of(expensive, mid));
+        when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of());
+        when(enrichmentService.calculateDiscountedPrice(expensive)).thenReturn(new BigDecimal("150.00"));
+        when(enrichmentService.calculateDiscountedPrice(mid)).thenReturn(null);
+        when(productMapper.toListResponse(eq(expensive), any(), eq(new BigDecimal("150.00")))).thenReturn(createListResponse(1L, "Expensive", null));
+        when(productMapper.toListResponse(eq(mid), any(), isNull())).thenReturn(createListResponse(2L, "Mid", null));
+
+        var result = productQueryService.getAll(pageable, null, null, null);
+
+        assertThat(result.getContent()).extracting(ProductListResponse::name)
+                .containsExactly("Expensive", "Mid");
+    }
+
+    @Test
     public void shouldGetPopularProducts() {
         var product = createProduct(1L, "Maki");
         var listResponse = createListResponse(1L, "Maki", 4.5);

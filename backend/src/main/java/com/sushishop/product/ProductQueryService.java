@@ -12,9 +12,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -36,7 +38,12 @@ public class ProductQueryService {
 
         var ratingOrder = pageable.getSort().getOrderFor("rating");
         if (ratingOrder != null) {
-            return getAllSortedByRating(spec, pageable, ratingOrder.getDirection());
+            return getAllSortedInMemory(spec, pageable, products -> ratingComparator(products, ratingOrder.getDirection()));
+        }
+
+        var priceOrder = pageable.getSort().getOrderFor("price");
+        if (priceOrder != null) {
+            return getAllSortedInMemory(spec, pageable, products -> priceComparator(products, priceOrder.getDirection()));
         }
 
         var page = productRepository.findAll(spec, pageable);
@@ -50,25 +57,37 @@ public class ProductQueryService {
         return new PageImpl<>(enriched, pageable, page.getTotalElements());
     }
 
-    private Page<ProductListResponse> getAllSortedByRating(Specification<Product> spec, Pageable pageable, Sort.Direction direction) {
+    private Page<ProductListResponse> getAllSortedInMemory(Specification<Product> spec, Pageable pageable, Function<List<Product>, Comparator<Product>> comparatorFactory) {
         List<Product> matching = productRepository.findAll(spec);
         if (matching.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        var productIds = matching.stream().map(Product::getId).toList();
-        var ratings = enrichmentService.getAverageRatings(productIds);
-
-        Comparator<Product> byRating = Comparator.comparingDouble(p -> ratings.getOrDefault(p.getId(), 0.0));
-        var sorted = matching.stream()
-                .sorted(direction == Sort.Direction.DESC ? byRating.reversed() : byRating)
-                .toList();
+        var comparator = comparatorFactory.apply(matching);
+        var sorted = matching.stream().sorted(comparator).toList();
 
         int start = Math.min((int) pageable.getOffset(), sorted.size());
         int end = Math.min(start + pageable.getPageSize(), sorted.size());
 
         var enriched = enrichProducts(sorted.subList(start, end));
         return new PageImpl<>(enriched, pageable, sorted.size());
+    }
+
+    private Comparator<Product> ratingComparator(List<Product> products, Sort.Direction direction) {
+        var ratings = enrichmentService.getAverageRatings(products.stream().map(Product::getId).toList());
+        Comparator<Product> byRating = Comparator.comparingDouble(p -> ratings.getOrDefault(p.getId(), 0.0));
+        return direction == Sort.Direction.DESC ? byRating.reversed() : byRating;
+    }
+
+    private Comparator<Product> priceComparator(List<Product> products, Sort.Direction direction) {
+        enrichmentService.enrichProductsWithImagesAndPromotions(products);
+        Comparator<Product> byPrice = Comparator.comparing(this::effectivePrice);
+        return direction == Sort.Direction.DESC ? byPrice.reversed() : byPrice;
+    }
+
+    private BigDecimal effectivePrice(Product product) {
+        var discounted = enrichmentService.calculateDiscountedPrice(product);
+        return discounted != null ? discounted : product.getPrice();
     }
 
     @Transactional(readOnly = true)
