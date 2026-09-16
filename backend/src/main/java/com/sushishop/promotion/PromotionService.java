@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -87,7 +89,10 @@ public class PromotionService {
             return Page.empty(pageable);
         }
 
-        var promotions = promotionRepository.findPromotionsByIds(ids);
+        Map<Long, Promotion> promotionsById = new LinkedHashMap<>();
+        promotionRepository.findPromotionsByIds(ids).forEach(p -> promotionsById.put(p.getId(), p));
+
+        var promotions = ids.stream().map(promotionsById::get).toList();
         var responses = assembler.toResponseList(promotions);
 
         return new PageImpl<>(responses, pageable, idsPage.getTotalElements());

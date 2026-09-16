@@ -188,6 +188,26 @@ public class PromotionServiceTest {
     }
 
     @Test
+    public void shouldPreserveRequestedOrderWhenFetchingPromotionsByIds() {
+        var second = Promotion.builder().id(2L).slug("second").title("Second").discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(1)).active(ACTIVE).products(Set.of()).build();
+        var first = Promotion.builder().id(1L).slug("first").title("First").discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(1)).active(ACTIVE).products(Set.of()).build();
+        var firstResponse = new PromotionResponse(1L, "first", "First", null, DISCOUNT_PERCENT, null, null, ACTIVE, IS_CURRENTLY_ACTIVE, List.of());
+        var secondResponse = new PromotionResponse(2L, "second", "Second", null, DISCOUNT_PERCENT, null, null, ACTIVE, IS_CURRENTLY_ACTIVE, List.of());
+
+        when(promotionRepository.findIds(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(2L, 1L)));
+        when(promotionRepository.findPromotionsByIds(List.of(2L, 1L)))
+                .thenReturn(List.of(first, second));
+        when(assembler.toResponseList(List.of(second, first))).thenReturn(List.of(secondResponse, firstResponse));
+
+        var result = promotionService.getAll(Pageable.unpaged(), null);
+
+        assertThat(result.getContent()).extracting(PromotionResponse::id).containsExactly(2L, 1L);
+    }
+
+    @Test
     public void shouldGetAllWithoutSearch() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
