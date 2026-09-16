@@ -34,6 +34,7 @@ class RateLimitRedisConfigTest {
     @Test
     void shouldWireUpAndProduceAWorkingProxyManager() {
         new ApplicationContextRunner()
+                .withPropertyValues("spring.profiles.active=")
                 .withUserConfiguration(RedisPropertiesConfig.class, RateLimitRedisConfig.class)
                 .run(context -> {
                     assertThat(context).hasNotFailed();
