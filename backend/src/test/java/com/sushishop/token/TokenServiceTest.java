@@ -68,6 +68,24 @@ public class TokenServiceTest {
     }
 
     @Test
+    public void shouldCreateEmailChangeToken() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .build();
+
+        when(tokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var token = tokenService.createEmailChangeToken(user, "new@example.com");
+
+        assertThat(token.getTokenType()).isEqualTo(TokenType.EMAIL_CHANGE);
+        assertThat(token.getUser()).isEqualTo(user);
+        verify(tokenRepository).invalidateAllByUserAndType(1L, TokenType.EMAIL_CHANGE);
+        verify(tokenRepository).save(any());
+        verify(mailService).sendEmailChangeVerification(eq("new@example.com"), any());
+    }
+
+    @Test
     public void shouldValidateToken() {
         var token = Token.builder()
                 .token("token123")

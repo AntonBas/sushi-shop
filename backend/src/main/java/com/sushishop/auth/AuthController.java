@@ -9,7 +9,9 @@ import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.auth.dto.response.ResendVerificationResponse;
 import com.sushishop.security.jwt.JwtCookieService;
 import com.sushishop.shared.ratelimit.RateLimit;
+import com.sushishop.user.dto.request.ChangeEmailRequest;
 import com.sushishop.user.dto.request.RegisterRequest;
+import com.sushishop.user.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -35,6 +39,7 @@ public class AuthController {
     private final AuthService authService;
     private final EmailVerificationService emailVerificationService;
     private final PasswordResetService passwordResetService;
+    private final EmailChangeService emailChangeService;
     private final JwtCookieService jwtCookieService;
 
     @RateLimit(value = 3)
@@ -159,5 +164,33 @@ public class AuthController {
         log.info("POST /api/auth/password/reset");
         passwordResetService.resetPassword(request.token(), request.newPassword());
         return ResponseEntity.ok().build();
+    }
+
+    @RateLimit(value = 10)
+    @PostMapping("/email-change")
+    @Operation(summary = "Request an email address change")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Confirmation link sent to the new email"),
+            @ApiResponse(responseCode = "400", description = "Current email not verified, or new email same as current"),
+            @ApiResponse(responseCode = "409", description = "New email already registered")
+    })
+    public ResponseEntity<Void> requestEmailChange(@Valid @RequestBody ChangeEmailRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("POST /api/auth/email-change - {}", userDetails.getUsername());
+        emailChangeService.requestEmailChange(userDetails.getUsername(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @RateLimit(value = 10)
+    @GetMapping("/email-change/confirm")
+    @Operation(summary = "Confirm a pending email address change")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Email changed"),
+            @ApiResponse(responseCode = "400", description = "Invalid, expired or already used token"),
+            @ApiResponse(responseCode = "409", description = "New email was registered by someone else in the meantime")
+    })
+    @SecurityRequirements()
+    public ResponseEntity<UserResponse> confirmEmailChange(@RequestParam String token) {
+        log.info("GET /api/auth/email-change/confirm");
+        return ResponseEntity.ok(emailChangeService.confirmEmailChange(token));
     }
 }

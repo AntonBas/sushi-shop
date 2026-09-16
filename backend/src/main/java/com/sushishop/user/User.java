@@ -59,6 +59,11 @@ public class User extends BaseEntity {
     @Column(name = "last_verification_email_sent_at")
     private LocalDateTime lastVerificationEmailSentAt;
 
+    @Email
+    @Size(max = 100)
+    @Column(name = "pending_email", length = 100)
+    private String pendingEmail;
+
     @Builder.Default
     @Column(nullable = false)
     private Integer tokenVersion = 0;

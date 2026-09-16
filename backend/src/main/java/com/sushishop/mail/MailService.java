@@ -59,6 +59,23 @@ public class MailService {
                 "Your account password was just changed. If you didn't do this, please reset your password immediately.");
     }
 
+    @Async
+    public void sendEmailChangeVerification(String to, String token) {
+        sendStyledEmail(to, "Confirm your new Sushi Bas Shop email",
+                "Confirm Your New Email",
+                "Click the button below to confirm this address as your new account email.",
+                "Confirm Email",
+                baseUrl + "/verify-email-change?token=" + token);
+    }
+
+    @Async
+    public void sendEmailChangeRequestedNotification(String to, String newEmail) {
+        sendPlainEmail(to, "Your Sushi Bas Shop email change request",
+                "Email Change Requested",
+                "A request was made to change your account email to " + newEmail
+                        + ". If this wasn't you, please contact support immediately.");
+    }
+
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {
         String html = """
                 <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">

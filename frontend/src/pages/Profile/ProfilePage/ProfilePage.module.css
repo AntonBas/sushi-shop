@@ -69,6 +69,21 @@
   gap: 16px;
 }
 
+.sectionTitle {
+  font-size: 16px;
+  color: var(--color-text);
+  margin: 32px 0 -4px;
+}
+
+.pendingNotice {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-tertiary);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0;
+}
+
 @media (max-width: 768px) {
   .row {
     grid-template-columns: 1fr;

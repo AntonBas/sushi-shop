@@ -96,6 +96,7 @@ public class UserServiceTest {
                 1L,
                 "Anton",
                 "anton@example.com",
+                null,
                 "+380961791111",
                 UserRole.CUSTOMER,
                 null
@@ -129,6 +130,7 @@ public class UserServiceTest {
                 1L,
                 "New Name",
                 "anton@example.com",
+                null,
                 "+380999999999",
                 UserRole.CUSTOMER,
                 null

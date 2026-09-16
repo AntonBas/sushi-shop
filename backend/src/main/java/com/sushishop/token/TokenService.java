@@ -51,6 +51,21 @@ public class TokenService {
         return token;
     }
 
+    @Transactional
+    public Token createEmailChangeToken(User user, String newEmail) {
+        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_CHANGE);
+
+        var token = Token.builder()
+                .token(UUID.randomUUID().toString())
+                .tokenType(TokenType.EMAIL_CHANGE)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
+                .build();
+        tokenRepository.save(token);
+        mailService.sendEmailChangeVerification(newEmail, token.getToken());
+        return token;
+    }
+
     @Transactional(readOnly = true)
     public Token validateAndGetToken(String tokenValue, TokenType expectedType) {
         var tokenEntity = tokenRepository.findByToken(tokenValue)

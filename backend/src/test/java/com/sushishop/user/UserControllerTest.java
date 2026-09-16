@@ -13,11 +13,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -39,7 +39,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
     public void shouldGetCurrentUser() throws Exception {
-        var response = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
 

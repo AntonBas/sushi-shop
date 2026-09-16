@@ -9,6 +9,7 @@ import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login/Login";
 import Register from "./pages/Auth/Register/Register";
 import EmailVerification from "./pages/Auth/EmailVerification/EmailVerification";
+import VerifyEmailChange from "./pages/Auth/VerifyEmailChange/VerifyEmailChange";
 import OAuth2Redirect from "./pages/Auth/OAuth2Redirect/OAuth2Redirect";
 import ForgotPassword from "./pages/Auth/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword/ResetPassword";
@@ -84,6 +85,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
       </Route>
       <Route path="/verify-email" element={<EmailVerification />} />
+      <Route path="/verify-email-change" element={<VerifyEmailChange />} />
       <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
       <Route
         path="/admin"

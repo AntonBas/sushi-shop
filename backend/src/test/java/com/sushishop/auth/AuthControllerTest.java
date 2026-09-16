@@ -9,6 +9,7 @@ import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.user.UserRole;
+import com.sushishop.user.dto.request.ChangeEmailRequest;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -52,6 +54,9 @@ public class AuthControllerTest {
     @MockitoBean
     private PasswordResetService passwordResetService;
 
+    @MockitoBean
+    private EmailChangeService emailChangeService;
+
     @BeforeEach
     public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
@@ -60,7 +65,7 @@ public class AuthControllerTest {
     @Test
     public void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.register(any())).thenReturn(authResult);
@@ -86,7 +91,7 @@ public class AuthControllerTest {
     @Test
     public void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.login(any())).thenReturn(authResult);
@@ -127,7 +132,7 @@ public class AuthControllerTest {
     @Test
     public void shouldExchangeOAuth2Code() throws Exception {
         var request = new OAuth2ExchangeRequest("valid-code");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.exchangeOAuth2Code("valid-code")).thenReturn(authResult);
@@ -233,5 +238,27 @@ public class AuthControllerTest {
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("jwt", 0));
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
+    public void shouldRequestEmailChange() throws Exception {
+        var request = new ChangeEmailRequest("new@example.com");
+
+        mockMvc.perform(post("/api/auth/email-change")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void shouldConfirmEmailChangeWithoutAuthentication() throws Exception {
+        var response = new UserResponse(1L, "Anton", "new@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+
+        when(emailChangeService.confirmEmailChange("token123")).thenReturn(response);
+
+        mockMvc.perform(get("/api/auth/email-change/confirm").param("token", "token123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("new@example.com"));
     }
 }

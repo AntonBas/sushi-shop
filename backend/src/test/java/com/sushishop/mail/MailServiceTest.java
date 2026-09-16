@@ -75,6 +75,31 @@ class MailServiceTest {
     }
 
     @Test
+    void shouldSendEmailChangeVerificationWithConfirmLink() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.to[0].email").value("new@example.com"))
+                .andExpect(jsonPath("$.htmlContent", containsString(
+                        "http://localhost:5173/verify-email-change?token=token789")))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendEmailChangeVerification("new@example.com", "token789");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldSendEmailChangeRequestedNotificationToOldAddress() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.to[0].email").value("old@example.com"))
+                .andExpect(jsonPath("$.htmlContent", containsString("new@example.com")))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendEmailChangeRequestedNotification("old@example.com", "new@example.com");
+
+        mockServer.verify();
+    }
+
+    @Test
     void shouldRetryUpToThreeTimesThenGiveUpWithoutThrowing() {
         mockServer.expect(ExpectedCount.times(3), requestTo("https://api.brevo.com/v3/smtp/email"))
                 .andRespond(withServerError());

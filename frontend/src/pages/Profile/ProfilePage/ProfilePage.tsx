@@ -15,6 +15,7 @@ export default function ProfilePage() {
   const { showNotification } = useNotification();
   const updateApi = useApi<UserResponse>();
   const passwordApi = useApi<void>();
+  const emailApi = useApi<void>();
 
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [name, setName] = useState("");
@@ -25,6 +26,7 @@ export default function ProfilePage() {
   const [apartment, setApartment] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -72,6 +74,18 @@ export default function ProfilePage() {
     }
   };
 
+  const handleRequestEmailChange = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    try {
+      await emailApi.execute(() => usersApi.requestEmailChange({ newEmail }));
+    } catch {
+      return;
+    }
+    await refreshUser();
+    setNewEmail("");
+    showNotification(`Confirmation link sent to ${newEmail}`, "success");
+  };
+
   const handleChangePassword = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
@@ -110,31 +124,52 @@ export default function ProfilePage() {
         </button>
       </div>
       {activeTab === "profile" && (
-        <form onSubmit={handleUpdateProfile} className={styles.form}>
-          <div className={styles.fieldReadonly}>
-            <label className={styles.label}>Email</label>
-            <input
-              value={user?.email || ""}
-              disabled
-              className={styles.input}
+        <>
+          <form onSubmit={handleUpdateProfile} className={styles.form}>
+            <div className={styles.fieldReadonly}>
+              <label className={styles.label}>Email</label>
+              <input
+                value={user?.email || ""}
+                disabled
+                className={styles.input}
+              />
+            </div>
+            <Input
+              label="Name"
+              value={name}
+              onChange={setName}
+              placeholder="Your name"
             />
-          </div>
-          <Input
-            label="Name"
-            value={name}
-            onChange={setName}
-            placeholder="Your name"
-          />
-          <Input
-            label="Phone"
-            value={phone}
-            onChange={setPhone}
-            placeholder="+380991234567"
-          />
-          <Button type="submit" loading={updateApi.loading}>
-            Save
-          </Button>
-        </form>
+            <Input
+              label="Phone"
+              value={phone}
+              onChange={setPhone}
+              placeholder="+380991234567"
+            />
+            <Button type="submit" loading={updateApi.loading}>
+              Save
+            </Button>
+          </form>
+
+          <h2 className={styles.sectionTitle}>Change Email</h2>
+          <form onSubmit={handleRequestEmailChange} className={styles.form}>
+            {user?.pendingEmail && (
+              <p className={styles.pendingNotice}>
+                Confirmation pending for <strong>{user.pendingEmail}</strong>. Check your inbox to complete the change.
+              </p>
+            )}
+            <Input
+              label="New Email"
+              type="email"
+              value={newEmail}
+              onChange={setNewEmail}
+              placeholder="new@example.com"
+            />
+            <Button type="submit" loading={emailApi.loading} disabled={!newEmail}>
+              Send Confirmation Link
+            </Button>
+          </form>
+        </>
       )}
       {activeTab === "address" && (
         <form onSubmit={handleUpdateAddress} className={styles.form}>
