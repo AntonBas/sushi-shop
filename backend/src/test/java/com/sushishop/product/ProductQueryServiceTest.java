@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
@@ -24,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -105,6 +107,28 @@ public class ProductQueryServiceTest {
         var result = productQueryService.getAll(pageable, null, null, null);
 
         assertThat(result.getContent()).isEmpty();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void shouldSortProductsByRatingDescending() {
+        var lowRated = createProduct(1L, "Low");
+        var highRated = createProduct(2L, "High");
+        var noReviews = createProduct(3L, "NoReviews");
+        var pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.DESC, "rating"));
+
+        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of(lowRated, highRated, noReviews));
+        when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(1L, 3.0, 2L, 4.8));
+        when(enrichmentService.calculateDiscountedPrice(any())).thenReturn(null);
+        when(productMapper.toListResponse(eq(highRated), eq(4.8), any())).thenReturn(createListResponse(2L, "High", 4.8));
+        when(productMapper.toListResponse(eq(lowRated), eq(3.0), any())).thenReturn(createListResponse(1L, "Low", 3.0));
+        when(productMapper.toListResponse(eq(noReviews), isNull(), any())).thenReturn(createListResponse(3L, "NoReviews", null));
+
+        var result = productQueryService.getAll(pageable, null, null, null);
+
+        assertThat(result.getContent()).extracting(ProductListResponse::name)
+                .containsExactly("High", "Low", "NoReviews");
+        assertThat(result.getTotalElements()).isEqualTo(3);
     }
 
     @Test

@@ -7,10 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +34,11 @@ public class ProductQueryService {
                 .and(ProductSpecification.hasCategory(category))
                 .and(ProductSpecification.isAvailable(available));
 
+        var ratingOrder = pageable.getSort().getOrderFor("rating");
+        if (ratingOrder != null) {
+            return getAllSortedByRating(spec, pageable, ratingOrder.getDirection());
+        }
+
         var page = productRepository.findAll(spec, pageable);
         List<Product> products = page.getContent();
 
@@ -41,6 +48,27 @@ public class ProductQueryService {
 
         var enriched = enrichProducts(products);
         return new PageImpl<>(enriched, pageable, page.getTotalElements());
+    }
+
+    private Page<ProductListResponse> getAllSortedByRating(Specification<Product> spec, Pageable pageable, Sort.Direction direction) {
+        List<Product> matching = productRepository.findAll(spec);
+        if (matching.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        var productIds = matching.stream().map(Product::getId).toList();
+        var ratings = enrichmentService.getAverageRatings(productIds);
+
+        Comparator<Product> byRating = Comparator.comparingDouble(p -> ratings.getOrDefault(p.getId(), 0.0));
+        var sorted = matching.stream()
+                .sorted(direction == Sort.Direction.DESC ? byRating.reversed() : byRating)
+                .toList();
+
+        int start = Math.min((int) pageable.getOffset(), sorted.size());
+        int end = Math.min(start + pageable.getPageSize(), sorted.size());
+
+        var enriched = enrichProducts(sorted.subList(start, end));
+        return new PageImpl<>(enriched, pageable, sorted.size());
     }
 
     @Transactional(readOnly = true)

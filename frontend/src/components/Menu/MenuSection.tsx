@@ -20,34 +20,36 @@ export default function MenuSection() {
     const cat = searchParams.get("category") as Category | "";
     return cat && categories.includes(cat) ? cat : "";
   });
+  const [sort, setSort] = useState(() => searchParams.get("sort") || "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadMoreProducts(0, {
       search: search || undefined,
       category: activeCategory || undefined,
+      sort: sort || undefined,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadMoreProducts]);
+
+  const buildSearchParams = (overrides: { search?: string; category?: Category | ""; sort?: string }) => {
+    const params: Record<string, string> = {};
+    if (overrides.search) params.search = overrides.search;
+    if (overrides.category) params.category = overrides.category;
+    if (overrides.sort) params.sort = overrides.sort;
+    return params;
+  };
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(0);
-      if (value) {
-        setSearchParams({
-          search: value,
-          ...(activeCategory && { category: activeCategory }),
-        });
-      } else if (activeCategory) {
-        setSearchParams({ category: activeCategory });
-      } else {
-        setSearchParams({});
-      }
+      setSearchParams(buildSearchParams({ search: value, category: activeCategory, sort }));
       loadMoreProducts(0, {
         search: value || undefined,
         category: activeCategory || undefined,
+        sort: sort || undefined,
       });
     }, 300);
   };
@@ -55,16 +57,22 @@ export default function MenuSection() {
   const handleCategoryChange = (cat: Category | "") => {
     setActiveCategory(cat);
     setPage(0);
-    if (cat) {
-      setSearchParams({ category: cat, ...(search && { search }) });
-    } else if (search) {
-      setSearchParams({ search });
-    } else {
-      setSearchParams({});
-    }
+    setSearchParams(buildSearchParams({ search, category: cat, sort }));
     loadMoreProducts(0, {
       search: search || undefined,
       category: cat || undefined,
+      sort: sort || undefined,
+    });
+  };
+
+  const handleSortChange = (value: string) => {
+    setSort(value);
+    setPage(0);
+    setSearchParams(buildSearchParams({ search, category: activeCategory, sort: value }));
+    loadMoreProducts(0, {
+      search: search || undefined,
+      category: activeCategory || undefined,
+      sort: value || undefined,
     });
   };
 
@@ -75,6 +83,7 @@ export default function MenuSection() {
     loadMoreProducts(nextPage, {
       search: search || undefined,
       category: activeCategory || undefined,
+      sort: sort || undefined,
     });
   };
 
@@ -94,22 +103,36 @@ export default function MenuSection() {
           />
         </div>
 
-        <div className={styles.categories}>
-          <button
-            className={`${styles.categoryBtn} ${activeCategory === "" ? styles.active : ""}`}
-            onClick={() => handleCategoryChange("")}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
+        <div className={styles.sortRow}>
+          <div className={styles.categories}>
             <button
-              key={cat}
-              className={`${styles.categoryBtn} ${activeCategory === cat ? styles.active : ""}`}
-              onClick={() => handleCategoryChange(cat)}
+              className={`${styles.categoryBtn} ${activeCategory === "" ? styles.active : ""}`}
+              onClick={() => handleCategoryChange("")}
             >
-              {CATEGORY_DISPLAY[cat]}
+              All
             </button>
-          ))}
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                className={`${styles.categoryBtn} ${activeCategory === cat ? styles.active : ""}`}
+                onClick={() => handleCategoryChange(cat)}
+              >
+                {CATEGORY_DISPLAY[cat]}
+              </button>
+            ))}
+          </div>
+
+          <select
+            value={sort}
+            onChange={(e) => handleSortChange(e.target.value)}
+            className={styles.sortSelect}
+            aria-label="Sort products"
+          >
+            <option value="">Sort: Default</option>
+            <option value="price,asc">Price: Low to High</option>
+            <option value="price,desc">Price: High to Low</option>
+            <option value="rating,desc">Rating: High to Low</option>
+          </select>
         </div>
       </div>
 

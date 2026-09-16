@@ -17,6 +17,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Nonnull
     Page<Product> findAll(Specification<Product> spec, @Nonnull Pageable pageable);
 
+    @Nonnull
+    List<Product> findAll(Specification<Product> spec);
+
     @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Nonnull
     Optional<Product> findById(@Nonnull Long id);

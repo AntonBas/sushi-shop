@@ -59,4 +59,5 @@ export interface ProductFilters {
   search?: string
   category?: Category
   available?: boolean
+  sort?: string
 }
