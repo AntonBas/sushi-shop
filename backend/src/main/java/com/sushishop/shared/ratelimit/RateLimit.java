@@ -12,5 +12,10 @@ public @interface RateLimit {
 
     int duration() default 60;
 
-    String key() default "ip";
+    /**
+     * Rate limit dimensions. "ip" limits by client IP. "email" limits by the
+     * email field of the request body argument (requires an argument with an
+     * email() accessor). Any other value is used as a literal, global key.
+     */
+    String[] key() default {"ip"};
 }

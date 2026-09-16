@@ -52,7 +52,7 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(result.user()));
     }
 
-    @RateLimit
+    @RateLimit(key = {"ip", "email"})
     @PostMapping("/login")
     @Operation(summary = "User login")
     @ApiResponses(value = {
