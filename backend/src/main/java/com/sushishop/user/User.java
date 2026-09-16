@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @Setter
@@ -53,6 +55,9 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean emailVerified = false;
+
+    @Column(name = "last_verification_email_sent_at")
+    private LocalDateTime lastVerificationEmailSentAt;
 
     @Builder.Default
     @Column(nullable = false)

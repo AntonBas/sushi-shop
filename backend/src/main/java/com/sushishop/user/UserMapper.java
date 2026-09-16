@@ -19,6 +19,7 @@ public abstract class UserMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "emailVerified", constant = "false")
+    @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
     @Mapping(target = "tokenVersion", constant = "0")
     @Mapping(target = "userRole", constant = "CUSTOMER")
     @Mapping(target = "city", source = "address.city")

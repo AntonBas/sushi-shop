@@ -74,7 +74,11 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(TOO_MANY_REQUESTS);
         apiError.setMessage("Rate limit exceeded. Please try again later.");
         log.warn("Rate limit exceeded: {}", ex.getMessage());
-        return buildResponseEntity(apiError, request);
+        HttpHeaders headers = new HttpHeaders();
+        if (ex.getRetryAfterSeconds() != null) {
+            headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()));
+        }
+        return buildResponseEntity(apiError, request, headers);
     }
 
     @ExceptionHandler(SushiShopException.class)
@@ -148,12 +152,18 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Nonnull
     private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request) {
+        return buildResponseEntity(apiError, request, new HttpHeaders());
+    }
+
+    @Nonnull
+    private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request,
+                                                        @Nonnull HttpHeaders headers) {
         if (request instanceof ServletWebRequest servletWebRequest) {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
             apiError.setPath("unknown");
         }
-        return new ResponseEntity<>(apiError,
+        return new ResponseEntity<>(apiError, headers,
                 Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));
     }
 }

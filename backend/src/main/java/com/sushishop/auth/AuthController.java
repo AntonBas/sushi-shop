@@ -3,8 +3,10 @@ package com.sushishop.auth;
 import com.sushishop.auth.dto.request.ForgotPasswordRequest;
 import com.sushishop.auth.dto.request.LoginRequest;
 import com.sushishop.auth.dto.request.OAuth2ExchangeRequest;
+import com.sushishop.auth.dto.request.ResendVerificationRequest;
 import com.sushishop.auth.dto.request.ResetPasswordRequest;
 import com.sushishop.auth.dto.response.AuthResponse;
+import com.sushishop.auth.dto.response.ResendVerificationResponse;
 import com.sushishop.security.jwt.JwtCookieService;
 import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.user.dto.request.RegisterRequest;
@@ -108,6 +110,30 @@ public class AuthController {
     public ResponseEntity<Void> verifyEmail(@RequestParam String token) {
         emailVerificationService.verifyEmail(token);
         return ResponseEntity.ok().build();
+    }
+
+    @RateLimit(duration = 900)
+    @PostMapping("/resend-verification")
+    @Operation(summary = "Resend email verification")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Verification email sent, or silently ignored if email is unknown"),
+            @ApiResponse(responseCode = "400", description = "Email already verified"),
+            @ApiResponse(responseCode = "429", description = "Resend requested too soon")
+    })
+    @SecurityRequirements()
+    public ResponseEntity<ResendVerificationResponse> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        log.info("POST /api/auth/resend-verification - {}", request.email());
+        int cooldownSeconds = emailVerificationService.resendVerification(request.email());
+        return ResponseEntity.ok(new ResendVerificationResponse(cooldownSeconds));
+    }
+
+    @RateLimit(value = 10)
+    @GetMapping("/resend-verification/status")
+    @Operation(summary = "Check remaining resend cooldown without sending an email")
+    @SecurityRequirements()
+    public ResponseEntity<ResendVerificationResponse> resendVerificationStatus(@RequestParam String email) {
+        int cooldownSeconds = emailVerificationService.getResendCooldownStatus(email);
+        return ResponseEntity.ok(new ResendVerificationResponse(cooldownSeconds));
     }
 
     @RateLimit(duration = 900)

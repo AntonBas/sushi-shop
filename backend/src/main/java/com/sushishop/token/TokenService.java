@@ -23,6 +23,8 @@ public class TokenService {
 
     @Transactional
     public Token createVerificationToken(User user) {
+        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
+
         var token = Token.builder()
                 .token(UUID.randomUUID().toString())
                 .tokenType(TokenType.EMAIL_VERIFICATION)
