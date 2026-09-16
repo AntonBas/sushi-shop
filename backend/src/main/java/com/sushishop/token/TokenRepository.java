@@ -18,4 +18,8 @@ public interface TokenRepository extends JpaRepository<Token, Long> {
     @Modifying
     @Query("DELETE FROM Token t WHERE t.expiryDate < :now AND t.used = false")
     int deleteAllByExpiryDateBeforeAndUsedFalse(@Param("now") LocalDateTime now);
+
+    @Modifying
+    @Query("DELETE FROM Token t WHERE t.user.id IN (SELECT u.id FROM User u WHERE u.emailVerified = false AND u.createdAt < :cutoff)")
+    void deleteAllByUnverifiedUserCreatedBefore(@Param("cutoff") LocalDateTime cutoff);
 }
