@@ -6,9 +6,11 @@ import styles from './ProfileSidebar.module.css'
 export default function ProfileSidebar() {
   const location = useLocation()
 
+  const profileSubPaths = ['/profile', '/profile/address', '/profile/security']
+
   const menuItems = [
-    { path: '/profile', label: 'My Profile', icon: User },
-    { path: '/profile/orders', label: 'My Orders', icon: Package },
+    { path: '/profile', label: 'My Profile', icon: User, isActive: profileSubPaths.includes(location.pathname) },
+    { path: '/profile/orders', label: 'My Orders', icon: Package, isActive: location.pathname === '/profile/orders' },
   ]
 
   return (
@@ -24,7 +26,7 @@ export default function ProfileSidebar() {
             <Link
               key={item.path}
               to={item.path}
-              className={clsx(styles.item, location.pathname === item.path && styles.active)}
+              className={clsx(styles.item, item.isActive && styles.active)}
             >
               <Icon size={20} className={styles.icon} />
               <span>{item.label}</span>
