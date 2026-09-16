@@ -1,5 +1,4 @@
 import axios, { type AxiosError } from "axios";
-import { API_BASE_URL } from "../config/env";
 
 declare module "axios" {
     export interface AxiosRequestConfig {
@@ -15,7 +14,7 @@ export const setUnauthorizedHandler = (handler: (() => void) | null) => {
 };
 
 const api = axios.create({
-    baseURL: `${API_BASE_URL}/api`,
+    baseURL: "/api",
     withCredentials: true,
     headers: {
         "X-Requested-With": "XMLHttpRequest",
