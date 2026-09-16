@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,11 +56,13 @@ public class PasswordResetServiceTest {
                 .emailVerified(true)
                 .build();
 
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
 
         passwordResetService.forgotPassword("anton@example.com");
 
         verify(tokenService).createPasswordResetToken(user);
+        assertThat(user.getLastPasswordResetSentAt()).isNotNull();
+        verify(userRepository).save(user);
     }
 
     @Test
@@ -69,7 +72,7 @@ public class PasswordResetServiceTest {
                 .emailVerified(false)
                 .build();
 
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
 
         passwordResetService.forgotPassword("anton@example.com");
 
@@ -78,11 +81,45 @@ public class PasswordResetServiceTest {
 
     @Test
     public void shouldSilentlyIgnoreForgotPasswordForNonExistentUser() {
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.empty());
 
         passwordResetService.forgotPassword("anton@example.com");
 
         verify(tokenService, never()).createPasswordResetToken(any());
+    }
+
+    @Test
+    public void shouldSilentlyIgnoreForgotPasswordWithinCooldown() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(true)
+                .lastPasswordResetSentAt(LocalDateTime.now().minusSeconds(10))
+                .build();
+
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
+
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService, never()).createPasswordResetToken(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldSendForgotPasswordAgainAfterCooldownElapsed() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(true)
+                .lastPasswordResetSentAt(LocalDateTime.now().minusSeconds(61))
+                .build();
+
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
+
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService).createPasswordResetToken(user);
+        verify(userRepository).save(user);
     }
 
     @Test

@@ -13,10 +13,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PasswordResetService {
+
+    private static final Duration RESET_COOLDOWN = Duration.ofSeconds(60);
 
     private final TokenService tokenService;
     private final UserRepository userRepository;
@@ -26,7 +31,7 @@ public class PasswordResetService {
 
     @Transactional
     public void forgotPassword(String email) {
-        var userOpt = userRepository.findByEmail(email);
+        var userOpt = userRepository.findByEmailForUpdate(email);
         if (userOpt.isEmpty()) {
             log.info("Password reset requested for unknown email {}", email);
             return;
@@ -38,7 +43,15 @@ public class PasswordResetService {
             return;
         }
 
+        var lastSentAt = user.getLastPasswordResetSentAt();
+        if (lastSentAt != null && lastSentAt.plus(RESET_COOLDOWN).isAfter(LocalDateTime.now())) {
+            log.info("Password reset requested for {} within cooldown, skipping", email);
+            return;
+        }
+
         tokenService.createPasswordResetToken(user);
+        user.setLastPasswordResetSentAt(LocalDateTime.now());
+        userRepository.save(user);
         log.info("Password reset email sent to {}", email);
     }
 

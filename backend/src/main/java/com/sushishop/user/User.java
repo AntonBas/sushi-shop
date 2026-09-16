@@ -59,6 +59,9 @@ public class User extends BaseEntity {
     @Column(name = "last_verification_email_sent_at")
     private LocalDateTime lastVerificationEmailSentAt;
 
+    @Column(name = "last_password_reset_sent_at")
+    private LocalDateTime lastPasswordResetSentAt;
+
     @Email
     @Size(max = 100)
     @Column(name = "pending_email", length = 100)

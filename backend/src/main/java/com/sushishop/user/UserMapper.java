@@ -20,6 +20,7 @@ public abstract class UserMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "emailVerified", constant = "false")
     @Mapping(target = "lastVerificationEmailSentAt", ignore = true)
+    @Mapping(target = "lastPasswordResetSentAt", ignore = true)
     @Mapping(target = "pendingEmail", ignore = true)
     @Mapping(target = "googleSignInEnabled", constant = "true")
     @Mapping(target = "tokenVersion", constant = "0")
