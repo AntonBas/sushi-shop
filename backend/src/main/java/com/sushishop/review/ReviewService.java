@@ -17,7 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -64,8 +66,11 @@ public class ReviewService {
             return Page.empty(pageable);
         }
 
-        var reviews = reviewRepository.findReviewsByIds(ids);
-        var responses = reviews.stream()
+        Map<Long, Review> reviewsById = new LinkedHashMap<>();
+        reviewRepository.findReviewsByIds(ids).forEach(r -> reviewsById.put(r.getId(), r));
+
+        var responses = ids.stream()
+                .map(reviewsById::get)
                 .map(reviewMapper::toResponse)
                 .toList();
 

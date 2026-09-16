@@ -12,8 +12,8 @@ export const updateReview = async (id: number, data: CreateReviewRequest): Promi
   return res
 }
 
-export const getReviews = async (productId: number, page = 0, size = 5): Promise<Page<ReviewResponse>> => {
-  const { data } = await api.get(`/reviews/product/${productId}`, { params: { page, size, sort: 'createdAt,desc' } })
+export const getReviews = async (productId: number, page = 0, size = 5, sort = 'createdAt,desc'): Promise<Page<ReviewResponse>> => {
+  const { data } = await api.get(`/reviews/product/${productId}`, { params: { page, size, sort } })
   return data
 }
 

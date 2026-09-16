@@ -14,8 +14,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -103,6 +107,25 @@ public class ReviewServiceTest {
 
         assertThatThrownBy(() -> reviewService.create(request, "unknown@example.com"))
                 .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    public void shouldPreserveRequestedSortOrderWhenFetchingReviews() {
+        var pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "rating"));
+        var idsPage = new PageImpl<>(List.of(2L, 1L), pageable, 2);
+        var review1 = Review.builder().id(1L).rating(3).build();
+        var review2 = Review.builder().id(2L).rating(5).build();
+        var response1 = new ReviewResponse(1L, 1L, "Anton", 3, null, null, null, null);
+        var response2 = new ReviewResponse(2L, 1L, "Bas", 5, null, null, null, null);
+
+        when(reviewRepository.findReviewIdsByProductId(1L, pageable)).thenReturn(idsPage);
+        when(reviewRepository.findReviewsByIds(List.of(2L, 1L))).thenReturn(List.of(review1, review2));
+        when(reviewMapper.toResponse(review2)).thenReturn(response2);
+        when(reviewMapper.toResponse(review1)).thenReturn(response1);
+
+        var result = reviewService.getByProduct(1L, pageable);
+
+        assertThat(result.getContent()).extracting(ReviewResponse::id).containsExactly(2L, 1L);
     }
 
     @Test

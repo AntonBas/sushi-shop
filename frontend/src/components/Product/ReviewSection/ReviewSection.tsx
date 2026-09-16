@@ -25,6 +25,7 @@ export default function ReviewSection({ productId }: Props) {
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [reviewPage, setReviewPage] = useState(0);
   const [totalReviewPages, setTotalReviewPages] = useState(0);
+  const [reviewSort, setReviewSort] = useState("createdAt,desc");
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -38,15 +39,20 @@ export default function ReviewSection({ productId }: Props) {
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
   const loadReviews = useCallback((page: number) => {
-    reviewsApi.getReviews(productId, page).then((res) => {
+    reviewsApi.getReviews(productId, page, 5, reviewSort).then((res) => {
       setReviews(res.content);
       setTotalReviewPages(res.page.totalPages);
     });
-  }, [productId]);
+  }, [productId, reviewSort]);
 
   useEffect(() => {
     loadReviews(0);
   }, [loadReviews]);
+
+  const handleReviewSortChange = (value: string) => {
+    setReviewSort(value);
+    setReviewPage(0);
+  };
 
   const showError = (err: unknown, fallback: string) => {
     showNotification(getErrorMessage(err, fallback), "error");
@@ -155,7 +161,22 @@ export default function ReviewSection({ productId }: Props) {
 
   return (
     <div className={styles.section}>
-      <h2 className={styles.title}>Reviews ({reviews.length})</h2>
+      <div className={styles.titleRow}>
+        <h2 className={styles.title}>Reviews ({reviews.length})</h2>
+        {reviews.length > 0 && (
+          <select
+            value={reviewSort}
+            onChange={(e) => handleReviewSortChange(e.target.value)}
+            className={styles.sortSelect}
+            aria-label="Sort reviews"
+          >
+            <option value="createdAt,desc">Newest</option>
+            <option value="createdAt,asc">Oldest</option>
+            <option value="rating,desc">Highest Rating</option>
+            <option value="rating,asc">Lowest Rating</option>
+          </select>
+        )}
+      </div>
       {user && (
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.stars}>
