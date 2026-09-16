@@ -77,7 +77,7 @@ export default function Modal({ isOpen, onClose, title, children }: Props) {
             <button type="button" onClick={onClose} aria-label="Close">✕</button>
           </div>
         )}
-        <div>{children}</div>
+        <div className={styles.body}>{children}</div>
       </div>
     </div>,
     document.body
