@@ -15,6 +15,7 @@ const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
 }
 
 const UNVERIFIED_EMAIL_ERROR = 'Please verify your email before login'
+const OAUTH_NO_PASSWORD_ERROR = 'This account uses Google sign-in and has no password set. Sign in with Google, or use "Forgot password?" to set one.'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -74,6 +75,17 @@ export default function Login() {
           >
             {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend verification email'}
           </Button>
+        </div>
+      )}
+
+      {error === OAUTH_NO_PASSWORD_ERROR && (
+        <div className={styles.resendBlock}>
+          <Button type="button" variant="secondary" onClick={handleGoogleLogin} style={{ width: '100%' }}>
+            Continue with Google
+          </Button>
+          <p className={styles.link}>
+            Or <Link to="/forgot-password">set a password</Link> for this account.
+          </p>
         </div>
       )}
 

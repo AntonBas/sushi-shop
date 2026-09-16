@@ -66,6 +66,7 @@ public class AuthServiceTest {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
+                .password("encoded-password")
                 .emailVerified(true)
                 .tokenVersion(0)
                 .build();
@@ -96,6 +97,22 @@ public class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Please verify your email before login");
+    }
+
+    @Test
+    public void shouldThrowWhenOAuthAccountHasNoPassword() {
+        var request = new LoginRequest("anton@example.com", "password123");
+        var user = User.builder()
+                .email("anton@example.com")
+                .emailVerified(true)
+                .password(null)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("This account uses Google sign-in");
     }
 
     @Test

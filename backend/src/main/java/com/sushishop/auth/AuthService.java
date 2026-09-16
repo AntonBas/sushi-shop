@@ -46,6 +46,10 @@ public class AuthService {
             throw new BadRequestException("Please verify your email before login");
         }
 
+        if (user.getPassword() == null) {
+            throw new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one.");
+        }
+
         var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 

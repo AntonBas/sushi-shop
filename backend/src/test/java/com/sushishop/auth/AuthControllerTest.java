@@ -112,6 +112,19 @@ public class AuthControllerTest {
     }
 
     @Test
+    public void shouldReturn400WhenOAuthAccountHasNoPassword() throws Exception {
+        var request = new LoginRequest("anton@example.com", "password123");
+
+        when(authService.login(any())).thenThrow(new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one."));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one."));
+    }
+
+    @Test
     public void shouldExchangeOAuth2Code() throws Exception {
         var request = new OAuth2ExchangeRequest("valid-code");
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
