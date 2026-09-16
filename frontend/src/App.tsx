@@ -80,6 +80,8 @@ function App() {
           }
         >
           <Route index element={<ProfilePage />} />
+          <Route path="address" element={<ProfilePage />} />
+          <Route path="security" element={<ProfilePage />} />
           <Route path="orders" element={<MyOrdersPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />

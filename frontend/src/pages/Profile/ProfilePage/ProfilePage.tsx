@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
 import { useNotification } from "../../../context/useNotification";
 import { useApi } from "../../../hooks/common/useApi";
@@ -10,6 +11,12 @@ import styles from "./ProfilePage.module.css";
 
 type Tab = "profile" | "address" | "security";
 
+function tabFromPath(pathname: string): Tab {
+  if (pathname.endsWith("/address")) return "address";
+  if (pathname.endsWith("/security")) return "security";
+  return "profile";
+}
+
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const { showNotification } = useNotification();
@@ -17,8 +24,9 @@ export default function ProfilePage() {
   const passwordApi = useApi<void>();
   const emailApi = useApi<void>();
   const googleUnlinkApi = useApi<void>();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
+  const activeTab = tabFromPath(location.pathname);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
@@ -121,24 +129,24 @@ export default function ProfilePage() {
     <div className={styles.page}>
       <h1 className={styles.title}>My Profile</h1>
       <div className={styles.tabs}>
-        <button
+        <Link
+          to="/profile"
           className={`${styles.tab} ${activeTab === "profile" ? styles.active : ""}`}
-          onClick={() => setActiveTab("profile")}
         >
           Profile
-        </button>
-        <button
+        </Link>
+        <Link
+          to="/profile/address"
           className={`${styles.tab} ${activeTab === "address" ? styles.active : ""}`}
-          onClick={() => setActiveTab("address")}
         >
           Address
-        </button>
-        <button
+        </Link>
+        <Link
+          to="/profile/security"
           className={`${styles.tab} ${activeTab === "security" ? styles.active : ""}`}
-          onClick={() => setActiveTab("security")}
         >
           Security
-        </button>
+        </Link>
       </div>
       {activeTab === "profile" && (
         <form onSubmit={handleUpdateProfile} className={styles.form}>

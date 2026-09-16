@@ -17,11 +17,13 @@
 }
 
 .tab {
+  display: inline-block;
   padding: 10px 20px;
   border: none;
   background: none;
   color: var(--color-text-muted);
   font-size: 15px;
+  text-decoration: none;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
