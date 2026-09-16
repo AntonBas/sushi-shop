@@ -3,6 +3,7 @@ package com.sushishop.security.jwt;
 import com.sushishop.user.CachedAuthUser;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -19,5 +20,9 @@ public class UserCacheService {
                 .filter(user -> user.getTokenVersion().equals(tokenVersion))
                 .map(user -> new CachedAuthUser(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified()))
                 .orElse(null);
+    }
+
+    @CacheEvict(value = "userCache", key = "#email + ':' + #tokenVersion")
+    public void evictCachedUser(String email, Integer tokenVersion) {
     }
 }

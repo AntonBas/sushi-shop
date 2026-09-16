@@ -4,6 +4,7 @@ import com.sushishop.mail.MailService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
 import com.sushishop.user.UserMapper;
@@ -13,6 +14,7 @@ import com.sushishop.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +28,7 @@ public class EmailChangeService {
     private final TokenService tokenService;
     private final MailService mailService;
     private final CacheManager cacheManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void requestEmailChange(String email, ChangeEmailRequest request) {
@@ -66,13 +69,15 @@ public class EmailChangeService {
         }
 
         var oldEmail = user.getEmail();
+        var oldTokenVersion = user.getTokenVersion();
         user.setEmail(user.getPendingEmail());
         user.setPendingEmail(null);
-        user.setTokenVersion(user.getTokenVersion() + 1);
+        user.setTokenVersion(oldTokenVersion + 1);
         userRepository.save(user);
 
         tokenService.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_CHANGE);
         evictUserCache(oldEmail);
+        eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, oldEmail, oldTokenVersion));
         log.info("Email changed from {} to {}", oldEmail, user.getEmail());
         return userMapper.toResponse(user);
     }

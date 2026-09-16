@@ -2,11 +2,13 @@ package com.sushishop.auth;
 
 import com.sushishop.mail.MailService;
 import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public void forgotPassword(String email) {
@@ -48,11 +51,13 @@ public class PasswordResetService {
             throw new BadRequestException("New password must be different from old password");
         }
 
+        var oldTokenVersion = user.getTokenVersion();
         user.setPassword(passwordEncoder.encode(newPassword));
-        user.setTokenVersion(user.getTokenVersion() + 1);
+        user.setTokenVersion(oldTokenVersion + 1);
         userRepository.save(user);
 
         tokenService.invalidateAllByUserAndType(user.getId(), TokenType.PASSWORD_RESET);
+        eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, user.getEmail(), oldTokenVersion));
         mailService.sendPasswordChangedNotification(user.getEmail());
         log.info("Password reset for {}", user.getEmail());
     }

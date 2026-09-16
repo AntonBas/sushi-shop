@@ -1,6 +1,7 @@
 package com.sushishop.user;
 
 import com.sushishop.mail.MailService;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
@@ -8,9 +9,11 @@ import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -35,6 +38,9 @@ public class UserServiceTest {
 
     @Mock
     private MailService mailService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UserService userService;
@@ -169,6 +175,11 @@ public class UserServiceTest {
         assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
         verify(mailService).sendPasswordChangedNotification("anton@example.com");
+
+        var eventCaptor = ArgumentCaptor.forClass(UserSessionsInvalidatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEmail()).isEqualTo("anton@example.com");
+        assertThat(eventCaptor.getValue().getPreviousTokenVersion()).isEqualTo(0);
     }
 
     @Test

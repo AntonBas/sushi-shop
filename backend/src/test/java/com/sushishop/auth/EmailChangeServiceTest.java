@@ -1,6 +1,7 @@
 package com.sushishop.auth;
 
 import com.sushishop.mail.MailService;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.token.Token;
@@ -14,11 +15,13 @@ import com.sushishop.user.dto.request.ChangeEmailRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
 
@@ -49,6 +52,9 @@ class EmailChangeServiceTest {
 
     @Mock
     private Cache usersCache;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private EmailChangeService emailChangeService;
@@ -146,6 +152,11 @@ class EmailChangeServiceTest {
         verify(userRepository).save(user);
         verify(tokenService).invalidateAllByUserAndType(1L, TokenType.EMAIL_CHANGE);
         verify(usersCache).evict("anton@example.com");
+
+        var eventCaptor = ArgumentCaptor.forClass(UserSessionsInvalidatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEmail()).isEqualTo("anton@example.com");
+        assertThat(eventCaptor.getValue().getPreviousTokenVersion()).isEqualTo(0);
     }
 
     @Test

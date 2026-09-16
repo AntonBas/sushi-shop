@@ -1,9 +1,11 @@
 package com.sushishop.security.oauth2;
 
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -19,6 +21,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private static final String GOOGLE_SIGN_IN_DISABLED_ERROR_CODE = "google_sign_in_disabled";
 
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) {
@@ -67,10 +70,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         }
 
         if (!user.isEmailVerified()) {
+            var oldTokenVersion = user.getTokenVersion();
             user.setEmailVerified(true);
             user.setPassword(null);
-            user.setTokenVersion(user.getTokenVersion() + 1);
+            user.setTokenVersion(oldTokenVersion + 1);
             userRepository.save(user);
+            eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, email, oldTokenVersion));
         }
     }
 }

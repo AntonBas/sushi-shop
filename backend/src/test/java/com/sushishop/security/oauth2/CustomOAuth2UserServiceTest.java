@@ -1,5 +1,6 @@
 package com.sushishop.security.oauth2;
 
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -28,6 +30,9 @@ class CustomOAuth2UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CustomOAuth2UserService customOAuth2UserService;
@@ -82,6 +87,11 @@ class CustomOAuth2UserServiceTest {
         assertThat(attackerControlledUser.getPassword()).isNull();
         assertThat(attackerControlledUser.getTokenVersion()).isEqualTo(4);
         verify(userRepository).save(attackerControlledUser);
+
+        var eventCaptor = ArgumentCaptor.forClass(UserSessionsInvalidatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEmail()).isEqualTo("victim@gmail.com");
+        assertThat(eventCaptor.getValue().getPreviousTokenVersion()).isEqualTo(3);
     }
 
     @Test
@@ -120,5 +130,6 @@ class CustomOAuth2UserServiceTest {
         assertThat(existingUser.getPassword()).isEqualTo("still-their-own-password");
         assertThat(existingUser.getTokenVersion()).isEqualTo(1);
         verify(userRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 }
