@@ -35,7 +35,7 @@ springdoc:
 app:
   jwt:
     cookie-secure: true
-    cookie-same-site: None
+    cookie-same-site: Lax
   frontend-url: ${FRONTEND_URL}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS}
