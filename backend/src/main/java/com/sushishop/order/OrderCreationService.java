@@ -6,6 +6,7 @@ import com.sushishop.order.dto.request.OrderItemRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductEnrichmentService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
@@ -30,6 +31,7 @@ public class OrderCreationService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ProductEnrichmentService productEnrichmentService;
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
@@ -83,7 +85,8 @@ public class OrderCreationService {
             if (!product.isAvailable()) {
                 throw new BadRequestException("Product is not available: " + product.getName());
             }
-            var unitPrice = product.getPrice();
+            var discountedPrice = productEnrichmentService.calculateDiscountedPrice(product);
+            var unitPrice = discountedPrice != null ? discountedPrice : product.getPrice();
             var subtotal = unitPrice.multiply(BigDecimal.valueOf(item.quantity()));
             return OrderItem.builder()
                     .product(product)

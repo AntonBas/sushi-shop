@@ -6,6 +6,7 @@ import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductEnrichmentService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.shared.address.AddressResponse;
@@ -40,6 +41,9 @@ public class OrderCreationServiceTest {
     private ProductRepository productRepository;
 
     @Mock
+    private ProductEnrichmentService productEnrichmentService;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -66,6 +70,7 @@ public class OrderCreationServiceTest {
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(productEnrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
         when(orderRepository.save(any())).thenReturn(order);
         when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
 
@@ -75,6 +80,34 @@ public class OrderCreationServiceTest {
         assertThat(result.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         verify(orderRepository).save(any());
         verify(messagingTemplate).convertAndSend(eq("/topic/orders/new"), any(OrderStatusUpdateResponse.class));
+    }
+
+    @Test
+    public void shouldApplyActivePromotionDiscount() {
+        var address = new AddressRequest("Lviv", "Zelena", "204", "280", "code 123");
+        var itemRequest = new OrderItemRequest(1L, 2);
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, address, List.of(itemRequest));
+
+        var user = User.builder().id(1L).email("test@test.com").build();
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
+        var order = new Order();
+        var expectedResponse = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111",
+                new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
+                DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, new BigDecimal("400.00"), null, List.of());
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(productEnrichmentService.calculateDiscountedPrice(product)).thenReturn(new BigDecimal("200.00"));
+        when(orderRepository.save(any())).thenReturn(order);
+        when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
+
+        orderCreationService.create(request, "test@test.com");
+
+        var orderCaptor = org.mockito.ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCaptor.capture());
+        // 250.00 - 20% = 200.00 per item, x2 = 400.00
+        assertThat(orderCaptor.getValue().getTotalAmount()).isEqualByComparingTo(new BigDecimal("400.00"));
+        assertThat(orderCaptor.getValue().getItems().get(0).getUnitPrice()).isEqualByComparingTo(new BigDecimal("200.00"));
     }
 
     @Test
