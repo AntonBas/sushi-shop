@@ -21,6 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final UserCacheService userCacheService;
     private final JwtCookieService jwtCookieService;
+    private final JwtBlacklistService jwtBlacklistService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
@@ -29,7 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null) {
             var payload = jwtUtil.parseToken(token);
 
-            if (payload != null) {
+            if (payload != null && jwtBlacklistService.isBlacklisted(payload.jti())) {
+                SecurityContextHolder.clearContext();
+            } else if (payload != null) {
                 var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
 
                 if (cachedUser != null) {

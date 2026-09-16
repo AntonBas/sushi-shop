@@ -1,6 +1,7 @@
 package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.LoginRequest;
+import com.sushishop.security.jwt.JwtBlacklistService;
 import com.sushishop.security.jwt.JwtUtil;
 import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
 import com.sushishop.shared.exception.core.BadRequestException;
@@ -22,13 +23,17 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -57,6 +62,9 @@ public class AuthServiceTest {
 
     @Mock
     private OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
+
+    @Mock
+    private JwtBlacklistService jwtBlacklistService;
 
     @InjectMocks
     private AuthService authService;
@@ -168,5 +176,32 @@ public class AuthServiceTest {
         assertThatThrownBy(() -> authService.exchangeOAuth2Code("bad-code"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Invalid or expired code");
+    }
+
+    @Test
+    public void shouldBlacklistTokenOnLogout() {
+        var expiration = new Date(System.currentTimeMillis() + 60_000);
+        var payload = new JwtUtil.JwtPayload("anton@example.com", 0, "jti-123", expiration);
+        when(jwtUtil.parseToken("token123")).thenReturn(payload);
+
+        authService.logout("token123");
+
+        verify(jwtBlacklistService).blacklist(eq("jti-123"), any(Duration.class));
+    }
+
+    @Test
+    public void shouldDoNothingOnLogoutWhenTokenIsNull() {
+        authService.logout(null);
+
+        verifyNoInteractions(jwtBlacklistService);
+    }
+
+    @Test
+    public void shouldDoNothingOnLogoutWhenTokenIsInvalid() {
+        when(jwtUtil.parseToken("bad-token")).thenReturn(null);
+
+        authService.logout("bad-token");
+
+        verifyNoInteractions(jwtBlacklistService);
     }
 }

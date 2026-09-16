@@ -1,6 +1,7 @@
 package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.LoginRequest;
+import com.sushishop.security.jwt.JwtBlacklistService;
 import com.sushishop.security.jwt.JwtUtil;
 import com.sushishop.security.jwt.WsTicketService;
 import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
@@ -18,6 +19,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class AuthService {
     private final TokenService tokenService;
     private final OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
     private final WsTicketService wsTicketService;
+    private final JwtBlacklistService jwtBlacklistService;
 
     public record AuthResult(String token, UserResponse user) {
     }
@@ -96,5 +101,20 @@ public class AuthService {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Unknown user"));
         return wsTicketService.issueTicket(email, user.getTokenVersion());
+    }
+
+    public void logout(String token) {
+        if (token == null) {
+            return;
+        }
+
+        var payload = jwtUtil.parseToken(token);
+        if (payload == null || payload.jti() == null || payload.expiration() == null) {
+            return;
+        }
+
+        var ttl = Duration.between(Instant.now(), payload.expiration().toInstant());
+        jwtBlacklistService.blacklist(payload.jti(), ttl);
+        log.info("Logout: token blacklisted for {}", payload.email());
     }
 }
