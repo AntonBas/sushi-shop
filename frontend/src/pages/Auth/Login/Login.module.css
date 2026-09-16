@@ -27,6 +27,17 @@
   gap: 16px;
 }
 
+.resendBlock {
+  margin-bottom: 16px;
+}
+
+.resendMessageSuccess, .resendMessageError {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+.resendMessageSuccess { color: var(--color-success); }
+.resendMessageError { color: var(--color-error); }
+
 .forgot {
   text-align: right;
   font-size: 14px;

@@ -28,3 +28,7 @@ export interface ResetPasswordRequest {
 export interface AuthResponse {
   user: UserResponse
 }
+
+export interface ResendVerificationResponse {
+  cooldownSeconds: number
+}

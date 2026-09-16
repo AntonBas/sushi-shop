@@ -5,6 +5,7 @@ import { API_BASE_URL } from '../../../config/env'
 import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
+import { useResendVerification } from '../../../hooks/common/useResendVerification'
 import styles from './Login.module.css'
 
 const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
@@ -12,6 +13,8 @@ const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
   unverified_email: 'Your Google account email is not verified. Please verify it with Google first.',
   oauth2_failed: 'Google login failed. Please try again.',
 }
+
+const UNVERIFIED_EMAIL_ERROR = 'Please verify your email before login'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -24,6 +27,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { resend, cooldown, sending, message, messageType } = useResendVerification()
 
   useEffect(() => {
     if (searchParams.get('error')) {
@@ -54,6 +58,24 @@ export default function Login() {
       <h1 className={styles.title}>Sign In</h1>
 
       {error && <div className={styles.error}>{error}</div>}
+
+      {error === UNVERIFIED_EMAIL_ERROR && (
+        <div className={styles.resendBlock}>
+          {message && (
+            <p className={messageType === 'error' ? styles.resendMessageError : styles.resendMessageSuccess}>{message}</p>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => resend(email)}
+            loading={sending}
+            disabled={cooldown > 0 || !email}
+            style={{ width: '100%' }}
+          >
+            {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend verification email'}
+          </Button>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />

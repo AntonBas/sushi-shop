@@ -1,5 +1,5 @@
 import api from './client'
-import type { LoginRequest, RegisterRequest, ForgotPasswordRequest, ResetPasswordRequest, AuthResponse } from '../types'
+import type { LoginRequest, RegisterRequest, ForgotPasswordRequest, ResetPasswordRequest, AuthResponse, ResendVerificationResponse } from '../types'
 
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
   const { data: res } = await api.post('/auth/login', data)
@@ -27,6 +27,16 @@ export const issueWsTicket = async (): Promise<string> => {
 
 export const verifyEmail = async (token: string): Promise<void> => {
   await api.get('/auth/verify', { params: { token } })
+}
+
+export const resendVerification = async (email: string): Promise<ResendVerificationResponse> => {
+  const { data } = await api.post('/auth/resend-verification', { email })
+  return data
+}
+
+export const getResendVerificationStatus = async (email: string): Promise<ResendVerificationResponse> => {
+  const { data } = await api.get('/auth/resend-verification/status', { params: { email } })
+  return data
 }
 
 export const forgotPassword = async (data: ForgotPasswordRequest): Promise<void> => {

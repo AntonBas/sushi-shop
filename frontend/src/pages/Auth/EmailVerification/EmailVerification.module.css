@@ -41,6 +41,26 @@
 .card h2 { font-size: 22px; color: var(--color-text); }
 .card p { font-size: 14px; color: var(--color-text-secondary); }
 
+.messageSuccess, .messageError {
+  font-size: 13px;
+  margin: 0;
+}
+.messageSuccess { color: var(--color-success); }
+.messageError { color: var(--color-error); }
+
+.link {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.link a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+.link a:hover {
+  text-decoration: underline;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
