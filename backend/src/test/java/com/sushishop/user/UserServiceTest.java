@@ -1,5 +1,6 @@
 package com.sushishop.user;
 
+import com.sushishop.mail.MailService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
@@ -31,6 +32,9 @@ public class UserServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private MailService mailService;
 
     @InjectMocks
     private UserService userService;
@@ -160,6 +164,7 @@ public class UserServiceTest {
         assertThat(user.getPassword()).isEqualTo("hashedNew");
         assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
+        verify(mailService).sendPasswordChangedNotification("anton@example.com");
     }
 
     @Test

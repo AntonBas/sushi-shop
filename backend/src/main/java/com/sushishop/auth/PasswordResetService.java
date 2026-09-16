@@ -1,5 +1,6 @@
 package com.sushishop.auth;
 
+import com.sushishop.mail.MailService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
@@ -18,6 +19,7 @@ public class PasswordResetService {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MailService mailService;
 
     @Transactional
     public void forgotPassword(String email) {
@@ -51,6 +53,7 @@ public class PasswordResetService {
         userRepository.save(user);
 
         tokenService.invalidateAllByUserAndType(user.getId(), TokenType.PASSWORD_RESET);
+        mailService.sendPasswordChangedNotification(user.getEmail());
         log.info("Password reset for {}", user.getEmail());
     }
 }

@@ -52,6 +52,13 @@ public class MailService {
                 baseUrl + "/reset-password?token=" + token);
     }
 
+    @Async
+    public void sendPasswordChangedNotification(String to) {
+        sendPlainEmail(to, "Your Sushi Bas Shop password was changed",
+                "Password Changed",
+                "Your account password was just changed. If you didn't do this, please reset your password immediately.");
+    }
+
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {
         String html = """
                 <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
@@ -67,6 +74,26 @@ public class MailService {
                 </div>
                 """.formatted(title, body, buttonUrl, buttonText);
 
+        deliver(to, subject, html);
+    }
+
+    private void sendPlainEmail(String to, String subject, String title, String body) {
+        String html = """
+                <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
+                  <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+                    <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
+                  </div>
+                  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                    <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
+                    <p style="margin:0;color:#6b7280;font-size:15px;line-height:1.5">%s</p>
+                  </div>
+                </div>
+                """.formatted(title, body);
+
+        deliver(to, subject, html);
+    }
+
+    private void deliver(String to, String subject, String html) {
         var payload = Map.of(
                 "sender", Map.of("name", fromName, "email", fromEmail),
                 "to", List.of(Map.of("email", to)),

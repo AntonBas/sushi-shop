@@ -1,6 +1,7 @@
 package com.sushishop.user;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.mail.MailService;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
@@ -25,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final MailService mailService;
 
     @Auditable(action = AuditAction.CREATE, entity = "User")
     @Transactional
@@ -91,6 +93,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         user.setTokenVersion(user.getTokenVersion() + 1);
         userRepository.save(user);
+        mailService.sendPasswordChangedNotification(email);
         log.info("Password changed for {}", email);
     }
 }

@@ -63,6 +63,18 @@ class MailServiceTest {
     }
 
     @Test
+    void shouldSendPasswordChangedNotificationWithoutActionLink() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.subject").value("Your Sushi Bas Shop password was changed"))
+                .andExpect(jsonPath("$.htmlContent", containsString("password was just changed")))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendPasswordChangedNotification("anton@example.com");
+
+        mockServer.verify();
+    }
+
+    @Test
     void shouldRetryUpToThreeTimesThenGiveUpWithoutThrowing() {
         mockServer.expect(ExpectedCount.times(3), requestTo("https://api.brevo.com/v3/smtp/email"))
                 .andRespond(withServerError());

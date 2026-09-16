@@ -1,5 +1,6 @@
 package com.sushishop.auth;
 
+import com.sushishop.mail.MailService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;
@@ -33,6 +34,9 @@ public class PasswordResetServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private MailService mailService;
 
     @InjectMocks
     private PasswordResetService passwordResetService;
@@ -101,6 +105,7 @@ public class PasswordResetServiceTest {
         assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
         verify(tokenService).invalidateAllByUserAndType(1L, TokenType.PASSWORD_RESET);
+        verify(mailService).sendPasswordChangedNotification("anton@example.com");
     }
 
     @Test
