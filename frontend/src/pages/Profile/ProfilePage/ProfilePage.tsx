@@ -8,7 +8,7 @@ import Input from "../../../components/UI/Input/Input";
 import type { UserResponse } from "../../../types";
 import styles from "./ProfilePage.module.css";
 
-type Tab = "profile" | "address" | "password";
+type Tab = "profile" | "address" | "security";
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -27,6 +27,7 @@ export default function ProfilePage() {
   const [apartment, setApartment] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
 
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -89,6 +90,10 @@ export default function ProfilePage() {
 
   const handleChangePassword = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      showNotification("New passwords do not match", "error");
+      return;
+    }
     try {
       await passwordApi.execute(() =>
         usersApi.changePassword({ oldPassword, newPassword }),
@@ -98,6 +103,7 @@ export default function ProfilePage() {
     }
     setOldPassword("");
     setNewPassword("");
+    setConfirmPassword("");
     showNotification("Password changed", "success");
   };
 
@@ -128,59 +134,38 @@ export default function ProfilePage() {
           Address
         </button>
         <button
-          className={`${styles.tab} ${activeTab === "password" ? styles.active : ""}`}
-          onClick={() => setActiveTab("password")}
+          className={`${styles.tab} ${activeTab === "security" ? styles.active : ""}`}
+          onClick={() => setActiveTab("security")}
         >
-          Password
+          Security
         </button>
       </div>
       {activeTab === "profile" && (
-        <>
-          <form onSubmit={handleUpdateProfile} className={styles.form}>
-            <div className={styles.fieldReadonly}>
-              <label className={styles.label}>Email</label>
-              <input
-                value={user?.email || ""}
-                disabled
-                className={styles.input}
-              />
-            </div>
-            <Input
-              label="Name"
-              value={name}
-              onChange={setName}
-              placeholder="Your name"
+        <form onSubmit={handleUpdateProfile} className={styles.form}>
+          <div className={styles.fieldReadonly}>
+            <label className={styles.label}>Email</label>
+            <input
+              value={user?.email || ""}
+              disabled
+              className={styles.input}
             />
-            <Input
-              label="Phone"
-              value={phone}
-              onChange={setPhone}
-              placeholder="+380991234567"
-            />
-            <Button type="submit" loading={updateApi.loading}>
-              Save
-            </Button>
-          </form>
-
-          <h2 className={styles.sectionTitle}>Change Email</h2>
-          <form onSubmit={handleRequestEmailChange} className={styles.form}>
-            {user?.pendingEmail && (
-              <p className={styles.pendingNotice}>
-                Confirmation pending for <strong>{user.pendingEmail}</strong>. Check your inbox to complete the change.
-              </p>
-            )}
-            <Input
-              label="New Email"
-              type="email"
-              value={newEmail}
-              onChange={setNewEmail}
-              placeholder="new@example.com"
-            />
-            <Button type="submit" loading={emailApi.loading} disabled={!newEmail}>
-              Send Confirmation Link
-            </Button>
-          </form>
-        </>
+          </div>
+          <Input
+            label="Name"
+            value={name}
+            onChange={setName}
+            placeholder="Your name"
+          />
+          <Input
+            label="Phone"
+            value={phone}
+            onChange={setPhone}
+            placeholder="+380991234567"
+          />
+          <Button type="submit" loading={updateApi.loading}>
+            Save
+          </Button>
+        </form>
       )}
       {activeTab === "address" && (
         <form onSubmit={handleUpdateAddress} className={styles.form}>
@@ -215,8 +200,9 @@ export default function ProfilePage() {
           </Button>
         </form>
       )}
-      {activeTab === "password" && (
+      {activeTab === "security" && (
         <>
+          <h2 className={styles.sectionTitle}>Change Password</h2>
           <form onSubmit={handleChangePassword} className={styles.form}>
             <Input
               label="Current Password"
@@ -232,8 +218,34 @@ export default function ProfilePage() {
               onChange={setNewPassword}
               placeholder="Min 8 characters"
             />
+            <Input
+              label="Confirm New Password"
+              type="password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              placeholder="Repeat new password"
+            />
             <Button type="submit" loading={passwordApi.loading}>
               Change Password
+            </Button>
+          </form>
+
+          <h2 className={styles.sectionTitle}>Change Email</h2>
+          <form onSubmit={handleRequestEmailChange} className={styles.form}>
+            {user?.pendingEmail && (
+              <p className={styles.pendingNotice}>
+                Confirmation pending for <strong>{user.pendingEmail}</strong>. Check your inbox to complete the change.
+              </p>
+            )}
+            <Input
+              label="New Email"
+              type="email"
+              value={newEmail}
+              onChange={setNewEmail}
+              placeholder="new@example.com"
+            />
+            <Button type="submit" loading={emailApi.loading} disabled={!newEmail}>
+              Send Confirmation Link
             </Button>
           </form>
 
