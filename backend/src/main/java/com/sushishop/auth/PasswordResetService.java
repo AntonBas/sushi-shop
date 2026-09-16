@@ -1,7 +1,6 @@
 package com.sushishop.auth;
 
 import com.sushishop.shared.exception.core.BadRequestException;
-import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
 import com.sushishop.user.UserRepository;
@@ -22,11 +21,16 @@ public class PasswordResetService {
 
     @Transactional
     public void forgotPassword(String email) {
-        var user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found"));
+        var userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.info("Password reset requested for unknown email {}", email);
+            return;
+        }
 
+        var user = userOpt.get();
         if (!user.isEmailVerified()) {
-            throw new BadRequestException("Please verify your email first");
+            log.info("Password reset requested for unverified email {}", email);
+            return;
         }
 
         tokenService.createPasswordResetToken(user);

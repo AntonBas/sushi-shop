@@ -139,6 +139,9 @@ public class AuthController {
     @RateLimit(duration = 900)
     @PostMapping("/password/forgot")
     @Operation(summary = "Request password reset")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Always returned, regardless of whether the email is registered or verified")
+    })
     @SecurityRequirements()
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         log.info("POST /api/auth/password/forgot - {}", request.email());

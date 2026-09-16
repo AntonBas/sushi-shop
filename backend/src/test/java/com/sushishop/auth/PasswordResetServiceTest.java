@@ -1,7 +1,6 @@
 package com.sushishop.auth;
 
 import com.sushishop.shared.exception.core.BadRequestException;
-import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
@@ -18,6 +17,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +53,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenForgotPasswordForUnverifiedUser() {
+    public void shouldSilentlyIgnoreForgotPasswordForUnverifiedUser() {
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(false)
@@ -60,17 +61,18 @@ public class PasswordResetServiceTest {
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> passwordResetService.forgotPassword("anton@example.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Please verify your email first");
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService, never()).createPasswordResetToken(user);
     }
 
     @Test
-    public void shouldThrowWhenForgotPasswordForNonExistentUser() {
+    public void shouldSilentlyIgnoreForgotPasswordForNonExistentUser() {
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> passwordResetService.forgotPassword("anton@example.com"))
-                .isInstanceOf(NotFoundException.class);
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService, never()).createPasswordResetToken(any());
     }
 
     @Test
