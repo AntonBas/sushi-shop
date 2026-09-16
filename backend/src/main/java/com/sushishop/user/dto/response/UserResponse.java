@@ -25,6 +25,9 @@ public record UserResponse(
         UserRole userRole,
 
         @Schema(description = "Default delivery address")
-        AddressResponse address
+        AddressResponse address,
+
+        @Schema(description = "Whether Google sign-in is enabled for this account", example = "true")
+        boolean googleSignInEnabled
 ) {
 }

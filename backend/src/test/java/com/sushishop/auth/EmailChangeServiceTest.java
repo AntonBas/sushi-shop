@@ -135,7 +135,7 @@ class EmailChangeServiceTest {
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(cacheManager.getCache("users")).thenReturn(usersCache);
         when(userMapper.toResponse(user)).thenReturn(
-                new UserResponse(1L, null, "new@example.com", null, null, UserRole.CUSTOMER, null));
+                new UserResponse(1L, null, "new@example.com", null, null, UserRole.CUSTOMER, null, true));
 
         var result = emailChangeService.confirmEmailChange("token123");
 

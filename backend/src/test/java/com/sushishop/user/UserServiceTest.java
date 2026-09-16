@@ -99,7 +99,8 @@ public class UserServiceTest {
                 null,
                 "+380961791111",
                 UserRole.CUSTOMER,
-                null
+                null,
+                true
         );
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -133,7 +134,8 @@ public class UserServiceTest {
                 null,
                 "+380999999999",
                 UserRole.CUSTOMER,
-                null
+                null,
+                true
         );
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -182,5 +184,52 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.changePassword("anton@example.com", request))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    public void shouldDisableGoogleSignIn() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashedPassword")
+                .googleSignInEnabled(true)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        userService.disableGoogleSignIn("anton@example.com");
+
+        assertThat(user.isGoogleSignInEnabled()).isFalse();
+        verify(userRepository).save(user);
+        verify(mailService).sendGoogleSignInDisabledNotification("anton@example.com");
+    }
+
+    @Test
+    public void shouldThrowWhenDisablingGoogleSignInWithoutPassword() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .password(null)
+                .googleSignInEnabled(true)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userService.disableGoogleSignIn("anton@example.com"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Set a password");
+    }
+
+    @Test
+    public void shouldThrowWhenGoogleSignInAlreadyDisabled() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashedPassword")
+                .googleSignInEnabled(false)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> userService.disableGoogleSignIn("anton@example.com"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("already disabled");
     }
 }

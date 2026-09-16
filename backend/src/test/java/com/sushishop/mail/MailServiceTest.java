@@ -100,6 +100,18 @@ class MailServiceTest {
     }
 
     @Test
+    void shouldSendGoogleSignInDisabledNotification() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.to[0].email").value("anton@example.com"))
+                .andExpect(jsonPath("$.subject").value("Google sign-in disabled for your Sushi Bas Shop account"))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendGoogleSignInDisabledNotification("anton@example.com");
+
+        mockServer.verify();
+    }
+
+    @Test
     void shouldRetryUpToThreeTimesThenGiveUpWithoutThrowing() {
         mockServer.expect(ExpectedCount.times(3), requestTo("https://api.brevo.com/v3/smtp/email"))
                 .andRespond(withServerError());

@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const updateApi = useApi<UserResponse>();
   const passwordApi = useApi<void>();
   const emailApi = useApi<void>();
+  const googleUnlinkApi = useApi<void>();
 
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [name, setName] = useState("");
@@ -98,6 +99,16 @@ export default function ProfilePage() {
     setOldPassword("");
     setNewPassword("");
     showNotification("Password changed", "success");
+  };
+
+  const handleDisableGoogleSignIn = async () => {
+    try {
+      await googleUnlinkApi.execute(() => usersApi.disableGoogleSignIn());
+    } catch {
+      return;
+    }
+    await refreshUser();
+    showNotification("Google sign-in disabled", "success");
   };
 
   return (
@@ -205,25 +216,50 @@ export default function ProfilePage() {
         </form>
       )}
       {activeTab === "password" && (
-        <form onSubmit={handleChangePassword} className={styles.form}>
-          <Input
-            label="Current Password"
-            type="password"
-            value={oldPassword}
-            onChange={setOldPassword}
-            placeholder="••••••••"
-          />
-          <Input
-            label="New Password"
-            type="password"
-            value={newPassword}
-            onChange={setNewPassword}
-            placeholder="Min 8 characters"
-          />
-          <Button type="submit" loading={passwordApi.loading}>
-            Change Password
-          </Button>
-        </form>
+        <>
+          <form onSubmit={handleChangePassword} className={styles.form}>
+            <Input
+              label="Current Password"
+              type="password"
+              value={oldPassword}
+              onChange={setOldPassword}
+              placeholder="••••••••"
+            />
+            <Input
+              label="New Password"
+              type="password"
+              value={newPassword}
+              onChange={setNewPassword}
+              placeholder="Min 8 characters"
+            />
+            <Button type="submit" loading={passwordApi.loading}>
+              Change Password
+            </Button>
+          </form>
+
+          <h2 className={styles.sectionTitle}>Google Sign-In</h2>
+          <div className={styles.form}>
+            {user?.googleSignInEnabled ? (
+              <>
+                <p className={styles.pendingNotice}>
+                  Google sign-in is enabled for this account.
+                </p>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  loading={googleUnlinkApi.loading}
+                  onClick={handleDisableGoogleSignIn}
+                >
+                  Disable Google Sign-In
+                </Button>
+              </>
+            ) : (
+              <p className={styles.pendingNotice}>
+                Google sign-in is disabled for this account. You can only log in with your password.
+              </p>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

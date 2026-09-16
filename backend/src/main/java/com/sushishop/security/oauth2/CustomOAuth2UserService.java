@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private static final String UNVERIFIED_EMAIL_ERROR_CODE = "unverified_email";
+    private static final String GOOGLE_SIGN_IN_DISABLED_ERROR_CODE = "google_sign_in_disabled";
 
     private final UserRepository userRepository;
 
@@ -58,6 +59,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                     .build();
             return userRepository.save(newUser);
         });
+
+        if (!user.isGoogleSignInEnabled()) {
+            OAuth2Error error = new OAuth2Error(GOOGLE_SIGN_IN_DISABLED_ERROR_CODE,
+                    "Google sign-in is disabled for this account. Please log in with your password.", null);
+            throw new OAuth2AuthenticationException(error, error.toString());
+        }
 
         if (!user.isEmailVerified()) {
             user.setEmailVerified(true);

@@ -76,6 +76,14 @@ public class MailService {
                         + ". If this wasn't you, please contact support immediately.");
     }
 
+    @Async
+    public void sendGoogleSignInDisabledNotification(String to) {
+        sendPlainEmail(to, "Google sign-in disabled for your Sushi Bas Shop account",
+                "Google Sign-In Disabled",
+                "Google sign-in was just disabled for your account. You can now only log in with your password. "
+                        + "If you didn't do this, please change your password immediately.");
+    }
+
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {
         String html = """
                 <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">

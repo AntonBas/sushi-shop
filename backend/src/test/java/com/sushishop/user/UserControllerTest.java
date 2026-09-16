@@ -15,6 +15,7 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,7 +40,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
     public void shouldGetCurrentUser() throws Exception {
-        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
 
@@ -61,6 +62,13 @@ public class UserControllerTest {
         mockMvc.perform(put("/api/users/me/password")
                         .contentType(APPLICATION_JSON)
                         .content(request))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
+    public void shouldDisableGoogleSignIn() throws Exception {
+        mockMvc.perform(post("/api/users/me/google-unlink"))
                 .andExpect(status().isOk());
     }
 }

@@ -64,6 +64,10 @@ public class User extends BaseEntity {
     @Column(name = "pending_email", length = 100)
     private String pendingEmail;
 
+    @Column(name = "google_sign_in_enabled", nullable = false)
+    @Builder.Default
+    private boolean googleSignInEnabled = true;
+
     @Builder.Default
     @Column(nullable = false)
     private Integer tokenVersion = 0;
