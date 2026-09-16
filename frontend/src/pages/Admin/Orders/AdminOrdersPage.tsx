@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
 import { useOrderSocket } from "../../../hooks/features/useOrderSocket";
 import { useNotification } from "../../../context/useNotification";
@@ -192,7 +192,7 @@ export default function AdminOrdersPage() {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <>
+                  <Fragment key={order.id}>
                     <tr
                       key={order.id}
                       className={styles.orderRow}
@@ -294,7 +294,7 @@ export default function AdminOrdersPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
