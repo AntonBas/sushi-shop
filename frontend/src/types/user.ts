@@ -24,5 +24,4 @@ export interface UserResponse {
   phone: string
   userRole: UserRole
   address?: AddressResponse
-  googleSignInEnabled: boolean
 }

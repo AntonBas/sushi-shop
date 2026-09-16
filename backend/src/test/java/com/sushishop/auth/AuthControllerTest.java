@@ -65,7 +65,7 @@ public class AuthControllerTest {
     @Test
     public void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.register(any())).thenReturn(authResult);
@@ -91,7 +91,7 @@ public class AuthControllerTest {
     @Test
     public void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.login(any())).thenReturn(authResult);
@@ -132,7 +132,7 @@ public class AuthControllerTest {
     @Test
     public void shouldExchangeOAuth2Code() throws Exception {
         var request = new OAuth2ExchangeRequest("valid-code");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.exchangeOAuth2Code("valid-code")).thenReturn(authResult);
@@ -253,7 +253,7 @@ public class AuthControllerTest {
 
     @Test
     public void shouldConfirmEmailChangeWithoutAuthentication() throws Exception {
-        var response = new UserResponse(1L, "Anton", "new@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var response = new UserResponse(1L, "Anton", "new@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
 
         when(emailChangeService.confirmEmailChange("token123")).thenReturn(response);
 

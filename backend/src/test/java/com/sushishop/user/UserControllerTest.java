@@ -39,7 +39,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
     public void shouldGetCurrentUser() throws Exception {
-        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
 

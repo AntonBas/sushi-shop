@@ -95,25 +95,6 @@ class CustomOAuth2UserServiceTest {
     }
 
     @Test
-    void shouldRejectGoogleSignInWhenDisabledForExistingUser() {
-        var user = User.builder()
-                .email("disabled@gmail.com")
-                .name("Disabled User")
-                .emailVerified(true)
-                .password("their-own-password")
-                .tokenVersion(1)
-                .googleSignInEnabled(false)
-                .build();
-        var oauthUser = googleUser("disabled@gmail.com", true);
-        when(userRepository.findByEmail("disabled@gmail.com")).thenReturn(Optional.of(user));
-
-        assertThatThrownBy(() -> customOAuth2UserService.linkOrCreateUser(oauthUser))
-                .isInstanceOf(OAuth2AuthenticationException.class);
-
-        verify(userRepository, never()).save(any());
-    }
-
-    @Test
     void shouldNotTouchPasswordOrTokenVersionForAlreadyVerifiedUser() {
         var existingUser = User.builder()
                 .email("returning@gmail.com")

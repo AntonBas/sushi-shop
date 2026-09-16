@@ -11,7 +11,6 @@ import styles from './Login.module.css'
 const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
   access_denied: 'Google login was cancelled.',
   unverified_email: 'Your Google account email is not verified. Please verify it with Google first.',
-  google_sign_in_disabled: 'Google sign-in is disabled for this account. Please log in with your password.',
   oauth2_failed: 'Google login failed. Please try again.',
 }
 

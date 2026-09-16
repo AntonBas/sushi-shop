@@ -78,7 +78,7 @@ public class AuthServiceTest {
                 .emailVerified(true)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
         var authority = new SimpleGrantedAuthority("ROLE_CUSTOMER");
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -138,7 +138,7 @@ public class AuthServiceTest {
                 .userRole(UserRole.CUSTOMER)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
 
         when(userService.create(request)).thenReturn(user);
         when(userMapper.toResponse(user)).thenReturn(userResponse);
@@ -157,7 +157,7 @@ public class AuthServiceTest {
                 .userRole(UserRole.CUSTOMER)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
 
         when(oAuth2ExchangeCodeService.consume("valid-code")).thenReturn(Optional.of("anton@example.com"));
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));

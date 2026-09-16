@@ -22,7 +22,6 @@ const user: UserResponse = {
   name: "A",
   phone: "",
   userRole: "CUSTOMER",
-  googleSignInEnabled: true,
 };
 
 function axiosErrorWithStatus(status: number) {
