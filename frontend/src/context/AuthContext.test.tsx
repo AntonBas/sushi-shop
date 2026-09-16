@@ -21,8 +21,8 @@ const user: UserResponse = {
   email: "a@example.com",
   name: "A",
   phone: "",
-  userRole: "USER",
-} as UserResponse;
+  userRole: "CUSTOMER",
+};
 
 function axiosErrorWithStatus(status: number) {
   return new AxiosError(
