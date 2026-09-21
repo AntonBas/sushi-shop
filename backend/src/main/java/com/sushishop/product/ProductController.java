@@ -57,7 +57,7 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "Get all products")
-    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = "name") Pageable pageable,
+    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = {"name", "id"}) Pageable pageable,
                                                             @RequestParam(required = false) String search,
                                                             @RequestParam(required = false) Category category,
                                                             @RequestParam(required = false) Boolean available) {

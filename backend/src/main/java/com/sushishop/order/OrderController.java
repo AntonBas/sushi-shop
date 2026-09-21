@@ -57,7 +57,7 @@ public class OrderController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<UserOrderResponse>> getMyOrders(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/orders/my - user: {}", userDetails.getUsername());
         return ResponseEntity.ok(orderQueryService.getByUser(userDetails.getUsername(), pageable));
     }
@@ -67,7 +67,7 @@ public class OrderController {
     @Operation(summary = "Get all orders (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
-            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) DeliveryMethod deliveryMethod,
             @RequestParam(required = false) PaymentMethod paymentMethod,

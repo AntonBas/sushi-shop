@@ -40,7 +40,7 @@ public class AuditLogController {
             @RequestParam(required = false) String performedBy,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
-            @PageableDefault(size = 20, sort = "performedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 20, sort = {"performedAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(auditLogService.getAll(action, entityName, entityId, performedBy, start, end, pageable));
     }
 }

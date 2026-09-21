@@ -70,7 +70,7 @@ public class ReviewController {
     @Operation(summary = "Get reviews by product")
     public ResponseEntity<Page<ReviewResponse>> getByProduct(
             @PathVariable Long productId,
-            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(size = 5, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/reviews/product/{}", productId);
         return ResponseEntity.ok(reviewService.getByProduct(productId, pageable));
     }

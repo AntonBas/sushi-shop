@@ -65,7 +65,7 @@ public class PromotionController {
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<PromotionResponse>> getAll(
-            @PageableDefault(size = 12, sort = "startDate", direction = Sort.Direction.DESC) Pageable pageable,
+            @PageableDefault(size = 12, sort = {"startDate", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) String search) {
         return ResponseEntity.ok(promotionService.getAll(pageable, search));
     }
