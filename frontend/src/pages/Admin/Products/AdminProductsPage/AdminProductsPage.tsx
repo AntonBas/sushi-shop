@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
@@ -20,20 +20,29 @@ export default function AdminProductsPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<Category | "">("");
   const [availableFilter, setAvailableFilter] = useState<boolean | "">("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteName, setDeleteName] = useState("");
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const categories = Object.keys(CATEGORY_DISPLAY) as Category[];
 
   useEffect(() => {
     loadProducts(page, {
-      search: search || undefined,
+      search: debouncedSearch || undefined,
       category: categoryFilter || undefined,
       available: availableFilter === "" ? undefined : availableFilter,
     });
-  }, [page, search, categoryFilter, availableFilter, loadProducts]);
+  }, [page, debouncedSearch, categoryFilter, availableFilter, loadProducts]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -42,7 +51,7 @@ export default function AdminProductsPage() {
       setDeleteId(null);
       showNotification("Product deleted", "success");
       loadProducts(page, {
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         category: categoryFilter || undefined,
         available: availableFilter === "" ? undefined : availableFilter,
       });
@@ -56,7 +65,7 @@ export default function AdminProductsPage() {
       await productsApi.toggleProduct(id);
       showNotification("Product status updated", "success");
       loadProducts(page, {
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         category: categoryFilter || undefined,
         available: availableFilter === "" ? undefined : availableFilter,
       });
@@ -65,7 +74,7 @@ export default function AdminProductsPage() {
     }
   };
 
-  if (loading) return <Loading text="Loading products..." />;
+  if (loading && products.length === 0) return <Loading text="Loading products..." />;
 
   return (
     <div className={styles.page}>
@@ -83,10 +92,7 @@ export default function AdminProductsPage() {
             type="text"
             placeholder="Search products..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
         <select

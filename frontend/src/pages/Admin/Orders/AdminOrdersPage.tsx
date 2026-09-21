@@ -49,21 +49,30 @@ export default function AdminOrdersPage() {
   const [deliveryFilter, setDeliveryFilter] = useState<DeliveryMethod | "">("");
   const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "">("");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search });
+  const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch });
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    filtersRef.current = { page, statusFilter, deliveryFilter, paymentFilter, search };
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search]);
+    filtersRef.current = { page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch };
+  }, [page, statusFilter, deliveryFilter, paymentFilter, debouncedSearch]);
 
   useEffect(() => {
     loadOrders(page, 12, {
       status: statusFilter || undefined,
       deliveryMethod: deliveryFilter || undefined,
       paymentMethod: paymentFilter || undefined,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
     });
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, debouncedSearch, loadOrders]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
+  };
 
   useOrderSocket((client: Client) => {
     client.subscribe("/topic/orders/new", () => {
@@ -91,14 +100,14 @@ export default function AdminOrdersPage() {
         status: statusFilter || undefined,
         deliveryMethod: deliveryFilter || undefined,
         paymentMethod: paymentFilter || undefined,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
       });
     } catch (err: unknown) {
       showNotification(getErrorMessage(err, "Failed to update status"), "error");
     }
   };
 
-  if (loading) return <Loading text="Loading orders..." />;
+  if (loading && orders.length === 0) return <Loading text="Loading orders..." />;
 
   return (
     <div className={styles.page}>
@@ -113,10 +122,7 @@ export default function AdminOrdersPage() {
             type="text"
             placeholder="Search customer or phone..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
         <select
