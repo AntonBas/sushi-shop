@@ -46,6 +46,11 @@ public class ProductQueryService {
             return getAllSortedInMemory(spec, pageable, products -> priceComparator(products, priceOrder.getDirection()));
         }
 
+        var popularityOrder = pageable.getSort().getOrderFor("popularity");
+        if (popularityOrder != null) {
+            return getAllSortedInMemory(spec, pageable, products -> popularityComparator(products, popularityOrder.getDirection()));
+        }
+
         var page = productRepository.findAll(spec, pageable);
         List<Product> products = page.getContent();
 
@@ -76,13 +81,22 @@ public class ProductQueryService {
     private Comparator<Product> ratingComparator(List<Product> products, Sort.Direction direction) {
         var ratings = enrichmentService.getAverageRatings(products.stream().map(Product::getId).toList());
         Comparator<Product> byRating = Comparator.comparingDouble(p -> ratings.getOrDefault(p.getId(), 0.0));
-        return direction == Sort.Direction.DESC ? byRating.reversed() : byRating;
+        if (direction == Sort.Direction.DESC) byRating = byRating.reversed();
+        return byRating.thenComparing(Product::getId);
     }
 
     private Comparator<Product> priceComparator(List<Product> products, Sort.Direction direction) {
         enrichmentService.enrichProductsWithImagesAndPromotions(products);
         Comparator<Product> byPrice = Comparator.comparing(this::effectivePrice);
-        return direction == Sort.Direction.DESC ? byPrice.reversed() : byPrice;
+        if (direction == Sort.Direction.DESC) byPrice = byPrice.reversed();
+        return byPrice.thenComparing(Product::getId);
+    }
+
+    private Comparator<Product> popularityComparator(List<Product> products, Sort.Direction direction) {
+        var orderQuantities = enrichmentService.getOrderQuantities(products.stream().map(Product::getId).toList());
+        Comparator<Product> byOrderQuantity = Comparator.comparingLong(p -> orderQuantities.getOrDefault(p.getId(), 0L));
+        if (direction == Sort.Direction.DESC) byOrderQuantity = byOrderQuantity.reversed();
+        return byOrderQuantity.thenComparing(Product::getId);
     }
 
     private BigDecimal effectivePrice(Product product) {

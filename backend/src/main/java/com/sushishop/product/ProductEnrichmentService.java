@@ -56,6 +56,17 @@ public class ProductEnrichmentService {
                 ));
     }
 
+    public Map<Long, Long> getOrderQuantities(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) return Map.of();
+
+        return productRepository.findOrderQuantitiesByProductIds(productIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
     public void enrichProductsWithImagesAndPromotions(List<Product> products) {
         if (products == null || products.isEmpty()) return;
 

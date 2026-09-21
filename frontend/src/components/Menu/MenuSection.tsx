@@ -129,6 +129,7 @@ export default function MenuSection() {
             aria-label="Sort products"
           >
             <option value="">Sort: Default</option>
+            <option value="popularity,desc">Most Popular</option>
             <option value="price,asc">Price: Low to High</option>
             <option value="price,desc">Price: High to Low</option>
             <option value="rating,desc">Rating: High to Low</option>
