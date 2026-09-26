@@ -5,12 +5,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -72,5 +74,21 @@ class JwtBlacklistServiceTest {
     void shouldReportNotBlacklistedForNullJti() {
         assertThat(jwtBlacklistService.isBlacklisted(null)).isFalse();
         verify(redisTemplate, never()).hasKey(anyString());
+    }
+
+    @Test
+    void shouldReportNotBlacklistedWhenRedisUnavailable() {
+        when(redisTemplate.hasKey("jwt:blacklist:jti-123"))
+                .thenThrow(new RedisConnectionFailureException("Redis down"));
+
+        assertThat(jwtBlacklistService.isBlacklisted("jti-123")).isFalse();
+    }
+
+    @Test
+    void shouldNotThrowWhenBlacklistingAndRedisUnavailable() {
+        when(redisTemplate.opsForValue()).thenThrow(new RedisConnectionFailureException("Redis down"));
+
+        assertThatCode(() -> jwtBlacklistService.blacklist("jti-123", Duration.ofSeconds(30)))
+                .doesNotThrowAnyException();
     }
 }
