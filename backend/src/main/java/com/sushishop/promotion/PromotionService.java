@@ -14,7 +14,6 @@ import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -41,7 +40,7 @@ public class PromotionService {
     private final PromotionResponseAssembler assembler;
     private final SlugService slugService;
     private final ProductCacheService productCacheService;
-    private final CacheManager cacheManager;
+    private final PromotionCacheService promotionCacheService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
@@ -132,9 +131,9 @@ public class PromotionService {
 
         var saved = promotionRepository.save(promotion);
 
-        evictPromotionCache(id, oldSlug);
+        promotionCacheService.evict(id, oldSlug);
         if (!oldSlug.equals(saved.getSlug())) {
-            evictPromotionCache(id, saved.getSlug());
+            promotionCacheService.evict(id, saved.getSlug());
         }
         var affectedProducts = new HashSet<>(oldProducts);
         affectedProducts.addAll(saved.getProducts());
@@ -156,18 +155,9 @@ public class PromotionService {
         promotionRepository.save(promotion);
         promotionRepository.delete(promotion);
 
-        evictPromotionCache(id, slug);
+        promotionCacheService.evict(id, slug);
         evictProductsCache(products);
         log.info("Promotion deleted: id={}", id);
-    }
-
-    private void evictPromotionCache(Long id, String slug) {
-        var cache = cacheManager.getCache("promotions");
-        if (cache == null) {
-            return;
-        }
-        cache.evict("id:" + id);
-        cache.evict("slug:" + slug);
     }
 
     private void evictProductsCache(Set<Product> products) {

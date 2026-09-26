@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
@@ -60,7 +59,7 @@ public class PromotionServiceTest {
     private ProductCacheService productCacheService;
 
     @Mock
-    private CacheManager cacheManager;
+    private PromotionCacheService promotionCacheService;
 
     @InjectMocks
     private PromotionService promotionService;

@@ -1,12 +1,11 @@
 package com.sushishop.mail;
 
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
 
@@ -79,16 +78,7 @@ public class MailService {
     }
 
     private void dispatch(Runnable send) {
-        if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    taskExecutor.execute(send);
-                }
-            });
-        } else {
-            taskExecutor.execute(send);
-        }
+        TransactionCallbacks.afterCommit(() -> taskExecutor.execute(send));
     }
 
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {
