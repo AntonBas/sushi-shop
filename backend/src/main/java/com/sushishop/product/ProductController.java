@@ -99,7 +99,7 @@ public class ProductController {
     }
 
     @GetMapping("/popular")
-    @Operation(summary = "Get popular products", description = "Returns top 10 products sorted by rating and review count")
+    @Operation(summary = "Get popular products", description = "Returns top 10 available products (excluding extras) sorted by units ordered in non-cancelled orders")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of popular products")
     })
