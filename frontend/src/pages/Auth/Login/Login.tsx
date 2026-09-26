@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/useAuth'
 import { API_BASE_URL } from '../../../config/env'
-import { getErrorMessage } from '../../../api/errorMessage'
+import { getErrorCode, getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import { useResendVerification } from '../../../hooks/common/useResendVerification'
@@ -14,8 +14,8 @@ const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
   oauth2_failed: 'Google login failed. Please try again.',
 }
 
-const UNVERIFIED_EMAIL_ERROR = 'Please verify your email before login'
-const OAUTH_NO_PASSWORD_ERROR = 'This account uses Google sign-in and has no password set. Sign in with Google, or use "Forgot password?" to set one.'
+const EMAIL_NOT_VERIFIED_CODE = 'EMAIL_NOT_VERIFIED'
+const PASSWORD_NOT_SET_CODE = 'PASSWORD_NOT_SET'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -25,6 +25,7 @@ export default function Login() {
     const oauthError = searchParams.get('error')
     return oauthError ? (OAUTH2_ERROR_MESSAGES[oauthError] || OAUTH2_ERROR_MESSAGES.oauth2_failed) : ''
   })
+  const [errorCode, setErrorCode] = useState<string | undefined>()
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -39,12 +40,14 @@ export default function Login() {
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setError('')
+    setErrorCode(undefined)
     setLoading(true)
     try {
       await login({ email, password })
       navigate('/')
     } catch (err) {
       setError(getErrorMessage(err, 'Invalid email or password'))
+      setErrorCode(getErrorCode(err))
     } finally {
       setLoading(false)
     }
@@ -60,7 +63,7 @@ export default function Login() {
 
       {error && <div className={styles.error}>{error}</div>}
 
-      {error === UNVERIFIED_EMAIL_ERROR && (
+      {errorCode === EMAIL_NOT_VERIFIED_CODE && (
         <div className={styles.resendBlock}>
           {message && (
             <p className={messageType === 'error' ? styles.resendMessageError : styles.resendMessageSuccess}>{message}</p>
@@ -78,7 +81,7 @@ export default function Login() {
         </div>
       )}
 
-      {error === OAUTH_NO_PASSWORD_ERROR && (
+      {errorCode === PASSWORD_NOT_SET_CODE && (
         <div className={styles.resendBlock}>
           <Button type="button" variant="secondary" onClick={handleGoogleLogin} style={{ width: '100%' }}>
             Continue with Google

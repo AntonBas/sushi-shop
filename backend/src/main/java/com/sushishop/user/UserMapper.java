@@ -14,6 +14,7 @@ public abstract class UserMapper {
     protected AddressConverter addressConverter;
 
     @Mapping(target = "address", expression = "java(addressConverter.toResponse(user.getCity(), user.getStreet(), user.getHouse(), user.getApartment(), null))")
+    @Mapping(target = "hasPassword", expression = "java(user.getPassword() != null)")
     public abstract UserResponse toResponse(User user);
 
     @Mapping(target = "id", ignore = true)

@@ -25,6 +25,9 @@ public class ApiError {
     private final LocalDateTime timestamp = LocalDateTime.now();
 
     @Setter
+    private String code;
+
+    @Setter
     private String message;
 
     @Setter

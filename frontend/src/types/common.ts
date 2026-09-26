@@ -16,6 +16,7 @@ export interface ApiSubError {
 }
 
 export interface ApiErrorResponse {
+  code?: string
   message?: string
   subErrors?: ApiSubError[]
 }

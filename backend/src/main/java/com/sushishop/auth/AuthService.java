@@ -15,6 +15,7 @@ import com.sushishop.user.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ import java.time.Instant;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+
+    static final String EMAIL_NOT_VERIFIED_CODE = "EMAIL_NOT_VERIFIED";
+    static final String PASSWORD_NOT_SET_CODE = "PASSWORD_NOT_SET";
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -45,18 +49,19 @@ public class AuthService {
         log.info("Login attempt for email: {}", request.email());
 
         var user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new BadRequestException("Invalid email or password"));
-
-        if (!user.isEmailVerified()) {
-            throw new BadRequestException("Please verify your email before login");
-        }
+                .orElseThrow(() -> new BadCredentialsException("Unknown email"));
 
         if (user.getPassword() == null) {
-            throw new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one.");
+            throw new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one.",
+                    PASSWORD_NOT_SET_CODE);
         }
 
         var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+
+        if (!user.isEmailVerified()) {
+            throw new BadRequestException("Please verify your email before login", EMAIL_NOT_VERIFIED_CODE);
+        }
 
         var authority = authentication.getAuthorities().iterator().next().getAuthority();
         String role = authority != null ? authority.replace("ROLE_", "") : "CUSTOMER";
@@ -68,17 +73,14 @@ public class AuthService {
     }
 
     @Transactional
-    public AuthResult register(RegisterRequest request) {
+    public UserResponse register(RegisterRequest request) {
         log.info("Register attempt for email: {}", request.email());
 
         var user = userService.create(request);
         tokenService.createVerificationToken(user);
 
-        String jwt = jwtUtil.generateToken(user.getEmail(), user.getUserRole().name(), user.getTokenVersion());
-        var userResponse = userMapper.toResponse(user);
-
         log.info("Register successful for email: {}", request.email());
-        return new AuthResult(jwt, userResponse);
+        return userMapper.toResponse(user);
     }
 
     @Transactional(readOnly = true)

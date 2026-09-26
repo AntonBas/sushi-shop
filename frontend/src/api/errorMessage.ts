@@ -11,3 +11,10 @@ export function getErrorMessage(err: unknown, fallback: string): string {
   }
   return fallback;
 }
+
+export function getErrorCode(err: unknown): string | undefined {
+  if (err instanceof AxiosError) {
+    return (err.response?.data as ApiErrorResponse | undefined)?.code;
+  }
+  return undefined;
+}

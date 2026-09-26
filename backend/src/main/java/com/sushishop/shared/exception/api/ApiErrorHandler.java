@@ -94,6 +94,7 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                                                               @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(ex.getStatus());
         apiError.setMessage(ex.getMessage());
+        apiError.setCode(ex.getCode());
         if (ex.getStatus().is5xxServerError()) {
             log.error("Server exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
         } else {

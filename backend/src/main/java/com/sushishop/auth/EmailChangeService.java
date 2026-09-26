@@ -49,6 +49,7 @@ public class EmailChangeService {
 
         user.setPendingEmail(request.newEmail());
         userRepository.save(user);
+        evictUserCache(email);
 
         tokenService.createEmailChangeToken(user, request.newEmail());
         mailService.sendEmailChangeRequestedNotification(email, request.newEmail());

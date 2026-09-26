@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } else if (payload != null) {
                 var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
 
-                if (cachedUser != null) {
+                if (cachedUser != null && cachedUser.emailVerified()) {
                     var principal = new CustomUserDetails(cachedUser);
                     var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);

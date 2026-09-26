@@ -200,32 +200,39 @@ export default function ProfilePage() {
       {activeTab === "security" && (
         <>
           <h2 className={styles.sectionTitle}>Change Password</h2>
-          <form onSubmit={handleChangePassword} className={styles.form}>
-            <Input
-              label="Current Password"
-              type="password"
-              value={oldPassword}
-              onChange={setOldPassword}
-              placeholder="••••••••"
-            />
-            <Input
-              label="New Password"
-              type="password"
-              value={newPassword}
-              onChange={setNewPassword}
-              placeholder="Min 8 characters"
-            />
-            <Input
-              label="Confirm New Password"
-              type="password"
-              value={confirmPassword}
-              onChange={setConfirmPassword}
-              placeholder="Repeat new password"
-            />
-            <Button type="submit" loading={passwordApi.loading}>
-              Change Password
-            </Button>
-          </form>
+          {user?.hasPassword ? (
+            <form onSubmit={handleChangePassword} className={styles.form}>
+              <Input
+                label="Current Password"
+                type="password"
+                value={oldPassword}
+                onChange={setOldPassword}
+                placeholder="••••••••"
+              />
+              <Input
+                label="New Password"
+                type="password"
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Min 8 characters"
+              />
+              <Input
+                label="Confirm New Password"
+                type="password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder="Repeat new password"
+              />
+              <Button type="submit" loading={passwordApi.loading}>
+                Change Password
+              </Button>
+            </form>
+          ) : (
+            <p className={styles.pendingNotice}>
+              This account signs in with Google and has no password yet.{" "}
+              <Link to="/forgot-password">Set a password</Link> to also sign in with email.
+            </p>
+          )}
 
           <h2 className={styles.sectionTitle}>Change Email</h2>
           <form onSubmit={handleRequestEmailChange} className={styles.form}>

@@ -27,6 +27,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -65,16 +66,15 @@ public class AuthControllerTest {
     @Test
     public void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
-        var authResult = new AuthService.AuthResult("jwt-token", userResponse);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
-        when(authService.register(any())).thenReturn(authResult);
+        when(authService.register(any())).thenReturn(userResponse);
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(cookie().value("jwt", "jwt-token"))
+                .andExpect(cookie().doesNotExist("jwt"))
                 .andExpect(jsonPath("$.user.email").value("anton@example.com"));
     }
 
@@ -91,7 +91,7 @@ public class AuthControllerTest {
     @Test
     public void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.login(any())).thenReturn(authResult);
@@ -120,19 +120,20 @@ public class AuthControllerTest {
     public void shouldReturn400WhenOAuthAccountHasNoPassword() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
 
-        when(authService.login(any())).thenThrow(new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one."));
+        when(authService.login(any())).thenThrow(new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one.", "PASSWORD_NOT_SET"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one."));
+                .andExpect(jsonPath("$.message").value("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one."))
+                .andExpect(jsonPath("$.code").value("PASSWORD_NOT_SET"));
     }
 
     @Test
     public void shouldExchangeOAuth2Code() throws Exception {
         var request = new OAuth2ExchangeRequest("valid-code");
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
 
         when(authService.exchangeOAuth2Code("valid-code")).thenReturn(authResult);
@@ -224,6 +225,16 @@ public class AuthControllerTest {
     }
 
     @Test
+    public void shouldNormalizeEmailCaseBeforeCallingService() throws Exception {
+        mockMvc.perform(post("/api/auth/password/forgot")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"Anton@Example.COM\"}"))
+                .andExpect(status().isOk());
+
+        verify(passwordResetService).forgotPassword("anton@example.com");
+    }
+
+    @Test
     public void shouldResetPassword() throws Exception {
         var request = new ResetPasswordRequest("token123", "NewPass123", "NewPass123");
 
@@ -253,7 +264,7 @@ public class AuthControllerTest {
 
     @Test
     public void shouldConfirmEmailChangeWithoutAuthentication() throws Exception {
-        var response = new UserResponse(1L, "Anton", "new@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var response = new UserResponse(1L, "Anton", "new@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(emailChangeService.confirmEmailChange("token123")).thenReturn(response);
 

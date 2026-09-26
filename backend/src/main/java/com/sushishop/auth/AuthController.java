@@ -9,6 +9,7 @@ import com.sushishop.auth.dto.response.AuthResponse;
 import com.sushishop.auth.dto.response.ResendVerificationResponse;
 import com.sushishop.security.jwt.JwtCookieService;
 import com.sushishop.shared.ratelimit.RateLimit;
+import com.sushishop.shared.service.EmailNormalizer;
 import com.sushishop.user.dto.request.ChangeEmailRequest;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
@@ -56,11 +57,10 @@ public class AuthController {
             @ApiResponse(responseCode = "409", description = "Email already registered")
     })
     @SecurityRequirements()
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.info("POST /api/auth/register - email: {}", request.email());
-        var result = authService.register(request);
-        jwtCookieService.addTokenCookie(response, result.token());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(result.user()));
+        var user = authService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(user));
     }
 
     @RateLimit(key = {"ip", "email"})
@@ -144,7 +144,7 @@ public class AuthController {
     @Operation(summary = "Check remaining resend cooldown without sending an email")
     @SecurityRequirements()
     public ResponseEntity<ResendVerificationResponse> resendVerificationStatus(@RequestParam String email) {
-        int cooldownSeconds = emailVerificationService.getResendCooldownStatus(email);
+        int cooldownSeconds = emailVerificationService.getResendCooldownStatus(EmailNormalizer.normalize(email));
         return ResponseEntity.ok(new ResendVerificationResponse(cooldownSeconds));
     }
 

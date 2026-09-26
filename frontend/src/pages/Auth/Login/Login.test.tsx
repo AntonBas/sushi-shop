@@ -11,7 +11,7 @@ vi.mock('../../../hooks/common/useResendVerification')
 
 const OAUTH_NO_PASSWORD_ERROR = 'This account uses Google sign-in and has no password set. Sign in with Google, or use "Forgot password?" to set one.'
 
-function axiosErrorWithMessage(message: string) {
+function axiosErrorWithMessage(message: string, code: string) {
   return new AxiosError(
     'Request failed',
     '400',
@@ -22,7 +22,7 @@ function axiosErrorWithMessage(message: string) {
       statusText: 'Bad Request',
       headers: {},
       config: { headers: new AxiosHeaders() },
-      data: { message },
+      data: { message, code },
     },
   )
 }
@@ -38,7 +38,7 @@ function renderLogin() {
 describe('Login', () => {
   it('shows a Google sign-in prompt when the account has no password set', async () => {
     vi.mocked(useAuth).mockReturnValue({
-      login: vi.fn().mockRejectedValue(axiosErrorWithMessage(OAUTH_NO_PASSWORD_ERROR)),
+      login: vi.fn().mockRejectedValue(axiosErrorWithMessage(OAUTH_NO_PASSWORD_ERROR, 'PASSWORD_NOT_SET')),
     } as unknown as ReturnType<typeof useAuth>)
     vi.mocked(useResendVerification).mockReturnValue({
       resend: vi.fn(),

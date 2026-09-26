@@ -69,11 +69,13 @@ class EmailChangeServiceTest {
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(cacheManager.getCache("users")).thenReturn(usersCache);
 
         emailChangeService.requestEmailChange("anton@example.com", request);
 
         assertThat(user.getPendingEmail()).isEqualTo("new@example.com");
         verify(userRepository).save(user);
+        verify(usersCache).evict("anton@example.com");
         verify(tokenService).createEmailChangeToken(user, "new@example.com");
         verify(mailService).sendEmailChangeRequestedNotification("anton@example.com", "new@example.com");
     }
@@ -141,7 +143,7 @@ class EmailChangeServiceTest {
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(cacheManager.getCache("users")).thenReturn(usersCache);
         when(userMapper.toResponse(user)).thenReturn(
-                new UserResponse(1L, null, "new@example.com", null, null, UserRole.CUSTOMER, null));
+                new UserResponse(1L, null, "new@example.com", null, null, UserRole.CUSTOMER, null, true));
 
         var result = emailChangeService.confirmEmailChange("token123");
 

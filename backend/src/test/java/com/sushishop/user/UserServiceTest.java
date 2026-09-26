@@ -105,7 +105,8 @@ public class UserServiceTest {
                 null,
                 "+380961791111",
                 UserRole.CUSTOMER,
-                null
+                null,
+                true
         );
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -139,7 +140,8 @@ public class UserServiceTest {
                 null,
                 "+380999999999",
                 UserRole.CUSTOMER,
-                null
+                null,
+                true
         );
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));

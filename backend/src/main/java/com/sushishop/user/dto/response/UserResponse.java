@@ -25,6 +25,9 @@ public record UserResponse(
         UserRole userRole,
 
         @Schema(description = "Default delivery address")
-        AddressResponse address
+        AddressResponse address,
+
+        @Schema(description = "Whether the account has a password (false for Google-only accounts)", example = "true")
+        boolean hasPassword
 ) {
 }

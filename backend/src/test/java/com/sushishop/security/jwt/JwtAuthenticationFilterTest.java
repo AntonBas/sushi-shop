@@ -1,5 +1,7 @@
 package com.sushishop.security.jwt;
 
+import com.sushishop.user.CachedAuthUser;
+import com.sushishop.user.UserRole;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +61,40 @@ class JwtAuthenticationFilterTest {
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
         verify(userCacheService, never()).getCachedUser(any(), any());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldNotAuthenticateUserWithUnverifiedEmail() throws Exception {
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+        var payload = new JwtUtil.JwtPayload("anton@example.com", 0, "jti-123", new Date());
+
+        when(jwtCookieService.extractToken(request)).thenReturn("token123");
+        when(jwtUtil.parseToken("token123")).thenReturn(payload);
+        when(userCacheService.getCachedUser("anton@example.com", 0))
+                .thenReturn(new CachedAuthUser("anton@example.com", UserRole.CUSTOMER, false));
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void shouldAuthenticateUserWithVerifiedEmail() throws Exception {
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+        var payload = new JwtUtil.JwtPayload("anton@example.com", 0, "jti-123", new Date());
+
+        when(jwtCookieService.extractToken(request)).thenReturn("token123");
+        when(jwtUtil.parseToken("token123")).thenReturn(payload);
+        when(userCacheService.getCachedUser("anton@example.com", 0))
+                .thenReturn(new CachedAuthUser("anton@example.com", UserRole.CUSTOMER, true));
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         verify(filterChain).doFilter(request, response);
     }
 }

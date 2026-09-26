@@ -19,6 +19,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -78,7 +79,7 @@ public class AuthServiceTest {
                 .emailVerified(true)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
         var authority = new SimpleGrantedAuthority("ROLE_CUSTOMER");
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -97,14 +98,44 @@ public class AuthServiceTest {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
+                .password("encoded-password")
                 .emailVerified(false)
                 .build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Please verify your email before login");
+                .hasMessageContaining("Please verify your email before login")
+                .extracting("code").isEqualTo("EMAIL_NOT_VERIFIED");
+    }
+
+    @Test
+    public void shouldCheckPasswordBeforeRevealingThatEmailIsNotVerified() {
+        var request = new LoginRequest("anton@example.com", "wrong-password");
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("encoded-password")
+                .emailVerified(false)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    public void shouldThrowBadCredentialsForUnknownEmail() {
+        var request = new LoginRequest("ghost@example.com", "password123");
+
+        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadCredentialsException.class);
     }
 
     @Test
@@ -120,7 +151,8 @@ public class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("This account uses Google sign-in");
+                .hasMessageContaining("This account uses Google sign-in")
+                .extracting("code").isEqualTo("PASSWORD_NOT_SET");
     }
 
     @Test
@@ -138,15 +170,15 @@ public class AuthServiceTest {
                 .userRole(UserRole.CUSTOMER)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(userService.create(request)).thenReturn(user);
         when(userMapper.toResponse(user)).thenReturn(userResponse);
-        when(jwtUtil.generateToken("anton@example.com", "CUSTOMER", 0)).thenReturn("jwt-token");
 
         var result = authService.register(request);
 
-        assertThat(result.token()).isEqualTo("jwt-token");
+        assertThat(result).isEqualTo(userResponse);
+        verifyNoInteractions(jwtUtil);
         verify(tokenService).createVerificationToken(user);
     }
 
@@ -157,7 +189,7 @@ public class AuthServiceTest {
                 .userRole(UserRole.CUSTOMER)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(oAuth2ExchangeCodeService.consume("valid-code")).thenReturn(Optional.of("anton@example.com"));
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
