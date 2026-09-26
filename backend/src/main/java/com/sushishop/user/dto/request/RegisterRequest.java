@@ -1,6 +1,7 @@
 package com.sushishop.user.dto.request;
 
 import com.sushishop.shared.address.AddressRequest;
+import com.sushishop.shared.service.EmailNormalizer;
 import com.sushishop.shared.validation.FieldsMatch;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -42,4 +43,8 @@ public record RegisterRequest(
         @Valid
         AddressRequest address
 ) {
+
+    public RegisterRequest {
+        email = EmailNormalizer.normalize(email);
+    }
 }

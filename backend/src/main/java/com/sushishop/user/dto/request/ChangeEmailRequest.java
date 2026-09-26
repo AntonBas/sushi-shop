@@ -1,5 +1,6 @@
 package com.sushishop.user.dto.request;
 
+import com.sushishop.shared.service.EmailNormalizer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,4 +13,8 @@ public record ChangeEmailRequest(
         @Size(max = 100, message = "Email must be less than 100 characters")
         String newEmail
 ) {
+
+    public ChangeEmailRequest {
+        newEmail = EmailNormalizer.normalize(newEmail);
+    }
 }

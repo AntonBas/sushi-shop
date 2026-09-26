@@ -1,5 +1,6 @@
 package com.sushishop.security.oauth2;
 
+import com.sushishop.shared.service.EmailNormalizer;
 import com.sushishop.user.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,7 +33,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                                         @NonNull HttpServletResponse response,
                                         @NonNull Authentication authentication) throws IOException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        String email = Objects.requireNonNull(oAuth2User).getAttribute("email");
+        String email = EmailNormalizer.normalize(Objects.requireNonNull(oAuth2User).getAttribute("email"));
 
         userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalStateException("User not found with email: " + email));

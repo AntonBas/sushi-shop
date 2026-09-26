@@ -1,6 +1,7 @@
 package com.sushishop.security.oauth2;
 
 import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.shared.service.EmailNormalizer;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserRole;
@@ -42,7 +43,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
      */
     void linkOrCreateUser(OAuth2User oauthUser) {
         var attributes = oauthUser.getAttributes();
-        String email = (String) attributes.get("email");
+        String email = EmailNormalizer.normalize((String) attributes.get("email"));
         String name = (String) attributes.get("name");
 
         if (!Boolean.TRUE.equals(attributes.get("email_verified"))) {
