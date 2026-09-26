@@ -4,8 +4,10 @@ import com.sushishop.security.jwt.JwtAuthenticationFilter;
 import com.sushishop.security.oauth2.CustomOAuth2UserService;
 import com.sushishop.security.oauth2.OAuth2AuthenticationFailureHandler;
 import com.sushishop.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import jakarta.servlet.Filter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -47,6 +49,16 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterServletRegistration() {
+        return disabledServletRegistration(jwtFilter);
+    }
+
+    @Bean
+    public FilterRegistrationBean<CsrfHeaderFilter> csrfHeaderFilterServletRegistration() {
+        return disabledServletRegistration(csrfHeaderFilter);
     }
 
     @Bean
@@ -113,5 +125,11 @@ public class SecurityConfig {
                 .addFilterBefore(csrfHeaderFilter, JwtAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    private static <T extends Filter> FilterRegistrationBean<T> disabledServletRegistration(T filter) {
+        FilterRegistrationBean<T> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 }

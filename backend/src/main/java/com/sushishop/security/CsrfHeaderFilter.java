@@ -11,15 +11,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Set;
 
-/**
- * Cookie-based auth is vulnerable to CSRF, and the usual Spring Security
- * double-submit cookie defense doesn't apply here: frontend and backend are
- * on different domains (Vercel/Render), so frontend JS can never read a
- * cookie the backend sets. Instead, this requires a custom header on every
- * mutating request. A plain HTML form can't set custom headers, and cross-site
- * JS can't either unless our CORS config allows its origin (it doesn't) —
- * the header itself doesn't need to be secret.
- */
 @Component
 public class CsrfHeaderFilter extends OncePerRequestFilter {
 
