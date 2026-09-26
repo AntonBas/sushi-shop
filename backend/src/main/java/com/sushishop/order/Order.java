@@ -23,7 +23,6 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,7 +42,6 @@ import java.util.List;
         @Index(name = "idx_order_status", columnList = "status"),
         @Index(name = "idx_order_created_at", columnList = "created_at")
 })
-@EqualsAndHashCode(callSuper = true, exclude = "items")
 public class Order extends BaseEntity {
 
     @Id
