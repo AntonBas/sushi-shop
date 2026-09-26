@@ -4,7 +4,10 @@ import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.shared.validation.FieldsMatch;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "Registration data")
 @FieldsMatch(first = "password", second = "confirmPassword", message = "Passwords don't match!")

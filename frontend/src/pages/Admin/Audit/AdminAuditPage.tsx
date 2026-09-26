@@ -48,9 +48,6 @@ export default function AdminAuditPage() {
           <option value="CREATE">CREATE</option>
           <option value="UPDATE">UPDATE</option>
           <option value="DELETE">DELETE</option>
-          <option value="LOGIN">LOGIN</option>
-          <option value="LOGOUT">LOGOUT</option>
-          <option value="EXPORT">EXPORT</option>
         </select>
         <input
           type="text"
