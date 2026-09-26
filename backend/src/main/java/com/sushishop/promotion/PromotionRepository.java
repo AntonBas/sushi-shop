@@ -19,8 +19,8 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     @Query("SELECT p FROM Promotion p WHERE p.startDate <= :now AND p.endDate >= :now AND p.active = true")
     List<Promotion> findActiveAt(@Param("now") LocalDateTime now);
 
-    @Query("SELECT p.id FROM Promotion p WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%'))")
-    Page<Long> findIdsBySearch(@Param("search") String search, @Nonnull Pageable pageable);
+    @Query("SELECT p.id FROM Promotion p WHERE LOWER(p.title) LIKE :pattern ESCAPE '\\'")
+    Page<Long> findIdsByTitlePattern(@Param("pattern") String pattern, @Nonnull Pageable pageable);
 
     @Query("SELECT p.id FROM Promotion p")
     Page<Long> findIds(@Nonnull Pageable pageable);

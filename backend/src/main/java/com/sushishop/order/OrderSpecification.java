@@ -1,5 +1,6 @@
 package com.sushishop.order;
 
+import com.sushishop.shared.service.LikePattern;
 import org.springframework.data.jpa.domain.Specification;
 
 public class OrderSpecification {
@@ -18,9 +19,10 @@ public class OrderSpecification {
     public static Specification<Order> hasSearch(String search) {
         return (root, query, cb) -> {
             if (search == null || search.isBlank()) return null;
+            String pattern = LikePattern.contains(search);
             return cb.or(
-                    cb.like(root.get("customerName"), "%" + search + "%"),
-                    cb.like(root.get("phone"), "%" + search + "%")
+                    cb.like(root.get("customerName"), pattern, LikePattern.ESCAPE),
+                    cb.like(root.get("phone"), pattern, LikePattern.ESCAPE)
             );
         };
     }

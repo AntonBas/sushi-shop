@@ -9,6 +9,7 @@ import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.LikePattern;
 import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
@@ -79,7 +80,7 @@ public class PromotionService {
     public Page<PromotionResponse> getAll(Pageable pageable, String search) {
         Page<Long> idsPage;
         if (search != null && !search.isBlank()) {
-            idsPage = promotionRepository.findIdsBySearch(search, pageable);
+            idsPage = promotionRepository.findIdsByTitlePattern(LikePattern.containsIgnoreCase(search), pageable);
         } else {
             idsPage = promotionRepository.findIds(pageable);
         }
