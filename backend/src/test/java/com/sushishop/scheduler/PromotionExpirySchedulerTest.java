@@ -3,6 +3,7 @@ package com.sushishop.scheduler;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductCacheService;
 import com.sushishop.promotion.Promotion;
+import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.promotion.PromotionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,44 +32,48 @@ class PromotionExpirySchedulerTest {
     @Mock
     private ProductCacheService productCacheService;
 
+    @Mock
+    private PromotionCacheService promotionCacheService;
+
     @InjectMocks
     private PromotionExpiryScheduler scheduler;
 
     @Test
-    void shouldEvictCacheForProductsOfJustExpiredPromotion() {
+    void shouldEvictCachesForPromotionThatJustStartedOrEnded() {
         var product = Product.builder().id(1L).slug("maki").build();
-        var promotion = Promotion.builder().id(1L).products(Set.of(product)).build();
+        var promotion = Promotion.builder().id(1L).slug("summer").products(Set.of(product)).build();
 
-        when(promotionRepository.findEndingBetween(any(), any())).thenReturn(List.of(promotion));
+        when(promotionRepository.findStartingOrEndingBetween(any(), any())).thenReturn(List.of(promotion));
 
-        scheduler.evictExpiredPromotionsCache();
+        scheduler.evictCacheOnPromotionBoundaries();
 
         verify(productCacheService).evict(1L, "maki");
+        verify(promotionCacheService).evict(1L, "summer");
     }
 
     @Test
     void shouldDoNothingWhenNoPromotionsExpired() {
-        when(promotionRepository.findEndingBetween(any(), any())).thenReturn(List.of());
+        when(promotionRepository.findStartingOrEndingBetween(any(), any())).thenReturn(List.of());
 
-        scheduler.evictExpiredPromotionsCache();
+        scheduler.evictCacheOnPromotionBoundaries();
 
         verify(productCacheService, never()).evict(any(), any());
     }
 
     @Test
     void shouldStartNextWindowWhereThePreviousOneEnded() {
-        when(promotionRepository.findEndingBetween(any(), any())).thenReturn(List.of());
+        when(promotionRepository.findStartingOrEndingBetween(any(), any())).thenReturn(List.of());
 
-        scheduler.evictExpiredPromotionsCache();
+        scheduler.evictCacheOnPromotionBoundaries();
 
         var toCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(promotionRepository).findEndingBetween(any(), toCaptor.capture());
+        verify(promotionRepository).findStartingOrEndingBetween(any(), toCaptor.capture());
         var firstRunEnd = toCaptor.getValue();
 
-        scheduler.evictExpiredPromotionsCache();
+        scheduler.evictCacheOnPromotionBoundaries();
 
         var fromCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(promotionRepository, times(2)).findEndingBetween(fromCaptor.capture(), any());
+        verify(promotionRepository, times(2)).findStartingOrEndingBetween(fromCaptor.capture(), any());
         assertThat(fromCaptor.getAllValues().get(1)).isEqualTo(firstRunEnd);
     }
 }

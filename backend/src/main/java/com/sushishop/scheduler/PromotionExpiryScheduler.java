@@ -1,6 +1,7 @@
 package com.sushishop.scheduler;
 
 import com.sushishop.product.ProductCacheService;
+import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.promotion.PromotionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,17 +17,20 @@ public class PromotionExpiryScheduler {
 
     private final PromotionRepository promotionRepository;
     private final ProductCacheService productCacheService;
+    private final PromotionCacheService promotionCacheService;
 
     private volatile LocalDateTime lastRun = LocalDateTime.now();
 
     @Scheduled(fixedRate = INTERVAL_MS)
-    public void evictExpiredPromotionsCache() {
+    public void evictCacheOnPromotionBoundaries() {
         var now = LocalDateTime.now();
         var from = lastRun;
 
-        promotionRepository.findEndingBetween(from, now).forEach(promotion ->
-                promotion.getProducts().forEach(product ->
-                        productCacheService.evict(product.getId(), product.getSlug())));
+        promotionRepository.findStartingOrEndingBetween(from, now).forEach(promotion -> {
+            promotionCacheService.evict(promotion.getId(), promotion.getSlug());
+            promotion.getProducts().forEach(product ->
+                    productCacheService.evict(product.getId(), product.getSlug()));
+        });
 
         lastRun = now;
     }

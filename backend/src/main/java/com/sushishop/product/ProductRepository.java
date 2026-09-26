@@ -27,6 +27,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = {"promotions", "productImages"})
     Optional<Product> findBySlug(String slug);
 
+    @Query("SELECT COUNT(oi) > 0 FROM OrderItem oi WHERE oi.product.id = :productId")
+    boolean isReferencedByOrders(@Param("productId") Long productId);
+
     @Query("""
                 SELECT p FROM Product p
                 LEFT JOIN OrderItem oi ON oi.product = p AND oi.order.status <> 'CANCELLED'
