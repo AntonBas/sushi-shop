@@ -2,6 +2,7 @@ package com.sushishop.product;
 
 import com.sushishop.file.FileStorageService;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class ProductImageService {
             log.warn("Skipping empty image for product: {}", productId);
             return;
         }
+        TransactionCallbacks.afterRollback(() -> fileStorageService.delete(url));
 
         int nextOrder = product.getProductImages().stream()
                 .mapToInt(ProductImage::getSortOrder)
@@ -56,10 +58,11 @@ public class ProductImageService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Image not found: " + imageId));
 
-        fileStorageService.delete(image.getUrl());
+        var url = image.getUrl();
         product.getProductImages().remove(image);
         productRepository.save(product);
         productCacheService.evict(productId, product.getSlug());
+        TransactionCallbacks.afterCommit(() -> fileStorageService.delete(url));
         log.info("Image {} deleted from product: {}", imageId, productId);
     }
 
@@ -87,6 +90,7 @@ public class ProductImageService {
         for (int i = 0; i < images.size(); i++) {
             String url = fileStorageService.store(images.get(i));
             if (url != null) {
+                TransactionCallbacks.afterRollback(() -> fileStorageService.delete(url));
                 productImages.add(ProductImage.builder()
                         .url(url)
                         .sortOrder(i)

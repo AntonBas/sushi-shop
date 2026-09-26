@@ -95,6 +95,24 @@ public class ProductMapperTest {
     }
 
     @Test
+    public void shouldClearDescriptionAndPiecesButKeepOtherFieldsWhenNull() {
+        Product product = new Product();
+        product.setName("Maki");
+        product.setDescription("Salmon roll");
+        product.setPrice(new BigDecimal("250.00"));
+        product.setWeight(250);
+        product.setPieces(8);
+
+        productMapper.updateEntity(new UpdateProductRequest(null, null, null, null, null, null), product);
+
+        assertThat(product.getDescription()).isNull();
+        assertThat(product.getPieces()).isNull();
+        assertThat(product.getName()).isEqualTo("Maki");
+        assertThat(product.getPrice()).isEqualByComparingTo("250.00");
+        assertThat(product.getWeight()).isEqualTo(250);
+    }
+
+    @Test
     public void shouldMapToListResponse() {
         Product product = Product.builder()
                 .id(1L)

@@ -162,11 +162,11 @@ export default function AdminProductForm() {
       if (isEdit && id) {
         await productsApi.updateProduct(Number(id), {
           name: name || undefined,
-          description: description || undefined,
+          description: description || null,
           price: price ? Number(price) : undefined,
           category: category || undefined,
           weight: weight ? Number(weight) : undefined,
-          pieces: pieces ? Number(pieces) : undefined,
+          pieces: pieces ? Number(pieces) : null,
         });
 
         const imageIds = existingImages.map((img) => img.id);
@@ -289,7 +289,7 @@ export default function AdminProductForm() {
                 rows={3}
                 className={styles.textarea}
                 placeholder="Product description"
-                maxLength={250}
+                maxLength={500}
               />
             </div>
             <div className={styles.row}>

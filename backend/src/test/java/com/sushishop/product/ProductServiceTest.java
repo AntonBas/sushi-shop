@@ -4,7 +4,11 @@ import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.promotion.Promotion;
+import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.review.ReviewRepository;
+import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;
@@ -44,6 +48,9 @@ public class ProductServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private PromotionCacheService promotionCacheService;
 
     @Mock
     private ReviewRepository reviewRepository;
@@ -162,13 +169,58 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldDeleteProduct() {
+    public void shouldDeleteProductAndItsImageFiles() {
         var product = createProduct();
+        product.getProductImages().add(ProductImage.builder().id(5L).url("/api/files/a.jpg").product(product).build());
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.isReferencedByOrders(1L)).thenReturn(false);
 
         productService.delete(1L);
 
         verify(productRepository).delete(product);
+        verify(fileStorageService).delete("/api/files/a.jpg");
+    }
+
+    @Test
+    public void shouldRejectDeletingOrderedProductWithoutTouchingFiles() {
+        var product = createProduct();
+        product.getProductImages().add(ProductImage.builder().id(5L).url("/api/files/a.jpg").product(product).build());
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.isReferencedByOrders(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.delete(1L)).isInstanceOf(ConflictException.class);
+
+        verify(productRepository, never()).delete(any());
+        verifyNoInteractions(fileStorageService);
+    }
+
+    @Test
+    public void shouldRejectUpdateThatLeavesSetWithoutPieces() {
+        var request = new UpdateProductRequest(null, null, null, Category.SET, null, null);
+        var product = createProduct();
+        product.setPieces(null);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        doAnswer(inv -> {
+            product.setCategory(Category.SET);
+            return null;
+        }).when(productMapper).updateEntity(request, product);
+
+        assertThatThrownBy(() -> productService.update(1L, request)).isInstanceOf(BadRequestException.class);
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldEvictPromotionCacheWhenProductAvailabilityChanges() {
+        var product = createProduct();
+        product.getPromotions().add(Promotion.builder().id(7L).slug("summer").build());
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.toggleAvailability(1L);
+
+        verify(promotionCacheService).evict(7L, "summer");
     }
 }

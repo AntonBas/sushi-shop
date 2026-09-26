@@ -5,11 +5,14 @@ import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.review.ReviewRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -30,6 +33,7 @@ public class ProductService {
     private final ProductEnrichmentService enrichmentService;
     private final ProductImageService productImageService;
     private final ProductCacheService productCacheService;
+    private final PromotionCacheService promotionCacheService;
     private final FileStorageService fileStorageService;
     private final ReviewRepository reviewRepository;
 
@@ -79,6 +83,9 @@ public class ProductService {
         }
 
         productMapper.updateEntity(request, product);
+        if (product.getCategory() == Category.SET && product.getPieces() == null) {
+            throw new BadRequestException("Pieces is required for sets");
+        }
 
         var updated = productRepository.save(product);
         log.info("Product updated: {}", updated.getId());
@@ -87,6 +94,7 @@ public class ProductService {
         if (!oldSlug.equals(updated.getSlug())) {
             productCacheService.evict(id, updated.getSlug());
         }
+        evictPromotionsOf(updated);
         return toResponse(updated);
     }
 
@@ -98,6 +106,7 @@ public class ProductService {
         product.setAvailable(!product.isAvailable());
         productRepository.save(product);
         productCacheService.evict(id, product.getSlug());
+        evictPromotionsOf(product);
         log.info("Product {} is now {}", id, product.isAvailable() ? "available" : "unavailable");
     }
 
@@ -106,14 +115,22 @@ public class ProductService {
     public void delete(Long id) {
         var product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Product not found: " + id));
+        if (productRepository.isReferencedByOrders(id)) {
+            throw new ConflictException("Product has already been ordered and cannot be deleted. Mark it unavailable instead.");
+        }
         var slug = product.getSlug();
+        var imageUrls = product.getProductImages().stream().map(ProductImage::getUrl).toList();
 
-        product.getProductImages().forEach(img -> fileStorageService.delete(img.getUrl()));
+        evictPromotionsOf(product);
         product.getPromotions().clear();
-        productRepository.save(product);
         productRepository.delete(product);
         productCacheService.evict(id, slug);
+        TransactionCallbacks.afterCommit(() -> imageUrls.forEach(fileStorageService::delete));
         log.debug("Deleted product with ID: {}", id);
+    }
+
+    private void evictPromotionsOf(Product product) {
+        product.getPromotions().forEach(promotion -> promotionCacheService.evict(promotion.getId(), promotion.getSlug()));
     }
 
     private ProductResponse toResponse(Product product) {
