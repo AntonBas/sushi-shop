@@ -1,32 +1,55 @@
 package com.sushishop.shared.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sushishop.auth.PasswordResetService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.io.IOException;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@SpringBootTest
+@ActiveProfiles("test")
 public class JacksonConfigTest {
 
-    private final ObjectMapper objectMapper = new JacksonConfig().objectMapper();
+    @Autowired
+    private WebApplicationContext context;
 
-    private record Sample(String name, String description) {
+    @MockitoBean
+    private PasswordResetService passwordResetService;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    public void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
-    public void shouldTrimLeadingAndTrailingWhitespaceOnStringFields() throws IOException {
-        Sample sample = objectMapper.readValue(
-                "{\"name\":\"  Maki  \",\"description\":\"\\tSalmon roll\\n\"}", Sample.class);
+    public void shouldTrimStringFieldsInHttpRequestBody() throws Exception {
+        mockMvc.perform(post("/api/auth/password/forgot")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"  a@b.com\\t\"}"))
+                .andExpect(status().isOk());
 
-        assertThat(sample.name()).isEqualTo("Maki");
-        assertThat(sample.description()).isEqualTo("Salmon roll");
+        verify(passwordResetService).forgotPassword("a@b.com");
     }
 
     @Test
-    public void shouldLeaveNullStringFieldsUnchanged() throws IOException {
-        Sample sample = objectMapper.readValue("{\"name\":\"Maki\",\"description\":null}", Sample.class);
-
-        assertThat(sample.description()).isNull();
+    public void shouldSerializeErrorStatusByEnumName() throws Exception {
+        mockMvc.perform(post("/api/auth/password/forgot")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"not-an-email\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
     }
 }
