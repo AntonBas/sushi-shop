@@ -22,6 +22,7 @@ const user: UserResponse = {
   name: "A",
   phone: "",
   userRole: "CUSTOMER",
+  hasPassword: true,
 };
 
 function axiosErrorWithStatus(status: number) {
