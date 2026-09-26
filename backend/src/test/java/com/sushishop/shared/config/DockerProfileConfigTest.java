@@ -27,7 +27,7 @@ public class DockerProfileConfigTest {
                 .containsKeys(
                         "spring.datasource.url",
                         "spring.data.redis.host",
-                        "spring.security.oauth2.client.registration.google.client-id"
+                        "spring.security.oauth2.client.registration.google.redirect-uri"
                 )
                 .doesNotContainKeys(
                         "springdoc.datasource.url",
