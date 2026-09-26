@@ -8,7 +8,7 @@ export type PaymentMethod = 'ONLINE' | 'ON_DELIVERY'
 
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'COURIER'
 
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'EXPORT'
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE'
 
 export const CATEGORY_DISPLAY: Record<Category, string> = {
   ROLL: 'Roll',
