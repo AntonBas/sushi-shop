@@ -1,9 +1,13 @@
 package com.sushishop.mail;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
@@ -17,6 +21,7 @@ public class MailService {
     private static final long RETRY_DELAY_MS = 200;
 
     private final RestClient restClient;
+    private final TaskExecutor taskExecutor;
     private final String fromEmail;
     private final String fromName;
 
@@ -25,7 +30,9 @@ public class MailService {
 
     public MailService(@Value("${app.mail.api-key}") String apiKey,
                         @Value("${app.mail.from-email}") String fromEmail,
-                        @Value("${app.mail.from-name}") String fromName) {
+                        @Value("${app.mail.from-name}") String fromName,
+                        @Qualifier("mailTaskExecutor") TaskExecutor taskExecutor) {
+        this.taskExecutor = taskExecutor;
         this.fromEmail = fromEmail;
         this.fromName = fromName;
         this.restClient = RestClient.builder()
@@ -34,46 +41,54 @@ public class MailService {
                 .build();
     }
 
-    @Async
     public void sendVerificationEmail(String to, String token) {
-        sendStyledEmail(to, "Verify your Sushi Bas Shop account",
+        dispatch(() -> sendStyledEmail(to, "Verify your Sushi Bas Shop account",
                 "Welcome!",
                 "Thanks for creating an account. Click the button below to verify your email address.",
                 "Verify Email",
-                baseUrl + "/verify-email?token=" + token);
+                baseUrl + "/verify-email?token=" + token));
     }
 
-    @Async
     public void sendPasswordResetEmail(String to, String token) {
-        sendStyledEmail(to, "Reset your Sushi Bas Shop password",
+        dispatch(() -> sendStyledEmail(to, "Reset your Sushi Bas Shop password",
                 "Reset Password",
                 "Click the button below to reset your password.",
                 "Reset Password",
-                baseUrl + "/reset-password?token=" + token);
+                baseUrl + "/reset-password?token=" + token));
     }
 
-    @Async
     public void sendPasswordChangedNotification(String to) {
-        sendPlainEmail(to, "Your Sushi Bas Shop password was changed",
+        dispatch(() -> sendPlainEmail(to, "Your Sushi Bas Shop password was changed",
                 "Password Changed",
-                "Your account password was just changed. If you didn't do this, please reset your password immediately.");
+                "Your account password was just changed. If you didn't do this, please reset your password immediately."));
     }
 
-    @Async
     public void sendEmailChangeVerification(String to, String token) {
-        sendStyledEmail(to, "Confirm your new Sushi Bas Shop email",
+        dispatch(() -> sendStyledEmail(to, "Confirm your new Sushi Bas Shop email",
                 "Confirm Your New Email",
                 "Click the button below to confirm this address as your new account email.",
                 "Confirm Email",
-                baseUrl + "/verify-email-change?token=" + token);
+                baseUrl + "/verify-email-change?token=" + token));
     }
 
-    @Async
     public void sendEmailChangeRequestedNotification(String to, String newEmail) {
-        sendPlainEmail(to, "Your Sushi Bas Shop email change request",
+        dispatch(() -> sendPlainEmail(to, "Your Sushi Bas Shop email change request",
                 "Email Change Requested",
-                "A request was made to change your account email to " + newEmail
-                        + ". If this wasn't you, please contact support immediately.");
+                "A request was made to change your account email to " + HtmlUtils.htmlEscape(newEmail)
+                        + ". If this wasn't you, please contact support immediately."));
+    }
+
+    private void dispatch(Runnable send) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    taskExecutor.execute(send);
+                }
+            });
+        } else {
+            taskExecutor.execute(send);
+        }
     }
 
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {

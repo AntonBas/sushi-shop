@@ -2,12 +2,16 @@ package com.sushishop.mail;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
@@ -24,7 +28,7 @@ class MailServiceTest {
 
     @BeforeEach
     void setUp() {
-        mailService = new MailService("test-api-key", "from@sushibas.shop", "Sushi Bas Shop");
+        mailService = new MailService("test-api-key", "from@sushibas.shop", "Sushi Bas Shop", new SyncTaskExecutor());
         ReflectionTestUtils.setField(mailService, "baseUrl", "http://localhost:5173");
 
         RestClient.Builder builder = RestClient.builder()
@@ -117,6 +121,49 @@ class MailServiceTest {
                 .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
 
         mailService.sendVerificationEmail("anton@example.com", "token123");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldHtmlEscapeNewEmailInChangeRequestedNotification() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.htmlContent", containsString("&lt;b&gt;x@example.com")))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendEmailChangeRequestedNotification("old@example.com", "<b>x@example.com");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldDeferSendingUntilTransactionCommits() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            mailService.sendVerificationEmail("anton@example.com", "token123");
+            assertThatThrownBy(mockServer::verify).isInstanceOf(AssertionError.class);
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldNotSendWhenTransactionRollsBack() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            mailService.sendVerificationEmail("anton@example.com", "token123");
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(sync -> sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
 
         mockServer.verify();
     }
