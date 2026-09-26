@@ -31,23 +31,23 @@ class UnverifiedAccountCleanupSchedulerTest {
 
     @Test
     void shouldDeleteTokensBeforeDeletingUnverifiedUsersOlderThanGracePeriod() {
-        when(userRepository.deleteAllByEmailVerifiedFalseAndCreatedAtBefore(any())).thenReturn(2);
+        when(userRepository.deleteUnverifiedWithoutActivityCreatedBefore(any())).thenReturn(2);
 
         scheduler.cleanupUnverifiedAccounts();
 
         var cutoffCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(tokenRepository).deleteAllByUnverifiedUserCreatedBefore(cutoffCaptor.capture());
-        verify(userRepository).deleteAllByEmailVerifiedFalseAndCreatedAtBefore(cutoffCaptor.getValue());
+        verify(tokenRepository).deleteAllOfUnverifiedUsersWithoutActivityCreatedBefore(cutoffCaptor.capture());
+        verify(userRepository).deleteUnverifiedWithoutActivityCreatedBefore(cutoffCaptor.getValue());
         assertThat(Duration.between(cutoffCaptor.getValue(), LocalDateTime.now().minusHours(48)).abs())
                 .isLessThan(Duration.ofSeconds(5));
     }
 
     @Test
     void shouldNotThrowWhenNothingToClean() {
-        when(userRepository.deleteAllByEmailVerifiedFalseAndCreatedAtBefore(any())).thenReturn(0);
+        when(userRepository.deleteUnverifiedWithoutActivityCreatedBefore(any())).thenReturn(0);
 
         scheduler.cleanupUnverifiedAccounts();
 
-        verify(userRepository).deleteAllByEmailVerifiedFalseAndCreatedAtBefore(any());
+        verify(userRepository).deleteUnverifiedWithoutActivityCreatedBefore(any());
     }
 }

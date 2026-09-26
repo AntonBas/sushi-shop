@@ -19,7 +19,7 @@ public class TokenCleanupScheduler {
     @Scheduled(cron = "0 0 3 * * *")
     @Transactional
     public void cleanupExpiredTokens() {
-        int deleted = tokenRepository.deleteAllByExpiryDateBeforeAndUsedFalse(LocalDateTime.now());
-        log.info("Cleaned up {} expired unused tokens", deleted);
+        int deleted = tokenRepository.deleteAllByExpiryDateBefore(LocalDateTime.now());
+        log.info("Cleaned up {} expired tokens", deleted);
     }
 }

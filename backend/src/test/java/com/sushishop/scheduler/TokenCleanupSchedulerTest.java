@@ -27,22 +27,22 @@ class TokenCleanupSchedulerTest {
 
     @Test
     void shouldDeleteExpiredUnusedTokensAsOfNow() {
-        when(tokenRepository.deleteAllByExpiryDateBeforeAndUsedFalse(any())).thenReturn(3);
+        when(tokenRepository.deleteAllByExpiryDateBefore(any())).thenReturn(3);
 
         scheduler.cleanupExpiredTokens();
 
         var cutoffCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
-        verify(tokenRepository).deleteAllByExpiryDateBeforeAndUsedFalse(cutoffCaptor.capture());
+        verify(tokenRepository).deleteAllByExpiryDateBefore(cutoffCaptor.capture());
         assertThat(Duration.between(cutoffCaptor.getValue(), LocalDateTime.now()).abs())
                 .isLessThan(Duration.ofSeconds(5));
     }
 
     @Test
     void shouldNotThrowWhenNothingToClean() {
-        when(tokenRepository.deleteAllByExpiryDateBeforeAndUsedFalse(any())).thenReturn(0);
+        when(tokenRepository.deleteAllByExpiryDateBefore(any())).thenReturn(0);
 
         scheduler.cleanupExpiredTokens();
 
-        verify(tokenRepository).deleteAllByExpiryDateBeforeAndUsedFalse(any());
+        verify(tokenRepository).deleteAllByExpiryDateBefore(any());
     }
 }

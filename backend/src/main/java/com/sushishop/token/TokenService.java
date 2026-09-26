@@ -8,7 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.util.HexFormat;
 import java.util.UUID;
 
 @Slf4j
@@ -22,53 +26,26 @@ public class TokenService {
     private final MailService mailService;
 
     @Transactional
-    public Token createVerificationToken(User user) {
-        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
-
-        var token = Token.builder()
-                .token(UUID.randomUUID().toString())
-                .tokenType(TokenType.EMAIL_VERIFICATION)
-                .user(user)
-                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
-                .build();
-        tokenRepository.save(token);
-        mailService.sendVerificationEmail(user.getEmail(), token.getToken());
-        return token;
+    public void createVerificationToken(User user) {
+        String rawToken = issueToken(user, TokenType.EMAIL_VERIFICATION);
+        mailService.sendVerificationEmail(user.getEmail(), rawToken);
     }
 
     @Transactional
-    public Token createPasswordResetToken(User user) {
-        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.PASSWORD_RESET);
-
-        var token = Token.builder()
-                .token(UUID.randomUUID().toString())
-                .tokenType(TokenType.PASSWORD_RESET)
-                .user(user)
-                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
-                .build();
-        tokenRepository.save(token);
-        mailService.sendPasswordResetEmail(user.getEmail(), token.getToken());
-        return token;
+    public void createPasswordResetToken(User user) {
+        String rawToken = issueToken(user, TokenType.PASSWORD_RESET);
+        mailService.sendPasswordResetEmail(user.getEmail(), rawToken);
     }
 
     @Transactional
-    public Token createEmailChangeToken(User user, String newEmail) {
-        tokenRepository.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_CHANGE);
-
-        var token = Token.builder()
-                .token(UUID.randomUUID().toString())
-                .tokenType(TokenType.EMAIL_CHANGE)
-                .user(user)
-                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
-                .build();
-        tokenRepository.save(token);
-        mailService.sendEmailChangeVerification(newEmail, token.getToken());
-        return token;
+    public void createEmailChangeToken(User user, String newEmail) {
+        String rawToken = issueToken(user, TokenType.EMAIL_CHANGE);
+        mailService.sendEmailChangeVerification(newEmail, rawToken);
     }
 
     @Transactional(readOnly = true)
     public Token validateAndGetToken(String tokenValue, TokenType expectedType) {
-        var tokenEntity = tokenRepository.findByToken(tokenValue)
+        var tokenEntity = tokenRepository.findByToken(hash(tokenValue))
                 .orElseThrow(() -> new BadRequestException("Invalid or expired token"));
 
         if (tokenEntity.isUsed()) {
@@ -89,5 +66,27 @@ public class TokenService {
     @Transactional
     public void invalidateAllByUserAndType(Long userId, TokenType type) {
         tokenRepository.invalidateAllByUserAndType(userId, type);
+    }
+
+    static String hash(String rawToken) {
+        try {
+            byte[] digest = MessageDigest.getInstance("SHA-256").digest(rawToken.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    private String issueToken(User user, TokenType type) {
+        tokenRepository.invalidateAllByUserAndType(user.getId(), type);
+
+        String rawToken = UUID.randomUUID().toString();
+        tokenRepository.save(Token.builder()
+                .token(hash(rawToken))
+                .tokenType(type)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(TOKEN_EXPIRATION_HOURS))
+                .build());
+        return rawToken;
     }
 }

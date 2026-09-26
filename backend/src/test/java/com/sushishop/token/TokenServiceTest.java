@@ -5,6 +5,7 @@ import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.user.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,21 +33,25 @@ public class TokenServiceTest {
     private TokenService tokenService;
 
     @Test
-    public void shouldCreateVerificationToken() {
+    public void shouldCreateVerificationTokenStoringOnlyItsHash() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
                 .build();
 
-        when(tokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        tokenService.createVerificationToken(user);
 
-        var token = tokenService.createVerificationToken(user);
-
-        assertThat(token.getTokenType()).isEqualTo(TokenType.EMAIL_VERIFICATION);
-        assertThat(token.getUser()).isEqualTo(user);
-        assertThat(token.getExpiryDate()).isAfter(LocalDateTime.now());
-        verify(tokenRepository).save(any());
-        verify(mailService).sendVerificationEmail(eq("anton@example.com"), any());
+        var saved = ArgumentCaptor.forClass(Token.class);
+        var sentToken = ArgumentCaptor.forClass(String.class);
+        verify(tokenRepository).invalidateAllByUserAndType(1L, TokenType.EMAIL_VERIFICATION);
+        verify(tokenRepository).save(saved.capture());
+        verify(mailService).sendVerificationEmail(eq("anton@example.com"), sentToken.capture());
+        assertThat(saved.getValue().getTokenType()).isEqualTo(TokenType.EMAIL_VERIFICATION);
+        assertThat(saved.getValue().getUser()).isEqualTo(user);
+        assertThat(saved.getValue().getExpiryDate()).isAfter(LocalDateTime.now());
+        assertThat(saved.getValue().getToken())
+                .isNotEqualTo(sentToken.getValue())
+                .isEqualTo(TokenService.hash(sentToken.getValue()));
     }
 
     @Test
@@ -56,15 +61,13 @@ public class TokenServiceTest {
                 .email("anton@example.com")
                 .build();
 
-        when(tokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        tokenService.createPasswordResetToken(user);
 
-        var token = tokenService.createPasswordResetToken(user);
-
-        assertThat(token.getTokenType()).isEqualTo(TokenType.PASSWORD_RESET);
-        assertThat(token.getUser()).isEqualTo(user);
+        var saved = ArgumentCaptor.forClass(Token.class);
         verify(tokenRepository).invalidateAllByUserAndType(1L, TokenType.PASSWORD_RESET);
-        verify(tokenRepository).save(any());
+        verify(tokenRepository).save(saved.capture());
         verify(mailService).sendPasswordResetEmail(eq("anton@example.com"), any());
+        assertThat(saved.getValue().getTokenType()).isEqualTo(TokenType.PASSWORD_RESET);
     }
 
     @Test
@@ -74,15 +77,13 @@ public class TokenServiceTest {
                 .email("anton@example.com")
                 .build();
 
-        when(tokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        tokenService.createEmailChangeToken(user, "new@example.com");
 
-        var token = tokenService.createEmailChangeToken(user, "new@example.com");
-
-        assertThat(token.getTokenType()).isEqualTo(TokenType.EMAIL_CHANGE);
-        assertThat(token.getUser()).isEqualTo(user);
+        var saved = ArgumentCaptor.forClass(Token.class);
         verify(tokenRepository).invalidateAllByUserAndType(1L, TokenType.EMAIL_CHANGE);
-        verify(tokenRepository).save(any());
+        verify(tokenRepository).save(saved.capture());
         verify(mailService).sendEmailChangeVerification(eq("new@example.com"), any());
+        assertThat(saved.getValue().getTokenType()).isEqualTo(TokenType.EMAIL_CHANGE);
     }
 
     @Test
@@ -95,7 +96,7 @@ public class TokenServiceTest {
                 .user(User.builder().build())
                 .build();
 
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
+        when(tokenRepository.findByToken(TokenService.hash("token123"))).thenReturn(Optional.of(token));
 
         var result = tokenService.validateAndGetToken("token123", TokenType.EMAIL_VERIFICATION);
 
@@ -112,7 +113,7 @@ public class TokenServiceTest {
                 .user(User.builder().build())
                 .build();
 
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
+        when(tokenRepository.findByToken(TokenService.hash("token123"))).thenReturn(Optional.of(token));
 
         assertThatThrownBy(() -> tokenService.validateAndGetToken("token123", TokenType.EMAIL_VERIFICATION))
                 .isInstanceOf(BadRequestException.class)
@@ -129,7 +130,7 @@ public class TokenServiceTest {
                 .user(User.builder().build())
                 .build();
 
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
+        when(tokenRepository.findByToken(TokenService.hash("token123"))).thenReturn(Optional.of(token));
 
         assertThatThrownBy(() -> tokenService.validateAndGetToken("token123", TokenType.EMAIL_VERIFICATION))
                 .isInstanceOf(BadRequestException.class)
@@ -146,7 +147,7 @@ public class TokenServiceTest {
                 .user(User.builder().build())
                 .build();
 
-        when(tokenRepository.findByToken("token123")).thenReturn(Optional.of(token));
+        when(tokenRepository.findByToken(TokenService.hash("token123"))).thenReturn(Optional.of(token));
 
         assertThatThrownBy(() -> tokenService.validateAndGetToken("token123", TokenType.PASSWORD_RESET))
                 .isInstanceOf(BadRequestException.class)

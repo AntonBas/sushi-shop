@@ -24,8 +24,8 @@ public class UnverifiedAccountCleanupScheduler {
     @Transactional
     public void cleanupUnverifiedAccounts() {
         var cutoff = LocalDateTime.now().minusHours(GRACE_PERIOD_HOURS);
-        tokenRepository.deleteAllByUnverifiedUserCreatedBefore(cutoff);
-        int deleted = userRepository.deleteAllByEmailVerifiedFalseAndCreatedAtBefore(cutoff);
+        tokenRepository.deleteAllOfUnverifiedUsersWithoutActivityCreatedBefore(cutoff);
+        int deleted = userRepository.deleteUnverifiedWithoutActivityCreatedBefore(cutoff);
         log.info("Cleaned up {} unverified accounts older than {}h", deleted, GRACE_PERIOD_HOURS);
     }
 }

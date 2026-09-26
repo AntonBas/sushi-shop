@@ -20,6 +20,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmailForUpdate(@Param("email") String email);
 
     @Modifying
-    @Query("DELETE FROM User u WHERE u.emailVerified = false AND u.createdAt < :cutoff")
-    int deleteAllByEmailVerifiedFalseAndCreatedAtBefore(@Param("cutoff") LocalDateTime cutoff);
+    @Query("DELETE FROM User u WHERE u.emailVerified = false AND u.createdAt < :cutoff"
+            + " AND NOT EXISTS (SELECT 1 FROM Order o WHERE o.user = u)"
+            + " AND NOT EXISTS (SELECT 1 FROM Review r WHERE r.user = u)"
+            + " AND NOT EXISTS (SELECT 1 FROM ReviewReply rr WHERE rr.user = u)")
+    int deleteUnverifiedWithoutActivityCreatedBefore(@Param("cutoff") LocalDateTime cutoff);
 }
