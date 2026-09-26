@@ -42,6 +42,8 @@ app:
   seed-demo-users: false
   rate-limit:
     client-ip-header: CF-Connecting-IP
+  monitoring:
+    password: ${PROMETHEUS_PASSWORD}
   upload:
     cloudinary:
       cloud-name: ${CLOUDINARY_CLOUD_NAME}
