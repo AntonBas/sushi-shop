@@ -36,6 +36,8 @@ springdoc:
 
 app:
   seed-demo-users: ${SEED_DEMO_USERS:false}
+  rate-limit:
+    client-ip-header: X-Real-IP
 
 logging:
   level:

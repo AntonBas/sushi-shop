@@ -2,10 +2,11 @@ package com.sushishop.shared.ratelimit;
 
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.Signature;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -31,7 +32,9 @@ class RateLimitAspectTest {
     @Mock
     private JoinPoint joinPoint;
 
-    @InjectMocks
+    @Mock
+    private Signature signature;
+
     private RateLimitAspect rateLimitAspect;
 
     @RateLimit
@@ -40,6 +43,13 @@ class RateLimitAspectTest {
 
     @RateLimit(key = {"ip", "email"})
     private void ipAndEmailAnnotatedMethod() {
+    }
+
+    @BeforeEach
+    void setUp() {
+        rateLimitAspect = new RateLimitAspect(rateLimitService, "");
+        when(joinPoint.getSignature()).thenReturn(signature);
+        when(signature.toShortString()).thenReturn("AuthController.login(..)");
     }
 
     @AfterEach
@@ -67,7 +77,37 @@ class RateLimitAspectTest {
 
         rateLimitAspect.checkRateLimit(joinPoint, rateLimitAnnotation());
 
-        verify(rateLimitService).tryConsume("10.0.0.1", 1, 5, 60);
+        verify(rateLimitService).tryConsume("AuthController.login(..):10.0.0.1", 1, 5, 60);
+    }
+
+    @Test
+    void shouldUseConfiguredClientIpHeaderInsteadOfRemoteAddr() throws NoSuchMethodException {
+        var aspect = new RateLimitAspect(rateLimitService, "CF-Connecting-IP");
+        var request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.1");
+        request.addHeader("X-Forwarded-For", "6.6.6.6, 203.0.113.9");
+        request.addHeader("CF-Connecting-IP", "203.0.113.9");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(joinPoint.getArgs()).thenReturn(new Object[0]);
+        when(rateLimitService.tryConsume(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
+
+        aspect.checkRateLimit(joinPoint, rateLimitAnnotation());
+
+        verify(rateLimitService).tryConsume("AuthController.login(..):203.0.113.9", 1, 5, 60);
+    }
+
+    @Test
+    void shouldFallBackToRemoteAddrWhenConfiguredHeaderMissing() throws NoSuchMethodException {
+        var aspect = new RateLimitAspect(rateLimitService, "CF-Connecting-IP");
+        var request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.1");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        when(joinPoint.getArgs()).thenReturn(new Object[0]);
+        when(rateLimitService.tryConsume(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
+
+        aspect.checkRateLimit(joinPoint, rateLimitAnnotation());
+
+        verify(rateLimitService).tryConsume("AuthController.login(..):10.0.0.1", 1, 5, 60);
     }
 
     @Test
@@ -93,8 +133,8 @@ class RateLimitAspectTest {
 
         rateLimitAspect.checkRateLimit(joinPoint, ipAndEmailRateLimitAnnotation());
 
-        verify(rateLimitService).tryConsume(eq("10.0.0.1"), anyInt(), anyInt(), anyInt());
-        verify(rateLimitService).tryConsume(eq("email:anton@example.com"), anyInt(), anyInt(), anyInt());
+        verify(rateLimitService).tryConsume(eq("AuthController.login(..):10.0.0.1"), anyInt(), anyInt(), anyInt());
+        verify(rateLimitService).tryConsume(eq("AuthController.login(..):email:anton@example.com"), anyInt(), anyInt(), anyInt());
     }
 
     @Test
@@ -103,8 +143,8 @@ class RateLimitAspectTest {
         request.setRemoteAddr("10.0.0.1");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         when(joinPoint.getArgs()).thenReturn(new Object[]{new EmailRequest("anton@example.com")});
-        when(rateLimitService.tryConsume(eq("10.0.0.1"), anyInt(), anyInt(), anyInt())).thenReturn(true);
-        when(rateLimitService.tryConsume(eq("email:anton@example.com"), anyInt(), anyInt(), anyInt())).thenReturn(false);
+        when(rateLimitService.tryConsume(eq("AuthController.login(..):10.0.0.1"), anyInt(), anyInt(), anyInt())).thenReturn(true);
+        when(rateLimitService.tryConsume(eq("AuthController.login(..):email:anton@example.com"), anyInt(), anyInt(), anyInt())).thenReturn(false);
 
         assertThatThrownBy(() -> rateLimitAspect.checkRateLimit(joinPoint, ipAndEmailRateLimitAnnotation()))
                 .isInstanceOf(RateLimitExceededException.class);
@@ -116,7 +156,7 @@ class RateLimitAspectTest {
         request.setRemoteAddr("10.0.0.1");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         when(joinPoint.getArgs()).thenReturn(new Object[]{"not a request"});
-        when(rateLimitService.tryConsume(eq("10.0.0.1"), anyInt(), anyInt(), anyInt())).thenReturn(true);
+        when(rateLimitService.tryConsume(eq("AuthController.login(..):10.0.0.1"), anyInt(), anyInt(), anyInt())).thenReturn(true);
 
         assertThatThrownBy(() -> rateLimitAspect.checkRateLimit(joinPoint, ipAndEmailRateLimitAnnotation()))
                 .isInstanceOf(IllegalStateException.class);
