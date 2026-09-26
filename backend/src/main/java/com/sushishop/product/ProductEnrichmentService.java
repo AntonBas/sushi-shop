@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -23,11 +22,7 @@ public class ProductEnrichmentService {
         var bestPromo = getBestPromo(product);
         if (bestPromo == null) return null;
 
-        var discount = bestPromo.getDiscountPercent()
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        return product.getPrice()
-                .multiply(BigDecimal.ONE.subtract(discount))
-                .setScale(2, RoundingMode.HALF_UP);
+        return bestPromo.applyDiscount(product.getPrice());
     }
 
     public BigDecimal getDiscountPercent(Product product) {

@@ -14,7 +14,6 @@ import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -53,7 +52,6 @@ public class Token extends BaseEntity {
     private User user;
 
     @NotNull
-    @Future
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 

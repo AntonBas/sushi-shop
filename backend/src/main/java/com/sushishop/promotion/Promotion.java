@@ -15,7 +15,6 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,6 +25,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -38,6 +38,8 @@ import java.util.Set;
 @Builder
 @Table(name = "promotions")
 public class Promotion extends BaseEntity {
+
+    private static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,7 +70,6 @@ public class Promotion extends BaseEntity {
     private LocalDateTime startDate;
 
     @NotNull
-    @Future
     @Column(nullable = false)
     private LocalDateTime endDate;
 
@@ -85,6 +86,11 @@ public class Promotion extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean active = true;
+
+    public BigDecimal applyDiscount(BigDecimal price) {
+        var remainingShare = ONE_HUNDRED.subtract(discountPercent);
+        return price.multiply(remainingShare).divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);
+    }
 
     public boolean isCurrentlyActive() {
         var now = LocalDateTime.now();
