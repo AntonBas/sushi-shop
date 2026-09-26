@@ -1,6 +1,7 @@
 package com.sushishop.user;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,7 +21,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     public CustomUserDetails(CachedAuthUser cachedUser) {
-        this(cachedUser.email(), cachedUser.password(), cachedUser.userRole(), cachedUser.emailVerified());
+        this(cachedUser.email(), null, cachedUser.userRole(), cachedUser.emailVerified());
     }
 
     private CustomUserDetails(String email, String password, UserRole userRole, boolean emailVerified) {
@@ -37,7 +38,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    @Nonnull
+    @Nullable
     public String getPassword() {
         return password;
     }

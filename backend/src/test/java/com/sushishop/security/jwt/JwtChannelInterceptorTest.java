@@ -91,7 +91,7 @@ class JwtChannelInterceptorTest {
         var user = buildUser("user@test.com", UserRole.CUSTOMER);
         when(wsTicketService.consume("good")).thenReturn(Optional.of(new WsTicketService.WsTicketPayload("user@test.com", 0)));
         when(userCacheService.getCachedUser("user@test.com", 0))
-                .thenReturn(new CachedAuthUser(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified()));
+                .thenReturn(new CachedAuthUser(user.getEmail(), user.getUserRole(), user.isEmailVerified()));
 
         var result = interceptor.preSend(connectMessage("good"), channel);
 
