@@ -9,12 +9,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -26,7 +28,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
@@ -86,21 +94,41 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                                                               @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(ex.getStatus());
         apiError.setMessage(ex.getMessage());
-        apiError.setDebugMessage(ex.getDebugMessage());
-        log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
+        if (ex.getStatus().is5xxServerError()) {
+            log.error("Server exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+        } else {
+            log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
+        }
         return buildResponseEntity(apiError, request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<Object> handleDataIntegrityViolation(@Nonnull DataIntegrityViolationException ex,
                                                                   @Nonnull WebRequest request) {
-        if (ex.getCause() instanceof ConstraintViolationException) {
-            ApiError apiError = new ApiError(CONFLICT, "Database constraint violation", ex.getCause());
+        if (ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+            ApiError apiError = new ApiError(CONFLICT, "Database constraint violation");
             log.warn("Database constraint violation: {}", ex.getMessage());
             return buildResponseEntity(apiError, request);
         }
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Database error");
         log.error("Database error: ", ex);
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    protected ResponseEntity<Object> handleTransactionSystem(@Nonnull TransactionSystemException ex,
+                                                             @Nonnull WebRequest request) {
+        if (ex.getRootCause() instanceof ConstraintViolationException constraintViolation) {
+            return handleConstraintViolation(constraintViolation, request);
+        }
+        return handleAllExceptions(ex, request);
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    protected ResponseEntity<Object> handlePropertyReference(@Nonnull PropertyReferenceException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(BAD_REQUEST, String.format("Unknown property '%s'", ex.getPropertyName()));
+        log.warn("Invalid property reference: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
