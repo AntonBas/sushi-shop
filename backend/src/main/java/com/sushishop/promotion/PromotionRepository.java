@@ -19,6 +19,11 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     @Query("SELECT p FROM Promotion p WHERE p.startDate <= :now AND p.endDate >= :now AND p.active = true")
     List<Promotion> findActiveAt(@Param("now") LocalDateTime now);
 
+    @Nonnull
+    @EntityGraph(attributePaths = {"products"})
+    @Query("SELECT p FROM Promotion p WHERE p.active = true AND p.startDate < :end AND p.endDate > :start")
+    List<Promotion> findActiveOverlapping(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
     @Query("SELECT p.id FROM Promotion p WHERE LOWER(p.title) LIKE :pattern ESCAPE '\\'")
     Page<Long> findIdsByTitlePattern(@Param("pattern") String pattern, @Nonnull Pageable pageable);
 

@@ -26,6 +26,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class PromotionValidatorTest {
 
+    private static final LocalDateTime START = LocalDateTime.of(2030, 1, 1, 0, 0);
+    private static final LocalDateTime END = LocalDateTime.of(2030, 1, 31, 0, 0);
+
     @Mock
     private PromotionRepository promotionRepository;
 
@@ -120,7 +123,7 @@ public class PromotionValidatorTest {
     }
 
     @Test
-    public void validateProductsNotInOtherActivePromotions_shouldThrowWhenConflict() {
+    public void validateProductsNotInOverlappingPromotions_shouldThrowWhenConflict() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
         var product2 = Product.builder().id(2L).name("Roll 2").build();
 
@@ -130,18 +133,15 @@ public class PromotionValidatorTest {
                 .products(new HashSet<>(List.of(product1, product2)))
                 .build();
 
-        when(promotionRepository.findActiveAt(any(LocalDateTime.class)))
+        when(promotionRepository.findActiveOverlapping(START, END))
                 .thenReturn(List.of(existingPromotion));
 
-        when(productRepository.findAllById(List.of(1L)))
-                .thenReturn(List.of(product1));
-
         assertThrows(BadRequestException.class,
-                () -> validator.validateProductsNotInOtherActivePromotions(List.of(1L), null));
+                () -> validator.validateProductsNotInOverlappingPromotions(List.of(1L), START, END, null));
     }
 
     @Test
-    public void validateProductsNotInOtherActivePromotions_shouldSkipExcludedPromotion() {
+    public void validateProductsNotInOverlappingPromotions_shouldSkipExcludedPromotion() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
 
         var existingPromotion = Promotion.builder()
@@ -150,15 +150,15 @@ public class PromotionValidatorTest {
                 .products(new HashSet<>(List.of(product1)))
                 .build();
 
-        when(promotionRepository.findActiveAt(any(LocalDateTime.class)))
+        when(promotionRepository.findActiveOverlapping(START, END))
                 .thenReturn(List.of(existingPromotion));
 
         assertDoesNotThrow(() ->
-                validator.validateProductsNotInOtherActivePromotions(List.of(1L), 10L));
+                validator.validateProductsNotInOverlappingPromotions(List.of(1L), START, END, 10L));
     }
 
     @Test
-    public void validateProductsNotInOtherActivePromotions_shouldPassWhenNoConflict() {
+    public void validateProductsNotInOverlappingPromotions_shouldPassWhenNoConflict() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
         var product2 = Product.builder().id(2L).name("Roll 2").build();
 
@@ -168,10 +168,10 @@ public class PromotionValidatorTest {
                 .products(new HashSet<>(List.of(product1)))
                 .build();
 
-        when(promotionRepository.findActiveAt(any(LocalDateTime.class)))
+        when(promotionRepository.findActiveOverlapping(START, END))
                 .thenReturn(List.of(existingPromotion));
 
         assertDoesNotThrow(() ->
-                validator.validateProductsNotInOtherActivePromotions(List.of(2L), null));
+                validator.validateProductsNotInOverlappingPromotions(List.of(2L), START, END, null));
     }
 }

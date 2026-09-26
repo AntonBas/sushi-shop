@@ -48,7 +48,7 @@ public class PromotionService {
         validator.validateDates(request.startDate(), request.endDate());
         validator.validateTitleUnique(request.title());
         validator.validateProductsExist(request.productIds());
-        validator.validateProductsNotInOtherActivePromotions(request.productIds(), null);
+        validator.validateProductsNotInOverlappingPromotions(request.productIds(), request.startDate(), request.endDate(), null);
 
         var products = new HashSet<>(productRepository.findAllById(request.productIds()));
 
@@ -128,6 +128,10 @@ public class PromotionService {
         updateDates(promotion, request.startDate(), request.endDate());
         updateProducts(promotion, request.productIds());
         updateActive(promotion, request.active());
+        if (promotion.isActive() && affectsOverlap(request)) {
+            var productIds = promotion.getProducts().stream().map(Product::getId).toList();
+            validator.validateProductsNotInOverlappingPromotions(productIds, promotion.getStartDate(), promotion.getEndDate(), id);
+        }
 
         var saved = promotionRepository.save(promotion);
 
@@ -198,9 +202,13 @@ public class PromotionService {
     private void updateProducts(Promotion promotion, List<Long> newProductIds) {
         if (newProductIds != null) {
             validator.validateProductsExist(newProductIds);
-            validator.validateProductsNotInOtherActivePromotions(newProductIds, promotion.getId());
             promotion.setProducts(new HashSet<>(productRepository.findAllById(newProductIds)));
         }
+    }
+
+    private boolean affectsOverlap(UpdatePromotionRequest request) {
+        return request.productIds() != null || request.startDate() != null
+                || request.endDate() != null || request.active() != null;
     }
 
     private void updateActive(Promotion promotion, Boolean newActive) {

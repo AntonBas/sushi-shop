@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -130,7 +131,7 @@ public class PromotionServiceTest {
         verify(validator).validateDates(request.startDate(), request.endDate());
         verify(validator).validateTitleUnique(PROMOTION_TITLE);
         verify(validator).validateProductsExist(List.of(PRODUCT_ID));
-        verify(validator).validateProductsNotInOtherActivePromotions(List.of(PRODUCT_ID), null);
+        verify(validator).validateProductsNotInOverlappingPromotions(List.of(PRODUCT_ID), request.startDate(), request.endDate(), null);
         verify(promotionRepository).save(any());
     }
 
@@ -406,5 +407,52 @@ public class PromotionServiceTest {
 
         verify(promotionRepository).save(promotion);
         verify(promotionRepository).delete(promotion);
+    }
+
+    @Test
+    public void shouldCheckOverlapWithEffectiveDatesWhenDatesChange() {
+        var newEnd = LocalDateTime.now().plusDays(10);
+        var request = new UpdatePromotionRequest(null, null, null, null, newEnd, null, null);
+        var product = Product.builder().id(PRODUCT_ID).slug("maki").build();
+        var start = LocalDateTime.now().minusDays(1);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(start)
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(new HashSet<>(Set.of(product)))
+                .build();
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        verify(validator).validateProductsNotInOverlappingPromotions(List.of(PRODUCT_ID), start, newEnd, PROMOTION_ID);
+    }
+
+    @Test
+    public void shouldSkipOverlapCheckWhenOnlyDescriptionChanges() {
+        var request = new UpdatePromotionRequest(null, "New desc", null, null, null, null, null);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now().minusDays(10))
+                .endDate(LocalDateTime.now().minusDays(1))
+                .active(true)
+                .products(new HashSet<>())
+                .build();
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        verify(validator, never()).validateProductsNotInOverlappingPromotions(any(), any(), any(), any());
     }
 }

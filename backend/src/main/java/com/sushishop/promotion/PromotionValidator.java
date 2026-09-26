@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,26 +54,22 @@ public class PromotionValidator {
         }
     }
 
-    public void validateProductsNotInOtherActivePromotions(List<Long> productIds, Long excludePromotionId) {
-        var activePromotions = promotionRepository.findActiveAt(LocalDateTime.now());
-
-        for (var promotion : activePromotions) {
+    public void validateProductsNotInOverlappingPromotions(Collection<Long> productIds, LocalDateTime startDate,
+                                                          LocalDateTime endDate, Long excludePromotionId) {
+        for (var promotion : promotionRepository.findActiveOverlapping(startDate, endDate)) {
             if (promotion.getId().equals(excludePromotionId)) {
                 continue;
             }
 
-            var conflictingProductIds = promotion.getProducts().stream()
-                    .map(Product::getId)
-                    .filter(productIds::contains)
+            var conflictingProductNames = promotion.getProducts().stream()
+                    .filter(product -> productIds.contains(product.getId()))
+                    .map(Product::getName)
                     .toList();
 
-            if (!conflictingProductIds.isEmpty()) {
-                var productNames = productRepository.findAllById(conflictingProductIds).stream()
-                        .map(Product::getName)
-                        .toList();
+            if (!conflictingProductNames.isEmpty()) {
                 throw new BadRequestException(
-                        "Products already in active promotion '" + promotion.getTitle() + "': "
-                                + String.join(", ", productNames)
+                        "Products already in promotion '" + promotion.getTitle() + "' for an overlapping period: "
+                                + String.join(", ", conflictingProductNames)
                 );
             }
         }
