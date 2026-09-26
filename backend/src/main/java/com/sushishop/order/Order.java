@@ -58,8 +58,8 @@ public class Order extends BaseEntity {
     private String customerName;
 
     @NotBlank
-    @Size(max = 15)
-    @Column(nullable = false, length = 15)
+    @Size(max = 16)
+    @Column(nullable = false, length = 20)
     private String phone;
 
     @Column(length = 50)
