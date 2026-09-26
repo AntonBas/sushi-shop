@@ -11,7 +11,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import tools.jackson.databind.json.JsonMapper;
 
+import java.time.LocalDateTime;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -23,6 +27,9 @@ public class JacksonConfigTest {
 
     @Autowired
     private WebApplicationContext context;
+
+    @Autowired
+    private JsonMapper jsonMapper;
 
     @MockitoBean
     private PasswordResetService passwordResetService;
@@ -51,5 +58,13 @@ public class JacksonConfigTest {
                         .content("{\"email\":\"not-an-email\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value("BAD_REQUEST"));
+    }
+
+    @Test
+    public void shouldWriteLocalDateTimeAsUtcAndReadUtcInputBack() {
+        var dateTime = LocalDateTime.of(2026, 9, 27, 15, 30);
+
+        assertThat(jsonMapper.writeValueAsString(dateTime)).isEqualTo("\"2026-09-27T15:30:00Z\"");
+        assertThat(jsonMapper.readValue("\"2026-09-27T15:30:00.000Z\"", LocalDateTime.class)).isEqualTo(dateTime);
     }
 }

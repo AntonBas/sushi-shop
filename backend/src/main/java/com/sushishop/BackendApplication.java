@@ -5,6 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.time.ZoneOffset;
+import java.util.TimeZone;
+
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
 @SpringBootApplication
@@ -13,6 +16,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 public class BackendApplication {
 
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneOffset.UTC));
         SpringApplication.run(BackendApplication.class, args);
     }
 }

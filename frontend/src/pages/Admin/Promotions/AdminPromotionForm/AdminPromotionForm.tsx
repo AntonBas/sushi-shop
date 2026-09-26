@@ -10,6 +10,7 @@ import Input from "../../../../components/UI/Input/Input";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
 import type { PromotionResponse } from "../../../../types";
+import { toDateTimeLocalValue } from "../../../../utils/dateTimeLocal";
 import { formatPrice } from "../../../../utils/formatPrice";
 import styles from "./AdminPromotionForm.module.css";
 
@@ -44,8 +45,8 @@ export default function AdminPromotionForm() {
           setTitle(promo.title);
           setDescription(promo.description || "");
           setDiscountPercent(String(promo.discountPercent));
-          setStartDate(promo.startDate?.slice(0, 16) || "");
-          setEndDate(promo.endDate?.slice(0, 16) || "");
+          setStartDate(promo.startDate ? toDateTimeLocalValue(promo.startDate) : "");
+          setEndDate(promo.endDate ? toDateTimeLocalValue(promo.endDate) : "");
           setActive(promo.active);
           setSelectedProductIds(promo.products.map((p) => p.id));
           setSelectedProductNames(
