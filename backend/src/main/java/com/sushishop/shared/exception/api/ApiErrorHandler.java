@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
@@ -113,6 +114,14 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         }
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Database error");
         log.error("Database error: ", ex);
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    protected ResponseEntity<Object> handleOptimisticLocking(@Nonnull OptimisticLockingFailureException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(CONFLICT, "The resource was modified concurrently, please retry");
+        log.warn("Optimistic locking failure: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 

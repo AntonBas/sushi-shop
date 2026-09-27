@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -58,6 +59,13 @@ class ApiErrorHandlerTest {
     }
 
     @Test
+    void shouldReturnConflictOnOptimisticLockingFailure() throws Exception {
+        standaloneMockMvc.perform(get("/optimistic-lock"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("The resource was modified concurrently, please retry"));
+    }
+
+    @Test
     void shouldReturnBadRequestOnBeanValidationFailureAtCommit() throws Exception {
         standaloneMockMvc.perform(get("/commit-validation"))
                 .andExpect(status().isBadRequest())
@@ -93,6 +101,11 @@ class ApiErrorHandlerTest {
                     new org.hibernate.exception.ConstraintViolationException(
                             "duplicate key", new SQLException("duplicate key value violates unique constraint"),
                             "uk_users_email"));
+        }
+
+        @GetMapping("/optimistic-lock")
+        public void optimisticLock() {
+            throw new ObjectOptimisticLockingFailureException("Order", 1L);
         }
 
         @GetMapping("/data-integrity")
