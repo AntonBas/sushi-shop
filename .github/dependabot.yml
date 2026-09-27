@@ -5,6 +5,9 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "gradle"
     directory: "/backend"
@@ -29,9 +32,21 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "docker-compose"
     directory: "/"
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "redis"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "grafana/grafana"
+        update-types: ["version-update:semver-major"]
