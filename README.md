@@ -1,9 +1,9 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 397 backend tests across 73 test classes, zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 400+ backend tests, zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.7-green)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)
@@ -133,7 +133,7 @@ flowchart TD
 
 - **Role-Based Access Control (RBAC):** separate workflows and permissions for User, Admin, and Courier, enforced at both API and UI level.
 - **API rate limiting:** configurable per-endpoint throttling via Bucket4j backed by Redis, so limits are shared across instances; buckets expire via Redis TTL.
-- **Security hardening:** CSP/HSTS/X-Frame-Options headers (Nginx in Docker Compose, `vercel.json` on Vercel), Dependabot version updates across npm/Gradle/GitHub Actions, authenticated WebSocket subscriptions.
+- **Security hardening:** CSP/HSTS/X-Frame-Options headers (Nginx in Docker Compose, `vercel.json` on Vercel), Dependabot version updates across npm/Gradle/GitHub Actions/Docker, authenticated WebSocket subscriptions.
 - **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing.
 
 ---
@@ -142,40 +142,36 @@ flowchart TD
 
 ### Backend
 
-| Technology                  | Version               |
-| ----------------------------- | ------------------------ |
-| Java                         | 21                     |
-| Spring Boot                  | 4.0.7                  |
-| Spring Security               | Spring Boot-managed     |
-| Spring Data JPA / Hibernate   | Spring Boot-managed     |
-| PostgreSQL                   | 16                     |
-| Redis                         | 7                      |
-| Flyway                        | Spring Boot-managed     |
-| JWT (jjwt)                    | 0.12.6                 |
-| MapStruct                     | 1.6.3                  |
-| WebSocket / STOMP              | Spring Boot-managed     |
-| Stripe                        | 33.1.1                 |
-| Google OAuth2 Client           | Spring Boot-managed     |
-| Bucket4j                      | 8.10.1                 |
-| Brevo (transactional email)   | HTTP API via `RestClient` |
-| Cloudinary                    | 2.3.0                  |
-| Testcontainers                | 1.20.6                 |
-| Spring AOP                    | Spring Boot-managed     |
-| Spring Scheduling              | Spring Boot-managed     |
+| Technology                    | Purpose                                        |
+| :---------------------------- | :--------------------------------------------- |
+| Java 21, Spring Boot 4        | Application framework                          |
+| Spring Security, Google OAuth2 Client, jjwt | Authentication and authorization (JWT in httpOnly cookie) |
+| Spring Data JPA / Hibernate   | Persistence                                    |
+| PostgreSQL 16, Flyway         | Database and schema migrations                 |
+| Redis 7                       | Cache, JWT blacklist, rate-limit buckets       |
+| Bucket4j                      | Rate limiting                                  |
+| MapStruct                     | DTO mapping                                    |
+| WebSocket / STOMP             | Real-time order status updates                 |
+| Stripe                        | Online payments                                |
+| Brevo                         | Transactional email (HTTP API via `RestClient`) |
+| Cloudinary                    | Image storage                                  |
+| Spring AOP, Spring Scheduling | Audit logging, rate limiting, scheduled cleanup |
+| JUnit 5, Mockito, Testcontainers, ArchUnit | Testing                           |
 
 ### Frontend
 
-| Technology         | Version        |
-| -------------------- | ---------------- |
-| React                | 19.2.7          |
-| TypeScript            | 6.0.2           |
-| Vite                  | 8.1.1           |
-| React Router DOM       | 7.18.1          |
-| Axios                 | 1.18.1          |
-| STOMP.js              | 7.3.0           |
-| SockJS Client          | 1.6.1           |
-| dnd-kit               | 6.3.1           |
-| CSS Modules            | native (Vite)   |
+| Technology                    | Purpose                                        |
+| :---------------------------- | :--------------------------------------------- |
+| React 19, TypeScript          | UI                                             |
+| Vite                          | Build and dev server                           |
+| React Router                  | Routing                                        |
+| Axios                         | HTTP client                                    |
+| STOMP.js, SockJS              | Real-time order tracking                       |
+| dnd-kit                       | Drag-and-drop in the admin panel               |
+| CSS Modules                   | Component-scoped styles                        |
+| Vitest, React Testing Library | Testing                                        |
+
+Exact dependency versions live in `backend/build.gradle` and `frontend/package.json`.
 
 ### DevOps & Tools
 
@@ -316,7 +312,7 @@ unmapped properties), so any warning fails the build.
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs to `master`/`develop`: backend
 build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
-`tsc -b`, Vite). There is no deployment step — this is CI only, deployment
+`tsc -b`, Vite), then builds both Docker images. There is no deployment step — this is CI only, deployment
 is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +
 Neon + Upstash (see [Getting Started](#getting-started)).
 
