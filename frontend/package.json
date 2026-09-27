@@ -18,7 +18,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@stomp/stompjs": "^7.3.0",
-    "axios": "^1.18.1",
+    "axios": "^1.20.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.48.0",
     "react": "^19.2.7",
