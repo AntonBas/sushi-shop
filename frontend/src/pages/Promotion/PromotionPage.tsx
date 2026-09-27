@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Tag, Clock, Menu as MenuIcon } from "lucide-react";
 import { useApi } from "../../hooks/common/useApi";
@@ -10,6 +10,7 @@ import styles from "./PromotionPage.module.css";
 
 export default function PromotionPage() {
   const { slug } = useParams<{ slug: string }>();
+  const [now] = useState(Date.now);
   const { data: promotion, loading, execute } = useApi<PromotionResponse>();
 
   useEffect(() => {
@@ -19,17 +20,15 @@ export default function PromotionPage() {
   if (loading) return <Loading text="Loading promotion..." />;
   if (!promotion) return null;
 
-  /* eslint-disable react-hooks/purity */
   const daysLeft = Math.ceil(
-    (new Date(promotion.endDate).getTime() - Date.now()) /
+    (new Date(promotion.endDate).getTime() - now) /
       (1000 * 60 * 60 * 24),
   );
-  /* eslint-enable react-hooks/purity */
 
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
-        <Link to="/" className={styles.breadcrumbLink}>
+        <Link to="/menu" className={styles.breadcrumbLink}>
           <MenuIcon size={14} /> Menu
         </Link>
         <span className={styles.separator}>/</span>

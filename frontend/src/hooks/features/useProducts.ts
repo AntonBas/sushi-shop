@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { useApi } from '.././common/useApi'
+import { useApi } from '../common/useApi'
 import * as productsApi from '../../api/products'
 import type { ProductListResponse, ProductResponse } from '../../types'
 import type { ProductFilters } from '../../types/product'

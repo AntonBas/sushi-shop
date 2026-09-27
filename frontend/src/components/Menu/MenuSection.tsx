@@ -23,14 +23,15 @@ export default function MenuSection() {
   const [sort, setSort] = useState(() => searchParams.get("sort") || "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const [initialFilters] = useState(() => ({
+    search: search || undefined,
+    category: activeCategory || undefined,
+    sort: sort || undefined,
+  }));
+
   useEffect(() => {
-    loadMoreProducts(0, {
-      search: search || undefined,
-      category: activeCategory || undefined,
-      sort: sort || undefined,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadMoreProducts]);
+    loadMoreProducts(0, initialFilters);
+  }, [loadMoreProducts, initialFilters]);
 
   const buildSearchParams = (overrides: { search?: string; category?: Category | ""; sort?: string }) => {
     const params: Record<string, string> = {};

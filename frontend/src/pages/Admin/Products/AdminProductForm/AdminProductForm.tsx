@@ -106,19 +106,18 @@ export default function AdminProductForm() {
     if (isEdit && id) getProduct(Number(id));
   }, [isEdit, id, getProduct]);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (isEdit && product) {
-      setName(product.name);
-      setDescription(product.description || "");
-      setPrice(product.price.toString());
-      setCategory(product.category as Category);
-      setWeight(product.weight?.toString() || "");
-      setPieces(product.pieces?.toString() || "");
-      setExistingImages(product.images);
-    }
-  }, [isEdit, product]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [loadedProduct, setLoadedProduct] = useState<typeof product>(null);
+
+  if (isEdit && product && product !== loadedProduct) {
+    setLoadedProduct(product);
+    setName(product.name);
+    setDescription(product.description || "");
+    setPrice(product.price.toString());
+    setCategory(product.category as Category);
+    setWeight(product.weight?.toString() || "");
+    setPieces(product.pieces?.toString() || "");
+    setExistingImages(product.images);
+  }
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

@@ -18,13 +18,9 @@ interface Props {
 export default function Notification({ id, message, type, isVisible, onClose, duration = 5000, position = 0 }: Props) {
   const [isHiding, setIsHiding] = useState(false)
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (!isVisible && !isHiding) {
-      setIsHiding(true)
-    }
-  }, [isVisible, isHiding])
-  /* eslint-enable react-hooks/set-state-in-effect */
+  if (!isVisible && !isHiding) {
+    setIsHiding(true)
+  }
 
   useEffect(() => {
     if (isVisible && duration > 0) {

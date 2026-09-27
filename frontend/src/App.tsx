@@ -1,9 +1,9 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/useAuth";
 import Loading from "./components/UI/Loading/Loading";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import MainLayout from "./layout/MainLayout/MainLayout";
-import AdminLayout from "./components/Admin/AdminLayout/AdminLayout";
 import ProfileLayout from "./components/Profile/ProfileLayout/ProfileLayout";
 import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login/Login";
@@ -18,17 +18,19 @@ import ProfilePage from "./pages/Profile/ProfilePage/ProfilePage";
 import MyOrdersPage from "./pages/Profile/MyOrdersPage/MyOrdersPage";
 import PromotionPage from "./pages/Promotion/PromotionPage";
 import ProductPage from "./pages/Product/ProductPage";
-import AdminProductsPage from "./pages/Admin/Products/AdminProductsPage/AdminProductsPage";
-import AdminProductForm from "./pages/Admin/Products/AdminProductForm/AdminProductForm";
-import AdminOrdersPage from "./pages/Admin/Orders/AdminOrdersPage";
-import AdminPromotionsPage from "./pages/Admin/Promotions/AdminPromotionsPage/AdminPromotionsPage";
-import AdminPromotionForm from "./pages/Admin/Promotions/AdminPromotionForm/AdminPromotionForm";
-import AdminAuditPage from "./pages/Admin/Audit/AdminAuditPage";
 import CheckoutPage from "./pages/Checkout/CheckoutPage";
 import MenuPage from "./pages/Menu/MenuPage";
 import OrderSuccessPage from "./pages/Order/Success/SuccessPage";
 import OrderCancelPage from "./pages/Order/Cancel/CancelPage";
 import NotFoundPage from "./pages/NotFound/NotFoundPage";
+
+const AdminLayout = lazy(() => import("./components/Admin/AdminLayout/AdminLayout"));
+const AdminProductsPage = lazy(() => import("./pages/Admin/Products/AdminProductsPage/AdminProductsPage"));
+const AdminProductForm = lazy(() => import("./pages/Admin/Products/AdminProductForm/AdminProductForm"));
+const AdminOrdersPage = lazy(() => import("./pages/Admin/Orders/AdminOrdersPage"));
+const AdminPromotionsPage = lazy(() => import("./pages/Admin/Promotions/AdminPromotionsPage/AdminPromotionsPage"));
+const AdminPromotionForm = lazy(() => import("./pages/Admin/Promotions/AdminPromotionForm/AdminPromotionForm"));
+const AdminAuditPage = lazy(() => import("./pages/Admin/Audit/AdminAuditPage"));
 
 function App() {
   const { loading } = useAuth();
@@ -93,19 +95,21 @@ function App() {
         path="/admin"
         element={
           <ProtectedRoute staffOnly>
-            <AdminLayout />
+            <Suspense fallback={<Loading text="Loading admin panel..." />}>
+              <AdminLayout />
+            </Suspense>
           </ProtectedRoute>
         }
       >
         <Route index element={<Navigate to="orders" replace />} />
-        <Route path="products" element={<AdminProductsPage />} />
-        <Route path="products/new" element={<AdminProductForm />} />
-        <Route path="products/:id/edit" element={<AdminProductForm />} />
+        <Route path="products" element={<ProtectedRoute adminOnly><AdminProductsPage /></ProtectedRoute>} />
+        <Route path="products/new" element={<ProtectedRoute adminOnly><AdminProductForm /></ProtectedRoute>} />
+        <Route path="products/:id/edit" element={<ProtectedRoute adminOnly><AdminProductForm /></ProtectedRoute>} />
         <Route path="orders" element={<AdminOrdersPage />} />
-        <Route path="promotions" element={<AdminPromotionsPage />} />
-        <Route path="promotions/new" element={<AdminPromotionForm />} />
-        <Route path="promotions/:id/edit" element={<AdminPromotionForm />} />
-        <Route path="audit" element={<AdminAuditPage />} />
+        <Route path="promotions" element={<ProtectedRoute adminOnly><AdminPromotionsPage /></ProtectedRoute>} />
+        <Route path="promotions/new" element={<ProtectedRoute adminOnly><AdminPromotionForm /></ProtectedRoute>} />
+        <Route path="promotions/:id/edit" element={<ProtectedRoute adminOnly><AdminPromotionForm /></ProtectedRoute>} />
+        <Route path="audit" element={<ProtectedRoute adminOnly><AdminAuditPage /></ProtectedRoute>} />
       </Route>
     </Routes>
   );
