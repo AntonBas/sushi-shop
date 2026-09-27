@@ -6,6 +6,7 @@ COPY gradle gradle
 COPY gradlew .
 RUN chmod +x gradlew
 RUN ./gradlew dependencies --no-daemon
+COPY config ./config
 COPY src ./src
 RUN ./gradlew clean build -x test --no-daemon
 
