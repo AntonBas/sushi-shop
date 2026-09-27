@@ -81,7 +81,12 @@ public class StripeService {
             if ("checkout.session.completed".equals(event.getType())) {
                 var deserializer = event.getDataObjectDeserializer();
                 if (deserializer.getObject().isPresent()) {
-                    sessionId = ((Session) deserializer.getObject().get()).getId();
+                    var session = (Session) deserializer.getObject().get();
+                    if ("paid".equals(session.getPaymentStatus())) {
+                        sessionId = session.getId();
+                    } else {
+                        log.warn("Checkout session {} completed with payment status {}", session.getId(), session.getPaymentStatus());
+                    }
                 }
             }
             return new WebhookEvent(event.getId(), sessionId);

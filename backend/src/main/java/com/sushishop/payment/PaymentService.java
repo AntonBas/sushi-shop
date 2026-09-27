@@ -1,10 +1,14 @@
 package com.sushishop.payment;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.order.Order;
 import com.sushishop.order.OrderService;
+import com.sushishop.order.OrderStatus;
+import com.sushishop.order.PaymentMethod;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -22,6 +27,26 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderService orderService;
     private final ApplicationEventPublisher eventPublisher;
+
+    public void ensurePayable(Order order) {
+        if (order.getPaymentMethod() != PaymentMethod.ONLINE) {
+            throw new ConflictException("Order is paid on delivery");
+        }
+        if (order.isPaid()) {
+            throw new ConflictException("Order is already paid");
+        }
+        if (order.getStatus() != OrderStatus.NEW) {
+            throw new ConflictException("Order cannot be paid in status " + order.getStatus());
+        }
+    }
+
+    @Transactional
+    public List<String> expirePendingPayments(Long orderId) {
+        var pending = paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING);
+        pending.forEach(payment -> payment.setStatus(PaymentStatus.EXPIRED));
+        paymentRepository.saveAll(pending);
+        return pending.stream().map(Payment::getStripeSessionId).toList();
+    }
 
     @Auditable(action = AuditAction.CREATE, entity = "Payment")
     @Transactional

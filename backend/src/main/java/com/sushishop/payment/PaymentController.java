@@ -36,6 +36,8 @@ public class PaymentController {
     public ResponseEntity<Map<String, String>> createCheckout(@PathVariable Long orderId,
                                                               @AuthenticationPrincipal UserDetails userDetails) {
         var order = orderService.getOwnedOrder(orderId, userDetails.getUsername(), false);
+        paymentService.ensurePayable(order);
+        paymentService.expirePendingPayments(orderId).forEach(stripeService::expireCheckoutSession);
         var amountInCents = order.getTotalAmount().movePointRight(2).longValueExact();
         var info = stripeService.createCheckoutSession(orderId, amountInCents, userDetails.getUsername());
         runWithCompensation(
