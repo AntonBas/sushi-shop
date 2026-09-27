@@ -86,7 +86,7 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - '5173:80'
+      - '127.0.0.1:5173:80'
     networks:
       - sushi-net
     restart: unless-stopped
@@ -105,14 +105,14 @@ services:
       - sushi-net
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.5.0
     container_name: sushi-prometheus
     profiles: [dev]
     depends_on:
       prometheus-config:
         condition: service_completed_successfully
     ports:
-      - '9090:9090'
+      - '127.0.0.1:9090:9090'
     volumes:
       - prometheus_config:/etc/prometheus
     networks:
@@ -120,17 +120,20 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.1.1
     container_name: sushi-grafana
     profiles: [dev]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
     networks:
       - sushi-net
     restart: unless-stopped
 
   ngrok:
-    image: ngrok/ngrok:latest
+    image: ngrok/ngrok:3
     container_name: sushi-ngrok
     profiles: [dev]
     depends_on:
@@ -140,7 +143,7 @@ services:
       - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
     command: http backend:8080 --log=stdout --log-level=info
     ports:
-      - '4040:4040'
+      - '127.0.0.1:4040:4040'
     networks:
       - sushi-net
     restart: unless-stopped

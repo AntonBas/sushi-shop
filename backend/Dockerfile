@@ -1,4 +1,4 @@
-FROM gradle:8.10-jdk21 AS builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
 COPY build.gradle .
 COPY settings.gradle .
@@ -11,7 +11,7 @@ RUN ./gradlew clean build -x test --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/build/libs/app.jar app.jar
 
 RUN mkdir -p uploads && \
     apt-get update && apt-get install -y curl && \
