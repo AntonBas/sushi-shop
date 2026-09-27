@@ -105,7 +105,7 @@ services:
       - sushi-net
 
   prometheus:
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.14.0
     container_name: sushi-prometheus
     profiles: [dev]
     depends_on:
