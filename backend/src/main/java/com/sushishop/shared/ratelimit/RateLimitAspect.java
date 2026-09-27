@@ -14,6 +14,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Optional;
 
 @Aspect
 @Component
@@ -85,21 +87,27 @@ public class RateLimitAspect {
             if (arg == null) {
                 continue;
             }
+            var emailAccessor = findEmailAccessor(arg.getClass());
+            if (emailAccessor.isEmpty()) {
+                continue;
+            }
             try {
-                Method emailAccessor = arg.getClass().getMethod("email");
-                if (emailAccessor.getReturnType() != String.class) {
-                    continue;
-                }
-                var email = (String) emailAccessor.invoke(arg);
+                var email = (String) emailAccessor.get().invoke(arg);
                 if (email != null && !email.isBlank()) {
                     return email.toLowerCase();
                 }
-            } catch (NoSuchMethodException e) {
-                // argument has no email() accessor, try the next one
             } catch (ReflectiveOperationException e) {
                 throw new IllegalStateException("Failed to read email for rate limiting", e);
             }
         }
         throw new IllegalStateException("RateLimit key=email requires a request argument with an email() accessor");
+    }
+
+    private Optional<Method> findEmailAccessor(Class<?> type) {
+        return Arrays.stream(type.getMethods())
+                .filter(method -> method.getName().equals("email")
+                        && method.getParameterCount() == 0
+                        && method.getReturnType() == String.class)
+                .findFirst();
     }
 }

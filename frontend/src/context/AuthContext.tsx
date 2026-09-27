@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
@@ -10,8 +10,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const loading = initialLoading;
+  const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user;
   const isAdmin = user?.userRole === "ADMIN";
@@ -22,7 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       .getMe()
       .then(setUser)
       .catch(() => setUser(null))
-      .finally(() => setInitialLoading(false));
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -30,23 +29,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => setUnauthorizedHandler(null);
   }, []);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = useCallback(async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);
     setUser(response.user);
-  };
+  }, []);
 
-  const register = async (userData: RegisterRequest) => {
+  const register = useCallback(async (userData: RegisterRequest) => {
     await authApi.register(userData);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     authApi.logout().finally(() => {
       setUser(null);
       window.location.href = "/login";
     });
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const data = await usersApi.getMe();
       setUser(data);
@@ -56,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       throw error;
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

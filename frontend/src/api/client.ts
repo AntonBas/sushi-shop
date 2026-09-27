@@ -30,11 +30,11 @@ export const handleResponseError = async (error: AxiosError) => {
 
     if (!config._sessionRechecked) {
         config._sessionRechecked = true;
-        try {
-            await api.get("/users/me", { skipAuthRedirect: true });
+        const sessionAlive = await api
+            .get("/users/me", { skipAuthRedirect: true })
+            .then(() => true, () => false);
+        if (sessionAlive) {
             return api.request(config);
-        } catch {
-            // session really is gone, fall through to logout
         }
     }
 

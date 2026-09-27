@@ -86,7 +86,7 @@ app:
   seed-demo-users: false
   monitoring:
     username: ${PROMETHEUS_USER:prometheus}
-    password: ${PROMETHEUS_PASSWORD:changeme}
+    password: ${PROMETHEUS_PASSWORD}
 
 management:
   endpoints:

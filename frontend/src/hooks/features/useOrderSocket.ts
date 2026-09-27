@@ -52,14 +52,12 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
         connectionIssueNotifiedRef.current = false;
         onConnectEvent(client);
       },
-      onStompError: (frame) => {
+      onStompError: () => {
         clearWatchdog();
-        console.error("WebSocket STOMP error:", frame.headers.message);
         notifyConnectionIssue();
       },
-      onWebSocketError: (event) => {
+      onWebSocketError: () => {
         clearWatchdog();
-        console.error("WebSocket connection error:", event);
         notifyConnectionIssue();
       },
       onWebSocketClose: () => clearWatchdog(),

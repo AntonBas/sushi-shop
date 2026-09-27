@@ -6,6 +6,7 @@ import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -50,13 +51,6 @@ public class AuditAspect {
     }
 
     private Optional<Field> findIdField(Class<?> type) {
-        for (var current = type; current != null && current != Object.class; current = current.getSuperclass()) {
-            try {
-                return Optional.of(current.getDeclaredField("id"));
-            } catch (NoSuchFieldException ignored) {
-                // keep walking up to the next superclass
-            }
-        }
-        return Optional.empty();
+        return Optional.ofNullable(ReflectionUtils.findField(type, "id"));
     }
 }

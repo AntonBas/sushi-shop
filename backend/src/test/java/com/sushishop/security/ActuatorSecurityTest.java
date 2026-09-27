@@ -36,7 +36,7 @@ class ActuatorSecurityTest {
 
     @Test
     void shouldAllowPrometheusWithValidCredentials() throws Exception {
-        mockMvc.perform(get("/actuator/prometheus").with(httpBasic("prometheus", "changeme")))
+        mockMvc.perform(get("/actuator/prometheus").with(httpBasic("prometheus", "test-monitoring-password")))
                 .andExpect(status().isOk());
     }
 

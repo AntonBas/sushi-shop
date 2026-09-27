@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
 import { exchangeOAuth2Code } from "../../../api/auth";
@@ -7,8 +7,14 @@ import Loading from "../../../components/UI/Loading/Loading";
 export default function OAuth2Redirect() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+  const handledRef = useRef(false);
 
   useEffect(() => {
+    if (handledRef.current) {
+      return;
+    }
+    handledRef.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
     window.history.replaceState(null, "", window.location.pathname);

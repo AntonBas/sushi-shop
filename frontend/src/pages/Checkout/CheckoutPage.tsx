@@ -132,6 +132,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${deliveryMethod === "PICKUP" ? styles.activeMethod : ""}`}
+              aria-pressed={deliveryMethod === "PICKUP"}
               onClick={() => setDeliveryMethod("PICKUP")}
             >
               Pickup
@@ -139,6 +140,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${deliveryMethod === "DELIVERY" ? styles.activeMethod : ""}`}
+              aria-pressed={deliveryMethod === "DELIVERY"}
               onClick={() => setDeliveryMethod("DELIVERY")}
             >
               Delivery
@@ -195,6 +197,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${paymentMethod === "ON_DELIVERY" ? styles.activeMethod : ""}`}
+              aria-pressed={paymentMethod === "ON_DELIVERY"}
               onClick={() => setPaymentMethod("ON_DELIVERY")}
             >
               Pay on {deliveryMethod === "PICKUP" ? "Pickup" : "Delivery"}
@@ -202,6 +205,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${paymentMethod === "ONLINE" ? styles.activeMethod : ""}`}
+              aria-pressed={paymentMethod === "ONLINE"}
               onClick={() => setPaymentMethod("ONLINE")}
             >
               Pay Online

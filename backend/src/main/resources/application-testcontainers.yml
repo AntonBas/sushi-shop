@@ -29,6 +29,8 @@ app:
     api-key: test-api-key
     from-email: test@example.com
     from-name: Sushi Bas Shop
+  monitoring:
+    password: test-monitoring-password
   base-url: http://localhost:8080
   frontend-url: http://localhost:8080
   cors:
