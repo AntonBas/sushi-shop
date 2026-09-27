@@ -42,8 +42,8 @@ export default function ResetPassword() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <p className={styles.instruction}>Enter your new password below.</p>
-          <Input label="New Password" type="password" value={newPassword} onChange={setNewPassword} placeholder="Min 8 characters" />
-          <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
+          <Input label="New Password" name="newPassword" autoComplete="new-password" type="password" value={newPassword} onChange={setNewPassword} placeholder="Min 8 characters" />
+          <Input label="Confirm Password" name="confirmPassword" autoComplete="new-password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
           <Button type="submit" loading={loading} style={{ width: '100%' }}>
             {loading ? 'Resetting...' : 'Reset Password'}
           </Button>

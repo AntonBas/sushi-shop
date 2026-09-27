@@ -139,8 +139,10 @@ export default function AdminPromotionForm() {
           placeholder="Weekend Sale"
         />
         <div className={styles.fieldGroup}>
-          <label className={styles.label}>Description</label>
+          <label htmlFor="promotion-description" className={styles.label}>Description</label>
           <textarea
+            id="promotion-description"
+            name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
@@ -172,10 +174,11 @@ export default function AdminPromotionForm() {
         </div>
         {isEdit && (
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>Status</label>
-            <div className={styles.toggleRow}>
+            <span id="promotion-status-label" className={styles.label}>Status</span>
+            <div className={styles.toggleRow} role="group" aria-labelledby="promotion-status-label">
               <button
                 type="button"
+                aria-pressed={active}
                 onClick={() => setActive(true)}
                 className={`${styles.statusBtn} ${active ? styles.statusBtnActive : ""}`}
               >
@@ -183,6 +186,7 @@ export default function AdminPromotionForm() {
               </button>
               <button
                 type="button"
+                aria-pressed={!active}
                 onClick={() => setActive(false)}
                 className={`${styles.statusBtn} ${!active ? styles.statusBtnInactive : ""}`}
               >
@@ -192,20 +196,22 @@ export default function AdminPromotionForm() {
           </div>
         )}
         <div className={styles.fieldGroup}>
-          <label className={styles.label}>
+          <span className={styles.label}>
             Products ({selectedProductIds.length} selected)
-          </label>
+          </span>
           {selectedProductIds.length > 0 && (
             <div className={styles.selectedList}>
               {selectedProductIds.map((pid) => (
-                <span
+                <button
+                  type="button"
                   key={pid}
                   className={styles.selectedTag}
                   onClick={() => removeSelected(pid)}
+                  aria-label={`Remove ${selectedProductNames[pid] || `#${pid}`}`}
                 >
                   {selectedProductNames[pid] || `#${pid}`}
-                  <X size={12} />
-                </span>
+                  <X size={12} aria-hidden="true" />
+                </button>
               ))}
             </div>
           )}

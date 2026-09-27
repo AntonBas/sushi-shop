@@ -66,7 +66,7 @@ export default function EmailVerification() {
           </>
         )}
 
-        <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
+        <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
 
         {message && (
           <p className={messageType === 'error' ? styles.messageError : styles.messageSuccess}>{message}</p>

@@ -111,12 +111,16 @@ export default function CheckoutPage() {
           <h2 className={styles.sectionTitle}>Contact Info</h2>
           <Input
             label="Name"
+            name="name"
+            autoComplete="name"
             value={customerName}
             onChange={setCustomerName}
             placeholder="Your name"
           />
           <Input
             label="Phone"
+            name="phone"
+            autoComplete="tel"
             value={phone}
             onChange={setPhone}
             placeholder="+380991234567"
@@ -147,24 +151,30 @@ export default function CheckoutPage() {
             <div className={styles.addressGrid}>
               <Input
                 label="City"
+                name="city"
+                autoComplete="address-level2"
                 value={city}
                 onChange={setCity}
                 placeholder="City"
               />
               <Input
                 label="Street"
+                name="street"
+                autoComplete="address-line1"
                 value={street}
                 onChange={setStreet}
                 placeholder="Street"
               />
               <Input
                 label="House"
+                name="house"
                 value={house}
                 onChange={setHouse}
                 placeholder="House"
               />
               <Input
                 label="Apartment"
+                name="apartment"
                 value={apartment}
                 onChange={setApartment}
                 placeholder="Apt"
@@ -172,6 +182,7 @@ export default function CheckoutPage() {
             </div>
             <Input
               label="Comment"
+              name="comment"
               value={comment}
               onChange={setComment}
               placeholder="Floor, intercom code, etc."

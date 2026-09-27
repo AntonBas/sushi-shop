@@ -22,13 +22,13 @@ export const CATEGORY_DISPLAY: Record<Category, string> = {
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  NEW: "#6366f1",
-  CONFIRMED: "#3b82f6",
-  COOKING: "#f59e0b",
-  DELIVERING: "#8b5cf6",
-  READY: "#10b981",
-  DELIVERED: "#22c55e",
-  CANCELLED: "#ef4444",
+  NEW: "#4f46e5",
+  CONFIRMED: "#1d4ed8",
+  COOKING: "#b45309",
+  DELIVERING: "#6d28d9",
+  READY: "#047857",
+  DELIVERED: "#15803d",
+  CANCELLED: "#b91c1c",
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {

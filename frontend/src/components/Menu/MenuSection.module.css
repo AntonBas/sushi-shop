@@ -37,7 +37,6 @@
   background: var(--color-input-bg);
   color: var(--color-text);
   font-size: 15px;
-  outline: none;
 }
 
 .searchInput:focus {
@@ -69,7 +68,6 @@
 }
 
 .sortSelect:focus {
-  outline: none;
   border-color: var(--color-primary);
 }
 

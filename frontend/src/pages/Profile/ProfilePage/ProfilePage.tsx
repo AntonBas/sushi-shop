@@ -149,8 +149,9 @@ export default function ProfilePage() {
       {activeTab === "profile" && (
         <form onSubmit={handleUpdateProfile} className={styles.form}>
           <div className={styles.fieldReadonly}>
-            <label className={styles.label}>Email</label>
+            <label htmlFor="profile-email" className={styles.label}>Email</label>
             <input
+              id="profile-email"
               value={user?.email || ""}
               disabled
               className={styles.input}
@@ -158,12 +159,16 @@ export default function ProfilePage() {
           </div>
           <Input
             label="Name"
+            name="name"
+            autoComplete="name"
             value={name}
             onChange={setName}
             placeholder="Your name"
           />
           <Input
             label="Phone"
+            name="phone"
+            autoComplete="tel"
             value={phone}
             onChange={setPhone}
             placeholder="+380991234567"
@@ -177,12 +182,16 @@ export default function ProfilePage() {
         <form onSubmit={handleUpdateAddress} className={styles.form}>
           <Input
             label="City"
+            name="city"
+            autoComplete="address-level2"
             value={city}
             onChange={setCity}
             placeholder="City"
           />
           <Input
             label="Street"
+            name="street"
+            autoComplete="address-line1"
             value={street}
             onChange={setStreet}
             placeholder="Street"
@@ -190,12 +199,14 @@ export default function ProfilePage() {
           <div className={styles.row}>
             <Input
               label="House"
+              name="house"
               value={house}
               onChange={setHouse}
               placeholder="House"
             />
             <Input
               label="Apartment"
+              name="apartment"
               value={apartment}
               onChange={setApartment}
               placeholder="Apt"
@@ -218,6 +229,8 @@ export default function ProfilePage() {
             <form onSubmit={handleChangePassword} className={styles.form}>
               <Input
                 label="Current Password"
+                name="currentPassword"
+                autoComplete="current-password"
                 type="password"
                 value={oldPassword}
                 onChange={setOldPassword}
@@ -225,6 +238,8 @@ export default function ProfilePage() {
               />
               <Input
                 label="New Password"
+                name="newPassword"
+                autoComplete="new-password"
                 type="password"
                 value={newPassword}
                 onChange={setNewPassword}
@@ -232,6 +247,8 @@ export default function ProfilePage() {
               />
               <Input
                 label="Confirm New Password"
+                name="confirmPassword"
+                autoComplete="new-password"
                 type="password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
@@ -257,6 +274,8 @@ export default function ProfilePage() {
             )}
             <Input
               label="New Email"
+              name="newEmail"
+              autoComplete="email"
               type="email"
               value={newEmail}
               onChange={setNewEmail}

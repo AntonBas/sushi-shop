@@ -16,7 +16,7 @@
 }
 
 .icon {
-  color: #22c55e;
+  color: var(--color-success);
   margin-bottom: 16px;
 }
 

@@ -16,7 +16,7 @@
 }
 
 .icon {
-  color: #ef4444;
+  color: var(--color-error);
   margin-bottom: 16px;
 }
 

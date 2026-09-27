@@ -30,7 +30,12 @@ export default function AdminHeader({ onToggleSidebar, isSidebarOpen }: AdminHea
       </div>
 
       <div className={styles.rightSection}>
-        <button onClick={toggleTheme} className={styles.themeBtn}>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className={styles.themeBtn}
+          aria-label={theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+        >
           {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
         </button>
 

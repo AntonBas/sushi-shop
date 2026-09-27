@@ -51,12 +51,13 @@ export default function Pagination({
   const visiblePages = getVisiblePages(currentPage, totalPages);
 
   return (
-    <div className={styles.pagination}>
+    <nav className={styles.pagination} aria-label="Pagination">
       <button
         type="button"
         className={styles.navButton}
         onClick={() => onPageChange(0)}
         disabled={currentPage === 0}
+        aria-label="First page"
       >
         «
       </button>
@@ -65,6 +66,7 @@ export default function Pagination({
         className={styles.navButton}
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 0}
+        aria-label="Previous page"
       >
         ←
       </button>
@@ -86,6 +88,7 @@ export default function Pagination({
           key={i}
           className={`${styles.pageButton} ${i === currentPage ? styles.active : ""}`}
           onClick={() => onPageChange(i)}
+          aria-current={i === currentPage ? "page" : undefined}
         >
           {i + 1}
         </button>
@@ -109,6 +112,7 @@ export default function Pagination({
         className={styles.navButton}
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages - 1}
+        aria-label="Next page"
       >
         →
       </button>
@@ -117,9 +121,10 @@ export default function Pagination({
         className={styles.navButton}
         onClick={() => onPageChange(totalPages - 1)}
         disabled={currentPage === totalPages - 1}
+        aria-label="Last page"
       >
         »
       </button>
-    </div>
+    </nav>
   );
 }

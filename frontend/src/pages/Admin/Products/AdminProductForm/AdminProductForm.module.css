@@ -139,7 +139,6 @@
   background: var(--color-input-bg);
   color: var(--color-text);
   font-size: 15px;
-  outline: none;
   resize: vertical;
   font-family: inherit;
 }
@@ -155,7 +154,6 @@
   background: var(--color-input-bg);
   color: var(--color-text);
   font-size: 15px;
-  outline: none;
   cursor: pointer;
 }
 

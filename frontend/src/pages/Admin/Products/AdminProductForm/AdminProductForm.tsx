@@ -220,7 +220,7 @@ export default function AdminProductForm() {
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.layout}>
           <div className={styles.imagesSection}>
-            <label className={styles.label}>Images</label>
+            <span className={styles.label}>Images</span>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -281,8 +281,10 @@ export default function AdminProductForm() {
               placeholder="Product name"
             />
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Description</label>
+              <label htmlFor="product-description" className={styles.label}>Description</label>
               <textarea
+                id="product-description"
+                name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
@@ -315,8 +317,10 @@ export default function AdminProductForm() {
               type="number"
             />
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Category</label>
+              <label htmlFor="product-category" className={styles.label}>Category</label>
               <select
+                id="product-category"
+                name="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
                 className={styles.select}

@@ -39,7 +39,6 @@
   color: var(--color-text);
   padding: 10px 0;
   width: 100%;
-  outline: none;
   font-size: 14px;
 }
 
@@ -54,7 +53,6 @@
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 14px;
-  outline: none;
 }
 
 .filterSelect:focus {

@@ -48,8 +48,8 @@ export default function Notification({ id, message, type, isVisible, onClose, du
       onAnimationEnd={() => {
         if (isHiding) onClose(id)
       }}
-      role="status"
-      aria-live="polite"
+      role={type === 'error' ? 'alert' : 'status'}
+      aria-live={type === 'error' ? 'assertive' : 'polite'}
     >
       <div className={styles.content}>
         <span className={styles.icon}>{icons[type]}</span>

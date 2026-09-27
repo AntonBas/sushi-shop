@@ -16,6 +16,7 @@ describe('Pagination', () => {
 
     expect(screen.getByRole('button', { name: '1' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '1' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: '3' })).toBeInTheDocument()
   })
 
@@ -31,17 +32,17 @@ describe('Pagination', () => {
   it('disables the previous/first buttons on the first page', () => {
     render(<Pagination currentPage={0} totalPages={5} onPageChange={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: '«' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '←' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '»' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: 'First page' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Last page' })).not.toBeDisabled()
   })
 
   it('disables the next/last buttons on the last page', () => {
     render(<Pagination currentPage={4} totalPages={5} onPageChange={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: '»' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '→' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: '«' })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Last page' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'First page' })).not.toBeDisabled()
   })
 
   it('collapses far-away pages behind an ellipsis when there are many pages', () => {

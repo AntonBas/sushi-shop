@@ -47,11 +47,11 @@ export default function Register() {
       {error && <div className={styles.error}>{error}</div>}
 
       <form onSubmit={handleSubmit} className={styles.form}>
-        <Input label="Name" value={name} onChange={setName} placeholder="Your name" />
-        <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
-        <Input label="Phone" type="tel" value={phone} onChange={setPhone} placeholder="+380991234567" />
-        <Input label="Password" type="password" value={password} onChange={setPassword} placeholder="Min 8 characters" />
-        <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
+        <Input label="Name" name="name" autoComplete="name" value={name} onChange={setName} placeholder="Your name" />
+        <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
+        <Input label="Phone" name="phone" autoComplete="tel" type="tel" value={phone} onChange={setPhone} placeholder="+380991234567" />
+        <Input label="Password" name="password" autoComplete="new-password" type="password" value={password} onChange={setPassword} placeholder="Min 8 characters" />
+        <Input label="Confirm Password" name="confirmPassword" autoComplete="new-password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
 
         <button type="button" className={styles.toggle} onClick={() => setShowAddress(!showAddress)} aria-expanded={showAddress}>
           Delivery Address (optional)
@@ -60,10 +60,10 @@ export default function Register() {
 
         {showAddress && (
           <div className={styles.addressGrid}>
-            <Input label="City" value={city} onChange={setCity} placeholder="City" />
-            <Input label="Street" value={street} onChange={setStreet} placeholder="Street" />
-            <Input label="House" value={house} onChange={setHouse} placeholder="House" />
-            <Input label="Apartment" value={apartment} onChange={setApartment} placeholder="Apt" />
+            <Input label="City" name="city" autoComplete="address-level2" value={city} onChange={setCity} placeholder="City" />
+            <Input label="Street" name="street" autoComplete="address-line1" value={street} onChange={setStreet} placeholder="Street" />
+            <Input label="House" name="house" value={house} onChange={setHouse} placeholder="House" />
+            <Input label="Apartment" name="apartment" value={apartment} onChange={setApartment} placeholder="Apt" />
           </div>
         )}
 

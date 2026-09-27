@@ -40,7 +40,7 @@ export default function ForgotPassword() {
             Enter your email and we'll send you instructions to reset your password.
             Signed up with Google and don't have a password yet? Use this to set one.
           </p>
-          <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
+          <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
           <Button type="submit" loading={loading} style={{ width: '100%' }}>
             {loading ? 'Sending...' : 'Send Reset Instructions'}
           </Button>

@@ -30,7 +30,6 @@
 }
 
 .sortSelect:focus {
-  outline: none;
   border-color: var(--color-primary);
 }
 
@@ -66,7 +65,6 @@
   font-size: 15px;
   resize: vertical;
   font-family: inherit;
-  outline: none;
 }
 
 .textarea:focus {

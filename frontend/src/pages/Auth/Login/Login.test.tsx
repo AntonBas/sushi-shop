@@ -51,8 +51,8 @@ describe('Login', () => {
 
     renderLogin()
 
-    fireEvent.change(screen.getByPlaceholderText('your@email.com'), { target: { value: 'anton@example.com' } })
-    fireEvent.change(screen.getByPlaceholderText('••••••••'), { target: { value: 'password123' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'anton@example.com' } })
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
     fireEvent.click(screen.getByRole('button', { name: 'Login' }))
 
     await waitFor(() => expect(screen.getByText(OAUTH_NO_PASSWORD_ERROR)).toBeInTheDocument())
