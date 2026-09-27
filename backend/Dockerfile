@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk AS builder
+FROM eclipse-temurin:23-jdk AS builder
 WORKDIR /app
 COPY build.gradle .
 COPY settings.gradle .
@@ -10,7 +10,7 @@ COPY config ./config
 COPY src ./src
 RUN ./gradlew clean build -x test --no-daemon
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:23-jre
 WORKDIR /app
 COPY --from=builder /app/build/libs/app.jar app.jar
 
