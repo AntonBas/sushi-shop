@@ -45,7 +45,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
-    implementation "com.stripe:stripe-java:33.1.1"
+    implementation "com.stripe:stripe-java:33.4.2"
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
     implementation 'com.bucket4j:bucket4j-redis:8.10.1'
     implementation 'com.cloudinary:cloudinary-http5:2.4.0'
