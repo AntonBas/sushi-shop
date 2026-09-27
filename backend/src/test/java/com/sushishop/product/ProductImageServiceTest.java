@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductImageServiceTest {
+class ProductImageServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -41,7 +41,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldAddImage() {
+    void shouldAddImage() {
         var product = createProduct();
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
 
@@ -56,7 +56,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldSkipWhenFileIsEmpty() {
+    void shouldSkipWhenFileIsEmpty() {
         var product = createProduct();
         var file = new MockMultipartFile("empty.jpg", "empty.jpg", "image/jpeg", new byte[0]);
 
@@ -70,7 +70,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenProductNotFoundForAddImage() {
+    void shouldThrowWhenProductNotFoundForAddImage() {
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
 
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
@@ -79,7 +79,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldDeleteImage() {
+    void shouldDeleteImage() {
         var product = createProduct();
         var image = ProductImage.builder().id(10L).url("/api/files/test.jpg").sortOrder(0).product(product).build();
         product.getProductImages().add(image);
@@ -94,7 +94,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenImageNotFound() {
+    void shouldThrowWhenImageNotFound() {
         var product = createProduct();
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -103,7 +103,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldReorderImages() {
+    void shouldReorderImages() {
         var product = createProduct();
         var image1 = ProductImage.builder().id(1L).url("1.jpg").sortOrder(0).product(product).build();
         var image2 = ProductImage.builder().id(2L).url("2.jpg").sortOrder(1).product(product).build();
@@ -121,7 +121,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldAddImagesToProduct() {
+    void shouldAddImagesToProduct() {
         var product = createProduct();
         var file1 = new MockMultipartFile("1.jpg", "1.jpg", "image/jpeg", "1".getBytes());
         var file2 = new MockMultipartFile("2.jpg", "2.jpg", "image/jpeg", "2".getBytes());
@@ -137,7 +137,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldSkipNullImagesInAddImagesToProduct() {
+    void shouldSkipNullImagesInAddImagesToProduct() {
         var product = createProduct();
 
         productImageService.addImagesToProduct(product, null);

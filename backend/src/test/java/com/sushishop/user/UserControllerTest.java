@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class UserControllerTest {
+class UserControllerTest {
 
     private MockMvc mockMvc;
 
@@ -33,13 +33,13 @@ public class UserControllerTest {
     private UserService userService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    public void shouldGetCurrentUser() throws Exception {
+    void shouldGetCurrentUser() throws Exception {
         var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
@@ -51,7 +51,7 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    public void shouldChangePassword() throws Exception {
+    void shouldChangePassword() throws Exception {
         var request = """
                 {
                     "oldPassword": "oldPass",
@@ -67,7 +67,7 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    public void shouldClearAddress() throws Exception {
+    void shouldClearAddress() throws Exception {
         var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(userService.clearAddress("anton@example.com")).thenReturn(response);

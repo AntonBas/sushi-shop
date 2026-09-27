@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductEnrichmentServiceTest {
+class ProductEnrichmentServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -24,13 +24,13 @@ public class ProductEnrichmentServiceTest {
     private ProductEnrichmentService productEnrichmentService;
 
     @Test
-    public void shouldReturnEmptyMapForEmptyList() {
+    void shouldReturnEmptyMapForEmptyList() {
         var result = productEnrichmentService.getAverageRatings(List.of());
         assertThat(result).isEmpty();
     }
 
     @Test
-    public void shouldReturnRatingsMap() {
+    void shouldReturnRatingsMap() {
         when(productRepository.findAverageRatingsByProductIds(List.of(1L, 2L)))
                 .thenReturn(List.of(new Object[]{1L, 4.5}, new Object[]{2L, 3.0}));
 
@@ -40,7 +40,7 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    public void shouldEnrichProductsWithImagesAndPromotions() {
+    void shouldEnrichProductsWithImagesAndPromotions() {
         Product product1 = Product.builder().id(1L).name("Product 1").build();
         Product product2 = Product.builder().id(2L).name("Product 2").build();
         List<Product> products = Arrays.asList(product1, product2);
@@ -75,12 +75,12 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    public void shouldEnrichEmptyList() {
+    void shouldEnrichEmptyList() {
         productEnrichmentService.enrichProductsWithImagesAndPromotions(List.of());
     }
 
     @Test
-    public void shouldCalculateDiscountedPrice() {
+    void shouldCalculateDiscountedPrice() {
         var promotion = Promotion.builder()
                 .id(1L)
                 .title("Sale")
@@ -103,7 +103,7 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    public void shouldReturnNullDiscountedPriceWhenNoActivePromo() {
+    void shouldReturnNullDiscountedPriceWhenNoActivePromo() {
         var product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -117,7 +117,7 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    public void shouldGetDiscountPercent() {
+    void shouldGetDiscountPercent() {
         var promotion = Promotion.builder()
                 .id(1L)
                 .title("Sale")
@@ -140,7 +140,7 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    public void shouldGetPromotionTitle() {
+    void shouldGetPromotionTitle() {
         var promotion = Promotion.builder()
                 .id(1L)
                 .title("Weekend Sale")
@@ -163,7 +163,7 @@ public class ProductEnrichmentServiceTest {
     }
 
     @Test
-    public void shouldGetBestPromoWithHighestDiscount() {
+    void shouldGetBestPromoWithHighestDiscount() {
         var promo20 = Promotion.builder()
                 .id(1L)
                 .title("20% Sale")

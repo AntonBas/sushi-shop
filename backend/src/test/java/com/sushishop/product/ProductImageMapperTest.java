@@ -2,22 +2,20 @@ package com.sushishop.product;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class ProductImageMapperTest {
+@SpringJUnitConfig({ProductImageMapper.class})
+class ProductImageMapperTest {
 
     @Autowired
     private ProductImageMapper productImageMapper;
 
     @Test
-    public void shouldReturnMainImageWithLowestSortOrder() {
+    void shouldReturnMainImageWithLowestSortOrder() {
         var image1 = ProductImage.builder()
                 .id(1L)
                 .url("/api/files/1.jpg")
@@ -36,19 +34,19 @@ public class ProductImageMapperTest {
     }
 
     @Test
-    public void shouldReturnNullForEmptyList() {
+    void shouldReturnNullForEmptyList() {
         var result = productImageMapper.getMainImage(List.of());
         assertThat(result).isNull();
     }
 
     @Test
-    public void shouldReturnNullForNullList() {
+    void shouldReturnNullForNullList() {
         var result = productImageMapper.getMainImage(null);
         assertThat(result).isNull();
     }
 
     @Test
-    public void shouldReturnSingleImage() {
+    void shouldReturnSingleImage() {
         var image = ProductImage.builder()
                 .id(1L)
                 .url("/api/files/1.jpg")

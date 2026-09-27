@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class EmailVerificationServiceTest {
+class EmailVerificationServiceTest {
 
     @Mock
     private TokenService tokenService;
@@ -35,7 +35,7 @@ public class EmailVerificationServiceTest {
     private EmailVerificationService emailVerificationService;
 
     @Test
-    public void shouldVerifyEmail() {
+    void shouldVerifyEmail() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -59,7 +59,7 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldResendVerificationForUnverifiedUser() {
+    void shouldResendVerificationForUnverifiedUser() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -77,7 +77,7 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldRejectResendWhenAlreadyVerified() {
+    void shouldRejectResendWhenAlreadyVerified() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -93,7 +93,7 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldRejectResendWithinCooldownAndReportRemainingSeconds() {
+    void shouldRejectResendWithinCooldownAndReportRemainingSeconds() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -112,7 +112,7 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldAllowResendAfterCooldownElapsed() {
+    void shouldAllowResendAfterCooldownElapsed() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -128,7 +128,7 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldSilentlyIgnoreResendForUnknownEmailButReportSameCooldown() {
+    void shouldSilentlyIgnoreResendForUnknownEmailButReportSameCooldown() {
         when(userRepository.findByEmailForUpdate("unknown@example.com")).thenReturn(Optional.empty());
 
         int cooldownSeconds = emailVerificationService.resendVerification("unknown@example.com");
@@ -138,14 +138,14 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldReportZeroCooldownForUnknownEmail() {
+    void shouldReportZeroCooldownForUnknownEmail() {
         when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
 
         assertThat(emailVerificationService.getResendCooldownStatus("unknown@example.com")).isZero();
     }
 
     @Test
-    public void shouldReportZeroCooldownForAlreadyVerifiedEmail() {
+    void shouldReportZeroCooldownForAlreadyVerifiedEmail() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -159,7 +159,7 @@ public class EmailVerificationServiceTest {
     }
 
     @Test
-    public void shouldReportRemainingCooldownForRecentlyResentEmail() {
+    void shouldReportRemainingCooldownForRecentlyResentEmail() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")

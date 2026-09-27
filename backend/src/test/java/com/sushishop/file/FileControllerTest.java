@@ -19,7 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class FileControllerTest {
+class FileControllerTest {
 
     private MockMvc mockMvc;
 
@@ -30,12 +30,12 @@ public class FileControllerTest {
     private FileStorageService fileStorageService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
-    public void shouldReturnFile() throws Exception {
+    void shouldReturnFile() throws Exception {
         var resource = new UrlResource(Path.of("build.gradle").toUri());
 
         when(fileStorageService.load("test.jpg")).thenReturn(resource);
@@ -46,7 +46,7 @@ public class FileControllerTest {
     }
 
     @Test
-    public void shouldReturn404ForMissingFile() throws Exception {
+    void shouldReturn404ForMissingFile() throws Exception {
         when(fileStorageService.load("missing.jpg")).thenReturn(null);
 
         mockMvc.perform(get("/api/files/missing.jpg"))

@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class AuthControllerTest {
+class AuthControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -59,12 +59,12 @@ public class AuthControllerTest {
     private EmailChangeService emailChangeService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
-    public void shouldRegister() throws Exception {
+    void shouldRegister() throws Exception {
         var request = new RegisterRequest("Anton", "anton@example.com", "password123", "password123", "+380961791111", null);
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
@@ -79,7 +79,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldReturn400WhenInvalidRegister() throws Exception {
+    void shouldReturn400WhenInvalidRegister() throws Exception {
         var request = new RegisterRequest("", "invalid", "123", "123", "", null);
 
         mockMvc.perform(post("/api/auth/register")
@@ -89,7 +89,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldLogin() throws Exception {
+    void shouldLogin() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
@@ -105,7 +105,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldReturn401WhenInvalidCredentials() throws Exception {
+    void shouldReturn401WhenInvalidCredentials() throws Exception {
         var request = new LoginRequest("anton@example.com", "wrong");
 
         when(authService.login(any())).thenThrow(new BadCredentialsException("Bad credentials"));
@@ -117,7 +117,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldReturn400WhenOAuthAccountHasNoPassword() throws Exception {
+    void shouldReturn400WhenOAuthAccountHasNoPassword() throws Exception {
         var request = new LoginRequest("anton@example.com", "password123");
 
         when(authService.login(any())).thenThrow(new BadRequestException("This account uses Google sign-in and has no password set. Sign in with Google, or use \"Forgot password?\" to set one.", "PASSWORD_NOT_SET"));
@@ -131,7 +131,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldExchangeOAuth2Code() throws Exception {
+    void shouldExchangeOAuth2Code() throws Exception {
         var request = new OAuth2ExchangeRequest("valid-code");
         var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
         var authResult = new AuthService.AuthResult("jwt-token", userResponse);
@@ -146,7 +146,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldReturn400WhenOAuth2CodeInvalid() throws Exception {
+    void shouldReturn400WhenOAuth2CodeInvalid() throws Exception {
         var request = new OAuth2ExchangeRequest("bad-code");
 
         when(authService.exchangeOAuth2Code("bad-code")).thenThrow(new BadRequestException("Invalid or expired code"));
@@ -158,14 +158,14 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldVerifyEmail() throws Exception {
+    void shouldVerifyEmail() throws Exception {
         mockMvc.perform(get("/api/auth/verify")
                         .param("token", "token123"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    public void shouldResendVerification() throws Exception {
+    void shouldResendVerification() throws Exception {
         var request = new ResendVerificationRequest("anton@example.com");
 
         when(emailVerificationService.resendVerification("anton@example.com")).thenReturn(60);
@@ -178,7 +178,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldReturn400WhenResendingForAlreadyVerifiedEmail() throws Exception {
+    void shouldReturn400WhenResendingForAlreadyVerifiedEmail() throws Exception {
         var request = new ResendVerificationRequest("anton@example.com");
 
         when(emailVerificationService.resendVerification("anton@example.com"))
@@ -191,7 +191,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldReturn429WithRetryAfterHeaderWhenResendCooldownActive() throws Exception {
+    void shouldReturn429WithRetryAfterHeaderWhenResendCooldownActive() throws Exception {
         var request = new ResendVerificationRequest("anton@example.com");
 
         when(emailVerificationService.resendVerification("anton@example.com"))
@@ -205,7 +205,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldGetResendVerificationStatus() throws Exception {
+    void shouldGetResendVerificationStatus() throws Exception {
         when(emailVerificationService.getResendCooldownStatus(anyString())).thenReturn(17);
 
         mockMvc.perform(get("/api/auth/resend-verification/status")
@@ -215,7 +215,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldForgotPassword() throws Exception {
+    void shouldForgotPassword() throws Exception {
         var request = new ForgotPasswordRequest("anton@example.com");
 
         mockMvc.perform(post("/api/auth/password/forgot")
@@ -225,7 +225,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldNormalizeEmailCaseBeforeCallingService() throws Exception {
+    void shouldNormalizeEmailCaseBeforeCallingService() throws Exception {
         mockMvc.perform(post("/api/auth/password/forgot")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"Anton@Example.COM\"}"))
@@ -235,7 +235,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldResetPassword() throws Exception {
+    void shouldResetPassword() throws Exception {
         var request = new ResetPasswordRequest("token123", "NewPass123", "NewPass123");
 
         mockMvc.perform(post("/api/auth/password/reset")
@@ -245,7 +245,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldLogout() throws Exception {
+    void shouldLogout() throws Exception {
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("jwt", 0));
@@ -253,7 +253,7 @@ public class AuthControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    public void shouldRequestEmailChange() throws Exception {
+    void shouldRequestEmailChange() throws Exception {
         var request = new ChangeEmailRequest("new@example.com");
 
         mockMvc.perform(post("/api/auth/email-change")
@@ -263,7 +263,7 @@ public class AuthControllerTest {
     }
 
     @Test
-    public void shouldConfirmEmailChangeWithoutAuthentication() throws Exception {
+    void shouldConfirmEmailChangeWithoutAuthentication() throws Exception {
         var response = new UserResponse(1L, "Anton", "new@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(emailChangeService.confirmEmailChange("token123")).thenReturn(response);

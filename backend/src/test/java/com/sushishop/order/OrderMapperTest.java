@@ -4,11 +4,11 @@ import com.sushishop.order.dto.response.OrderItemResponse;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductImageMapper;
 import com.sushishop.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -16,15 +16,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class OrderMapperTest {
+@SpringJUnitConfig({OrderMapperImpl.class, ProductImageMapper.class})
+class OrderMapperTest {
 
     @Autowired
     private OrderMapper orderMapper;
 
     @Test
-    public void shouldMapToResponse() {
+    void shouldMapToResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -78,7 +77,7 @@ public class OrderMapperTest {
     }
 
     @Test
-    public void shouldMapToUserResponse() {
+    void shouldMapToUserResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -121,7 +120,7 @@ public class OrderMapperTest {
     }
 
     @Test
-    public void shouldMapToItemResponse() {
+    void shouldMapToItemResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -147,7 +146,7 @@ public class OrderMapperTest {
     }
 
     @Test
-    public void shouldMapToItemResponseList() {
+    void shouldMapToItemResponseList() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -174,7 +173,7 @@ public class OrderMapperTest {
     }
 
     @Test
-    public void shouldDerivePaymentStatusFromPaidFlagNotOrderStatus() {
+    void shouldDerivePaymentStatusFromPaidFlagNotOrderStatus() {
         var unpaidCancelled = Order.builder().paymentMethod(PaymentMethod.ONLINE).status(OrderStatus.CANCELLED).build();
         var unpaidNew = Order.builder().paymentMethod(PaymentMethod.ONLINE).status(OrderStatus.NEW).build();
         var paid = Order.builder().paymentMethod(PaymentMethod.ONLINE).status(OrderStatus.COOKING).paid(true).build();

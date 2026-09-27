@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useTheme } from './useTheme'
 
@@ -6,6 +6,17 @@ describe('useTheme', () => {
   beforeEach(() => {
     localStorage.clear()
     document.documentElement.classList.remove('dark')
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('defaults to the system dark preference when nothing is stored', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-color-scheme: dark)' }))
+    const { result } = renderHook(() => useTheme())
+    expect(result.current.theme).toBe('dark')
+    expect(localStorage.getItem('theme')).toBeNull()
   })
 
   it('defaults to light theme when nothing is stored', () => {

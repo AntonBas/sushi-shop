@@ -26,7 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ApiErrorHandlerTest {
+class ApiErrorHandlerTest {
 
     @Autowired
     private WebApplicationContext context;
@@ -35,7 +35,7 @@ public class ApiErrorHandlerTest {
     private MockMvc standaloneMockMvc;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
         standaloneMockMvc = MockMvcBuilders.standaloneSetup(new FailingController())
                 .setControllerAdvice(new ApiErrorHandler())
@@ -43,7 +43,7 @@ public class ApiErrorHandlerTest {
     }
 
     @Test
-    public void shouldReturnConflictWithoutSqlDetailsOnDatabaseConstraintViolation() throws Exception {
+    void shouldReturnConflictWithoutSqlDetailsOnDatabaseConstraintViolation() throws Exception {
         standaloneMockMvc.perform(get("/constraint"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Database constraint violation"))
@@ -51,21 +51,21 @@ public class ApiErrorHandlerTest {
     }
 
     @Test
-    public void shouldReturnInternalServerErrorOnOtherDataIntegrityViolation() throws Exception {
+    void shouldReturnInternalServerErrorOnOtherDataIntegrityViolation() throws Exception {
         standaloneMockMvc.perform(get("/data-integrity"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message").value("Database error"));
     }
 
     @Test
-    public void shouldReturnBadRequestOnBeanValidationFailureAtCommit() throws Exception {
+    void shouldReturnBadRequestOnBeanValidationFailureAtCommit() throws Exception {
         standaloneMockMvc.perform(get("/commit-validation"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.subErrors[0].field").value("name"));
     }
 
     @Test
-    public void shouldNotExposeCauseMessageForServerErrors() throws Exception {
+    void shouldNotExposeCauseMessageForServerErrors() throws Exception {
         standaloneMockMvc.perform(get("/internal"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.message").value("Payment session creation failed"))
@@ -73,7 +73,7 @@ public class ApiErrorHandlerTest {
     }
 
     @Test
-    public void shouldReturnBadRequestOnUnknownSortProperty() throws Exception {
+    void shouldReturnBadRequestOnUnknownSortProperty() throws Exception {
         mockMvc.perform(get("/api/products").param("sort", "foo"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Unknown property 'foo'"));

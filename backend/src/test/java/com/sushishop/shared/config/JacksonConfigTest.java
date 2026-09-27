@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class JacksonConfigTest {
+class JacksonConfigTest {
 
     @Autowired
     private WebApplicationContext context;
@@ -37,12 +37,12 @@ public class JacksonConfigTest {
     private MockMvc mockMvc;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
-    public void shouldTrimStringFieldsInHttpRequestBody() throws Exception {
+    void shouldTrimStringFieldsInHttpRequestBody() throws Exception {
         mockMvc.perform(post("/api/auth/password/forgot")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"  a@b.com\\t\"}"))
@@ -52,7 +52,7 @@ public class JacksonConfigTest {
     }
 
     @Test
-    public void shouldSerializeErrorStatusByEnumName() throws Exception {
+    void shouldSerializeErrorStatusByEnumName() throws Exception {
         mockMvc.perform(post("/api/auth/password/forgot")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"not-an-email\"}"))
@@ -61,7 +61,7 @@ public class JacksonConfigTest {
     }
 
     @Test
-    public void shouldWriteLocalDateTimeAsUtcAndReadUtcInputBack() {
+    void shouldWriteLocalDateTimeAsUtcAndReadUtcInputBack() {
         var dateTime = LocalDateTime.of(2026, 9, 27, 15, 30);
 
         assertThat(jsonMapper.writeValueAsString(dateTime)).isEqualTo("\"2026-09-27T15:30:00Z\"");

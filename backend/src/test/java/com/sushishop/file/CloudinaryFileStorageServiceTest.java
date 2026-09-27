@@ -24,14 +24,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class CloudinaryFileStorageServiceTest {
+class CloudinaryFileStorageServiceTest {
 
     private Cloudinary cloudinary;
     private Uploader uploader;
     private CloudinaryFileStorageService service;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         cloudinary = Mockito.mock(Cloudinary.class);
         uploader = Mockito.mock(Uploader.class);
         when(cloudinary.uploader()).thenReturn(uploader);
@@ -42,7 +42,7 @@ public class CloudinaryFileStorageServiceTest {
     }
 
     @Test
-    public void shouldStoreFileAndReturnSecureUrl() throws IOException {
+    void shouldStoreFileAndReturnSecureUrl() throws IOException {
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
         when(uploader.upload(any(byte[].class), anyMap()))
                 .thenReturn(Map.of("secure_url", "https://res.cloudinary.com/demo/image/upload/v1699999999/products/abc123.jpg"));
@@ -53,18 +53,18 @@ public class CloudinaryFileStorageServiceTest {
     }
 
     @Test
-    public void shouldReturnNullForNullFile() {
+    void shouldReturnNullForNullFile() {
         assertThat(service.store(null)).isNull();
     }
 
     @Test
-    public void shouldReturnNullForEmptyFile() {
+    void shouldReturnNullForEmptyFile() {
         var file = new MockMultipartFile("empty.jpg", "empty.jpg", "image/jpeg", new byte[0]);
         assertThat(service.store(file)).isNull();
     }
 
     @Test
-    public void shouldThrowForInvalidType() {
+    void shouldThrowForInvalidType() {
         var file = new MockMultipartFile("test.txt", "test.txt", "text/plain", "test".getBytes());
 
         assertThatThrownBy(() -> service.store(file))
@@ -73,7 +73,7 @@ public class CloudinaryFileStorageServiceTest {
     }
 
     @Test
-    public void shouldThrowForTooLargeFile() {
+    void shouldThrowForTooLargeFile() {
         var file = new MockMultipartFile("large.jpg", "large.jpg", "image/jpeg", new byte[6_000_000]);
 
         assertThatThrownBy(() -> service.store(file))
@@ -82,7 +82,7 @@ public class CloudinaryFileStorageServiceTest {
     }
 
     @Test
-    public void shouldWrapUploadIOException() throws IOException {
+    void shouldWrapUploadIOException() throws IOException {
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
         when(uploader.upload(any(byte[].class), anyMap())).thenThrow(new IOException("network down"));
 
@@ -91,21 +91,21 @@ public class CloudinaryFileStorageServiceTest {
     }
 
     @Test
-    public void shouldDestroyByExtractedPublicId() throws IOException {
+    void shouldDestroyByExtractedPublicId() throws IOException {
         service.delete("https://res.cloudinary.com/demo/image/upload/v1699999999/products/abc123.jpg");
 
         verify(uploader).destroy(eq("products/abc123"), anyMap());
     }
 
     @Test
-    public void shouldNotThrowWhenDestroyFails() throws IOException {
+    void shouldNotThrowWhenDestroyFails() throws IOException {
         when(uploader.destroy(any(), anyMap())).thenThrow(new IOException("network down"));
 
         service.delete("https://res.cloudinary.com/demo/image/upload/v1699999999/products/abc123.jpg");
     }
 
     @Test
-    public void shouldSkipDeletionForInvalidUrl() throws IOException {
+    void shouldSkipDeletionForInvalidUrl() throws IOException {
         service.delete("not-a-cloudinary-url");
 
         verify(uploader, Mockito.never()).destroy(any(), anyMap());
@@ -117,12 +117,12 @@ public class CloudinaryFileStorageServiceTest {
             "https://res.cloudinary.com/demo/image/upload/products/abc123.png, products/abc123",
             "https://res.cloudinary.com/demo/image/upload/v1/abc123.jpeg, abc123",
     })
-    public void shouldExtractPublicIdFromVariousUrlShapes(String url, String expectedPublicId) {
+    void shouldExtractPublicIdFromVariousUrlShapes(String url, String expectedPublicId) {
         assertThat(CloudinaryFileStorageService.extractPublicId(url)).isEqualTo(expectedPublicId);
     }
 
     @Test
-    public void shouldReturnNullPublicIdForMalformedUrl() {
+    void shouldReturnNullPublicIdForMalformedUrl() {
         assertThat(CloudinaryFileStorageService.extractPublicId("https://example.com/no-upload-segment.jpg")).isNull();
         assertThat(CloudinaryFileStorageService.extractPublicId(null)).isNull();
     }

@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PromotionServiceTest {
+class PromotionServiceTest {
 
     private static final Long PROMOTION_ID = 1L;
     private static final String PROMOTION_SLUG = "weekend-sale";
@@ -93,7 +93,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldCreatePromotion() {
+    void shouldCreatePromotion() {
         var request = new CreatePromotionRequest(
                 PROMOTION_TITLE,
                 "20% off",
@@ -136,7 +136,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetActivePromotions() {
+    void shouldGetActivePromotions() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -160,7 +160,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetAllWithSearch() {
+    void shouldGetAllWithSearch() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -188,7 +188,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldPreserveRequestedOrderWhenFetchingPromotionsByIds() {
+    void shouldPreserveRequestedOrderWhenFetchingPromotionsByIds() {
         var second = Promotion.builder().id(2L).slug("second").title("Second").discountPercent(DISCOUNT_PERCENT)
                 .startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(1)).active(ACTIVE).products(Set.of()).build();
         var first = Promotion.builder().id(1L).slug("first").title("First").discountPercent(DISCOUNT_PERCENT)
@@ -208,7 +208,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetAllWithoutSearch() {
+    void shouldGetAllWithoutSearch() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -236,7 +236,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetById() {
+    void shouldGetById() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -261,7 +261,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetBySlug() {
+    void shouldGetBySlug() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -285,7 +285,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenPromotionNotFound() {
+    void shouldThrowWhenPromotionNotFound() {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> promotionService.getById(PROMOTION_ID))
@@ -293,7 +293,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldUpdatePromotion() {
+    void shouldUpdatePromotion() {
         var request = new UpdatePromotionRequest(
                 "Updated Sale",
                 "Updated desc",
@@ -344,7 +344,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldUpdatePartialDates() {
+    void shouldUpdatePartialDates() {
         var request = new UpdatePromotionRequest(
                 null,
                 null,
@@ -393,7 +393,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldDeletePromotion() {
+    void shouldDeletePromotion() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -410,7 +410,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldCheckOverlapWithEffectiveDatesWhenDatesChange() {
+    void shouldCheckOverlapWithEffectiveDatesWhenDatesChange() {
         var newEnd = LocalDateTime.now().plusDays(10);
         var request = new UpdatePromotionRequest(null, null, null, null, newEnd, null, null);
         var product = Product.builder().id(PRODUCT_ID).slug("maki").build();
@@ -435,7 +435,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldSkipOverlapCheckWhenOnlyDescriptionChanges() {
+    void shouldSkipOverlapCheckWhenOnlyDescriptionChanges() {
         var request = new UpdatePromotionRequest(null, "New desc", null, null, null, null, null);
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)

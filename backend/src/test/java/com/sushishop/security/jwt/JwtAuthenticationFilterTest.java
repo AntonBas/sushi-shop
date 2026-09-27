@@ -97,4 +97,20 @@ class JwtAuthenticationFilterTest {
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
         verify(filterChain).doFilter(request, response);
     }
+
+    @Test
+    void shouldNotAuthenticateWhenTokenVersionIsOutdated() throws Exception {
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+        var payload = new JwtUtil.JwtPayload("anton@example.com", 1, "jti-123", new Date());
+
+        when(jwtCookieService.extractToken(request)).thenReturn("token123");
+        when(jwtUtil.parseToken("token123")).thenReturn(payload);
+        when(userCacheService.getCachedUser("anton@example.com", 1)).thenReturn(null);
+
+        filter.doFilter(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
 }

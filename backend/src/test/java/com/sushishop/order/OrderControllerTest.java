@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class OrderControllerTest {
+class OrderControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -51,13 +51,13 @@ public class OrderControllerTest {
     private OrderQueryService orderQueryService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "test@test.com")
-    public void shouldCreateOrder() throws Exception {
+    void shouldCreateOrder() throws Exception {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY,
                 new AddressRequest("Lviv", "Zelena", "204", "280", "code 123"),
                 List.of(new OrderItemRequest(1L, 2)));
@@ -76,7 +76,7 @@ public class OrderControllerTest {
     }
 
     @Test
-    public void shouldReturn400WhenInvalidOrder() throws Exception {
+    void shouldReturn400WhenInvalidOrder() throws Exception {
         var request = new CreateOrderRequest("", "", null, DeliveryMethod.DELIVERY, null, List.of());
 
         mockMvc.perform(post("/api/orders")
@@ -87,7 +87,7 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(username = "test@test.com")
-    public void shouldGetMyOrders() throws Exception {
+    void shouldGetMyOrders() throws Exception {
         var response = new UserOrderResponse(1L, "test@test.com", OrderStatus.NEW, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", BigDecimal.ZERO, null, List.of());
         Page<UserOrderResponse> page = new PageImpl<>(List.of(response));
 
@@ -101,7 +101,7 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
-    public void shouldGetAllOrders() throws Exception {
+    void shouldGetAllOrders() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
         Page<OrderResponse> page = new PageImpl<>(List.of(response));
 
@@ -114,14 +114,14 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(username = "test@test.com")
-    public void shouldRejectNonStaffUserFromGetAllOrders() throws Exception {
+    void shouldRejectNonStaffUserFromGetAllOrders() throws Exception {
         mockMvc.perform(get("/api/orders"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "test@test.com")
-    public void shouldGetById() throws Exception {
+    void shouldGetById() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, BigDecimal.ZERO, null, List.of());
 
         when(orderService.getById(1L, "test@test.com", false)).thenReturn(response);
@@ -133,7 +133,7 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(roles = {"ADMIN"})
-    public void shouldUpdateStatus() throws Exception {
+    void shouldUpdateStatus() throws Exception {
         var response = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null, DeliveryMethod.PICKUP, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.COOKING, BigDecimal.ZERO, null, List.of());
 
         when(orderService.updateStatus(eq(1L), any())).thenReturn(response);
@@ -146,7 +146,7 @@ public class OrderControllerTest {
 
     @Test
     @WithMockUser(username = "test@test.com")
-    public void shouldRejectNonStaffUserFromUpdateStatus() throws Exception {
+    void shouldRejectNonStaffUserFromUpdateStatus() throws Exception {
         mockMvc.perform(patch("/api/orders/1/status")
                         .param("status", "COOKING"))
                 .andExpect(status().isForbidden());

@@ -4,8 +4,7 @@ import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -13,15 +12,14 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class PromotionMapperTest {
+@SpringJUnitConfig({PromotionMapperImpl.class})
+class PromotionMapperTest {
 
     @Autowired
     private PromotionMapper promotionMapper;
 
     @Test
-    public void shouldMapToResponse() {
+    void shouldMapToResponse() {
         var product = Product.builder()
                 .id(1L)
                 .name("Maki")

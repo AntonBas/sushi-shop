@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("testcontainers")
-public class UserRepositoryIntegrationTest {
+class UserRepositoryIntegrationTest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -45,7 +45,7 @@ public class UserRepositoryIntegrationTest {
     private TransactionTemplate transactionTemplate;
 
     @Test
-    public void shouldLoadSeededDemoUsersWithValidRole() {
+    void shouldLoadSeededDemoUsersWithValidRole() {
         assertThat(userRepository.findByEmail("user@test.com"))
                 .isPresent()
                 .get()
@@ -66,7 +66,7 @@ public class UserRepositoryIntegrationTest {
     }
 
     @Test
-    public void shouldDeleteOnlyUnverifiedUsersWithoutOrdersOrReviews() {
+    void shouldDeleteOnlyUnverifiedUsersWithoutOrdersOrReviews() {
         long withOrder = insertUnverifiedUser("with-order@example.com");
         insertUnverifiedUser("clean@example.com");
         jdbcTemplate.update("""

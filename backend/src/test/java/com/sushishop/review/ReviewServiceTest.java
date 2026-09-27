@@ -29,7 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ReviewServiceTest {
+class ReviewServiceTest {
 
     @Mock
     private ReviewRepository reviewRepository;
@@ -50,7 +50,7 @@ public class ReviewServiceTest {
     private ReviewService reviewService;
 
     @Test
-    public void shouldCreateReview() {
+    void shouldCreateReview() {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
@@ -69,7 +69,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldUpdateReview() {
+    void shouldUpdateReview() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
         var review = Review.builder().id(1L).user(user).product(product).rating(4).comment("Good").build();
@@ -87,7 +87,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDuplicateReview() {
+    void shouldThrowWhenDuplicateReview() {
         var request = new CreateReviewRequest(1L, 5, "Great!");
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
@@ -101,7 +101,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUserNotFound() {
+    void shouldThrowWhenUserNotFound() {
         var request = new CreateReviewRequest(1L, 5, "Great!");
 
         when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
@@ -111,7 +111,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldPreserveRequestedSortOrderWhenFetchingReviews() {
+    void shouldPreserveRequestedSortOrderWhenFetchingReviews() {
         var pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "rating"));
         var idsPage = new PageImpl<>(List.of(2L, 1L), pageable, 2);
         var review1 = Review.builder().id(1L).rating(3).build();
@@ -130,7 +130,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUpdateReviewNotOwner() {
+    void shouldThrowWhenUpdateReviewNotOwner() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var review = Review.builder().id(1L).user(user).build();
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
@@ -142,7 +142,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeleteReviewNotOwner() {
+    void shouldThrowWhenDeleteReviewNotOwner() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var review = Review.builder().id(1L).user(user).build();
 
@@ -153,7 +153,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldLetAdminDeleteSomeoneElsesReview() {
+    void shouldLetAdminDeleteSomeoneElsesReview() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(3L).slug("maki").build();
         var review = Review.builder().id(1L).user(user).product(product).build();

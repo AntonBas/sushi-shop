@@ -3,22 +3,20 @@ package com.sushishop.review;
 import com.sushishop.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class ReviewMapperTest {
+@SpringJUnitConfig({ReviewMapperImpl.class})
+class ReviewMapperTest {
 
     @Autowired
     private ReviewMapper reviewMapper;
 
     @Test
-    public void shouldMapToResponse() {
+    void shouldMapToResponse() {
         var user = User.builder().name("Anton").build();
         var review = Review.builder()
                 .id(1L)
@@ -38,7 +36,7 @@ public class ReviewMapperTest {
     }
 
     @Test
-    public void shouldMapToReplyResponse() {
+    void shouldMapToReplyResponse() {
         var user = User.builder().name("Admin").build();
         var reply = ReviewReply.builder()
                 .id(1L)

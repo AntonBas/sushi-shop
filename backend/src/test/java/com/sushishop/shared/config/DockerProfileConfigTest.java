@@ -12,11 +12,11 @@ import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DockerProfileConfigTest {
+class DockerProfileConfigTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldNestConnectionPropertiesUnderSpringNotSpringdoc() throws IOException {
+    void shouldNestConnectionPropertiesUnderSpringNotSpringdoc() throws IOException {
         Resource resource = new ClassPathResource("application-docker.yml");
         var sources = new YamlPropertySourceLoader().load("application-docker", resource);
         PropertySource<?> source = sources.getFirst();

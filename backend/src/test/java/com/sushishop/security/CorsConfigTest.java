@@ -8,7 +8,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class CorsConfigTest {
+class CorsConfigTest {
 
     private CorsConfiguration configFor(String allowedOrigins) {
         CorsConfig corsConfig = new CorsConfig();
@@ -19,7 +19,7 @@ public class CorsConfigTest {
     }
 
     @Test
-    public void shouldMatchVercelPreviewDeploymentsViaWildcardPattern() {
+    void shouldMatchVercelPreviewDeploymentsViaWildcardPattern() {
         CorsConfiguration config = configFor("https://sushi-shop*.vercel.app");
 
         assertThat(config.checkOrigin("https://sushi-shop-five.vercel.app")).isNotNull();
@@ -27,21 +27,21 @@ public class CorsConfigTest {
     }
 
     @Test
-    public void shouldRejectOriginNotMatchingAnyPattern() {
+    void shouldRejectOriginNotMatchingAnyPattern() {
         CorsConfiguration config = configFor("https://sushi-shop*.vercel.app");
 
         assertThat(config.checkOrigin("https://evil.com")).isNull();
     }
 
     @Test
-    public void shouldTrimWhitespaceBetweenCommaSeparatedOrigins() {
+    void shouldTrimWhitespaceBetweenCommaSeparatedOrigins() {
         CorsConfiguration config = configFor("https://a.com, https://b.com");
 
         assertThat(config.checkOrigin("https://b.com")).isNotNull();
     }
 
     @Test
-    public void shouldFailFastWhenAllowedOriginsIsBlank() {
+    void shouldFailFastWhenAllowedOriginsIsBlank() {
         assertThatThrownBy(() -> configFor(""))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("app.cors.allowed-origins");

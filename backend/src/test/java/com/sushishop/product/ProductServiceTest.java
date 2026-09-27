@@ -26,7 +26,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductServiceTest {
+class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -85,7 +85,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldCreateProduct() {
+    void shouldCreateProduct() {
         var request = new CreateProductRequest("Maki", "Desc", new BigDecimal("250.00"), Category.ROLL, 250, 8);
         var product = createProduct();
         var expected = createResponse();
@@ -108,7 +108,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldGetById() {
+    void shouldGetById() {
         var product = createProduct();
         var expected = createResponse();
 
@@ -126,7 +126,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenProductNotFound() {
+    void shouldThrowWhenProductNotFound() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getById(1L))
@@ -134,7 +134,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldUpdateProduct() {
+    void shouldUpdateProduct() {
         var request = new UpdateProductRequest("Updated", null, null, null, null, null);
         var product = createProduct();
         var expected = createResponse();
@@ -156,7 +156,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldToggleAvailability() {
+    void shouldToggleAvailability() {
         var product = createProduct();
         product.setAvailable(true);
 
@@ -169,7 +169,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldDeleteProductAndItsImageFiles() {
+    void shouldDeleteProductAndItsImageFiles() {
         var product = createProduct();
         product.getProductImages().add(ProductImage.builder().id(5L).url("/api/files/a.jpg").product(product).build());
 
@@ -183,7 +183,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldRejectDeletingOrderedProductWithoutTouchingFiles() {
+    void shouldRejectDeletingOrderedProductWithoutTouchingFiles() {
         var product = createProduct();
         product.getProductImages().add(ProductImage.builder().id(5L).url("/api/files/a.jpg").product(product).build());
 
@@ -197,7 +197,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldRejectUpdateThatLeavesSetWithoutPieces() {
+    void shouldRejectUpdateThatLeavesSetWithoutPieces() {
         var request = new UpdateProductRequest(null, null, null, Category.SET, null, null);
         var product = createProduct();
         product.setPieces(null);
@@ -213,7 +213,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldEvictPromotionCacheWhenProductAvailabilityChanges() {
+    void shouldEvictPromotionCacheWhenProductAvailabilityChanges() {
         var product = createProduct();
         product.getPromotions().add(Promotion.builder().id(7L).slug("summer").build());
 

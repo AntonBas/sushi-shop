@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +14,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class LocalFileStorageServiceTest {
+class LocalFileStorageServiceTest {
 
     private LocalFileStorageService fileStorageService;
 
@@ -21,30 +22,19 @@ public class LocalFileStorageServiceTest {
     Path tempDir;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() {
         fileStorageService = new LocalFileStorageService();
 
-        var uploadDirField = LocalFileStorageService.class.getDeclaredField("uploadDir");
-        uploadDirField.setAccessible(true);
-        uploadDirField.set(fileStorageService, tempDir.toString());
-
-        var allowedTypesField = LocalFileStorageService.class.getDeclaredField("allowedTypes");
-        allowedTypesField.setAccessible(true);
-        allowedTypesField.set(fileStorageService, Set.of("image/jpeg", "image/png", "image/webp"));
-
-        var maxFileSizeField = LocalFileStorageService.class.getDeclaredField("maxFileSize");
-        maxFileSizeField.setAccessible(true);
-        maxFileSizeField.set(fileStorageService, 5242880L);
-
-        var urlPrefixField = LocalFileStorageService.class.getDeclaredField("urlPrefix");
-        urlPrefixField.setAccessible(true);
-        urlPrefixField.set(fileStorageService, "/api/files/");
+        ReflectionTestUtils.setField(fileStorageService, "uploadDir", tempDir.toString());
+        ReflectionTestUtils.setField(fileStorageService, "allowedTypes", Set.of("image/jpeg", "image/png", "image/webp"));
+        ReflectionTestUtils.setField(fileStorageService, "maxFileSize", 5242880L);
+        ReflectionTestUtils.setField(fileStorageService, "urlPrefix", "/api/files/");
 
         fileStorageService.init();
     }
 
     @Test
-    public void shouldStoreFile() {
+    void shouldStoreFile() {
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
 
         var result = fileStorageService.store(file);
@@ -54,13 +44,13 @@ public class LocalFileStorageServiceTest {
     }
 
     @Test
-    public void shouldReturnNullForNullFile() {
+    void shouldReturnNullForNullFile() {
         var result = fileStorageService.store(null);
         assertThat(result).isNull();
     }
 
     @Test
-    public void shouldReturnNullForEmptyFile() {
+    void shouldReturnNullForEmptyFile() {
         var file = new MockMultipartFile("empty.jpg", "empty.jpg", "image/jpeg", new byte[0]);
 
         var result = fileStorageService.store(file);
@@ -69,7 +59,7 @@ public class LocalFileStorageServiceTest {
     }
 
     @Test
-    public void shouldThrowForInvalidType() {
+    void shouldThrowForInvalidType() {
         var file = new MockMultipartFile("test.txt", "test.txt", "text/plain", "test".getBytes());
 
         assertThatThrownBy(() -> fileStorageService.store(file))
@@ -78,7 +68,7 @@ public class LocalFileStorageServiceTest {
     }
 
     @Test
-    public void shouldThrowForTooLargeFile() {
+    void shouldThrowForTooLargeFile() {
         var bytes = new byte[6_000_000];
         var file = new MockMultipartFile("large.jpg", "large.jpg", "image/jpeg", bytes);
 
@@ -88,7 +78,7 @@ public class LocalFileStorageServiceTest {
     }
 
     @Test
-    public void shouldLoadFile() throws Exception {
+    void shouldLoadFile() throws Exception {
         var fileName = "test-load.jpg";
         var filePath = tempDir.resolve(fileName);
         Files.write(filePath, "test".getBytes());
@@ -100,20 +90,20 @@ public class LocalFileStorageServiceTest {
     }
 
     @Test
-    public void shouldReturnNullForNonExistentFile() {
+    void shouldReturnNullForNonExistentFile() {
         var resource = fileStorageService.load("nonexistent.jpg");
         assertThat(resource).isNull();
     }
 
     @Test
-    public void shouldThrowForPathTraversal() {
+    void shouldThrowForPathTraversal() {
         assertThatThrownBy(() -> fileStorageService.load("../../etc/passwd"))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Invalid file path");
     }
 
     @Test
-    public void shouldDeleteFile() throws Exception {
+    void shouldDeleteFile() throws Exception {
         var fileName = "test-delete.jpg";
         var filePath = tempDir.resolve(fileName);
         Files.write(filePath, "test".getBytes());
@@ -124,12 +114,12 @@ public class LocalFileStorageServiceTest {
     }
 
     @Test
-    public void shouldNotThrowWhenDeleteNonExistentFile() {
+    void shouldNotThrowWhenDeleteNonExistentFile() {
         fileStorageService.delete("/api/files/nonexistent.jpg");
     }
 
     @Test
-    public void shouldNotDeleteWithInvalidUrl() throws Exception {
+    void shouldNotDeleteWithInvalidUrl() throws Exception {
         var fileName = "test-invalid.jpg";
         var filePath = tempDir.resolve(fileName);
         Files.write(filePath, "test".getBytes());

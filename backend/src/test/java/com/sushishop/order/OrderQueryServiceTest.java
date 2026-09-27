@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderQueryServiceTest {
+class OrderQueryServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -36,7 +36,7 @@ public class OrderQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldGetAllOrders() {
+    void shouldGetAllOrders() {
         Pageable pageable = PageRequest.of(0, 20);
         var order = Order.builder().id(1L).customerName("Anton").totalAmount(new BigDecimal("500.00")).build();
         var page = new PageImpl<>(List.of(order), pageable, 1);
@@ -57,7 +57,7 @@ public class OrderQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldGetAllOrdersWithFilters() {
+    void shouldGetAllOrdersWithFilters() {
         Pageable pageable = PageRequest.of(0, 20);
         var order = Order.builder().id(1L).status(OrderStatus.NEW).build();
         var page = new PageImpl<>(List.of(order), pageable, 1);
@@ -77,7 +77,7 @@ public class OrderQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldReturnEmptyPageWhenNoOrders() {
+    void shouldReturnEmptyPageWhenNoOrders() {
         Pageable pageable = PageRequest.of(0, 20);
         var page = new PageImpl<Order>(List.of(), pageable, 0);
 
@@ -89,7 +89,7 @@ public class OrderQueryServiceTest {
     }
 
     @Test
-    public void shouldGetByUser() {
+    void shouldGetByUser() {
         Pageable pageable = PageRequest.of(0, 20);
         var order = Order.builder().id(1L).customerName("Anton").build();
         var page = new PageImpl<>(List.of(order), pageable, 1);

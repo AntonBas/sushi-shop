@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ReviewControllerTest {
+class ReviewControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -42,13 +42,13 @@ public class ReviewControllerTest {
     private ReviewReplyService reviewReplyService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldCreateReview() throws Exception {
+    void shouldCreateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var response = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 
@@ -63,7 +63,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldUpdateReview() throws Exception {
+    void shouldUpdateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 4, "Updated!");
         var response = new ReviewResponse(1L, 1L, "Anton", 4, "Updated!", null, null, null);
 
@@ -78,7 +78,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldAddReply() throws Exception {
+    void shouldAddReply() throws Exception {
         var request = new CreateReviewReplyRequest("Thank you!");
         var response = new ReviewReplyResponse(1L, "Thank you!", "Admin", null);
 
@@ -93,7 +93,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldUpdateReply() throws Exception {
+    void shouldUpdateReply() throws Exception {
         var request = new CreateReviewReplyRequest("Updated reply");
         var response = new ReviewReplyResponse(1L, "Updated reply", "Admin", null);
 
@@ -108,14 +108,14 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldDeleteReply() throws Exception {
+    void shouldDeleteReply() throws Exception {
         mockMvc.perform(delete("/api/reviews/replies/1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldDeleteReview() throws Exception {
+    void shouldDeleteReview() throws Exception {
         mockMvc.perform(delete("/api/reviews/1"))
                 .andExpect(status().isNoContent());
 
@@ -124,7 +124,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldPassAdminFlagWhenAdminDeletesReview() throws Exception {
+    void shouldPassAdminFlagWhenAdminDeletesReview() throws Exception {
         mockMvc.perform(delete("/api/reviews/1"))
                 .andExpect(status().isNoContent());
 
@@ -133,7 +133,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldRejectNonAdminUserFromAddReply() throws Exception {
+    void shouldRejectNonAdminUserFromAddReply() throws Exception {
         var request = new CreateReviewReplyRequest("Thank you!");
 
         mockMvc.perform(post("/api/reviews/1/replies")

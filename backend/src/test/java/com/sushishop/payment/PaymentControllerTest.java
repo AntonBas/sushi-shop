@@ -29,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class PaymentControllerTest {
+class PaymentControllerTest {
 
     private MockMvc mockMvc;
 

@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderServiceTest {
+class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -38,7 +38,7 @@ public class OrderServiceTest {
     private OrderService orderService;
 
     @Test
-    public void shouldGetByIdForOwner() {
+    void shouldGetByIdForOwner() {
         var order = new Order();
         order.setUser(User.builder().email("anton@example.com").build());
         var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
@@ -54,7 +54,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldGetByIdForStaffRegardlessOfOwner() {
+    void shouldGetByIdForStaffRegardlessOfOwner() {
         var order = new Order();
         order.setUser(User.builder().email("anton@example.com").build());
         var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
@@ -70,7 +70,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowNotFoundWhenRequesterIsNotOwnerOrStaff() {
+    void shouldThrowNotFoundWhenRequesterIsNotOwnerOrStaff() {
         var order = new Order();
         order.setUser(User.builder().email("anton@example.com").build());
 
@@ -81,7 +81,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldUpdateStatusForDelivery() {
+    void shouldUpdateStatusForDelivery() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.NEW)
@@ -102,7 +102,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldUpdateStatusToReadyForPickup() {
+    void shouldUpdateStatusToReadyForPickup() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -122,7 +122,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldUpdateStatusToDeliveredForPickup() {
+    void shouldUpdateStatusToDeliveredForPickup() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.READY)
@@ -142,7 +142,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeliveringForPickup() {
+    void shouldThrowWhenDeliveringForPickup() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -157,7 +157,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenReadyForDelivery() {
+    void shouldThrowWhenReadyForDelivery() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -172,7 +172,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenSameStatus() {
+    void shouldThrowWhenSameStatus() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.NEW)
@@ -187,7 +187,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenCancelNonNewOrder() {
+    void shouldThrowWhenCancelNonNewOrder() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -202,7 +202,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldRejectConfirmingUnpaidOnlineOrder() {
+    void shouldRejectConfirmingUnpaidOnlineOrder() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.NEW)
@@ -218,7 +218,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldConfirmNewOrderAfterPaymentAndNotifySubscribers() {
+    void shouldConfirmNewOrderAfterPaymentAndNotifySubscribers() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.NEW)
@@ -236,7 +236,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldMarkCancelledOrderPaidWithoutReopeningIt() {
+    void shouldMarkCancelledOrderPaidWithoutReopeningIt() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.CANCELLED)

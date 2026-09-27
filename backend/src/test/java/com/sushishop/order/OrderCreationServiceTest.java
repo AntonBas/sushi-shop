@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderCreationServiceTest {
+class OrderCreationServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -56,7 +56,7 @@ public class OrderCreationServiceTest {
     private OrderCreationService orderCreationService;
 
     @Test
-    public void shouldCreateOrder() {
+    void shouldCreateOrder() {
         var address = new AddressRequest("Lviv", "Zelena", "204", "280", "code 123");
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, address, List.of(itemRequest));
@@ -83,7 +83,7 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldApplyActivePromotionDiscount() {
+    void shouldApplyActivePromotionDiscount() {
         var address = new AddressRequest("Lviv", "Zelena", "204", "280", "code 123");
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, address, List.of(itemRequest));
@@ -105,13 +105,12 @@ public class OrderCreationServiceTest {
 
         var orderCaptor = org.mockito.ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(orderCaptor.capture());
-        // 250.00 - 20% = 200.00 per item, x2 = 400.00
         assertThat(orderCaptor.getValue().getTotalAmount()).isEqualByComparingTo(new BigDecimal("400.00"));
         assertThat(orderCaptor.getValue().getItems().get(0).getUnitPrice()).isEqualByComparingTo(new BigDecimal("200.00"));
     }
 
     @Test
-    public void shouldThrowWhenProductNotAvailable() {
+    void shouldThrowWhenProductNotAvailable() {
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of(itemRequest));
 
@@ -127,7 +126,7 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeliveryWithoutAddress() {
+    void shouldThrowWhenDeliveryWithoutAddress() {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, null, List.of());
 
         var user = User.builder().id(1L).email("test@test.com").build();
@@ -138,7 +137,7 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDuplicateProductIds() {
+    void shouldThrowWhenDuplicateProductIds() {
         var itemRequest1 = new OrderItemRequest(1L, 2);
         var itemRequest2 = new OrderItemRequest(1L, 3);
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of(itemRequest1, itemRequest2));
@@ -152,7 +151,7 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUserNotFound() {
+    void shouldThrowWhenUserNotFound() {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of());
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());

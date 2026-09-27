@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TokenServiceTest {
+class TokenServiceTest {
 
     @Mock
     private TokenRepository tokenRepository;
@@ -33,7 +33,7 @@ public class TokenServiceTest {
     private TokenService tokenService;
 
     @Test
-    public void shouldCreateVerificationTokenStoringOnlyItsHash() {
+    void shouldCreateVerificationTokenStoringOnlyItsHash() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -55,7 +55,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void shouldCreatePasswordResetToken() {
+    void shouldCreatePasswordResetToken() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -71,7 +71,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void shouldCreateEmailChangeToken() {
+    void shouldCreateEmailChangeToken() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -87,7 +87,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void shouldValidateToken() {
+    void shouldValidateToken() {
         var token = Token.builder()
                 .token("token123")
                 .tokenType(TokenType.EMAIL_VERIFICATION)
@@ -104,7 +104,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenTokenUsed() {
+    void shouldThrowWhenTokenUsed() {
         var token = Token.builder()
                 .token("token123")
                 .tokenType(TokenType.EMAIL_VERIFICATION)
@@ -121,7 +121,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenTokenExpired() {
+    void shouldThrowWhenTokenExpired() {
         var token = Token.builder()
                 .token("token123")
                 .tokenType(TokenType.EMAIL_VERIFICATION)
@@ -138,7 +138,7 @@ public class TokenServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenWrongTokenType() {
+    void shouldThrowWhenWrongTokenType() {
         var token = Token.builder()
                 .token("token123")
                 .tokenType(TokenType.EMAIL_VERIFICATION)

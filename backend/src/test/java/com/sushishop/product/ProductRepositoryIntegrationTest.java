@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest
 @Testcontainers
 @ActiveProfiles("testcontainers")
-public class ProductRepositoryIntegrationTest {
+class ProductRepositoryIntegrationTest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -34,7 +34,7 @@ public class ProductRepositoryIntegrationTest {
     private ProductRepository productRepository;
 
     @Test
-    public void shouldSaveAndFindProduct() {
+    void shouldSaveAndFindProduct() {
         var product = productRepository.save(Product.builder()
                 .name("Test Roll")
                 .slug("test-roll")
@@ -50,7 +50,7 @@ public class ProductRepositoryIntegrationTest {
     }
 
     @Test
-    public void shouldFindPopularProductsExcludingExtraCategory() {
+    void shouldFindPopularProductsExcludingExtraCategory() {
         productRepository.save(Product.builder()
                 .name("Wasabi")
                 .slug("wasabi-test")
@@ -76,7 +76,7 @@ public class ProductRepositoryIntegrationTest {
     }
 
     @Test
-    public void shouldFindBySlug() {
+    void shouldFindBySlug() {
         productRepository.save(Product.builder()
                 .name("Philadelphia")
                 .slug("philadelphia-test")

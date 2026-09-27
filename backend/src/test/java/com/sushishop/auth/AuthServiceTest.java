@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
+class AuthServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
@@ -71,7 +71,7 @@ public class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    public void shouldLogin() {
+    void shouldLogin() {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -94,7 +94,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenEmailNotVerified() {
+    void shouldThrowWhenEmailNotVerified() {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -112,7 +112,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldCheckPasswordBeforeRevealingThatEmailIsNotVerified() {
+    void shouldCheckPasswordBeforeRevealingThatEmailIsNotVerified() {
         var request = new LoginRequest("anton@example.com", "wrong-password");
         var user = User.builder()
                 .email("anton@example.com")
@@ -129,7 +129,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldThrowBadCredentialsForUnknownEmail() {
+    void shouldThrowBadCredentialsForUnknownEmail() {
         var request = new LoginRequest("ghost@example.com", "password123");
 
         when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
@@ -139,7 +139,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenOAuthAccountHasNoPassword() {
+    void shouldThrowWhenOAuthAccountHasNoPassword() {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -156,7 +156,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldRegister() {
+    void shouldRegister() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",
@@ -183,7 +183,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldExchangeOAuth2Code() {
+    void shouldExchangeOAuth2Code() {
         var user = User.builder()
                 .email("anton@example.com")
                 .userRole(UserRole.CUSTOMER)
@@ -202,7 +202,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenExchangeCodeInvalidOrExpired() {
+    void shouldThrowWhenExchangeCodeInvalidOrExpired() {
         when(oAuth2ExchangeCodeService.consume("bad-code")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.exchangeOAuth2Code("bad-code"))
@@ -211,7 +211,7 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldBlacklistTokenOnLogout() {
+    void shouldBlacklistTokenOnLogout() {
         var expiration = new Date(System.currentTimeMillis() + 60_000);
         var payload = new JwtUtil.JwtPayload("anton@example.com", 0, "jti-123", expiration);
         when(jwtUtil.parseToken("token123")).thenReturn(payload);
@@ -222,14 +222,14 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldDoNothingOnLogoutWhenTokenIsNull() {
+    void shouldDoNothingOnLogoutWhenTokenIsNull() {
         authService.logout(null);
 
         verifyNoInteractions(jwtBlacklistService);
     }
 
     @Test
-    public void shouldDoNothingOnLogoutWhenTokenIsInvalid() {
+    void shouldDoNothingOnLogoutWhenTokenIsInvalid() {
         when(jwtUtil.parseToken("bad-token")).thenReturn(null);
 
         authService.logout("bad-token");

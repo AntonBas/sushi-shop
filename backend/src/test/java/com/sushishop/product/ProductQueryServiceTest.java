@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductQueryServiceTest {
+class ProductQueryServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -78,7 +78,7 @@ public class ProductQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldGetAllProducts() {
+    void shouldGetAllProducts() {
         var product = createProduct(1L, "Maki");
         var pageable = PageRequest.of(0, 12);
         var page = new PageImpl<>(List.of(product), pageable, 1);
@@ -98,7 +98,7 @@ public class ProductQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldReturnEmptyPageWhenNoProducts() {
+    void shouldReturnEmptyPageWhenNoProducts() {
         var pageable = PageRequest.of(0, 12);
         var page = new PageImpl<Product>(List.of(), pageable, 0);
 
@@ -111,7 +111,7 @@ public class ProductQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldSortProductsByRatingDescending() {
+    void shouldSortProductsByRatingDescending() {
         var lowRated = createProduct(1L, "Low");
         var highRated = createProduct(2L, "High");
         var noReviews = createProduct(3L, "NoReviews");
@@ -133,7 +133,7 @@ public class ProductQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldSortProductsByEffectivePriceAccountingForDiscount() {
+    void shouldSortProductsByEffectivePriceAccountingForDiscount() {
         var expensive = createProduct(1L, "Expensive");
         expensive.setPrice(new BigDecimal("300.00"));
         var mid = createProduct(2L, "Mid");
@@ -154,7 +154,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldGetPopularProducts() {
+    void shouldGetPopularProducts() {
         var product = createProduct(1L, "Maki");
         var listResponse = createListResponse(1L, "Maki", 4.5);
 
@@ -170,7 +170,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyListForPopularWhenNoProducts() {
+    void shouldReturnEmptyListForPopularWhenNoProducts() {
         when(productRepository.findPopular(any(Pageable.class))).thenReturn(List.of());
 
         var result = productQueryService.getPopular();
@@ -179,7 +179,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldGetRelatedProducts() {
+    void shouldGetRelatedProducts() {
         var product = createProduct(1L, "Maki");
         var relatedProduct = createProduct(2L, "Related");
         var listResponse = createListResponse(2L, "Related", 3.0);
@@ -198,7 +198,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenRelatedProductNotFound() {
+    void shouldThrowWhenRelatedProductNotFound() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productQueryService.getRelated(1L))

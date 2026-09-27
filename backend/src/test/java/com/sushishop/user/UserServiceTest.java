@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -46,7 +46,7 @@ public class UserServiceTest {
     private UserService userService;
 
     @Test
-    public void shouldCreateUser() {
+    void shouldCreateUser() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",
@@ -72,7 +72,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenEmailExists() {
+    void shouldThrowWhenEmailExists() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",
@@ -89,7 +89,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldGetByEmail() {
+    void shouldGetByEmail() {
         var user = User.builder()
                 .id(1L)
                 .name("Anton")
@@ -119,7 +119,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUpdateUser() {
+    void shouldUpdateUser() {
         var user = User.builder()
                 .id(1L)
                 .name("Old Name")
@@ -156,7 +156,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldChangePassword() {
+    void shouldChangePassword() {
         var request = new ChangePasswordRequest("oldPass", "newPass123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -183,7 +183,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenOldPasswordIncorrect() {
+    void shouldThrowWhenOldPasswordIncorrect() {
         var request = new ChangePasswordRequest("wrongOld", "newPass123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -198,7 +198,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldClearAddress() {
+    void shouldClearAddress() {
         var user = User.builder()
                 .email("anton@example.com")
                 .city("Lviv")

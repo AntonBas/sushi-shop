@@ -28,7 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PasswordResetServiceTest {
+class PasswordResetServiceTest {
 
     @Mock
     private TokenService tokenService;
@@ -49,7 +49,7 @@ public class PasswordResetServiceTest {
     private PasswordResetService passwordResetService;
 
     @Test
-    public void shouldForgotPassword() {
+    void shouldForgotPassword() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -66,7 +66,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldSilentlyIgnoreForgotPasswordForUnverifiedUser() {
+    void shouldSilentlyIgnoreForgotPasswordForUnverifiedUser() {
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(false)
@@ -80,7 +80,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldSilentlyIgnoreForgotPasswordForNonExistentUser() {
+    void shouldSilentlyIgnoreForgotPasswordForNonExistentUser() {
         when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.empty());
 
         passwordResetService.forgotPassword("anton@example.com");
@@ -89,7 +89,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldSilentlyIgnoreForgotPasswordWithinCooldown() {
+    void shouldSilentlyIgnoreForgotPasswordWithinCooldown() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -106,7 +106,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldSendForgotPasswordAgainAfterCooldownElapsed() {
+    void shouldSendForgotPasswordAgainAfterCooldownElapsed() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -123,7 +123,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldResetPassword() {
+    void shouldResetPassword() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -157,7 +157,7 @@ public class PasswordResetServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenResetPasswordSameAsOld() {
+    void shouldThrowWhenResetPasswordSameAsOld() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
