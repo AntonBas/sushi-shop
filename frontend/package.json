@@ -20,7 +20,7 @@
     "@stomp/stompjs": "^7.3.0",
     "axios": "^1.18.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.23.0",
+    "lucide-react": "^1.48.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-medium-image-zoom": "^5.4.8",
