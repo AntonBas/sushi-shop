@@ -11,6 +11,7 @@ import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.TransactionCallbacks;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,8 +54,8 @@ public class OrderCreationService {
         }
 
         var saved = orderRepository.save(order);
-        messagingTemplate.convertAndSend("/topic/orders/new",
-                new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name()));
+        var notification = new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name());
+        TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/new", notification));
         log.info("Order created: {}", saved.getId());
         return orderMapper.toResponse(saved);
     }
