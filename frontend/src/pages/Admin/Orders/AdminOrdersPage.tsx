@@ -5,6 +5,7 @@ import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
 import { getErrorMessage } from "../../../api/errorMessage";
 import { formatPrice } from "../../../utils/formatPrice";
+import { getStatusFlow } from "../../../utils/orderStatusFlow";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import { Search } from "lucide-react";
@@ -20,26 +21,6 @@ import {
 } from "../../../types/enums";
 import type { Client } from "@stomp/stompjs";
 import styles from "./AdminOrdersPage.module.css";
-
-const getStatusFlow = (
-  currentStatus: OrderStatus,
-  deliveryMethod: DeliveryMethod,
-): OrderStatus[] => {
-  switch (currentStatus) {
-    case "NEW":
-      return ["CONFIRMED", "CANCELLED"];
-    case "CONFIRMED":
-      return ["COOKING"];
-    case "COOKING":
-      return deliveryMethod === "DELIVERY" ? ["DELIVERING"] : ["READY"];
-    case "DELIVERING":
-      return ["DELIVERED"];
-    case "READY":
-      return ["DELIVERED"];
-    default:
-      return [];
-  }
-};
 
 export default function AdminOrdersPage() {
   const { orders, totalPages, loading, loadOrders } = useAdminOrders();
@@ -124,6 +105,7 @@ export default function AdminOrdersPage() {
           <input
             type="text"
             placeholder="Search customer or phone..."
+            aria-label="Search orders by customer or phone"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
@@ -245,10 +227,7 @@ export default function AdminOrdersPage() {
                       </td>
                       <td data-label="Actions">
                         <div className={styles.actions}>
-                          {getStatusFlow(
-                            order.status,
-                            order.deliveryMethod,
-                          ).map((nextStatus) => (
+                          {getStatusFlow(order).map((nextStatus) => (
                             <button
                               key={nextStatus}
                               onClick={(e) => {

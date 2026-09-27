@@ -91,6 +91,7 @@ export default function AdminProductsPage() {
           <input
             type="text"
             placeholder="Search products..."
+            aria-label="Search products"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />

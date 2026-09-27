@@ -100,6 +100,7 @@ export default function MenuSection() {
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search..."
+            aria-label="Search menu"
             className={styles.searchInput}
           />
         </div>

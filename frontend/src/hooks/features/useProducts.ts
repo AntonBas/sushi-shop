@@ -7,7 +7,7 @@ import type { Page } from '../../types/common'
 
 export function useProducts() {
   const { data: listData, loading: listLoading, error: listError, run: listRun } = useApi<Page<ProductListResponse>>()
-  const { data: itemData, loading: itemLoading, run: itemRun } = useApi<ProductResponse>()
+  const { data: itemData, loading: itemLoading, errorStatus: itemErrorStatus, run: itemRun } = useApi<ProductResponse>()
   const { run: popularRun } = useApi<ProductListResponse[]>()
   const { run: relatedRun } = useApi<ProductListResponse[]>()
   const [products, setProducts] = useState<ProductListResponse[]>([])
@@ -57,6 +57,7 @@ export function useProducts() {
     getProduct,
     getProductBySlug,
     product: itemData,
-    productLoading: itemLoading
+    productLoading: itemLoading,
+    productNotFound: itemErrorStatus === 404
   }
 }

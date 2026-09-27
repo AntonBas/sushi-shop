@@ -212,4 +212,24 @@ describe('useOrderSocket', () => {
     expect(client.activate).toHaveBeenCalledTimes(1)
     expect(showNotification).not.toHaveBeenCalled()
   })
+
+  it('does not reactivate the client when unmounted while the watchdog restart is in progress', async () => {
+    vi.useFakeTimers()
+    const { unmount } = renderHook(() => useOrderSocket(vi.fn()))
+    const client = lastClient()
+    let finishDeactivate: () => void = () => {}
+    client.deactivate.mockReturnValueOnce(new Promise((resolve) => { finishDeactivate = resolve }))
+    await runBeforeConnect(client)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(15000)
+    })
+    unmount()
+    await act(async () => {
+      finishDeactivate()
+      await vi.advanceTimersByTimeAsync(0)
+    })
+
+    expect(client.activate).toHaveBeenCalledTimes(1)
+  })
 })

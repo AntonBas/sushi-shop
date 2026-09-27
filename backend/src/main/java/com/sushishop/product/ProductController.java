@@ -6,6 +6,7 @@ import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.product.dto.response.ProductResponse;
 import com.sushishop.shared.service.LogSanitizer;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -67,10 +68,11 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "Get all products")
-    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = {"name", "id"}) Pageable pageable,
-                                                            @RequestParam(required = false) String search,
-                                                            @RequestParam(required = false) Category category,
-                                                            @RequestParam(required = false) Boolean available) {
+    public ResponseEntity<Page<ProductListResponse>> getAll(
+            @SortableFields({"name", "price", "rating", "popularity", "id"}) @PageableDefault(size = 12, sort = {"name", "id"}) Pageable pageable,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false) Boolean available) {
         log.info("GET /api/products - search: {}, category: {}, page: {}",
                 LogSanitizer.sanitize(search), category, pageable.getPageNumber());
         return ResponseEntity.ok(productQueryService.getAll(pageable, search, category, available));

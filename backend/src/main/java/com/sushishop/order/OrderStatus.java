@@ -5,7 +5,7 @@ import com.sushishop.shared.exception.core.BadRequestException;
 public enum OrderStatus {
     NEW, CONFIRMED, COOKING, DELIVERING, DELIVERED, READY, CANCELLED;
 
-    public void validateTransition(OrderStatus newStatus, DeliveryMethod deliveryMethod) {
+    public void validateTransition(OrderStatus newStatus, DeliveryMethod deliveryMethod, PaymentMethod paymentMethod) {
         if (deliveryMethod == null) {
             throw new BadRequestException("Delivery method is required");
         }
@@ -14,7 +14,7 @@ public enum OrderStatus {
             throw new BadRequestException("Order already has status: " + this);
         }
 
-        if (newStatus == CANCELLED && this != NEW) {
+        if (newStatus == CANCELLED && !isCancellable(paymentMethod)) {
             throw new BadRequestException("Cannot cancel order with status: " + this);
         }
 
@@ -35,10 +35,14 @@ public enum OrderStatus {
         }
     }
 
+    private boolean isCancellable(PaymentMethod paymentMethod) {
+        return this == NEW || (this == CONFIRMED && paymentMethod == PaymentMethod.ON_DELIVERY);
+    }
+
     private boolean isValidTransition(OrderStatus newStatus) {
         return switch (this) {
             case NEW -> newStatus == CONFIRMED || newStatus == CANCELLED;
-            case CONFIRMED -> newStatus == COOKING;
+            case CONFIRMED -> newStatus == COOKING || newStatus == CANCELLED;
             case COOKING -> newStatus == READY || newStatus == DELIVERING;
             case DELIVERING, READY -> newStatus == DELIVERED;
             case DELIVERED, CANCELLED -> false;

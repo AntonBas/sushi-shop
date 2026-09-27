@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -61,6 +62,22 @@ class ProductControllerTest {
         mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("Maki"));
+    }
+
+    @Test
+    void shouldAllowWhitelistedSortProperty() throws Exception {
+        when(productQueryService.getAll(any(Pageable.class), isNull(), isNull(), isNull())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/products").param("sort", "price,desc"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRejectSortByNestedUserProperty() throws Exception {
+        mockMvc.perform(get("/api/products").param("sort", "reviews.user.phone,asc"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(productQueryService);
     }
 
     @Test

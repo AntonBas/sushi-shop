@@ -173,7 +173,9 @@ public class PromotionService {
             validator.validateTitleUnique(newTitle);
             promotion.setTitle(newTitle);
             promotion.setSlug(slugService.generateUniqueSlug(newTitle,
-                    slug -> promotionRepository.findBySlug(slug).isPresent()));
+                    slug -> promotionRepository.findBySlug(slug)
+                            .filter(other -> !other.getId().equals(promotion.getId()))
+                            .isPresent()));
         }
     }
 

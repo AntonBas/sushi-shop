@@ -60,7 +60,7 @@ public class OrderService {
         var order = orderRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
 
-        order.getStatus().validateTransition(newStatus, order.getDeliveryMethod());
+        order.getStatus().validateTransition(newStatus, order.getDeliveryMethod(), order.getPaymentMethod());
         if (newStatus == OrderStatus.CONFIRMED && order.getPaymentMethod() == PaymentMethod.ONLINE && !order.isPaid()) {
             throw new BadRequestException("Online order cannot be confirmed before it is paid");
         }

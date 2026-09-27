@@ -6,6 +6,7 @@ import com.sushishop.order.dto.response.UserOrderResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.shared.service.LogSanitizer;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -66,7 +67,7 @@ public class OrderController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<UserOrderResponse>> getMyOrders(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
+            @SortableFields({"createdAt", "id"}) @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/orders/my - user: {}", userDetails.getUsername());
         return ResponseEntity.ok(orderQueryService.getByUser(userDetails.getUsername(), pageable));
     }
@@ -76,7 +77,7 @@ public class OrderController {
     @Operation(summary = "Get all orders (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
-            @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @SortableFields({"createdAt", "id"}) @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) DeliveryMethod deliveryMethod,
             @RequestParam(required = false) PaymentMethod paymentMethod,

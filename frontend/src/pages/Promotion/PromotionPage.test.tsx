@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { AxiosError, type AxiosResponse } from 'axios'
 import PromotionPage from './PromotionPage'
 import { useNotification } from '../../context/useNotification'
 import { getPromotionBySlug } from '../../api/promotions'
@@ -84,5 +85,14 @@ describe('PromotionPage', () => {
 
     expect(await screen.findByText(/^Starts /)).toBeInTheDocument()
     expect(screen.queryByText('20%')).not.toBeInTheDocument()
+  })
+
+  it('shows the not found page for an unknown promotion', async () => {
+    const response = { status: 404, statusText: 'Not Found', headers: {}, config: {}, data: { message: 'Promotion not found' } } as AxiosResponse
+    vi.mocked(getPromotionBySlug).mockRejectedValue(new AxiosError('Not Found', 'ERR_BAD_REQUEST', undefined, undefined, response))
+
+    renderPage()
+
+    expect(await screen.findByText('Page Not Found')).toBeInTheDocument()
   })
 })

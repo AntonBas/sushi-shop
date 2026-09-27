@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -20,8 +21,10 @@ import org.springframework.web.context.WebApplicationContext;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -142,5 +145,31 @@ class ReviewControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowSortingReviewsByRating() throws Exception {
+        when(reviewService.getByProduct(eq(1L), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/reviews/product/1").param("sort", "rating,desc"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRejectSortingReviewsByUserPhone() throws Exception {
+        mockMvc.perform(get("/api/reviews/product/1").param("sort", "user.phone"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(reviewService);
+    }
+
+    @Test
+    void shouldRejectUnknownPropertyInMultiPropertySort() throws Exception {
+        mockMvc.perform(get("/api/reviews/product/1")
+                        .param("sort", "createdAt,desc")
+                        .param("sort", "rating,user.city,asc"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(reviewService);
     }
 }

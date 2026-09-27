@@ -79,7 +79,7 @@ public class ProductService {
 
         if (request.name() != null && !request.name().equals(product.getName())) {
             product.setSlug(slugService.generateUniqueSlug(request.name(),
-                    slug -> productRepository.findBySlug(slug).isPresent()));
+                    slug -> productRepository.findBySlug(slug).filter(other -> !other.getId().equals(id)).isPresent()));
         }
 
         productMapper.updateEntity(request, product);

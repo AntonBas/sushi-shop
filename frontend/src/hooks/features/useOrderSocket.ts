@@ -36,7 +36,9 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
       clearWatchdog();
       watchdogId = window.setTimeout(() => {
         notifyConnectionIssue();
-        void client.deactivate().then(() => client.activate());
+        void client.deactivate().then(() => {
+          if (!disposed) client.activate();
+        });
       }, WATCHDOG_TIMEOUT_MS);
     };
 
@@ -60,6 +62,7 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
           if (disposed) return;
           notifyConnectionIssue();
           await client.deactivate();
+          if (disposed) return;
           clearRetry();
           retryId = window.setTimeout(() => client.activate(), RECONNECT_DELAY_MS);
         }

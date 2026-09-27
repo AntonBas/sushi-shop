@@ -348,6 +348,31 @@ class PromotionServiceTest {
     }
 
     @Test
+    void shouldKeepSlugWhenRenameProducesSameSlug() {
+        var request = new UpdatePromotionRequest(PROMOTION_TITLE + "!", null, null, null, null, null, null);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(ACTIVE)
+                .products(new HashSet<>())
+                .build();
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.findBySlug(PROMOTION_SLUG)).thenReturn(Optional.of(promotion));
+        when(slugService.generateUniqueSlug(eq(PROMOTION_TITLE + "!"), any()))
+                .thenAnswer(inv -> new SlugService().generateUniqueSlug(inv.getArgument(0), inv.getArgument(1)));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        assertThat(promotion.getSlug()).isEqualTo(PROMOTION_SLUG);
+    }
+
+    @Test
     void shouldUpdatePartialDates() {
         var request = new UpdatePromotionRequest(
                 null,

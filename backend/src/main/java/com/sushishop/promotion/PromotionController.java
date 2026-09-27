@@ -5,6 +5,7 @@ import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.shared.service.LogSanitizer;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -73,7 +74,7 @@ public class PromotionController {
     })
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<PromotionResponse>> getAll(
-            @PageableDefault(size = 12, sort = {"startDate", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
+            @SortableFields({"startDate", "endDate", "title", "id"}) @PageableDefault(size = 12, sort = {"startDate", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) String search) {
         return ResponseEntity.ok(promotionService.getAll(pageable, search));
     }

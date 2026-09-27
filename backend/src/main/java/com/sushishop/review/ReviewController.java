@@ -6,6 +6,7 @@ import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.review.dto.response.ReviewResponse;
 import com.sushishop.shared.ratelimit.RateLimit;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -79,7 +80,7 @@ public class ReviewController {
     @Operation(summary = "Get reviews by product")
     public ResponseEntity<Page<ReviewResponse>> getByProduct(
             @PathVariable Long productId,
-            @PageableDefault(size = 5, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
+            @SortableFields({"createdAt", "rating", "id"}) @PageableDefault(size = 5, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/reviews/product/{}", productId);
         return ResponseEntity.ok(reviewService.getByProduct(productId, pageable));
     }

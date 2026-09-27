@@ -40,15 +40,24 @@ export default function ReviewSection({ productId }: Props) {
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
   const loadReviews = useCallback((page: number) => {
-    reviewsApi.getReviews(productId, page, 5, reviewSort)
-      .then((res) => {
-        setReviews(res.content);
-        setTotalReviewPages(res.page.totalPages);
-        setTotalReviews(res.page.totalElements);
-      })
-      .catch((err: unknown) => {
-        showNotification(getErrorMessage(err, "Failed to load reviews"), "error");
-      });
+    const fetchPage = (target: number) => {
+      reviewsApi.getReviews(productId, target, 5, reviewSort)
+        .then((res) => {
+          const lastPage = res.page.totalPages - 1;
+          if (res.content.length === 0 && target > 0 && lastPage >= 0) {
+            fetchPage(Math.min(target - 1, lastPage));
+            return;
+          }
+          setReviewPage(target);
+          setReviews(res.content);
+          setTotalReviewPages(res.page.totalPages);
+          setTotalReviews(res.page.totalElements);
+        })
+        .catch((err: unknown) => {
+          showNotification(getErrorMessage(err, "Failed to load reviews"), "error");
+        });
+    };
+    fetchPage(page);
   }, [productId, reviewSort, showNotification]);
 
   useEffect(() => {

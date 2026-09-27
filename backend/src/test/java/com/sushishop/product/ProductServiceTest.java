@@ -166,6 +166,24 @@ class ProductServiceTest {
     }
 
     @Test
+    void shouldKeepSlugWhenRenameProducesSameSlug() {
+        var request = new UpdateProductRequest("maki", null, null, null, null, null);
+        var product = createProduct();
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findBySlug("maki")).thenReturn(Optional.of(product));
+        when(slugService.generateUniqueSlug(eq("maki"), any()))
+                .thenAnswer(inv -> new SlugService().generateUniqueSlug(inv.getArgument(0), inv.getArgument(1)));
+        when(productRepository.save(product)).thenReturn(product);
+        when(productMapper.toResponse(product)).thenReturn(createResponse());
+        when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of());
+
+        productService.update(1L, request);
+
+        assertThat(product.getSlug()).isEqualTo("maki");
+    }
+
+    @Test
     void shouldToggleAvailability() {
         var product = createProduct();
         product.setAvailable(true);

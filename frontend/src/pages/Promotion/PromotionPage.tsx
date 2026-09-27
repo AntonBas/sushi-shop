@@ -5,19 +5,21 @@ import { useApi } from "../../hooks/common/useApi";
 import * as promotionsApi from "../../api/promotions";
 import ProductCard from "../../components/Product/ProductCard/ProductCard";
 import Loading from "../../components/UI/Loading/Loading";
+import NotFoundPage from "../NotFound/NotFoundPage";
 import type { PromotionResponse } from "../../types";
 import styles from "./PromotionPage.module.css";
 
 export default function PromotionPage() {
   const { slug } = useParams<{ slug: string }>();
   const [now] = useState(Date.now);
-  const { data: promotion, loading, run } = useApi<PromotionResponse>();
+  const { data: promotion, loading, errorStatus, run } = useApi<PromotionResponse>();
 
   useEffect(() => {
     if (slug) void run(() => promotionsApi.getPromotionBySlug(slug));
   }, [slug, run]);
 
   if (loading) return <Loading text="Loading promotion..." />;
+  if (errorStatus === 404) return <NotFoundPage />;
   if (!promotion) return null;
 
   const startsAt = new Date(promotion.startDate).getTime();
