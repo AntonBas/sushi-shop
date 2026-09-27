@@ -1,8 +1,10 @@
 package com.sushishop.payment;
 
 import com.stripe.Stripe;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -79,19 +81,31 @@ public class StripeService {
             var event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
             String sessionId = null;
             if ("checkout.session.completed".equals(event.getType())) {
-                var deserializer = event.getDataObjectDeserializer();
-                if (deserializer.getObject().isPresent()) {
-                    var session = (Session) deserializer.getObject().get();
-                    if ("paid".equals(session.getPaymentStatus())) {
-                        sessionId = session.getId();
-                    } else {
-                        log.warn("Checkout session {} completed with payment status {}", session.getId(), session.getPaymentStatus());
-                    }
+                var session = deserializeSession(event);
+                if ("paid".equals(session.getPaymentStatus())) {
+                    sessionId = session.getId();
+                } else {
+                    log.warn("Checkout session {} completed with payment status {}", session.getId(), session.getPaymentStatus());
                 }
             }
             return new WebhookEvent(event.getId(), sessionId);
         } catch (SignatureVerificationException e) {
             throw new BadRequestException("Invalid Stripe signature");
+        }
+    }
+
+    private Session deserializeSession(Event event) {
+        var deserializer = event.getDataObjectDeserializer();
+        var object = deserializer.getObject();
+        if (object.isPresent()) {
+            return (Session) object.get();
+        }
+        log.error("Stripe event {} has API version {}, SDK expects {}; falling back to unsafe deserialization",
+                event.getId(), event.getApiVersion(), Stripe.API_VERSION);
+        try {
+            return (Session) deserializer.deserializeUnsafe();
+        } catch (EventDataObjectDeserializationException e) {
+            throw new InternalServerException("Failed to deserialize Stripe event " + event.getId(), e);
         }
     }
 }
