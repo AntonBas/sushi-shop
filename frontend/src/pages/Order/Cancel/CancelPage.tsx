@@ -12,11 +12,11 @@ export default function OrderCancelPage() {
       <div className={styles.card}>
         <XCircle size={64} className={styles.icon} />
         <h1>Payment Cancelled</h1>
-        <p>Your payment was not completed.</p>
+        <p>Your payment was not completed. Your order is saved, and you can pay for it from My Orders.</p>
         {orderId && <p className={styles.orderId}>Order #{orderId}</p>}
         <div className={styles.actions}>
-          <Link to="/cart">
-            <Button>Back to Cart</Button>
+          <Link to="/profile/orders">
+            <Button>My Orders</Button>
           </Link>
           <Link to="/menu">
             <Button variant="secondary">Continue Shopping</Button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
@@ -32,21 +32,20 @@ export default function CheckoutPage() {
   const [apartment, setApartment] = useState("");
   const [comment, setComment] = useState("");
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (user) {
-      setCustomerName(user.name);
-      setPhone(user.phone);
-      if (user.address) {
-        setCity(user.address.city);
-        setStreet(user.address.street);
-        setHouse(user.address.house);
-        setApartment(user.address.apartment || "");
-        setDeliveryMethod("DELIVERY");
-      }
+  const [prefilledFrom, setPrefilledFrom] = useState<typeof user>(null);
+
+  if (user && user !== prefilledFrom) {
+    setPrefilledFrom(user);
+    setCustomerName(user.name);
+    setPhone(user.phone);
+    if (user.address) {
+      setCity(user.address.city);
+      setStreet(user.address.street);
+      setHouse(user.address.house);
+      setApartment(user.address.apartment || "");
+      setDeliveryMethod("DELIVERY");
     }
-  }, [user]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -71,13 +70,17 @@ export default function CheckoutPage() {
           quantity: i.quantity,
         })),
       });
+      clearCart();
       if (paymentMethod === "ONLINE") {
-        const url = await paymentApi.execute(() =>
-          paymentsApi.createCheckout(order.id),
-        );
-        if (url) window.location.href = url;
+        try {
+          const url = await paymentApi.execute(() =>
+            paymentsApi.createCheckout(order.id),
+          );
+          if (url) window.location.assign(url);
+        } catch {
+          navigate("/profile/orders");
+        }
       } else {
-        clearCart();
         showNotification("Order placed successfully!", "success");
         navigate("/profile/orders");
       }

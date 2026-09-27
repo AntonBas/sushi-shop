@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useApi } from "../../../hooks/common/useApi";
+import { useNotification } from "../../../context/useNotification";
+import { getErrorMessage } from "../../../api/errorMessage";
 import { useOrderSocket } from "../../../hooks/features/useOrderSocket";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
@@ -17,6 +19,7 @@ import type { Client, StompSubscription } from "@stomp/stompjs";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
+  const { showNotification } = useNotification();
   const { data, loading, execute } = useApi<Page<UserOrderResponse>>();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
@@ -72,7 +75,9 @@ export default function MyOrdersPage() {
     setPayLoading(order.id);
     try {
       const url = await paymentsApi.createCheckout(order.id);
-      if (url) window.location.href = url;
+      if (url) window.location.assign(url);
+    } catch (err) {
+      showNotification(getErrorMessage(err, "Could not start payment"), "error");
     } finally {
       setPayLoading(null);
     }
