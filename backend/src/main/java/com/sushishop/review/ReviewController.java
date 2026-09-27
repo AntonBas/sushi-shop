@@ -5,6 +5,7 @@ import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.shared.ratelimit.RateLimit;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -40,6 +41,7 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
 
+    @RateLimit(value = 10, key = "user")
     @PostMapping
     @Operation(summary = "Create a review")
     @ApiResponse(responseCode = "201", description = "Review created")

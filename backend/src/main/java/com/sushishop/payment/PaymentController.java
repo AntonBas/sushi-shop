@@ -1,6 +1,7 @@
 package com.sushishop.payment;
 
 import com.sushishop.order.OrderService;
+import com.sushishop.shared.ratelimit.RateLimit;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +31,7 @@ public class PaymentController {
     private final WebhookIdempotencyService webhookIdempotencyService;
     private final OrderService orderService;
 
+    @RateLimit(key = "user")
     @PostMapping("/order/{orderId}")
     @Operation(summary = "Create Stripe checkout session for order")
     @SecurityRequirement(name = "bearerAuth")

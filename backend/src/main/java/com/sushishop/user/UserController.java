@@ -1,5 +1,6 @@
 package com.sushishop.user;
 
+import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
 import com.sushishop.user.dto.request.UpdateUserRequest;
 import com.sushishop.user.dto.response.UserResponse;
@@ -58,6 +59,7 @@ public class UserController {
         return ResponseEntity.ok(userService.clearAddress(userDetails.getUsername()));
     }
 
+    @RateLimit(duration = 900, key = "user")
     @PutMapping("/me/password")
     @Operation(summary = "Change password")
     @SecurityRequirement(name = "bearerAuth")

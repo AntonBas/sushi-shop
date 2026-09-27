@@ -15,7 +15,9 @@ public @interface RateLimit {
     /**
      * Rate limit dimensions. "ip" limits by client IP. "email" limits by the
      * email field of the request body argument (requires an argument with an
-     * email() accessor). Any other value is used as a literal, global key.
+     * email() accessor). "user" limits by the authenticated principal's name and
+     * falls back to the client IP for anonymous requests. Any other value is used
+     * as a literal, global key.
      */
     String[] key() default {"ip"};
 }

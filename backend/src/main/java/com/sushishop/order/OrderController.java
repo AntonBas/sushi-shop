@@ -4,6 +4,7 @@ import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
 import com.sushishop.security.Roles;
+import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.shared.service.LogSanitizer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -42,6 +43,7 @@ public class OrderController {
     private final OrderCreationService orderCreationService;
     private final OrderQueryService orderQueryService;
 
+    @RateLimit(value = 10, key = "user")
     @PostMapping
     @Operation(summary = "Create new order")
     @ApiResponses(value = {

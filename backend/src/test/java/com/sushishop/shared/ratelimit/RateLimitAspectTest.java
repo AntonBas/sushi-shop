@@ -10,8 +10,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -45,6 +51,10 @@ class RateLimitAspectTest {
     private void ipAndEmailAnnotatedMethod() {
     }
 
+    @RateLimit(key = "user")
+    private void userAnnotatedMethod() {
+    }
+
     @BeforeEach
     void setUp() {
         rateLimitAspect = new RateLimitAspect(rateLimitService, "");
@@ -55,6 +65,7 @@ class RateLimitAspectTest {
     @AfterEach
     void tearDown() {
         RequestContextHolder.resetRequestAttributes();
+        SecurityContextHolder.clearContext();
     }
 
     private RateLimit rateLimitAnnotation() throws NoSuchMethodException {
@@ -63,6 +74,37 @@ class RateLimitAspectTest {
 
     private RateLimit ipAndEmailRateLimitAnnotation() throws NoSuchMethodException {
         return getClass().getDeclaredMethod("ipAndEmailAnnotatedMethod").getAnnotation(RateLimit.class);
+    }
+
+    private RateLimit userRateLimitAnnotation() throws NoSuchMethodException {
+        return getClass().getDeclaredMethod("userAnnotatedMethod").getAnnotation(RateLimit.class);
+    }
+
+    @Test
+    void shouldLimitByAuthenticatedUserWhenUserKeyIsUsed() throws NoSuchMethodException {
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated("Anton@Example.com", null, List.of()));
+        when(joinPoint.getArgs()).thenReturn(new Object[0]);
+        when(rateLimitService.tryConsume(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
+
+        rateLimitAspect.checkRateLimit(joinPoint, userRateLimitAnnotation());
+
+        verify(rateLimitService).tryConsume("AuthController.login(..):user:anton@example.com", 1, 5, 60);
+    }
+
+    @Test
+    void shouldFallBackToClientIpForAnonymousUserKey() throws NoSuchMethodException {
+        var request = new MockHttpServletRequest();
+        request.setRemoteAddr("10.0.0.2");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        SecurityContextHolder.getContext().setAuthentication(new AnonymousAuthenticationToken(
+                "key", "anonymousUser", List.of(new SimpleGrantedAuthority("ROLE_ANONYMOUS"))));
+        when(joinPoint.getArgs()).thenReturn(new Object[0]);
+        when(rateLimitService.tryConsume(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
+
+        rateLimitAspect.checkRateLimit(joinPoint, userRateLimitAnnotation());
+
+        verify(rateLimitService).tryConsume("AuthController.login(..):10.0.0.2", 1, 5, 60);
     }
 
     @Test

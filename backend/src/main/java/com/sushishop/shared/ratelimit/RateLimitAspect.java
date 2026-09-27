@@ -6,6 +6,9 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -48,8 +51,18 @@ public class RateLimitAspect {
         return switch (keyType) {
             case "ip" -> getClientIp();
             case "email" -> "email:" + extractEmail(args);
+            case "user" -> resolveUser();
             default -> keyType;
         };
+    }
+
+    private String resolveUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return getClientIp();
+        }
+        return "user:" + authentication.getName().toLowerCase();
     }
 
     private String getClientIp() {
