@@ -5,8 +5,8 @@ function loadStoredCart(): CartItem[] {
   const saved = localStorage.getItem("cart");
   if (!saved) return [];
   try {
-    const parsed = JSON.parse(saved);
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed: unknown = JSON.parse(saved);
+    return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
   } catch {
     localStorage.removeItem("cart");
     return [];

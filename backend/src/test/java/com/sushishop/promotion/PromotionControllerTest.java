@@ -20,13 +20,18 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -87,6 +92,33 @@ class PromotionControllerTest {
                 .andExpect(jsonPath("$.slug").value(PROMOTION_SLUG));
 
         verify(promotionService).create(any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldRejectPromotionWithoutProducts() throws Exception {
+        var request = new CreatePromotionRequest(PROMOTION_TITLE, "20% off", DISCOUNT_PERCENT, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), null);
+
+        mockMvc.perform(post("/api/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.subErrors[0].field").value("productIds"));
+
+        verify(promotionService, never()).create(any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldRejectPromotionWithNullProductId() throws Exception {
+        var request = new CreatePromotionRequest(PROMOTION_TITLE, "20% off", DISCOUNT_PERCENT, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), Arrays.asList(1L, null));
+
+        mockMvc.perform(post("/api/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(promotionService, never()).create(any());
     }
 
     @Test

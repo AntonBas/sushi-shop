@@ -31,7 +31,7 @@ function stubLocation(search: string) {
 }
 
 describe('OAuth2Redirect', () => {
-  const refreshUser = vi.fn()
+  const refreshUser = vi.fn<() => Promise<void>>()
 
   beforeEach(() => {
     vi.clearAllMocks()

@@ -51,6 +51,9 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const toggleExpanded = (id: number) =>
+    setExpandedId((current) => (current === id ? null : id));
   const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch });
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -202,11 +205,23 @@ export default function AdminOrdersPage() {
                     <tr
                       key={order.id}
                       className={styles.orderRow}
-                      onClick={() =>
-                        setExpandedId(expandedId === order.id ? null : order.id)
-                      }
+                      onClick={() => toggleExpanded(order.id)}
                     >
-                      <td data-label="ID">#{order.id}</td>
+                      <td data-label="ID">
+                        <button
+                          type="button"
+                          className={styles.expandBtn}
+                          aria-expanded={expandedId === order.id}
+                          aria-controls={`order-details-${order.id}`}
+                          aria-label={`Order #${order.id} details`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpanded(order.id);
+                          }}
+                        >
+                          #{order.id}
+                        </button>
+                      </td>
                       <td data-label="Customer">{order.customerName}</td>
                       <td data-label="Method">
                         {order.deliveryMethod === "DELIVERY"
@@ -252,7 +267,7 @@ export default function AdminOrdersPage() {
                       </td>
                     </tr>
                     {expandedId === order.id && (
-                      <tr className={styles.expandedRow}>
+                      <tr id={`order-details-${order.id}`} className={styles.expandedRow}>
                         <td colSpan={7}>
                           <div className={styles.expandedContent}>
                             <div className={styles.detailRow}>

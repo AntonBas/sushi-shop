@@ -8,7 +8,7 @@ import * as paymentsApi from "../../../api/payments";
 import { formatPrice } from "../../../utils/formatPrice";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
-import type { UserOrderResponse } from "../../../types";
+import type { OrderStatusUpdateResponse, UserOrderResponse } from "../../../types";
 import type { Page } from "../../../types/common";
 import {
   ORDER_STATUS_COLORS,
@@ -27,6 +27,9 @@ export default function MyOrdersPage() {
   const [payLoading, setPayLoading] = useState<number | null>(null);
   const ordersRef = useRef<UserOrderResponse[]>([]);
   const subscriptionsRef = useRef<Map<number, StompSubscription>>(new Map());
+
+  const toggleExpanded = (id: number) =>
+    setExpandedId((current) => (current === id ? null : id));
 
   useEffect(() => {
     execute(() => ordersApi.getMyOrders(page)).then((res) =>
@@ -49,7 +52,7 @@ export default function MyOrdersPage() {
     currentIds.forEach((id) => {
       if (subscriptionsRef.current.has(id)) return;
       const subscription = client.subscribe(`/topic/orders/${id}`, (message) => {
-        const update = JSON.parse(message.body);
+        const update = JSON.parse(message.body) as OrderStatusUpdateResponse;
         setOrders((prev) =>
           prev.map((o) =>
             o.id === update.orderId ? { ...o, status: update.status } : o,
@@ -101,9 +104,17 @@ export default function MyOrdersPage() {
               <div key={order.id} className={styles.orderCard}>
                 <div
                   className={styles.orderHeader}
-                  onClick={() =>
-                    setExpandedId(expandedId === order.id ? null : order.id)
-                  }
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={expandedId === order.id}
+                  aria-controls={`order-details-${order.id}`}
+                  onClick={() => toggleExpanded(order.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleExpanded(order.id);
+                    }
+                  }}
                 >
                   <div>
                     <span className={styles.orderId}>Order #{order.id}</span>
@@ -158,7 +169,7 @@ export default function MyOrdersPage() {
                 )}
 
                 {expandedId === order.id && (
-                  <div className={styles.orderDetails}>
+                  <div id={`order-details-${order.id}`} className={styles.orderDetails}>
                     <div className={styles.itemsList}>
                       {order.items.map((item) => (
                         <div key={item.productId} className={styles.item}>

@@ -55,7 +55,7 @@ function SortableImage({ img, index, onRemove }: SortableImageProps) {
 
   return (
     <div ref={setNodeRef} style={style} className={styles.imageItem}>
-      <img src={img.url} alt={`Product image ${index + 1}`} />
+      <img src={img.url} alt={`Uploaded file ${index + 1}`} />
       <button
         type="button"
         className={styles.dragHandle}
@@ -254,7 +254,7 @@ export default function AdminProductForm() {
                   ))}
                   {images.map((image, index) => (
                     <div key={image.previewUrl} className={styles.imageItem}>
-                      <img src={image.previewUrl} alt={`New image ${index + 1}`} />
+                      <img src={image.previewUrl} alt={`New upload ${index + 1}`} />
                       <button
                         type="button"
                         onClick={() => handleRemoveNewImage(index)}

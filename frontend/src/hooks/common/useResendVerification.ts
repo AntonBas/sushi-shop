@@ -45,7 +45,7 @@ export function useResendVerification(initialCooldown = 0) {
       const res = await authApi.getResendVerificationStatus(email)
       setCooldown(res.cooldownSeconds)
     } catch {
-      /* best-effort sync; keep the current guess on failure */
+      return
     }
   }, [])
 

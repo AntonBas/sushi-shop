@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 400+ backend tests, zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Unit, controller and Testcontainers integration tests, zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-green)
@@ -227,8 +227,9 @@ cp .env.example .env
 ```
 
 Fill in the required values (same variables as Option 1 — JWT_SECRET,
-BREVO_API_KEY, MAIL_FROM_EMAIL, GOOGLE_*, STRIPE_*, APP_BASE_URL — the
-app fails to start without them, there are no defaults for secrets).
+BREVO_API_KEY, MAIL_FROM_EMAIL, GOOGLE_*, STRIPE_*, PROMETHEUS_PASSWORD,
+APP_BASE_URL — the app fails to start without them, there are no defaults
+for secrets).
 
 ```bash
 docker compose up -d postgres redis
@@ -287,7 +288,12 @@ to keep it warm.
 
 Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
 and the Java compiler runs with `-Werror` (unchecked operations, MapStruct
-unmapped properties), so any warning fails the build.
+unmapped properties), so any warning fails the build. Project rules are
+enforced by tooling rather than review: Checkstyle (no wildcard or unused
+imports, no tabs, no code comments except Javadoc), ESLint with
+`jsx-a11y` (keyboard-accessible interactions), type-aware `no-unsafe-*`
+rules (no `any` leaking from API responses or `JSON.parse`), `no-console`
+and a no-comments rule, plus Knip for unused files, exports and dependencies.
 
 ### Backend
 
@@ -295,7 +301,7 @@ unmapped properties), so any warning fails the build.
 - **Integration tests:** Testcontainers with real PostgreSQL and Redis — Flyway migrations, repository queries, full HTTP → service → database scenarios
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
-- **Coverage:** Jacoco (~84% instruction coverage). Run `./gradlew jacocoTestReport`
+- **Coverage:** JaCoCo. Run `./gradlew jacocoTestReport`
   and open `backend/build/reports/jacoco/test/html/index.html`.
 
 ### Frontend
@@ -311,7 +317,7 @@ unmapped properties), so any warning fails the build.
 ## CI/CD
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs to `master`/`develop`: backend
-build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
+build + Checkstyle + tests (Gradle), frontend lint + unused-code check + tests + build (ESLint, Knip, Vitest,
 `tsc -b`, Vite), then builds both Docker images. There is no deployment step — this is CI only, deployment
 is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +
 Neon + Upstash (see [Getting Started](#getting-started)).

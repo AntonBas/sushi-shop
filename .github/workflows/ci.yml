@@ -52,6 +52,10 @@ jobs:
         working-directory: frontend
         run: npm run lint
 
+      - name: Unused code
+        working-directory: frontend
+        run: npm run knip
+
       - name: Test
         working-directory: frontend
         run: npm run test

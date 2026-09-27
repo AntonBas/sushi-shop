@@ -62,7 +62,7 @@ export default function Modal({ isOpen, onClose, title, children }: Props) {
   if (!isOpen) return null
 
   return createPortal(
-    <div className={styles.overlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.overlay} role="presentation" onClick={e => e.target === e.currentTarget && onClose()}>
       <div
         ref={modalRef}
         className={styles.modal}

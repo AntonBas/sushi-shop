@@ -4,6 +4,7 @@ import com.sushishop.promotion.PromotionConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
@@ -35,7 +36,7 @@ public record UpdatePromotionRequest(
 
         @Size(min = 1, max = 100, message = "Product list must contain between 1 and 100 items")
         @Schema(description = "Product IDs to include")
-        List<Long> productIds,
+        List<@NotNull(message = "Product ID is required") Long> productIds,
 
         @Schema(description = "Is promotion active", example = "true")
         Boolean active

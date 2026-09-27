@@ -51,15 +51,20 @@ export default function AdminSidebar({
   const menuItems = allMenuItems.filter((item) => !item.adminOnly || isAdmin);
 
   useEffect(() => {
-    if (isOpen && isMobile) {
-      document.body.style.overflow = "hidden";
-    } else {
+    if (!isOpen || !isMobile) {
       document.body.style.overflow = "auto";
+      return;
     }
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = "auto";
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, isMobile]);
+  }, [isOpen, isMobile, onClose]);
 
   const handleItemClick = () => {
     if (isMobile) onClose();
@@ -96,6 +101,7 @@ export default function AdminSidebar({
       {isOpen && isMobile && (
         <div
           className={styles.overlay}
+          role="presentation"
           onClick={handleOverlayClick}
           onTouchStart={handleOverlayTouchStart}
           onTouchMove={handleOverlayTouchMove}

@@ -41,11 +41,6 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "Cancelled",
 }
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  ONLINE: "Online",
-  ON_DELIVERY: "On Delivery",
-}
-
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   ON_DELIVERY: "On Delivery",
   PENDING: "Pending",

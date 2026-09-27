@@ -43,8 +43,9 @@ public record CreatePromotionRequest(
         @Schema(description = "End date")
         LocalDateTime endDate,
 
+        @NotNull(message = "Products are required")
         @Size(min = 1, max = 100, message = "Product list must contain between 1 and 100 items")
         @Schema(description = "Product IDs to include")
-        List<Long> productIds
+        List<@NotNull(message = "Product ID is required") Long> productIds
 ) {
 }

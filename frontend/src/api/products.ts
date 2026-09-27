@@ -8,12 +8,12 @@ export const getProducts = async (
   size = 12,
   filters?: ProductFilters
 ): Promise<Page<ProductListResponse>> => {
-  const { data } = await api.get('/products', { params: { page, size, ...filters } })
+  const { data } = await api.get<Page<ProductListResponse>>('/products', { params: { page, size, ...filters } })
   return data
 }
 
 export const getProduct = async (id: number): Promise<ProductResponse> => {
-  const { data } = await api.get(`/products/${id}`)
+  const { data } = await api.get<ProductResponse>(`/products/${id}`)
   return data
 }
 
@@ -21,19 +21,19 @@ export const createProduct = async (product: CreateProductRequest, images?: File
   const formData = new FormData()
   formData.append('product', new Blob([JSON.stringify(product)], { type: 'application/json' }))
   if (images) images.forEach(img => formData.append('images', img))
-  const { data } = await api.post('/products', formData, {
+  const { data } = await api.post<ProductResponse>('/products', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
   return data
 }
 
 export const getProductBySlug = async (slug: string): Promise<ProductResponse> => {
-  const { data } = await api.get(`/products/slug/${slug}`)
+  const { data } = await api.get<ProductResponse>(`/products/slug/${slug}`)
   return data
 }
 
 export const updateProduct = async (id: number, data: UpdateProductRequest): Promise<ProductResponse> => {
-  const { data: res } = await api.put(`/products/${id}`, data)
+  const { data: res } = await api.put<ProductResponse>(`/products/${id}`, data)
   return res
 }
 
@@ -58,12 +58,12 @@ export const deleteProductImage = async (productId: number, imageId: number): Pr
 }
 
 export const getPopularProducts = async (): Promise<ProductListResponse[]> => {
-  const { data } = await api.get('/products/popular')
+  const { data } = await api.get<ProductListResponse[]>('/products/popular')
   return data
 }
 
 export const getRelatedProducts = async (id: number): Promise<ProductListResponse[]> => {
-  const { data } = await api.get(`/products/${id}/related`)
+  const { data } = await api.get<ProductListResponse[]>(`/products/${id}/related`)
   return data
 }
 

@@ -8,7 +8,7 @@ export interface Page<T> {
   }
 }
 
-export interface ApiSubError {
+interface ApiSubError {
   object: string
   field?: string | null
   rejectedValue?: unknown

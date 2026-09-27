@@ -114,6 +114,15 @@
   background: var(--color-bg-tertiary);
 }
 
+.expandBtn {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
 .expandedRow td {
   padding: 0;
 }
