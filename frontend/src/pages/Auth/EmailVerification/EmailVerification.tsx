@@ -28,7 +28,7 @@ export default function EmailVerification() {
 
   useEffect(() => {
     if (!token && initialEmail) {
-      syncStatus(initialEmail)
+      void syncStatus(initialEmail)
     }
   }, [token, initialEmail, syncStatus])
 
@@ -43,7 +43,7 @@ export default function EmailVerification() {
           <CheckCircle2 size={48} className={styles.icon} />
           <h2>Email Verified!</h2>
           <p>Your account is now active</p>
-          <Button onClick={() => navigate('/login')}>Go to Login</Button>
+          <Button onClick={() => void navigate('/login')}>Go to Login</Button>
         </div>
       </div>
     )
@@ -73,7 +73,7 @@ export default function EmailVerification() {
         )}
 
         <Button
-          onClick={() => resend(email)}
+          onClick={() => void resend(email)}
           loading={sending}
           disabled={cooldown > 0 || !email}
           style={{ width: '100%' }}

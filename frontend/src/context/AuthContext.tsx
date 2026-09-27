@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const logout = useCallback(() => {
-    authApi.logout().finally(() => {
+    void authApi.logout().catch(() => undefined).finally(() => {
       setUser(null);
       window.location.href = "/login";
     });

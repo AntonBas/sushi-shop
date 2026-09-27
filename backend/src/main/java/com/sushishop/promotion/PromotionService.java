@@ -193,7 +193,10 @@ public class PromotionService {
         if (newStartDate != null || newEndDate != null) {
             var effectiveStart = newStartDate != null ? newStartDate : promotion.getStartDate();
             var effectiveEnd = newEndDate != null ? newEndDate : promotion.getEndDate();
-            validator.validateDates(effectiveStart, effectiveEnd);
+            validator.validateDateOrder(effectiveStart, effectiveEnd);
+            if (!effectiveEnd.equals(promotion.getEndDate())) {
+                validator.validateEndDateNotInPast(effectiveEnd);
+            }
             promotion.setStartDate(effectiveStart);
             promotion.setEndDate(effectiveEnd);
         }

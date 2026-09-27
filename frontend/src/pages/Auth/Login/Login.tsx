@@ -44,7 +44,7 @@ export default function Login() {
     setLoading(true)
     try {
       await login({ email, password })
-      navigate('/')
+      void navigate('/')
     } catch (err) {
       setError(getErrorMessage(err, 'Invalid email or password'))
       setErrorCode(getErrorCode(err))
@@ -71,7 +71,7 @@ export default function Login() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => resend(email)}
+            onClick={() => void resend(email)}
             loading={sending}
             disabled={cooldown > 0 || !email}
             style={{ width: '100%' }}
@@ -92,7 +92,7 @@ export default function Login() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
         <Input label="Password" name="password" autoComplete="current-password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
         <div className={styles.forgot}>

@@ -33,5 +33,13 @@ export function useApi<T>() {
     }
   }, [showNotification])
 
-  return { ...state, loading, execute }
+  const run = useCallback(async (apiCall: () => Promise<T>, successMessage?: string): Promise<T | null> => {
+    try {
+      return await execute(apiCall, successMessage)
+    } catch {
+      return null
+    }
+  }, [execute])
+
+  return { ...state, loading, execute, run }
 }

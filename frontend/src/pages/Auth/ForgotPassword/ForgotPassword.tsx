@@ -35,7 +35,7 @@ export default function ForgotPassword() {
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <p className={styles.instruction}>
             Enter your email and we'll send you instructions to reset your password.
             Signed up with Google and don't have a password yet? Use this to set one.

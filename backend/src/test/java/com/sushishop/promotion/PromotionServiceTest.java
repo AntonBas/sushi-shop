@@ -393,7 +393,8 @@ class PromotionServiceTest {
 
         assertThat(result.id()).isEqualTo(PROMOTION_ID);
         assertThat(result.startDate()).isEqualTo(request.startDate());
-        verify(validator).validateDates(request.startDate(), promotion.getEndDate());
+        verify(validator).validateDateOrder(request.startDate(), promotion.getEndDate());
+        verify(validator, never()).validateEndDateNotInPast(any());
     }
 
     @Test
@@ -458,5 +459,53 @@ class PromotionServiceTest {
         promotionService.update(PROMOTION_ID, request);
 
         verify(validator, never()).validateProductsNotInOverlappingPromotions(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldAllowDeactivatingEndedPromotionWhenDatesAreUnchanged() {
+        var start = LocalDateTime.now().minusDays(10);
+        var end = LocalDateTime.now().minusDays(1);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(start)
+                .endDate(end)
+                .active(true)
+                .products(new HashSet<>())
+                .build();
+        var request = new UpdatePromotionRequest(null, null, null, start, end, null, false);
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        assertThat(promotion.isActive()).isFalse();
+        verify(validator, never()).validateEndDateNotInPast(any());
+    }
+
+    @Test
+    void shouldRejectMovingEndDateIntoThePast() {
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now().minusDays(10))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(new HashSet<>())
+                .build();
+        var newEnd = LocalDateTime.now().minusDays(1);
+        var request = new UpdatePromotionRequest(null, null, null, null, newEnd, null, null);
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        verify(validator).validateEndDateNotInPast(newEnd);
     }
 }

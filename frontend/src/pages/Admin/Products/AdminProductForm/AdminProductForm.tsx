@@ -110,7 +110,7 @@ export default function AdminProductForm() {
   );
 
   useEffect(() => {
-    if (isEdit && id) getProduct(Number(id));
+    if (isEdit && id) void getProduct(Number(id));
   }, [isEdit, id, getProduct]);
 
   const [loadedProduct, setLoadedProduct] = useState<typeof product>(null);
@@ -149,7 +149,7 @@ export default function AdminProductForm() {
     setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -206,7 +206,7 @@ export default function AdminProductForm() {
         );
         showNotification("Product created", "success");
       }
-      navigate("/admin/products");
+      void navigate("/admin/products");
     } catch (err: unknown) {
       showNotification(getErrorMessage(err, "Failed to save product"), "error");
     } finally {
@@ -222,7 +222,7 @@ export default function AdminProductForm() {
     <div className={styles.page}>
       <div className={styles.header}>
         <button
-          onClick={() => navigate("/admin/products")}
+          onClick={() => void navigate("/admin/products")}
           className={styles.backBtn}
         >
           <ArrowLeft size={20} />
@@ -230,7 +230,7 @@ export default function AdminProductForm() {
         <h1>{isEdit ? "Edit Product" : "New Product"}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <div className={styles.layout}>
           <div className={styles.imagesSection}>
             <span className={styles.label}>Images</span>
@@ -352,7 +352,7 @@ export default function AdminProductForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate("/admin/products")}
+            onClick={() => void navigate("/admin/products")}
           >
             Cancel
           </Button>

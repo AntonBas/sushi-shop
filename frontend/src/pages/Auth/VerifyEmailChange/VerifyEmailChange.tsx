@@ -45,14 +45,14 @@ export default function VerifyEmailChange() {
             <CheckCircle2 size={48} className={styles.icon} />
             <h2>Email Changed!</h2>
             <p>Your account email is now <strong>{newEmail}</strong>. Please log in again.</p>
-            <Button onClick={() => navigate('/login')} style={{ width: '100%' }}>Go to Login</Button>
+            <Button onClick={() => void navigate('/login')} style={{ width: '100%' }}>Go to Login</Button>
           </>
         ) : (
           <>
             <XCircle size={48} className={styles.icon} />
             <h2>Confirmation Failed</h2>
             <p>{error || 'The link is invalid or expired.'}</p>
-            <Button onClick={() => navigate('/profile')} style={{ width: '100%' }}>Back to Profile</Button>
+            <Button onClick={() => void navigate('/profile')} style={{ width: '100%' }}>Back to Profile</Button>
           </>
         )}
       </div>

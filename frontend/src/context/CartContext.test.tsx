@@ -43,4 +43,17 @@ describe('CartContext', () => {
     expect(result.current.items).toEqual([])
     expect(localStorage.getItem('cart')).toBeNull()
   })
+
+  it('updates prices of known products and keeps the rest', () => {
+    const { result } = renderHook(() => useCart(), { wrapper })
+    const nigiri = { productId: 2, name: 'Nigiri', price: 80, quantity: 1 }
+
+    act(() => result.current.addItem(maki))
+    act(() => result.current.addItem(nigiri))
+    act(() => result.current.updatePrices({ 1: 120 }))
+
+    expect(result.current.items.map((i) => i.price)).toEqual([120, 80])
+    expect(result.current.total).toBe(320)
+    expect(JSON.parse(localStorage.getItem('cart') ?? '[]')).toEqual(result.current.items)
+  })
 })

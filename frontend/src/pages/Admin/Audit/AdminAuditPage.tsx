@@ -24,7 +24,7 @@ export default function AdminAuditPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    loadLogs(page, {
+    void loadLogs(page, {
       action: action || undefined,
       entityName: debouncedTextFilters.entityName || undefined,
       entityId: debouncedTextFilters.entityId ? Number(debouncedTextFilters.entityId) : undefined,

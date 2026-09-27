@@ -16,7 +16,7 @@ import styles from "./AdminPromotionsPage.module.css";
 export default function AdminPromotionsPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const { data, loading, execute } = useApi<Page<PromotionResponse>>();
+  const { data, loading, run } = useApi<Page<PromotionResponse>>();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -26,13 +26,13 @@ export default function AdminPromotionsPage() {
 
   const loadPromotions = useCallback(
     (p: number, s?: string) => {
-      return execute(() => promotionsApi.getPromotions(p, 12, s));
+      return run(() => promotionsApi.getPromotions(p, 12, s));
     },
-    [execute],
+    [run],
   );
 
   useEffect(() => {
-    loadPromotions(page, debouncedSearch || undefined);
+    void loadPromotions(page, debouncedSearch || undefined);
   }, [page, debouncedSearch, loadPromotions]);
 
   const handleSearchChange = (value: string) => {
@@ -48,7 +48,7 @@ export default function AdminPromotionsPage() {
       await promotionsApi.deletePromotion(deleteId);
       setDeleteId(null);
       showNotification("Promotion deleted", "success");
-      loadPromotions(page, debouncedSearch || undefined);
+      void loadPromotions(page, debouncedSearch || undefined);
     } catch (err: unknown) {
       showNotification(getErrorMessage(err, "Failed to delete promotion"), "error");
     }
@@ -62,7 +62,7 @@ export default function AdminPromotionsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1>Promotions</h1>
-        <Button onClick={() => navigate("/admin/promotions/new")}>
+        <Button onClick={() => void navigate("/admin/promotions/new")}>
           Add Promotion
         </Button>
       </div>
@@ -82,7 +82,7 @@ export default function AdminPromotionsPage() {
         <div className={styles.empty}>
           <h3>No promotions found</h3>
           <p>Create your first promotion</p>
-          <Button onClick={() => navigate("/admin/promotions/new")}>
+          <Button onClick={() => void navigate("/admin/promotions/new")}>
             Add Promotion
           </Button>
         </div>
@@ -129,7 +129,7 @@ export default function AdminPromotionsPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            navigate(`/admin/promotions/${promo.id}/edit`)
+                            void navigate(`/admin/promotions/${promo.id}/edit`)
                           }
                           className={styles.editBtn}
                           aria-label={`Edit ${promo.title}`}
@@ -178,7 +178,7 @@ export default function AdminPromotionsPage() {
           <Button onClick={() => setDeleteId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} variant="danger">
+          <Button onClick={() => void handleDelete()} variant="danger">
             Delete
           </Button>
         </div>

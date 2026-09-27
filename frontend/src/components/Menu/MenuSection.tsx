@@ -30,7 +30,7 @@ export default function MenuSection() {
   }));
 
   useEffect(() => {
-    loadMoreProducts(0, initialFilters);
+    void loadMoreProducts(0, initialFilters);
   }, [loadMoreProducts, initialFilters]);
 
   const buildSearchParams = (overrides: { search?: string; category?: Category | ""; sort?: string }) => {
@@ -47,7 +47,7 @@ export default function MenuSection() {
     debounceRef.current = setTimeout(() => {
       setPage(0);
       setSearchParams(buildSearchParams({ search: value, category: activeCategory, sort }));
-      loadMoreProducts(0, {
+      void loadMoreProducts(0, {
         search: value || undefined,
         category: activeCategory || undefined,
         sort: sort || undefined,
@@ -59,7 +59,7 @@ export default function MenuSection() {
     setActiveCategory(cat);
     setPage(0);
     setSearchParams(buildSearchParams({ search, category: cat, sort }));
-    loadMoreProducts(0, {
+    void loadMoreProducts(0, {
       search: search || undefined,
       category: cat || undefined,
       sort: sort || undefined,
@@ -70,7 +70,7 @@ export default function MenuSection() {
     setSort(value);
     setPage(0);
     setSearchParams(buildSearchParams({ search, category: activeCategory, sort: value }));
-    loadMoreProducts(0, {
+    void loadMoreProducts(0, {
       search: search || undefined,
       category: activeCategory || undefined,
       sort: value || undefined,
@@ -81,7 +81,7 @@ export default function MenuSection() {
     const nextPage = page + 1;
     if (nextPage >= totalPages) return;
     setPage(nextPage);
-    loadMoreProducts(nextPage, {
+    void loadMoreProducts(nextPage, {
       search: search || undefined,
       category: activeCategory || undefined,
       sort: sort || undefined,

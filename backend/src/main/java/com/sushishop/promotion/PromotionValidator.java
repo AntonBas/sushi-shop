@@ -22,9 +22,17 @@ public class PromotionValidator {
     private final ProductRepository productRepository;
 
     public void validateDates(LocalDateTime startDate, LocalDateTime endDate) {
+        validateDateOrder(startDate, endDate);
+        validateEndDateNotInPast(endDate);
+    }
+
+    public void validateDateOrder(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate.isAfter(endDate)) {
             throw new BadRequestException("Start date must be before end date");
         }
+    }
+
+    public void validateEndDateNotInPast(LocalDateTime endDate) {
         if (endDate.isBefore(LocalDateTime.now())) {
             throw new BadRequestException("End date cannot be in the past");
         }

@@ -27,7 +27,7 @@ export default function OAuth2Redirect() {
         })
         .catch(() => navigate("/login?error=oauth2_failed", { replace: true }));
     } else {
-      navigate("/login?error=oauth2_failed", { replace: true });
+      void navigate("/login?error=oauth2_failed", { replace: true });
     }
   }, [navigate, refreshUser]);
 

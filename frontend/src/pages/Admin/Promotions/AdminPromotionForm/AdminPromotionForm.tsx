@@ -21,7 +21,7 @@ export default function AdminPromotionForm() {
   const { showNotification } = useNotification();
   const createApi = useApi<PromotionResponse>();
   const updateApi = useApi<PromotionResponse>();
-  const { loading: getLoading, execute: getPromotion } = useApi<PromotionResponse>();
+  const { loading: getLoading, run: getPromotion } = useApi<PromotionResponse>();
   const { products, totalPages, loading, loadProducts } = useProducts();
 
   const [title, setTitle] = useState("");
@@ -29,6 +29,7 @@ export default function AdminPromotionForm() {
   const [discountPercent, setDiscountPercent] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [loadedDates, setLoadedDates] = useState({ startDate: "", endDate: "" });
   const [active, setActive] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [selectedProductNames, setSelectedProductNames] = useState<
@@ -39,14 +40,17 @@ export default function AdminPromotionForm() {
 
   useEffect(() => {
     if (isEdit) {
-      getPromotion(() => promotionsApi.getPromotionById(Number(id)))
+      void getPromotion(() => promotionsApi.getPromotionById(Number(id)))
         .then((promo) => {
           if (!promo) return;
           setTitle(promo.title);
           setDescription(promo.description || "");
           setDiscountPercent(String(promo.discountPercent));
-          setStartDate(promo.startDate ? toDateTimeLocalValue(promo.startDate) : "");
-          setEndDate(promo.endDate ? toDateTimeLocalValue(promo.endDate) : "");
+          const loadedStart = promo.startDate ? toDateTimeLocalValue(promo.startDate) : "";
+          const loadedEnd = promo.endDate ? toDateTimeLocalValue(promo.endDate) : "";
+          setStartDate(loadedStart);
+          setEndDate(loadedEnd);
+          setLoadedDates({ startDate: loadedStart, endDate: loadedEnd });
           setActive(promo.active);
           setSelectedProductIds(promo.products.map((p) => p.id));
           setSelectedProductNames(
@@ -57,7 +61,7 @@ export default function AdminPromotionForm() {
   }, [id, isEdit, getPromotion]);
 
   useEffect(() => {
-    loadProducts(productPage, {
+    void loadProducts(productPage, {
       search: productSearch || undefined,
       available: true,
     });
@@ -90,20 +94,30 @@ export default function AdminPromotionForm() {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (!startDate || !endDate) {
+      showNotification("Start and end dates are required", "error");
+      return;
+    }
+    const startIso = new Date(startDate).toISOString();
+    const endIso = new Date(endDate).toISOString();
     const payload = {
       title,
       description: description || undefined,
       discountPercent: Number(discountPercent),
-      startDate: new Date(startDate).toISOString(),
-      endDate: new Date(endDate).toISOString(),
+      startDate: startIso,
+      endDate: endIso,
       productIds: selectedProductIds,
-      ...(isEdit && { active }),
     };
 
     try {
       if (isEdit) {
         await updateApi.execute(() =>
-          promotionsApi.updatePromotion(Number(id), payload),
+          promotionsApi.updatePromotion(Number(id), {
+            ...payload,
+            startDate: startDate !== loadedDates.startDate ? startIso : undefined,
+            endDate: endDate !== loadedDates.endDate ? endIso : undefined,
+            active,
+          }),
         );
         showNotification("Promotion updated", "success");
       } else {
@@ -113,7 +127,7 @@ export default function AdminPromotionForm() {
     } catch {
       return;
     }
-    navigate("/admin/promotions");
+    void navigate("/admin/promotions");
   };
 
   if (isEdit && getLoading) return <Loading text="Loading promotion..." />;
@@ -123,7 +137,7 @@ export default function AdminPromotionForm() {
       <div className={styles.header}>
         <button
           type="button"
-          onClick={() => navigate("/admin/promotions")}
+          onClick={() => void navigate("/admin/promotions")}
           className={styles.backBtn}
           aria-label="Back to promotions"
         >
@@ -131,7 +145,7 @@ export default function AdminPromotionForm() {
         </button>
         <h1>{isEdit ? "Edit Promotion" : "New Promotion"}</h1>
       </div>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <Input
           label="Title"
           value={title}
@@ -260,7 +274,7 @@ export default function AdminPromotionForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate("/admin/promotions")}
+            onClick={() => void navigate("/admin/promotions")}
           >
             Cancel
           </Button>

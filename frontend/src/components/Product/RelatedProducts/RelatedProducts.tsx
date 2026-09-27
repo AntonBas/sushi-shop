@@ -11,7 +11,7 @@ export default function RelatedProducts({ productId }: Props) {
   const { related, loadRelated, loading } = useProducts()
 
   useEffect(() => {
-    loadRelated(productId)
+    void loadRelated(productId)
   }, [productId, loadRelated])
 
   if (loading || related.length === 0) return null

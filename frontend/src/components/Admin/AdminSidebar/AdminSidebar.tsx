@@ -149,7 +149,7 @@ export default function AdminSidebar({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <button className={styles.backButton} onClick={() => navigate("/")}>
+          <button className={styles.backButton} onClick={() => void navigate("/")}>
             <ArrowLeft size={18} />
             <span>Back to Website</span>
           </button>

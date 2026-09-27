@@ -44,12 +44,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("cart");
   }, []);
 
+  const updatePrices = useCallback((prices: Record<number, number>) => {
+    setItems((prev) => {
+      const updated = prev.map((i) =>
+        prices[i.productId] !== undefined ? { ...i, price: prices[i.productId] } : i,
+      );
+      localStorage.setItem("cart", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const count = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, clearCart, total, count }}
+      value={{ items, addItem, removeItem, clearCart, updatePrices, total, count }}
     >
       {children}
     </CartContext.Provider>

@@ -292,7 +292,8 @@ unmapped properties), so any warning fails the build. Project rules are
 enforced by tooling rather than review: Checkstyle (no wildcard or unused
 imports, no tabs, no code comments except Javadoc), ESLint with
 `jsx-a11y` (keyboard-accessible interactions), type-aware `no-unsafe-*`
-rules (no `any` leaking from API responses or `JSON.parse`), `no-console`
+rules (no `any` leaking from API responses or `JSON.parse`), `no-floating-promises` /
+`no-misused-promises` (no unhandled rejections), `no-console`
 and a no-comments rule, plus Knip for unused files, exports and dependencies.
 
 ### Backend

@@ -32,7 +32,7 @@ export default function Register() {
         name, email, phone, password, confirmPassword,
         address: city ? { city, street, house, apartment: apartment || undefined } : undefined
       })
-      navigate(`/verify-email?email=${encodeURIComponent(email)}`)
+      void navigate(`/verify-email?email=${encodeURIComponent(email)}`)
     } catch (err) {
       setError(getErrorMessage(err, 'Registration failed'))
     } finally {
@@ -46,7 +46,7 @@ export default function Register() {
 
       {error && <div className={styles.error}>{error}</div>}
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <Input label="Name" name="name" autoComplete="name" value={name} onChange={setName} placeholder="Your name" />
         <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
         <Input label="Phone" name="phone" autoComplete="tel" type="tel" value={phone} onChange={setPhone} placeholder="+380991234567" />

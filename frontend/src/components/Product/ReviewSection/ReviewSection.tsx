@@ -40,12 +40,16 @@ export default function ReviewSection({ productId }: Props) {
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
   const loadReviews = useCallback((page: number) => {
-    reviewsApi.getReviews(productId, page, 5, reviewSort).then((res) => {
-      setReviews(res.content);
-      setTotalReviewPages(res.page.totalPages);
-      setTotalReviews(res.page.totalElements);
-    });
-  }, [productId, reviewSort]);
+    reviewsApi.getReviews(productId, page, 5, reviewSort)
+      .then((res) => {
+        setReviews(res.content);
+        setTotalReviewPages(res.page.totalPages);
+        setTotalReviews(res.page.totalElements);
+      })
+      .catch((err: unknown) => {
+        showNotification(getErrorMessage(err, "Failed to load reviews"), "error");
+      });
+  }, [productId, reviewSort, showNotification]);
 
   useEffect(() => {
     loadReviews(0);
@@ -180,7 +184,7 @@ export default function ReviewSection({ productId }: Props) {
         )}
       </div>
       {user && (
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <div className={styles.stars}>
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -291,7 +295,7 @@ export default function ReviewSection({ productId }: Props) {
                       Cancel
                     </Button>
                     <Button
-                      onClick={() => handleUpdate(review.id)}
+                      onClick={() => void handleUpdate(review.id)}
                       loading={updateApi.loading}
                     >
                       Save
@@ -354,7 +358,7 @@ export default function ReviewSection({ productId }: Props) {
                               Cancel
                             </Button>
                             <Button
-                              onClick={handleUpdateReply}
+                              onClick={() => void handleUpdateReply()}
                               loading={updateReplyApi.loading}
                             >
                               Save
@@ -391,7 +395,7 @@ export default function ReviewSection({ productId }: Props) {
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => handleReply(review.id)}
+                          onClick={() => void handleReply(review.id)}
                           loading={replyApi.loading}
                         >
                           Reply
@@ -434,7 +438,7 @@ export default function ReviewSection({ productId }: Props) {
           <Button onClick={() => setDeleteId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} variant="danger">
+          <Button onClick={() => void handleDelete()} variant="danger">
             Delete
           </Button>
         </div>
@@ -449,7 +453,7 @@ export default function ReviewSection({ productId }: Props) {
           <Button onClick={() => setDeleteReplyId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteReply} variant="danger">
+          <Button onClick={() => void handleDeleteReply()} variant="danger">
             Delete
           </Button>
         </div>

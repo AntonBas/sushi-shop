@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
@@ -6,6 +6,7 @@ import { useOrders } from "../../hooks/features/useOrders";
 import { useApi } from "../../hooks/common/useApi";
 import { useNotification } from "../../context/useNotification";
 import * as paymentsApi from "../../api/payments";
+import * as productsApi from "../../api/products";
 import { formatPrice } from "../../utils/formatPrice";
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";
@@ -14,7 +15,7 @@ import styles from "./CheckoutPage.module.css";
 
 export default function CheckoutPage() {
   const { user } = useAuth();
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, updatePrices } = useCart();
   const { createOrder, loading } = useOrders();
   const paymentApi = useApi<string>();
   const { showNotification } = useNotification();
@@ -33,6 +34,36 @@ export default function CheckoutPage() {
   const [comment, setComment] = useState("");
 
   const [prefilledFrom, setPrefilledFrom] = useState<typeof user>(null);
+  const productIdsKey = items.map((i) => i.productId).join(",");
+
+  const applyCurrentPrices = useEffectEvent((currentPrices: Record<number, number>) => {
+    const changed = items.some(
+      (i) => currentPrices[i.productId] !== undefined && currentPrices[i.productId] !== i.price,
+    );
+    if (!changed) return;
+    updatePrices(currentPrices);
+    showNotification("Prices in your cart were updated to current prices", "warning");
+  });
+
+  useEffect(() => {
+    if (!productIdsKey) return;
+    let cancelled = false;
+    const ids = productIdsKey.split(",").map(Number);
+    void Promise.allSettled(ids.map((id) => productsApi.getProduct(id))).then((results) => {
+      if (cancelled) return;
+      const currentPrices: Record<number, number> = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const product = result.value;
+          currentPrices[product.id] = product.discountedPrice ?? product.price;
+        }
+      });
+      applyCurrentPrices(currentPrices);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [productIdsKey]);
 
   if (user && user !== prefilledFrom) {
     setPrefilledFrom(user);
@@ -78,11 +109,11 @@ export default function CheckoutPage() {
           );
           if (url) window.location.assign(url);
         } catch {
-          navigate("/profile/orders");
+          void navigate("/profile/orders");
         }
       } else {
         showNotification("Order placed successfully!", "success");
-        navigate("/profile/orders");
+        void navigate("/profile/orders");
       }
     } catch {
       return;
@@ -106,7 +137,7 @@ export default function CheckoutPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Checkout</h1>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Contact Info</h2>
           <Input

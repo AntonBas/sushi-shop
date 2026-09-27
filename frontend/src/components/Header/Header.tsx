@@ -24,6 +24,7 @@ export default function Header() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileRef = useRef<HTMLDivElement>(null);
+  const mobileButtonRef = useRef<HTMLButtonElement>(null);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -34,8 +35,10 @@ export default function Header() {
         !dropdownRef.current.contains(e.target as Node)
       )
         setIsDropdownOpen(false);
-      if (mobileRef.current && !mobileRef.current.contains(e.target as Node))
-        setIsMobileOpen(false);
+      const target = e.target as Node;
+      const insideMobileMenu = mobileRef.current?.contains(target) ?? false;
+      const onMobileButton = mobileButtonRef.current?.contains(target) ?? false;
+      if (!insideMobileMenu && !onMobileButton) setIsMobileOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -148,7 +151,8 @@ export default function Header() {
 
           <button
             type="button"
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
+            ref={mobileButtonRef}
+            onClick={() => setIsMobileOpen((open) => !open)}
             className={styles.mobileBtn}
             aria-label="Toggle menu"
             aria-expanded={isMobileOpen}

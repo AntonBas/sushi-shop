@@ -147,7 +147,7 @@ export default function ProfilePage() {
         </Link>
       </div>
       {activeTab === "profile" && (
-        <form onSubmit={handleUpdateProfile} className={styles.form}>
+        <form onSubmit={(e) => void handleUpdateProfile(e)} className={styles.form}>
           <div className={styles.fieldReadonly}>
             <label htmlFor="profile-email" className={styles.label}>Email</label>
             <input
@@ -179,7 +179,7 @@ export default function ProfilePage() {
         </form>
       )}
       {activeTab === "address" && (
-        <form onSubmit={handleUpdateAddress} className={styles.form}>
+        <form onSubmit={(e) => void handleUpdateAddress(e)} className={styles.form}>
           <Input
             label="City"
             name="city"
@@ -216,7 +216,7 @@ export default function ProfilePage() {
             Save Address
           </Button>
           {user?.address && (
-            <Button type="button" variant="secondary" onClick={handleClearAddress} disabled={updateApi.loading}>
+            <Button type="button" variant="secondary" onClick={() => void handleClearAddress()} disabled={updateApi.loading}>
               Remove Address
             </Button>
           )}
@@ -226,7 +226,7 @@ export default function ProfilePage() {
         <>
           <h2 className={styles.sectionTitle}>Change Password</h2>
           {user?.hasPassword ? (
-            <form onSubmit={handleChangePassword} className={styles.form}>
+            <form onSubmit={(e) => void handleChangePassword(e)} className={styles.form}>
               <Input
                 label="Current Password"
                 name="currentPassword"
@@ -266,7 +266,7 @@ export default function ProfilePage() {
           )}
 
           <h2 className={styles.sectionTitle}>Change Email</h2>
-          <form onSubmit={handleRequestEmailChange} className={styles.form}>
+          <form onSubmit={(e) => void handleRequestEmailChange(e)} className={styles.form}>
             {user?.pendingEmail && (
               <p className={styles.pendingNotice}>
                 Confirmation pending for <strong>{user.pendingEmail}</strong>. Check your inbox to complete the change.

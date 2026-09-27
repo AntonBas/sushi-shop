@@ -11,19 +11,25 @@ import styles from "./PromotionPage.module.css";
 export default function PromotionPage() {
   const { slug } = useParams<{ slug: string }>();
   const [now] = useState(Date.now);
-  const { data: promotion, loading, execute } = useApi<PromotionResponse>();
+  const { data: promotion, loading, run } = useApi<PromotionResponse>();
 
   useEffect(() => {
-    if (slug) execute(() => promotionsApi.getPromotionBySlug(slug));
-  }, [slug, execute]);
+    if (slug) void run(() => promotionsApi.getPromotionBySlug(slug));
+  }, [slug, run]);
 
   if (loading) return <Loading text="Loading promotion..." />;
   if (!promotion) return null;
 
-  const daysLeft = Math.ceil(
-    (new Date(promotion.endDate).getTime() - now) /
-      (1000 * 60 * 60 * 24),
-  );
+  const startsAt = new Date(promotion.startDate).getTime();
+  const endsAt = new Date(promotion.endDate).getTime();
+  const isRunning = promotion.active && startsAt <= now && now < endsAt;
+  const isUpcoming = promotion.active && now < startsAt;
+  const daysLeft = Math.ceil((endsAt - now) / (1000 * 60 * 60 * 24));
+  const statusText = isRunning
+    ? `${daysLeft} day${daysLeft !== 1 ? "s" : ""} left`
+    : isUpcoming
+      ? `Starts ${new Date(startsAt).toLocaleDateString("en-US", { day: "numeric", month: "long" })}`
+      : "This promotion has ended";
 
   return (
     <div className={styles.page}>
@@ -48,7 +54,7 @@ export default function PromotionPage() {
           <div className={styles.meta}>
             <span className={styles.daysLeft}>
               <Clock size={14} />
-              {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+              {statusText}
             </span>
             <span className={styles.productCount}>
               {promotion.products.length} product
@@ -56,12 +62,14 @@ export default function PromotionPage() {
             </span>
           </div>
         </div>
-        <div className={styles.discountBadge}>
-          <span className={styles.discountValue}>
-            {promotion.discountPercent}%
-          </span>
-          <span className={styles.discountLabel}>OFF</span>
-        </div>
+        {isRunning && (
+          <div className={styles.discountBadge}>
+            <span className={styles.discountValue}>
+              {promotion.discountPercent}%
+            </span>
+            <span className={styles.discountLabel}>OFF</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.products}>

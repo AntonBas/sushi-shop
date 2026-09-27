@@ -51,7 +51,7 @@ export default function ResetPassword() {
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <p className={styles.instruction}>Enter your new password below.</p>
           <Input label="New Password" name="newPassword" autoComplete="new-password" type="password" value={newPassword} onChange={setNewPassword} placeholder="Min 8 characters" />
           <Input label="Confirm Password" name="confirmPassword" autoComplete="new-password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
@@ -61,12 +61,12 @@ export default function ResetPassword() {
         </form>
       </div>
 
-      <Modal isOpen={showSuccess} onClose={() => { setShowSuccess(false); navigate('/login') }}>
+      <Modal isOpen={showSuccess} onClose={() => { setShowSuccess(false); void navigate('/login') }}>
         <div className={styles.successModal}>
           <CheckCircle2 size={48} className={styles.successIcon} />
           <h2>Password Reset!</h2>
           <p>Your password has been successfully changed.</p>
-          <Button onClick={() => { setShowSuccess(false); navigate('/login') }} style={{ width: '100%', marginTop: 16 }}>
+          <Button onClick={() => { setShowSuccess(false); void navigate('/login') }} style={{ width: '100%', marginTop: 16 }}>
             Go to Login
           </Button>
         </div>

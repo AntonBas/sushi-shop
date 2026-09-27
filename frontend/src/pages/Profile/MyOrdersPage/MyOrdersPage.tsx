@@ -20,7 +20,7 @@ import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
   const { showNotification } = useNotification();
-  const { data, loading, execute } = useApi<Page<UserOrderResponse>>();
+  const { data, loading, run } = useApi<Page<UserOrderResponse>>();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
   const [page, setPage] = useState(0);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -32,10 +32,10 @@ export default function MyOrdersPage() {
     setExpandedId((current) => (current === id ? null : id));
 
   useEffect(() => {
-    execute(() => ordersApi.getMyOrders(page)).then((res) =>
-      setOrders(res.content),
-    );
-  }, [page, execute]);
+    void run(() => ordersApi.getMyOrders(page)).then((res) => {
+      if (res) setOrders(res.content);
+    });
+  }, [page, run]);
 
   const syncSubscriptions = useCallback((client: Client) => {
     if (!client.connected) return;
@@ -158,7 +158,7 @@ export default function MyOrdersPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePay(order);
+                        void handlePay(order);
                       }}
                       disabled={payLoading === order.id}
                       className={styles.payBtn}

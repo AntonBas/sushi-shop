@@ -30,7 +30,7 @@ export default function AdminProductsPage() {
   const categories = Object.keys(CATEGORY_DISPLAY) as Category[];
 
   useEffect(() => {
-    loadProducts(page, {
+    void loadProducts(page, {
       search: debouncedSearch || undefined,
       category: categoryFilter || undefined,
       available: availableFilter === "" ? undefined : availableFilter,
@@ -50,7 +50,7 @@ export default function AdminProductsPage() {
       await productsApi.deleteProduct(deleteId);
       setDeleteId(null);
       showNotification("Product deleted", "success");
-      loadProducts(page, {
+      void loadProducts(page, {
         search: debouncedSearch || undefined,
         category: categoryFilter || undefined,
         available: availableFilter === "" ? undefined : availableFilter,
@@ -64,7 +64,7 @@ export default function AdminProductsPage() {
     try {
       await productsApi.toggleProduct(id);
       showNotification("Product status updated", "success");
-      loadProducts(page, {
+      void loadProducts(page, {
         search: debouncedSearch || undefined,
         category: categoryFilter || undefined,
         available: availableFilter === "" ? undefined : availableFilter,
@@ -80,7 +80,7 @@ export default function AdminProductsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1>Products</h1>
-        <Button onClick={() => navigate("/admin/products/new")}>
+        <Button onClick={() => void navigate("/admin/products/new")}>
           Add Product
         </Button>
       </div>
@@ -131,7 +131,7 @@ export default function AdminProductsPage() {
         <div className={styles.empty}>
           <h3>No products found</h3>
           <p>Get started by creating your first product</p>
-          <Button onClick={() => navigate("/admin/products/new")}>
+          <Button onClick={() => void navigate("/admin/products/new")}>
             Add Product
           </Button>
         </div>
@@ -182,7 +182,7 @@ export default function AdminProductsPage() {
                     <td data-label="Status">
                       <button
                         type="button"
-                        onClick={() => handleToggle(product.id)}
+                        onClick={() => void handleToggle(product.id)}
                         className={styles.toggleBtn}
                         aria-label={`${product.available ? "Mark unavailable" : "Mark available"}: ${product.name}`}
                       >
@@ -198,7 +198,7 @@ export default function AdminProductsPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            navigate(`/admin/products/${product.id}/edit`)
+                            void navigate(`/admin/products/${product.id}/edit`)
                           }
                           className={styles.editBtn}
                           aria-label={`Edit ${product.name}`}
@@ -248,7 +248,7 @@ export default function AdminProductsPage() {
           <Button onClick={() => setDeleteId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} variant="danger">
+          <Button onClick={() => void handleDelete()} variant="danger">
             Delete
           </Button>
         </div>

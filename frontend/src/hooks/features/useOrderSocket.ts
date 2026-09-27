@@ -35,7 +35,7 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
       clearWatchdog();
       watchdogId = window.setTimeout(() => {
         notifyConnectionIssue();
-        client.deactivate().then(() => client.activate());
+        void client.deactivate().then(() => client.activate());
       }, WATCHDOG_TIMEOUT_MS);
     };
 
@@ -83,7 +83,7 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
     return () => {
       clearWatchdog();
       clearRetry();
-      client.deactivate();
+      void client.deactivate();
       stompRef.current = null;
     };
   }, [showNotification]);

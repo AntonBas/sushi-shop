@@ -7,7 +7,7 @@ export default function PopularSection() {
   const { popular, loadPopular } = useProducts()
 
   useEffect(() => {
-    loadPopular()
+    void loadPopular()
   }, [loadPopular])
 
   if (popular.length === 0) return null

@@ -7,6 +7,7 @@ import { useCart } from '../../context/useCart'
 import { useOrders } from '../../hooks/features/useOrders'
 import { useNotification } from '../../context/useNotification'
 import * as paymentsApi from '../../api/payments'
+import * as productsApi from '../../api/products'
 import type { UserResponse } from '../../types'
 
 vi.mock('../../context/useAuth')
@@ -14,9 +15,11 @@ vi.mock('../../context/useCart')
 vi.mock('../../hooks/features/useOrders')
 vi.mock('../../context/useNotification')
 vi.mock('../../api/payments')
+vi.mock('../../api/products')
 
 const createOrder = vi.fn()
 const clearCart = vi.fn()
+const updatePrices = vi.fn()
 const showNotification = vi.fn()
 
 const cartItem = { productId: 7, name: 'Maki', price: 250, quantity: 2 }
@@ -26,6 +29,7 @@ function mockCart(items: typeof cartItem[]) {
     items,
     total: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
     clearCart,
+    updatePrices,
   } as unknown as ReturnType<typeof useCart>)
 }
 
@@ -51,6 +55,9 @@ describe('CheckoutPage', () => {
     mockUser({ name: 'Anton', phone: '+380961791111', address: undefined })
     vi.mocked(useOrders).mockReturnValue({ createOrder, loading: false } as unknown as ReturnType<typeof useOrders>)
     vi.mocked(useNotification).mockReturnValue({ showNotification } as unknown as ReturnType<typeof useNotification>)
+    vi.mocked(productsApi.getProduct).mockResolvedValue(
+      { id: 7, price: 250, discountedPrice: null } as Awaited<ReturnType<typeof productsApi.getProduct>>,
+    )
   })
 
   afterEach(() => {
@@ -137,5 +144,23 @@ describe('CheckoutPage', () => {
     await waitFor(() => expect(createOrder).toHaveBeenCalled())
     expect(clearCart).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Place Order' })).toBeInTheDocument()
+  })
+
+  it('keeps cart prices when they match the current product prices', async () => {
+    renderCheckout()
+
+    await waitFor(() => expect(productsApi.getProduct).toHaveBeenCalledWith(7))
+    expect(updatePrices).not.toHaveBeenCalled()
+  })
+
+  it('updates stale cart prices and warns the customer', async () => {
+    vi.mocked(productsApi.getProduct).mockResolvedValue(
+      { id: 7, price: 300, discountedPrice: 270 } as Awaited<ReturnType<typeof productsApi.getProduct>>,
+    )
+
+    renderCheckout()
+
+    await waitFor(() => expect(updatePrices).toHaveBeenCalledWith({ 7: 270 }))
+    expect(showNotification).toHaveBeenCalledWith('Prices in your cart were updated to current prices', 'warning')
   })
 })

@@ -6,7 +6,18 @@ import jsxA11y from 'eslint-plugin-jsx-a11y-x'
 import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-const ALLOWED_COMMENT = /^(\s*eslint|\s*@ts-expect-error|\*|\/\s*<reference)/
+const DIRECTIVE_COMMENT = /^\s*(eslint-disable|eslint-enable|eslint-disable-line|eslint-disable-next-line)(\s|$)/
+const TS_DIRECTIVE_COMMENT = /^\s*@ts-expect-error(\s|$)/
+const TRIPLE_SLASH_REFERENCE = /^\/\s*<reference\s/
+
+function isAllowedComment(comment) {
+  if (comment.type === 'Block') {
+    return comment.value.startsWith('*') || DIRECTIVE_COMMENT.test(comment.value)
+  }
+  return DIRECTIVE_COMMENT.test(comment.value)
+    || TS_DIRECTIVE_COMMENT.test(comment.value)
+    || TRIPLE_SLASH_REFERENCE.test(comment.value)
+}
 
 /**
  * Project rule: code comments are not allowed. JSDoc blocks, eslint directives,
@@ -22,7 +33,7 @@ const noCodeComments = {
     return {
       Program() {
         for (const comment of context.sourceCode.getAllComments()) {
-          if (!ALLOWED_COMMENT.test(comment.value)) {
+          if (!isAllowedComment(comment)) {
             context.report({ loc: comment.loc, messageId: 'noComment' })
           }
         }
@@ -61,6 +72,8 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-call': 'error',
       '@typescript-eslint/no-unsafe-member-access': 'error',
       '@typescript-eslint/no-unsafe-return': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
     },
   },
 ])

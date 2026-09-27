@@ -62,7 +62,7 @@ export default function AdminOrdersPage() {
   }, [page, statusFilter, deliveryFilter, paymentFilter, debouncedSearch]);
 
   useEffect(() => {
-    loadOrders(page, 12, {
+    void loadOrders(page, 12, {
       status: statusFilter || undefined,
       deliveryMethod: deliveryFilter || undefined,
       paymentMethod: paymentFilter || undefined,
@@ -80,7 +80,7 @@ export default function AdminOrdersPage() {
   useOrderSocket((client: Client) => {
     client.subscribe("/topic/orders/new", () => {
       const f = filtersRef.current;
-      loadOrders(f.page, 12, {
+      void loadOrders(f.page, 12, {
         status: f.statusFilter || undefined,
         deliveryMethod: f.deliveryFilter || undefined,
         paymentMethod: f.paymentFilter || undefined,
@@ -99,7 +99,7 @@ export default function AdminOrdersPage() {
         `Order #${orderId} → ${ORDER_STATUS_LABELS[newStatus]}`,
         "success",
       );
-      loadOrders(page, 12, {
+      void loadOrders(page, 12, {
         status: statusFilter || undefined,
         deliveryMethod: deliveryFilter || undefined,
         paymentMethod: paymentFilter || undefined,
@@ -253,7 +253,7 @@ export default function AdminOrdersPage() {
                               key={nextStatus}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleStatusChange(order.id, nextStatus);
+                                void handleStatusChange(order.id, nextStatus);
                               }}
                               className={styles.actionBtn}
                               style={{

@@ -43,7 +43,7 @@ export default function ProductPage() {
   }
 
   useEffect(() => {
-    if (slug) getProductBySlug(slug);
+    if (slug) void getProductBySlug(slug);
   }, [slug, getProductBySlug]);
 
   if (productLoading) return <ProductSkeleton />;
