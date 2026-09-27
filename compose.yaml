@@ -92,7 +92,7 @@ services:
     restart: unless-stopped
 
   prometheus-config:
-    image: alpine:3.20
+    image: alpine:3.24
     container_name: sushi-prometheus-config
     profiles: [dev]
     env_file:
