@@ -15,6 +15,7 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
   const { showNotification } = useNotification();
 
   useEffect(() => {
+    let disposed = false;
     const notifyConnectionIssue = () => {
       if (connectionIssueNotifiedRef.current) return;
       connectionIssueNotifiedRef.current = true;
@@ -52,9 +53,11 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
       beforeConnect: async (client) => {
         try {
           const ticket = await issueWsTicket();
+          if (disposed) return;
           client.connectHeaders = { Authorization: `Bearer ${ticket}` };
           armWatchdog(client);
         } catch {
+          if (disposed) return;
           notifyConnectionIssue();
           await client.deactivate();
           clearRetry();
@@ -81,6 +84,7 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
     stompRef.current = client;
 
     return () => {
+      disposed = true;
       clearWatchdog();
       clearRetry();
       void client.deactivate();

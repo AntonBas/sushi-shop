@@ -173,4 +173,43 @@ describe('useOrderSocket', () => {
 
     expect(client.activate).toHaveBeenCalledTimes(1)
   })
+
+  it('does not revive the client when unmounted while the ticket request is in flight', async () => {
+    vi.useFakeTimers()
+    let resolveTicket: (ticket: string) => void = () => {}
+    vi.mocked(issueWsTicket).mockReturnValueOnce(new Promise((resolve) => { resolveTicket = resolve }))
+    const { unmount } = renderHook(() => useOrderSocket(vi.fn()))
+    const client = lastClient()
+
+    const beforeConnect = client.config.beforeConnect?.(client as unknown as Client)
+    unmount()
+    await act(async () => {
+      resolveTicket('late-ticket')
+      await beforeConnect
+      await vi.advanceTimersByTimeAsync(20000)
+    })
+
+    expect(client.connectHeaders).toEqual({})
+    expect(client.activate).toHaveBeenCalledTimes(1)
+    expect(showNotification).not.toHaveBeenCalled()
+  })
+
+  it('does not schedule a retry when unmounted while a failing ticket request is in flight', async () => {
+    vi.useFakeTimers()
+    let rejectTicket: (error: Error) => void = () => {}
+    vi.mocked(issueWsTicket).mockReturnValueOnce(new Promise((_, reject) => { rejectTicket = reject }))
+    const { unmount } = renderHook(() => useOrderSocket(vi.fn()))
+    const client = lastClient()
+
+    const beforeConnect = client.config.beforeConnect?.(client as unknown as Client)
+    unmount()
+    await act(async () => {
+      rejectTicket(new Error('network'))
+      await beforeConnect
+      await vi.advanceTimersByTimeAsync(20000)
+    })
+
+    expect(client.activate).toHaveBeenCalledTimes(1)
+    expect(showNotification).not.toHaveBeenCalled()
+  })
 })

@@ -189,4 +189,17 @@ class JwtChannelInterceptorTest {
         assertThatThrownBy(() -> interceptor.preSend(message, channel))
                 .isInstanceOf(AccessDeniedException.class);
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/topic/orders/new", "/topic/orders/1", "/app/anything"})
+    void shouldRejectClientSendEvenForAdmin(String destination) {
+        var accessor = StompHeaderAccessor.create(StompCommand.SEND);
+        accessor.setDestination(destination);
+        accessor.setUser(authFor("admin@test.com", UserRole.ADMIN));
+        accessor.setLeaveMutable(true);
+        var message = MessageBuilder.createMessage("{\"orderId\":1,\"status\":\"DELIVERED\"}".getBytes(), accessor.getMessageHeaders());
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
 }

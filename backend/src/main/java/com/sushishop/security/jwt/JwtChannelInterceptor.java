@@ -45,6 +45,8 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             accessor.setUser(authenticate(accessor));
         } else if (StompCommand.SUBSCRIBE.equals(command)) {
             authorizeSubscription(accessor);
+        } else if (StompCommand.SEND.equals(command)) {
+            throw new AccessDeniedException("Clients are not allowed to send messages");
         }
 
         return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());

@@ -38,7 +38,7 @@ public enum OrderStatus {
     private boolean isValidTransition(OrderStatus newStatus) {
         return switch (this) {
             case NEW -> newStatus == CONFIRMED || newStatus == CANCELLED;
-            case CONFIRMED -> newStatus == COOKING || newStatus == CANCELLED;
+            case CONFIRMED -> newStatus == COOKING;
             case COOKING -> newStatus == READY || newStatus == DELIVERING;
             case DELIVERING, READY -> newStatus == DELIVERED;
             case DELIVERED, CANCELLED -> false;

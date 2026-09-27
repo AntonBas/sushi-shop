@@ -29,7 +29,7 @@ const getStatusFlow = (
     case "NEW":
       return ["CONFIRMED", "CANCELLED"];
     case "CONFIRMED":
-      return ["COOKING", "CANCELLED"];
+      return ["COOKING"];
     case "COOKING":
       return deliveryMethod === "DELIVERY" ? ["DELIVERING"] : ["READY"];
     case "DELIVERING":

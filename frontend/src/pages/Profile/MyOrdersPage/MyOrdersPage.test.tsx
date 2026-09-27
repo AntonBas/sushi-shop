@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import type { Client, IMessage } from '@stomp/stompjs'
 import MyOrdersPage from './MyOrdersPage'
 import { useNotification } from '../../../context/useNotification'
@@ -83,8 +83,12 @@ describe('MyOrdersPage', () => {
     await screen.findByRole('button', { name: /Order #7/ })
     expect(screen.getByText('Pending')).toBeInTheDocument()
 
-    act(() => onSocketConnect?.(client))
-    act(() => handlers.get('/topic/orders/7')?.({
+    await waitFor(() => {
+      act(() => onSocketConnect?.(client))
+      expect(handlers.has('/topic/orders/7')).toBe(true)
+    })
+    const handler = handlers.get('/topic/orders/7')
+    act(() => handler?.({
       body: JSON.stringify({ orderId: 7, status: 'CONFIRMED', paymentStatus: 'PAID' }),
     } as IMessage))
 
