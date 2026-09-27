@@ -38,10 +38,10 @@ public class OrderQueryService {
             return Page.empty(pageable);
         }
 
-        enrichOrdersWithItems(orders);
+        var itemsByOrder = loadItemsByOrderId(orders);
 
         List<OrderResponse> responses = orders.stream()
-                .map(orderMapper::toResponse)
+                .map(order -> orderMapper.toResponse(order, itemsByOrder.getOrDefault(order.getId(), List.of())))
                 .toList();
 
         return new PageImpl<>(responses, pageable, page.getTotalElements());
@@ -56,25 +56,18 @@ public class OrderQueryService {
             return Page.empty(pageable);
         }
 
-        enrichOrdersWithItems(orders);
+        var itemsByOrder = loadItemsByOrderId(orders);
 
         List<UserOrderResponse> responses = orders.stream()
-                .map(orderMapper::toUserResponse)
+                .map(order -> orderMapper.toUserResponse(order, itemsByOrder.getOrDefault(order.getId(), List.of())))
                 .toList();
 
         return new PageImpl<>(responses, pageable, page.getTotalElements());
     }
 
-    private void enrichOrdersWithItems(List<Order> orders) {
+    private Map<Long, List<OrderItem>> loadItemsByOrderId(List<Order> orders) {
         List<Long> orderIds = orders.stream().map(Order::getId).toList();
-        List<OrderItem> allItems = orderRepository.findItemsByOrderIds(orderIds);
-
-        Map<Long, List<OrderItem>> itemsByOrder = allItems.stream()
+        return orderRepository.findItemsByOrderIds(orderIds).stream()
                 .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
-
-        orders.forEach(order -> {
-            List<OrderItem> items = itemsByOrder.getOrDefault(order.getId(), List.of());
-            order.setItems(items);
-        });
     }
 }

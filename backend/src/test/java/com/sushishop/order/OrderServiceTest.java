@@ -200,4 +200,55 @@ public class OrderServiceTest {
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Cannot cancel order with status");
     }
+
+    @Test
+    public void shouldRejectConfirmingUnpaidOnlineOrder() {
+        var order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.NEW)
+                .deliveryMethod(DeliveryMethod.DELIVERY)
+                .paymentMethod(PaymentMethod.ONLINE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.CONFIRMED))
+                .isInstanceOf(BadRequestException.class);
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    public void shouldConfirmNewOrderAfterPaymentAndNotifySubscribers() {
+        var order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.NEW)
+                .paymentMethod(PaymentMethod.ONLINE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.confirmOrder(1L);
+
+        assertThat(order.isPaid()).isTrue();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+        verify(messagingTemplate).convertAndSend(eq("/topic/orders/1"), any(OrderStatusUpdateResponse.class));
+    }
+
+    @Test
+    public void shouldMarkCancelledOrderPaidWithoutReopeningIt() {
+        var order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.CANCELLED)
+                .paymentMethod(PaymentMethod.ONLINE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        orderService.confirmOrder(1L);
+
+        assertThat(order.isPaid()).isTrue();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(messagingTemplate, never()).convertAndSend(any(String.class), any(Object.class));
+    }
 }
