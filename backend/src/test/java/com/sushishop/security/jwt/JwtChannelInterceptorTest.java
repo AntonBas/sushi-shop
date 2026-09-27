@@ -7,6 +7,8 @@ import com.sushishop.user.User;
 import com.sushishop.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -110,7 +112,7 @@ class JwtChannelInterceptorTest {
     }
 
     @Test
-    void shouldRejectNewOrdersSubscribeForNonAdmin() {
+    void shouldRejectNewOrdersSubscribeForCustomer() {
         var message = subscribeMessage("/topic/orders/new", authFor("user@test.com", UserRole.CUSTOMER));
 
         assertThatThrownBy(() -> interceptor.preSend(message, channel))
@@ -152,5 +154,39 @@ class JwtChannelInterceptorTest {
         var result = interceptor.preSend(message, channel);
 
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    void shouldAllowNewOrdersSubscribeForCourier() {
+        var message = subscribeMessage("/topic/orders/new", authFor("courier@test.com", UserRole.COURIER));
+
+        var result = interceptor.preSend(message, channel);
+
+        assertThat(result).isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/topic/orders/*", "/topic/orders/**", "/topic/**", "/topic/*/1", "/topic/orders", "/topic/orders/1/x", "/queue/orders/1"})
+    void shouldRejectWildcardAndUnknownDestinationsForCustomer(String destination) {
+        var message = subscribeMessage(destination, authFor("user@test.com", UserRole.CUSTOMER));
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldRejectWildcardDestinationEvenForAdmin() {
+        var message = subscribeMessage("/topic/**", authFor("admin@test.com", UserRole.ADMIN));
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldRejectSubscribeWithoutDestination() {
+        var message = subscribeMessage(null, authFor("user@test.com", UserRole.CUSTOMER));
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

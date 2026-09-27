@@ -39,12 +39,27 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
       }, WATCHDOG_TIMEOUT_MS);
     };
 
+    let retryId: number | null = null;
+    const clearRetry = () => {
+      if (retryId !== null) {
+        window.clearTimeout(retryId);
+        retryId = null;
+      }
+    };
+
     const client = new Client({
       webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
       beforeConnect: async (client) => {
-        const ticket = await issueWsTicket();
-        client.connectHeaders = { Authorization: `Bearer ${ticket}` };
-        armWatchdog(client);
+        try {
+          const ticket = await issueWsTicket();
+          client.connectHeaders = { Authorization: `Bearer ${ticket}` };
+          armWatchdog(client);
+        } catch {
+          notifyConnectionIssue();
+          await client.deactivate();
+          clearRetry();
+          retryId = window.setTimeout(() => client.activate(), RECONNECT_DELAY_MS);
+        }
       },
       reconnectDelay: RECONNECT_DELAY_MS,
       onConnect: () => {
@@ -67,6 +82,7 @@ export function useOrderSocket(onConnect: (client: Client) => void) {
 
     return () => {
       clearWatchdog();
+      clearRetry();
       client.deactivate();
       stompRef.current = null;
     };

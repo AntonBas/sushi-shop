@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class JwtChannelInterceptor implements ChannelInterceptor {
 
+    private static final String NEW_ORDERS_TOPIC = "/topic/orders/new";
     private static final Pattern ORDER_TOPIC_PATTERN = Pattern.compile("^/topic/orders/(\\d+)$");
     private static final String ROLE_ADMIN = "ROLE_" + Roles.ADMIN;
     private static final String ROLE_COURIER = "ROLE_" + Roles.COURIER;
@@ -69,28 +70,25 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     }
 
     private void authorizeSubscription(StompHeaderAccessor accessor) {
-        var destination = accessor.getDestination();
-        if (destination == null) {
-            return;
-        }
-
         if (!(accessor.getUser() instanceof UsernamePasswordAuthenticationToken auth)) {
             throw new AccessDeniedException("Not authenticated");
         }
 
-        if ("/topic/orders/new".equals(destination)) {
-            requireRole(auth, ROLE_ADMIN);
+        var destination = accessor.getDestination();
+        if (NEW_ORDERS_TOPIC.equals(destination)) {
+            requireStaff(auth);
             return;
         }
 
-        var matcher = ORDER_TOPIC_PATTERN.matcher(destination);
-        if (matcher.matches()) {
-            authorizeOrderTopic(auth, Long.valueOf(matcher.group(1)));
+        var matcher = destination == null ? null : ORDER_TOPIC_PATTERN.matcher(destination);
+        if (matcher == null || !matcher.matches()) {
+            throw new AccessDeniedException("Subscription destination is not allowed");
         }
+        authorizeOrderTopic(auth, Long.valueOf(matcher.group(1)));
     }
 
     private void authorizeOrderTopic(UsernamePasswordAuthenticationToken auth, Long orderId) {
-        if (hasRole(auth, ROLE_ADMIN) || hasRole(auth, ROLE_COURIER)) {
+        if (isStaff(auth)) {
             return;
         }
 
@@ -103,10 +101,14 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
         }
     }
 
-    private void requireRole(UsernamePasswordAuthenticationToken auth, String role) {
-        if (!hasRole(auth, role)) {
-            throw new AccessDeniedException("Requires " + role);
+    private void requireStaff(UsernamePasswordAuthenticationToken auth) {
+        if (!isStaff(auth)) {
+            throw new AccessDeniedException("Requires staff role");
         }
+    }
+
+    private boolean isStaff(UsernamePasswordAuthenticationToken auth) {
+        return hasRole(auth, ROLE_ADMIN) || hasRole(auth, ROLE_COURIER);
     }
 
     private boolean hasRole(UsernamePasswordAuthenticationToken auth, String role) {

@@ -139,4 +139,38 @@ describe('useOrderSocket', () => {
     expect(showNotification).not.toHaveBeenCalled()
     expect(client.deactivate).not.toHaveBeenCalled()
   })
+
+  it('retries after the ticket request fails instead of stalling', async () => {
+    vi.useFakeTimers()
+    vi.mocked(issueWsTicket).mockRejectedValueOnce(new Error('network'))
+    renderHook(() => useOrderSocket(vi.fn()))
+    const client = lastClient()
+
+    await runBeforeConnect(client)
+
+    expect(showNotification).toHaveBeenCalledWith(RECONNECT_WARNING, 'warning')
+    expect(client.deactivate).toHaveBeenCalledTimes(1)
+    expect(client.activate).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000)
+    })
+
+    expect(client.activate).toHaveBeenCalledTimes(2)
+  })
+
+  it('cancels a pending ticket retry on unmount', async () => {
+    vi.useFakeTimers()
+    vi.mocked(issueWsTicket).mockRejectedValueOnce(new Error('network'))
+    const { unmount } = renderHook(() => useOrderSocket(vi.fn()))
+    const client = lastClient()
+    await runBeforeConnect(client)
+
+    unmount()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5000)
+    })
+
+    expect(client.activate).toHaveBeenCalledTimes(1)
+  })
 })
