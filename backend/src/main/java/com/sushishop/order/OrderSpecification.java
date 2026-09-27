@@ -19,10 +19,9 @@ public class OrderSpecification {
     public static Specification<Order> hasSearch(String search) {
         return (root, query, cb) -> {
             if (search == null || search.isBlank()) return null;
-            String pattern = LikePattern.contains(search);
             return cb.or(
-                    cb.like(root.get("customerName"), pattern, LikePattern.ESCAPE),
-                    cb.like(root.get("phone"), pattern, LikePattern.ESCAPE)
+                    cb.like(cb.lower(root.get("customerName")), LikePattern.containsIgnoreCase(search), LikePattern.ESCAPE),
+                    cb.like(root.get("phone"), LikePattern.contains(search), LikePattern.ESCAPE)
             );
         };
     }
