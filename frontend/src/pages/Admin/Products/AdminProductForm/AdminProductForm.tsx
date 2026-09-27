@@ -31,6 +31,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import styles from "./AdminProductForm.module.css";
 
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_NEW_IMAGES = 5;
+
 interface SortableImageProps {
   img: ProductImageResponse;
   index: number;
@@ -131,10 +134,21 @@ export default function AdminProductForm() {
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-    const added = Array.from(files).map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+    const selected = Array.from(files);
+    e.target.value = "";
+    const withinSize = selected.filter((file) => file.size <= MAX_IMAGE_SIZE_BYTES);
+    if (withinSize.length < selected.length) {
+      showNotification("Images larger than 5 MB were skipped", "warning");
+    }
+    const slotsLeft = isEdit ? withinSize.length : MAX_NEW_IMAGES - images.length;
+    if (withinSize.length > slotsLeft) {
+      showNotification(`You can add up to ${MAX_NEW_IMAGES} images when creating a product`, "warning");
+    }
+    const added = withinSize
+      .slice(0, Math.max(0, slotsLeft))
+      .map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
     previewUrlsRef.current.push(...added.map((image) => image.previewUrl));
     setImages((prev) => [...prev, ...added]);
-    e.target.value = "";
   };
 
   const handleRemoveNewImage = (index: number) => {
@@ -222,8 +236,10 @@ export default function AdminProductForm() {
     <div className={styles.page}>
       <div className={styles.header}>
         <button
+          type="button"
           onClick={() => void navigate("/admin/products")}
           className={styles.backBtn}
+          aria-label="Back to products"
         >
           <ArrowLeft size={20} />
         </button>

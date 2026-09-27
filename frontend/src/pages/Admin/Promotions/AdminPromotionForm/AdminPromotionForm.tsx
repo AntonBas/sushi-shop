@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
@@ -36,6 +36,8 @@ export default function AdminPromotionForm() {
     Record<number, string>
   >({});
   const [productSearch, setProductSearch] = useState("");
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
+  const productSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [productPage, setProductPage] = useState(0);
 
   useEffect(() => {
@@ -62,10 +64,21 @@ export default function AdminPromotionForm() {
 
   useEffect(() => {
     void loadProducts(productPage, {
-      search: productSearch || undefined,
+      search: debouncedProductSearch || undefined,
       available: true,
     });
-  }, [productPage, productSearch, loadProducts]);
+  }, [productPage, debouncedProductSearch, loadProducts]);
+
+  useEffect(() => () => {
+    if (productSearchDebounceRef.current) clearTimeout(productSearchDebounceRef.current);
+  }, []);
+
+  const handleProductSearchChange = (value: string) => {
+    setProductSearch(value);
+    setProductPage(0);
+    if (productSearchDebounceRef.current) clearTimeout(productSearchDebounceRef.current);
+    productSearchDebounceRef.current = setTimeout(() => setDebouncedProductSearch(value), 300);
+  };
 
   const toggleProduct = (pid: number, name: string) => {
     setSelectedProductIds((prev) => {
@@ -234,11 +247,9 @@ export default function AdminPromotionForm() {
             <input
               type="text"
               placeholder="Search products..."
+              aria-label="Search products"
               value={productSearch}
-              onChange={(e) => {
-                setProductSearch(e.target.value);
-                setProductPage(0);
-              }}
+              onChange={(e) => handleProductSearchChange(e.target.value)}
             />
           </div>
           {loading ? (

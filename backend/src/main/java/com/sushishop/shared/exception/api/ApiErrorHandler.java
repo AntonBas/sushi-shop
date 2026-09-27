@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.Objects;
@@ -31,6 +32,7 @@ import java.util.Optional;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.CONTENT_TOO_LARGE;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -45,13 +47,24 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Override
     @Nonnull
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@Nonnull MaxUploadSizeExceededException ex,
+                                                                          @Nonnull HttpHeaders headers,
+                                                                          @Nonnull HttpStatusCode status,
+                                                                          @Nonnull WebRequest request) {
+        log.warn("Upload rejected: {}", ex.getMessage());
+        return buildResponseEntity(new ApiError(CONTENT_TOO_LARGE,
+                "Uploaded files are too large: max 5 MB per image and 30 MB per request"), request);
+    }
+
+    @Override
+    @Nonnull
     protected ResponseEntity<Object> handleHttpMessageNotReadable(@Nonnull HttpMessageNotReadableException ex,
                                                                   @Nonnull HttpHeaders headers,
                                                                   @Nonnull HttpStatusCode status,
                                                                   @Nonnull WebRequest request) {
         String error = "Malformed JSON request";
         log.warn("Malformed JSON request: {}", ex.getMessage());
-        return buildResponseEntity(new ApiError(BAD_REQUEST, error, ex), request);
+        return buildResponseEntity(new ApiError(BAD_REQUEST, error), request);
     }
 
     @Override
@@ -149,7 +162,6 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         String requiredType = Optional.ofNullable(ex.getRequiredType()).map(Class::getSimpleName).orElse("unknown");
         apiError.setMessage(String.format("The parameter '%s' of value '%s' could not be converted to type '%s'",
                 ex.getName(), ex.getValue(), requiredType));
-        apiError.setDebugMessage(ex.getMessage());
         log.warn("Type mismatch for parameter '{}': {}", ex.getName(), ex.getMessage());
         return buildResponseEntity(apiError, request);
     }

@@ -1,6 +1,7 @@
 package com.sushishop.product;
 
 import com.sushishop.file.FileStorageService;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ProductImageService {
+
+    static final int MAX_IMAGES_PER_UPLOAD = 5;
 
     private final ProductRepository productRepository;
     private final FileStorageService fileStorageService;
@@ -85,6 +88,9 @@ public class ProductImageService {
 
     public void addImagesToProduct(Product product, List<MultipartFile> images) {
         if (images == null || images.isEmpty()) return;
+        if (images.size() > MAX_IMAGES_PER_UPLOAD) {
+            throw new BadRequestException("You can upload at most " + MAX_IMAGES_PER_UPLOAD + " images at once");
+        }
 
         List<ProductImage> productImages = new ArrayList<>();
         for (int i = 0; i < images.size(); i++) {

@@ -16,12 +16,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.sql.SQLException;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,6 +68,28 @@ class ApiErrorHandlerTest {
         standaloneMockMvc.perform(get("/optimistic-lock"))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("The resource was modified concurrently, please retry"));
+    }
+
+    @Test
+    void shouldReturnContentTooLargeWithApiErrorBodyOnOversizedUpload() throws Exception {
+        standaloneMockMvc.perform(get("/too-large"))
+                .andExpect(status().isContentTooLarge())
+                .andExpect(jsonPath("$.message").value("Uploaded files are too large: max 5 MB per image and 30 MB per request"));
+    }
+
+    @Test
+    void shouldNotExposeInternalDetailsOnTypeMismatch() throws Exception {
+        standaloneMockMvc.perform(get("/type-mismatch/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.debugMessage").doesNotExist());
+    }
+
+    @Test
+    void shouldNotExposeParserDetailsOnMalformedJson() throws Exception {
+        standaloneMockMvc.perform(post("/malformed").contentType("application/json").content("{\"name\":"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Malformed JSON request"))
+                .andExpect(jsonPath("$.debugMessage").doesNotExist());
     }
 
     @Test
@@ -117,6 +144,19 @@ class ApiErrorHandlerTest {
         public void commitValidation() {
             throw new TransactionSystemException("Could not commit JPA transaction",
                     new ConstraintViolationException(validator.validate(new Named(""))));
+        }
+
+        @GetMapping("/too-large")
+        public void tooLarge() {
+            throw new MaxUploadSizeExceededException(30L * 1024 * 1024);
+        }
+
+        @GetMapping("/type-mismatch/{id}")
+        public void typeMismatch(@PathVariable Long id) {
+        }
+
+        @PostMapping("/malformed")
+        public void malformed(@RequestBody Named body) {
         }
 
         @GetMapping("/internal")
