@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="No image">
+  <rect width="400" height="400" fill="#f1f5f9"/>
+  <ellipse cx="200" cy="250" rx="120" ry="28" fill="#e2e8f0"/>
+  <rect x="120" y="150" width="160" height="90" rx="45" fill="#cbd5e1"/>
+  <rect x="120" y="170" width="160" height="30" fill="#94a3b8"/>
+  <text x="200" y="320" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#64748b">No image</text>
+</svg>

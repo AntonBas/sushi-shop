@@ -1,5 +1,5 @@
 import { useState, useCallback, type ReactNode } from "react";
-import { CartContext, type CartItem } from "./cart-context";
+import { CartContext, MAX_CART_QUANTITY, type CartItem } from "./cart-context";
 
 function loadStoredCart(): CartItem[] {
   const saved = localStorage.getItem("cart");
@@ -22,10 +22,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const updated = existing
         ? prev.map((i) =>
             i.productId === item.productId
-              ? { ...i, quantity: i.quantity + item.quantity }
+              ? { ...i, quantity: Math.min(MAX_CART_QUANTITY, i.quantity + item.quantity) }
               : i,
           )
-        : [...prev, item];
+        : [...prev, { ...item, quantity: Math.min(MAX_CART_QUANTITY, item.quantity) }];
       localStorage.setItem("cart", JSON.stringify(updated));
       return updated;
     });

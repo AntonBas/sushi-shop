@@ -25,6 +25,7 @@ export default function ReviewSection({ productId }: Props) {
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [reviewPage, setReviewPage] = useState(0);
   const [totalReviewPages, setTotalReviewPages] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
   const [reviewSort, setReviewSort] = useState("createdAt,desc");
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
@@ -42,6 +43,7 @@ export default function ReviewSection({ productId }: Props) {
     reviewsApi.getReviews(productId, page, 5, reviewSort).then((res) => {
       setReviews(res.content);
       setTotalReviewPages(res.page.totalPages);
+      setTotalReviews(res.page.totalElements);
     });
   }, [productId, reviewSort]);
 
@@ -162,7 +164,7 @@ export default function ReviewSection({ productId }: Props) {
   return (
     <div className={styles.section}>
       <div className={styles.titleRow}>
-        <h2 className={styles.title}>Reviews ({reviews.length})</h2>
+        <h2 className={styles.title}>Reviews ({totalReviews})</h2>
         {reviews.length > 0 && (
           <select
             value={reviewSort}

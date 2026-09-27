@@ -1,5 +1,7 @@
 import { createContext } from "react";
 
+export const MAX_CART_QUANTITY = 99;
+
 export interface CartItem {
   productId: number;
   name: string;

@@ -11,6 +11,7 @@ import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 import { useProducts } from "../../hooks/features/useProducts";
 import { useCart } from "../../context/useCart";
+import { MAX_CART_QUANTITY } from "../../context/cart-context";
 import { useNotification } from "../../context/useNotification";
 import { CATEGORY_DISPLAY } from "../../types/enums";
 import { formatPrice } from "../../utils/formatPrice";
@@ -33,18 +34,23 @@ export default function ProductPage() {
     swiped: boolean;
   }>({ x: null, y: null, swiped: false });
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (slug) getProductBySlug(slug);
+  const [shownSlug, setShownSlug] = useState(slug);
+
+  if (slug !== shownSlug) {
+    setShownSlug(slug);
     setQuantity(1);
     setActiveImage(0);
+  }
+
+  useEffect(() => {
+    if (slug) getProductBySlug(slug);
   }, [slug, getProductBySlug]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (productLoading) return <ProductSkeleton />;
   if (!product) return null;
 
   const handleAddToCart = () => {
+    if (!product.available) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -134,7 +140,7 @@ export default function ProductPage() {
           >
             <Zoom>
               <img
-                src={product.images[activeImage]?.url || "/placeholder.jpg"}
+                src={product.images[activeImage]?.url || "/placeholder.svg"}
                 alt={product.name}
                 className={styles.mainImage}
               />
@@ -239,15 +245,22 @@ export default function ProductPage() {
               <span>{quantity}</span>
               <button
                 type="button"
-                onClick={() => setQuantity((q) => q + 1)}
+                onClick={() => setQuantity((q) => Math.min(MAX_CART_QUANTITY, q + 1))}
+                disabled={quantity >= MAX_CART_QUANTITY}
                 aria-label="Increase quantity"
               >
                 +
               </button>
             </div>
-            <Button onClick={handleAddToCart} className={styles.addBtn}>
-              <ShoppingCart size={18} /> Add to Cart —{" "}
-              {formatPrice((product.discountedPrice || product.price) * quantity)}₴
+            <Button onClick={handleAddToCart} className={styles.addBtn} disabled={!product.available}>
+              {product.available ? (
+                <>
+                  <ShoppingCart size={18} /> Add to Cart —{" "}
+                  {formatPrice((product.discountedPrice || product.price) * quantity)}₴
+                </>
+              ) : (
+                "Currently unavailable"
+              )}
             </Button>
           </div>
         </div>
