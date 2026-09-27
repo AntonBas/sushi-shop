@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OrderService {
 
+    private static final String STAFF_ORDERS_TOPIC = "/topic/orders/new";
+
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
@@ -98,11 +100,21 @@ public class OrderService {
         order.setStatus(OrderStatus.CONFIRMED);
         var updated = orderRepository.save(order);
         publishStatusUpdate(updated);
+        notifyStaff(updated);
         log.info("Order {} confirmed after payment", orderId);
     }
 
     private void publishStatusUpdate(Order order) {
-        var update = new OrderStatusUpdateResponse(order.getId(), order.getStatus().name(), orderMapper.getPaymentStatus(order));
+        var update = toStatusUpdate(order);
         TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/" + order.getId(), update));
+    }
+
+    private void notifyStaff(Order order) {
+        var update = toStatusUpdate(order);
+        TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend(STAFF_ORDERS_TOPIC, update));
+    }
+
+    private OrderStatusUpdateResponse toStatusUpdate(Order order) {
+        return new OrderStatusUpdateResponse(order.getId(), order.getStatus().name(), orderMapper.getPaymentStatus(order));
     }
 }

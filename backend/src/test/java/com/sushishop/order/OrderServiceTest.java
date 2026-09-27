@@ -242,6 +242,7 @@ class OrderServiceTest {
         assertThat(order.isPaid()).isTrue();
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         verify(messagingTemplate).convertAndSend("/topic/orders/1", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
+        verify(messagingTemplate).convertAndSend("/topic/orders/new", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
     }
 
     @Test
@@ -281,6 +282,31 @@ class OrderServiceTest {
         orderService.updateStatus(1L, OrderStatus.CANCELLED);
 
         verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void shouldCancelConfirmedCashOnDeliveryOrder() {
+        var order = orderWith(PaymentMethod.ON_DELIVERY, false);
+        order.setStatus(OrderStatus.CONFIRMED);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.updateStatus(1L, OrderStatus.CANCELLED);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void shouldRejectCancellingConfirmedOnlineOrder() {
+        var order = orderWith(PaymentMethod.ONLINE, true);
+        order.setStatus(OrderStatus.CONFIRMED);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.CANCELLED))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Cannot cancel order with status");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
     }
 
     private Order orderWith(PaymentMethod paymentMethod, boolean paid) {

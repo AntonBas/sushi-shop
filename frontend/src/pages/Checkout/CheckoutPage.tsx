@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
@@ -20,6 +20,7 @@ export default function CheckoutPage() {
   const paymentApi = useApi<string>();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
+  const submittingRef = useRef(false);
 
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
@@ -80,6 +81,8 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       const order = await createOrder({
         customerName,
@@ -117,6 +120,8 @@ export default function CheckoutPage() {
       }
     } catch {
       return;
+    } finally {
+      submittingRef.current = false;
     }
   };
 

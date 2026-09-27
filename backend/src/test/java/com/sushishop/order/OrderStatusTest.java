@@ -10,16 +10,31 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrderStatusTest {
 
-    @Test
-    void shouldAllowCancellingNewOrder() {
-        assertThatCode(() -> OrderStatus.NEW.validateTransition(OrderStatus.CANCELLED, DeliveryMethod.PICKUP, PaymentMethod.ONLINE))
+    @ParameterizedTest
+    @EnumSource(PaymentMethod.class)
+    void shouldAllowCancellingNewOrderForAnyPaymentMethod(PaymentMethod paymentMethod) {
+        assertThatCode(() -> OrderStatus.NEW.validateTransition(OrderStatus.CANCELLED, DeliveryMethod.DELIVERY, paymentMethod))
+                .doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @EnumSource(DeliveryMethod.class)
+    void shouldAllowCancellingConfirmedCashOnDeliveryOrder(DeliveryMethod deliveryMethod) {
+        assertThatCode(() -> OrderStatus.CONFIRMED.validateTransition(OrderStatus.CANCELLED, deliveryMethod, PaymentMethod.ON_DELIVERY))
                 .doesNotThrowAnyException();
     }
 
     @ParameterizedTest
     @EnumSource(value = OrderStatus.class, names = {"CONFIRMED", "COOKING", "READY", "DELIVERING", "DELIVERED"})
-    void shouldRejectCancellingOrderPastNew(OrderStatus status) {
+    void shouldRejectCancellingOnlineOrderPastNew(OrderStatus status) {
         assertThatThrownBy(() -> status.validateTransition(OrderStatus.CANCELLED, DeliveryMethod.DELIVERY, PaymentMethod.ONLINE))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = OrderStatus.class, names = {"COOKING", "READY", "DELIVERING", "DELIVERED"})
+    void shouldRejectCancellingCashOnDeliveryOrderPastConfirmed(OrderStatus status) {
+        assertThatThrownBy(() -> status.validateTransition(OrderStatus.CANCELLED, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY))
                 .isInstanceOf(BadRequestException.class);
     }
 

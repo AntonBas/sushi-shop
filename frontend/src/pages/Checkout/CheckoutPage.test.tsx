@@ -107,6 +107,32 @@ describe('CheckoutPage', () => {
     expect(showNotification).toHaveBeenCalledWith('Order placed successfully!', 'success')
   })
 
+  it('creates only one order when the submit button is clicked twice in a row', async () => {
+    let resolveOrder: (order: { id: number }) => void = () => {}
+    createOrder.mockReturnValue(new Promise((resolve) => { resolveOrder = resolve }))
+
+    renderCheckout()
+    const submit = screen.getByRole('button', { name: 'Place Order' })
+    fireEvent.click(submit)
+    fireEvent.click(submit)
+    resolveOrder({ id: 42 })
+
+    expect(await screen.findByText('My orders')).toBeInTheDocument()
+    expect(createOrder).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows resubmitting after order creation fails', async () => {
+    createOrder.mockRejectedValueOnce(new Error('Validation failed')).mockResolvedValueOnce({ id: 42 })
+
+    renderCheckout()
+    fireEvent.click(screen.getByRole('button', { name: 'Place Order' }))
+    await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1))
+    fireEvent.click(screen.getByRole('button', { name: 'Place Order' }))
+
+    expect(await screen.findByText('My orders')).toBeInTheDocument()
+    expect(createOrder).toHaveBeenCalledTimes(2)
+  })
+
   it('redirects to Stripe checkout for online payment', async () => {
     const assign = vi.fn()
     vi.stubGlobal('location', { assign })
