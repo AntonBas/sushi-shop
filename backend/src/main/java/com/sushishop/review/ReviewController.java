@@ -95,13 +95,13 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a review")
+    @Operation(summary = "Delete a review (owner or admin)")
     @ApiResponse(responseCode = "204", description = "Review deleted")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable Long id,
                                        @AuthenticationPrincipal UserDetails userDetails) {
         log.info("DELETE /api/reviews/{}", id);
-        reviewService.delete(id, userDetails.getUsername());
+        reviewService.delete(id, userDetails.getUsername(), isAdmin(userDetails));
         return ResponseEntity.noContent().build();
     }
 
@@ -115,5 +115,10 @@ public class ReviewController {
         log.info("DELETE /api/reviews/replies/{}", id);
         reviewReplyService.deleteReply(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Roles.ADMIN));
     }
 }

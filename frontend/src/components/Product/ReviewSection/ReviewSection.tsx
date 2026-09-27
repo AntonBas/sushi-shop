@@ -202,7 +202,7 @@ export default function ReviewSection({ productId }: Props) {
             placeholder="Share your thoughts... (optional)"
             rows={3}
             className={styles.textarea}
-            maxLength={100}
+            maxLength={250}
           />
           <Button type="submit" loading={createApi.loading}>
             Submit Review
@@ -232,16 +232,18 @@ export default function ReviewSection({ productId }: Props) {
                       <span className={styles.edited}> (edited)</span>
                     )}
                 </span>
-                {review.userId === user?.id && (
+                {(review.userId === user?.id || isAdmin) && (
                   <div className={styles.actions}>
-                    <button
-                      type="button"
-                      onClick={() => startEdit(review)}
-                      className={styles.editBtn}
-                      aria-label="Edit review"
-                    >
-                      <Pencil size={14} />
-                    </button>
+                    {review.userId === user?.id && (
+                      <button
+                        type="button"
+                        onClick={() => startEdit(review)}
+                        className={styles.editBtn}
+                        aria-label="Edit review"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setDeleteId(review.id)}
@@ -277,7 +279,7 @@ export default function ReviewSection({ productId }: Props) {
                     onChange={(e) => setEditComment(e.target.value)}
                     rows={2}
                     className={styles.textarea}
-                    maxLength={100}
+                    maxLength={250}
                   />
                   <div className={styles.editActions}>
                     <Button
@@ -340,7 +342,7 @@ export default function ReviewSection({ productId }: Props) {
                             }
                             rows={2}
                             className={styles.textarea}
-                            maxLength={100}
+                            maxLength={250}
                           />
                           <div className={styles.editActions}>
                             <Button
@@ -374,7 +376,7 @@ export default function ReviewSection({ productId }: Props) {
                         placeholder="Reply to this review..."
                         rows={2}
                         className={styles.textarea}
-                        maxLength={100}
+                        maxLength={250}
                       />
                       <div className={styles.editActions}>
                         <Button

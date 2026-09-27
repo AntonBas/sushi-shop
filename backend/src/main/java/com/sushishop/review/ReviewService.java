@@ -95,11 +95,11 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
-    public void delete(Long reviewId, String email) {
+    public void delete(Long reviewId, String email, boolean isAdmin) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
 
-        OwnershipGuard.requireOwner(review.getUser().getEmail(), email, "You can only delete your own reviews");
+        OwnershipGuard.requireOwnerOrAdmin(review.getUser().getEmail(), email, isAdmin, "You can only delete your own reviews");
 
         var product = review.getProduct();
         reviewRepository.delete(review);

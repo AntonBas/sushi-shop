@@ -25,6 +25,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -147,7 +148,21 @@ public class ReviewServiceTest {
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
 
-        assertThatThrownBy(() -> reviewService.delete(1L, "other@example.com"))
+        assertThatThrownBy(() -> reviewService.delete(1L, "other@example.com", false))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    public void shouldLetAdminDeleteSomeoneElsesReview() {
+        var user = User.builder().id(1L).email("anton@example.com").build();
+        var product = Product.builder().id(3L).slug("maki").build();
+        var review = Review.builder().id(1L).user(user).product(product).build();
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+
+        reviewService.delete(1L, "admin@example.com", true);
+
+        verify(reviewRepository).delete(review);
+        verify(productCacheService).evict(3L, "maki");
     }
 }

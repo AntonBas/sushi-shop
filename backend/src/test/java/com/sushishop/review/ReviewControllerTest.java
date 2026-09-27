@@ -19,6 +19,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -117,6 +118,17 @@ public class ReviewControllerTest {
     public void shouldDeleteReview() throws Exception {
         mockMvc.perform(delete("/api/reviews/1"))
                 .andExpect(status().isNoContent());
+
+        verify(reviewService).delete(1L, "anton@example.com", false);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    public void shouldPassAdminFlagWhenAdminDeletesReview() throws Exception {
+        mockMvc.perform(delete("/api/reviews/1"))
+                .andExpect(status().isNoContent());
+
+        verify(reviewService).delete(1L, "admin@example.com", true);
     }
 
     @Test
