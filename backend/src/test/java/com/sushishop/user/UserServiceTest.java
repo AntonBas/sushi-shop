@@ -196,4 +196,25 @@ public class UserServiceTest {
         assertThatThrownBy(() -> userService.changePassword("anton@example.com", request))
                 .isInstanceOf(BadRequestException.class);
     }
+
+    @Test
+    public void shouldClearAddress() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .city("Lviv")
+                .street("Zelena")
+                .house("204")
+                .apartment("280")
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.clearAddress("anton@example.com");
+
+        assertThat(user.getCity()).isNull();
+        assertThat(user.getStreet()).isNull();
+        assertThat(user.getHouse()).isNull();
+        assertThat(user.getApartment()).isNull();
+    }
 }

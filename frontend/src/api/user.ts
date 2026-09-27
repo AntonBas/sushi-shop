@@ -11,6 +11,11 @@ export const updateProfile = async (data: UpdateUserRequest): Promise<UserRespon
   return res
 }
 
+export const clearAddress = async (): Promise<UserResponse> => {
+  const { data } = await api.delete('/users/me/address')
+  return data
+}
+
 export const changePassword = async (data: ChangePasswordRequest): Promise<void> => {
   await api.put('/users/me/password', data)
 }

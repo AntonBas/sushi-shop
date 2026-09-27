@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,6 +48,14 @@ public class UserController {
     public ResponseEntity<UserResponse> update(@Valid @RequestBody UpdateUserRequest request, @AuthenticationPrincipal UserDetails userDetails) {
         log.info("PUT /api/users/me - {}", userDetails.getUsername());
         return ResponseEntity.ok(userService.update(userDetails.getUsername(), request));
+    }
+
+    @DeleteMapping("/me/address")
+    @Operation(summary = "Remove the default delivery address")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<UserResponse> clearAddress(@AuthenticationPrincipal UserDetails userDetails) {
+        log.info("DELETE /api/users/me/address - {}", userDetails.getUsername());
+        return ResponseEntity.ok(userService.clearAddress(userDetails.getUsername()));
     }
 
     @PutMapping("/me/password")

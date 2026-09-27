@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
 import { useNotification } from "../../../context/useNotification";
@@ -37,18 +37,17 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setPhone(user.phone);
-      setCity(user.address?.city || "");
-      setStreet(user.address?.street || "");
-      setHouse(user.address?.house || "");
-      setApartment(user.address?.apartment || "");
-    }
-  }, [user]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [syncedUser, setSyncedUser] = useState<UserResponse | null>(null);
+
+  if (user && user !== syncedUser) {
+    setSyncedUser(user);
+    setName(user.name);
+    setPhone(user.phone);
+    setCity(user.address?.city || "");
+    setStreet(user.address?.street || "");
+    setHouse(user.address?.house || "");
+    setApartment(user.address?.apartment || "");
+  }
 
   const handleUpdateProfile = async (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -78,6 +77,16 @@ export default function ProfilePage() {
       );
       await refreshUser();
       showNotification("Address updated", "success");
+    } catch {
+      return;
+    }
+  };
+
+  const handleClearAddress = async () => {
+    try {
+      await updateApi.execute(() => usersApi.clearAddress());
+      await refreshUser();
+      showNotification("Address removed", "success");
     } catch {
       return;
     }
@@ -195,6 +204,11 @@ export default function ProfilePage() {
           <Button type="submit" loading={updateApi.loading}>
             Save Address
           </Button>
+          {user?.address && (
+            <Button type="button" variant="secondary" onClick={handleClearAddress} disabled={updateApi.loading}>
+              Remove Address
+            </Button>
+          )}
         </form>
       )}
       {activeTab === "security" && (

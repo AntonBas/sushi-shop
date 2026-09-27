@@ -81,6 +81,20 @@ public class UserService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "User")
     @Transactional
+    @CacheEvict(value = "users", key = "#email")
+    public UserResponse clearAddress(String email) {
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+        user.setCity(null);
+        user.setStreet(null);
+        user.setHouse(null);
+        user.setApartment(null);
+        log.info("Address cleared for user: {}", email);
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Auditable(action = AuditAction.UPDATE, entity = "User")
+    @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
