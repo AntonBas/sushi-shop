@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/useAuth";
 import Loading from "./components/UI/Loading/Loading";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import GuestRoute from "./components/Auth/GuestRoute";
 import MainLayout from "./layout/MainLayout/MainLayout";
 import ProfileLayout from "./components/Profile/ProfileLayout/ProfileLayout";
 import Home from "./pages/Home/Home";
@@ -45,8 +46,8 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products/:slug" element={<ProductPage />} />
         <Route path="/promotions/:slug" element={<PromotionPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route

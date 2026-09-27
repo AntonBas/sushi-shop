@@ -314,7 +314,7 @@ unmapped properties), so any warning fails the build.
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on pushes to `master`/`develop` and on PRs into `master`: backend
+GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs to `master`/`develop`: backend
 build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
 `tsc -b`, Vite). There is no deployment step — this is CI only, deployment
 is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +

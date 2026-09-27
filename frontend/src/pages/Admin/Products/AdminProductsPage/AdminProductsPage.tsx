@@ -184,7 +184,7 @@ export default function AdminProductsPage() {
                         type="button"
                         onClick={() => handleToggle(product.id)}
                         className={styles.toggleBtn}
-                        aria-label={product.available ? "Mark unavailable" : "Mark available"}
+                        aria-label={`${product.available ? "Mark unavailable" : "Mark available"}: ${product.name}`}
                       >
                         {product.available ? (
                           <ToggleRight size={20} className={styles.on} />
@@ -201,7 +201,7 @@ export default function AdminProductsPage() {
                             navigate(`/admin/products/${product.id}/edit`)
                           }
                           className={styles.editBtn}
-                          aria-label="Edit product"
+                          aria-label={`Edit ${product.name}`}
                         >
                           <Pencil size={16} />
                         </button>
@@ -212,7 +212,7 @@ export default function AdminProductsPage() {
                             setDeleteName(product.name);
                           }}
                           className={styles.deleteBtn}
-                          aria-label="Delete product"
+                          aria-label={`Delete ${product.name}`}
                         >
                           <Trash2 size={16} />
                         </button>

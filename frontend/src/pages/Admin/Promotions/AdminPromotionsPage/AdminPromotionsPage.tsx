@@ -132,7 +132,7 @@ export default function AdminPromotionsPage() {
                             navigate(`/admin/promotions/${promo.id}/edit`)
                           }
                           className={styles.editBtn}
-                          aria-label="Edit promotion"
+                          aria-label={`Edit ${promo.title}`}
                         >
                           <Pencil size={16} />
                         </button>
@@ -143,7 +143,7 @@ export default function AdminPromotionsPage() {
                             setDeleteTitle(promo.title);
                           }}
                           className={styles.deleteBtn}
-                          aria-label="Delete promotion"
+                          aria-label={`Delete ${promo.title}`}
                         >
                           <Trash2 size={16} />
                         </button>

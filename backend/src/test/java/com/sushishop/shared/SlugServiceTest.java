@@ -54,4 +54,19 @@ class SlugServiceTest {
         var result = slugService.generateSlug("   ");
         assertThat(result).isEqualTo("");
     }
+
+    @Test
+    void shouldTransliterateUkrainianName() {
+        assertThat(slugService.generateSlug("Філадельфія Люкс")).isEqualTo("filadelfiia-liuks");
+    }
+
+    @Test
+    void shouldUseWordStartFormsForIotatedLetters() {
+        assertThat(slugService.generateSlug("Юзу Їжак Євро")).isEqualTo("yuzu-yizhak-yevro");
+    }
+
+    @Test
+    void shouldFallBackWhenNothingTransliterable() {
+        assertThat(slugService.generateSlug("🍣🍣")).isEqualTo("item");
+    }
 }
