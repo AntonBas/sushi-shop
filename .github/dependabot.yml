@@ -11,6 +11,10 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    groups:
+      jjwt:
+        patterns:
+          - "io.jsonwebtoken:*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
