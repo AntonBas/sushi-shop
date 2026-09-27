@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar from '../AdminSidebar/AdminSidebar'
 import AdminHeader from '../AdminHeader/AdminHeader'
+import Loading from '../../UI/Loading/Loading'
 import styles from './AdminLayout.module.css'
 
 export default function AdminLayout() {
@@ -32,7 +33,9 @@ export default function AdminLayout() {
         <AdminHeader onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         <main className={styles.content}>
-          <Outlet />
+          <Suspense fallback={<Loading text="Loading..." />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <footer className={styles.adminFooter}>
