@@ -1,5 +1,6 @@
 package com.sushishop.audit;
 
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -25,7 +26,8 @@ public class AuditAspect {
         String user = auditorAware.getCurrentAuditor().orElse("system");
         Long entityId = extractId(result);
         String details = auditable.action() + " " + auditable.entity() + (entityId != null ? " #" + entityId : "");
-        auditLogService.log(auditable.action(), auditable.entity(), entityId, details, user);
+        TransactionCallbacks.afterCommit(
+                () -> auditLogService.log(auditable.action(), auditable.entity(), entityId, details, user));
     }
 
     private Long extractId(Object result) {

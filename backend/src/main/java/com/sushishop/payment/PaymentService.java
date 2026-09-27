@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -42,6 +43,15 @@ public class PaymentService {
 
     @Transactional
     public List<String> expirePendingPayments(Long orderId) {
+        return markPendingPaymentsExpired(orderId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public List<String> expirePendingPaymentsInNewTransaction(Long orderId) {
+        return markPendingPaymentsExpired(orderId);
+    }
+
+    private List<String> markPendingPaymentsExpired(Long orderId) {
         var pending = paymentRepository.findByOrderIdAndStatus(orderId, PaymentStatus.PENDING);
         pending.forEach(payment -> payment.setStatus(PaymentStatus.EXPIRED));
         paymentRepository.saveAll(pending);

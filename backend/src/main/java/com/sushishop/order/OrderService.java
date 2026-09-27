@@ -4,12 +4,14 @@ import com.sushishop.audit.Auditable;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.shared.enums.AuditAction;
+import com.sushishop.shared.event.OrderCancelledEvent;
 import com.sushishop.shared.event.PaymentConfirmedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public OrderResponse getById(Long id, String requesterEmail, boolean isStaff) {
@@ -65,6 +68,9 @@ public class OrderService {
         var updated = orderRepository.save(order);
 
         publishStatusUpdate(updated);
+        if (newStatus == OrderStatus.CANCELLED && order.getPaymentMethod() == PaymentMethod.ONLINE && !order.isPaid()) {
+            eventPublisher.publishEvent(new OrderCancelledEvent(this, id));
+        }
 
         log.info("Order {} status updated to {}", id, newStatus);
         return orderMapper.toResponse(updated);
@@ -82,7 +88,11 @@ public class OrderService {
         order.setPaid(true);
         if (order.getStatus() != OrderStatus.NEW) {
             orderRepository.save(order);
-            log.warn("Payment received for order {} in status {}, status left unchanged", orderId, order.getStatus());
+            if (order.getStatus() == OrderStatus.CANCELLED) {
+                log.error("Payment received for cancelled order {}, manual refund required", orderId);
+            } else {
+                log.warn("Payment received for order {} in status {}, status left unchanged", orderId, order.getStatus());
+            }
             return;
         }
         order.setStatus(OrderStatus.CONFIRMED);

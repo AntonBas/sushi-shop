@@ -2,6 +2,7 @@ package com.sushishop.order;
 
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.shared.event.OrderCancelledEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.User;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
@@ -20,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +38,9 @@ class OrderServiceTest {
 
     @Mock
     private SimpMessagingTemplate messagingTemplate;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private OrderService orderService;
@@ -252,5 +258,37 @@ class OrderServiceTest {
         assertThat(order.isPaid()).isTrue();
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         verify(messagingTemplate, never()).convertAndSend(any(String.class), any(Object.class));
+    }
+
+    @Test
+    void shouldPublishCancellationForUnpaidOnlineOrder() {
+        var order = orderWith(PaymentMethod.ONLINE, false);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.updateStatus(1L, OrderStatus.CANCELLED);
+
+        verify(eventPublisher).publishEvent(isA(OrderCancelledEvent.class));
+    }
+
+    @Test
+    void shouldNotPublishCancellationForPayOnDeliveryOrder() {
+        var order = orderWith(PaymentMethod.ON_DELIVERY, false);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.updateStatus(1L, OrderStatus.CANCELLED);
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    private Order orderWith(PaymentMethod paymentMethod, boolean paid) {
+        var order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.NEW);
+        order.setPaymentMethod(paymentMethod);
+        order.setDeliveryMethod(DeliveryMethod.PICKUP);
+        order.setPaid(paid);
+        return order;
     }
 }

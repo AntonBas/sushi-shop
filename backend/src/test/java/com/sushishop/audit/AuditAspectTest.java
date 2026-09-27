@@ -7,6 +7,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.AuditorAware;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Optional;
 
@@ -14,6 +16,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -89,5 +92,40 @@ class AuditAspectTest {
         auditAspect.audit(auditable(AuditAction.DELETE, "Product"), null);
 
         verify(auditLogService).log(eq(AuditAction.DELETE), eq("Product"), isNull(), any(), eq("admin@shop.com"));
+    }
+
+    @Test
+    void shouldWriteAuditLogOnlyAfterTransactionCommits() {
+        when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@test.com"));
+        var auditable = auditable(AuditAction.UPDATE, "User");
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            auditAspect.audit(auditable, new DirectIdResult(5L));
+            verifyNoInteractions(auditLogService);
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+
+        verify(auditLogService).log(eq(AuditAction.UPDATE), eq("User"), eq(5L), any(), eq("admin@test.com"));
+    }
+
+    @Test
+    void shouldNotWriteAuditLogWhenTransactionRollsBack() {
+        when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@test.com"));
+        var auditable = auditable(AuditAction.UPDATE, "User");
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            auditAspect.audit(auditable, new DirectIdResult(5L));
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(sync -> sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+
+        verifyNoInteractions(auditLogService);
     }
 }
