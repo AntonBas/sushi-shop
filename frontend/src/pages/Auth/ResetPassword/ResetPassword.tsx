@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
 import * as authApi from '../../../api/auth'
 import { getErrorMessage } from '../../../api/errorMessage'
@@ -19,12 +19,23 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
+  if (!token) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>Invalid reset link</h1>
+        <p className={styles.instruction}>
+          This password reset link is invalid. <Link to="/forgot-password">Request a new one</Link>.
+        </p>
+      </div>
+    )
+  }
+
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await authApi.resetPassword({ token: token!, newPassword, confirmPassword })
+      await authApi.resetPassword({ token, newPassword, confirmPassword })
       setShowSuccess(true)
     } catch (err) {
       setError(getErrorMessage(err, 'Something went wrong'))

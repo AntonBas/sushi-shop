@@ -94,7 +94,7 @@
 }
 
 .active:hover {
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .grid {

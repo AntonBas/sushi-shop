@@ -40,7 +40,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(239, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--color-error) 15%, transparent);
   color: var(--color-error);
   padding: 4px 10px;
   border-radius: 20px;

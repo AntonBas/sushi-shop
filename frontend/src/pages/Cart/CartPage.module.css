@@ -34,7 +34,7 @@
 }
 
 .clearBtn:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
 }
 
 .empty {
@@ -117,14 +117,14 @@
   padding: 6px;
   border: none;
   border-radius: 6px;
-  background: rgba(239, 68, 68, 0.1);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
   color: var(--color-error);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .removeBtn:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--color-error) 20%, transparent);
 }
 
 .footer {

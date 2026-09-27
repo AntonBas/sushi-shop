@@ -154,7 +154,7 @@ export default function AdminProductsPage() {
               <tbody>
                 {products.map((product) => (
                   <tr key={product.id}>
-                    <td>
+                    <td data-label="Image">
                       {product.mainImage ? (
                         <img
                           src={product.mainImage}
@@ -166,20 +166,20 @@ export default function AdminProductsPage() {
                         <div className={styles.noImage}>—</div>
                       )}
                     </td>
-                    <td className={styles.name}>{product.name}</td>
-                    <td>
+                    <td data-label="Name" className={styles.name}>{product.name}</td>
+                    <td data-label="Category">
                       <span className={styles.badge}>
                         {CATEGORY_DISPLAY[product.category]}
                       </span>
                     </td>
-                    <td>
+                    <td data-label="Weight">
                       {product.weight
                         ? `${product.weight}${product.category === "DRINK" ? "ml" : "g"}`
                         : "—"}
                     </td>
-                    <td>{product.pieces ? `${product.pieces} pcs` : "—"}</td>
-                    <td>{formatPrice(product.price)}₴</td>
-                    <td>
+                    <td data-label="Pieces">{product.pieces ? `${product.pieces} pcs` : "—"}</td>
+                    <td data-label="Price">{formatPrice(product.price)}₴</td>
+                    <td data-label="Status">
                       <button
                         type="button"
                         onClick={() => handleToggle(product.id)}
@@ -193,7 +193,7 @@ export default function AdminProductsPage() {
                         )}
                       </button>
                     </td>
-                    <td>
+                    <td data-label="Actions">
                       <div className={styles.actions}>
                         <button
                           type="button"

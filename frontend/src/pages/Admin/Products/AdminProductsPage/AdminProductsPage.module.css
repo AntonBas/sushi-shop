@@ -17,6 +17,7 @@
 
 .filters {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 20px;
 }
@@ -59,12 +60,6 @@
   border-color: var(--color-primary);
 }
 
-.loading {
-  text-align: center;
-  color: var(--color-text-muted);
-  padding: 40px;
-}
-
 .empty {
   text-align: center;
   padding: 60px 20px;
@@ -102,7 +97,7 @@
 .table th {
   text-align: left;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-bg-tertiary);
   color: var(--color-text-muted);
   font-size: 12px;
   text-transform: uppercase;
@@ -196,4 +191,59 @@
 
 .deleteBtn:hover {
   background: rgba(255, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .searchBox,
+  .filterSelect {
+    width: 100%;
+  }
+
+  .tableWrapper {
+    border-radius: 0;
+    background: none;
+    border: none;
+  }
+
+  .table {
+    min-width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: block;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background: var(--color-bg-card);
+    padding: 16px;
+    border: 1px solid var(--color-border);
+  }
+
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-top: none;
+    font-size: 14px;
+  }
+
+  .table td:before {
+    content: attr(data-label);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+  }
 }

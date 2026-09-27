@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
@@ -19,6 +19,8 @@ export default function AdminPromotionsPage() {
   const { data, loading, execute } = useApi<Page<PromotionResponse>>();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteTitle, setDeleteTitle] = useState("");
 
@@ -30,8 +32,15 @@ export default function AdminPromotionsPage() {
   );
 
   useEffect(() => {
-    loadPromotions(page, search || undefined);
-  }, [page, search, loadPromotions]);
+    loadPromotions(page, debouncedSearch || undefined);
+  }, [page, debouncedSearch, loadPromotions]);
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(0);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
+  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -39,7 +48,7 @@ export default function AdminPromotionsPage() {
       await promotionsApi.deletePromotion(deleteId);
       setDeleteId(null);
       showNotification("Promotion deleted", "success");
-      loadPromotions(page, search || undefined);
+      loadPromotions(page, debouncedSearch || undefined);
     } catch (err: unknown) {
       showNotification(getErrorMessage(err, "Failed to delete promotion"), "error");
     }
@@ -64,10 +73,8 @@ export default function AdminPromotionsPage() {
             type="text"
             placeholder="Search promotions..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            aria-label="Search promotions"
           />
         </div>
       </div>

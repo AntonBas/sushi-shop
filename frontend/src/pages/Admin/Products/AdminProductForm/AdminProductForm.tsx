@@ -77,6 +77,11 @@ function SortableImage({ img, index, onRemove }: SortableImageProps) {
   );
 }
 
+interface NewImage {
+  file: File;
+  previewUrl: string;
+}
+
 export default function AdminProductForm() {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
@@ -91,7 +96,9 @@ export default function AdminProductForm() {
   const [category, setCategory] = useState<Category>("ROLL");
   const [weight, setWeight] = useState("");
   const [pieces, setPieces] = useState("");
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<NewImage[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
+  const previewUrlsRef = useRef<string[]>([]);
   const [existingImages, setExistingImages] = useState<ProductImageResponse[]>(
     [],
   );
@@ -119,25 +126,27 @@ export default function AdminProductForm() {
     setExistingImages(product.images);
   }
 
+  useEffect(() => () => previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)), []);
+
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) setImages((prev) => [...prev, ...Array.from(files)]);
+    if (!files) return;
+    const added = Array.from(files).map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+    previewUrlsRef.current.push(...added.map((image) => image.previewUrl));
+    setImages((prev) => [...prev, ...added]);
+    e.target.value = "";
   };
 
   const handleRemoveNewImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImages((prev) => {
+      URL.revokeObjectURL(prev[index].previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
-  const handleRemoveExistingImage = async (imageId: number) => {
-    if (isEdit && id) {
-      try {
-        await productsApi.deleteProductImage(Number(id), imageId);
-        setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
-        showNotification("Image removed", "success");
-      } catch (err: unknown) {
-        showNotification(getErrorMessage(err, "Failed to remove image"), "error");
-      }
-    }
+  const handleRemoveExistingImage = (imageId: number) => {
+    setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -168,6 +177,10 @@ export default function AdminProductForm() {
           pieces: pieces ? Number(pieces) : null,
         });
 
+        for (const imageId of removedImageIds) {
+          await productsApi.deleteProductImage(Number(id), imageId);
+        }
+
         const imageIds = existingImages.map((img) => img.id);
         if (imageIds.length > 0) {
           await productsApi.reorderProductImages(Number(id), imageIds);
@@ -175,7 +188,7 @@ export default function AdminProductForm() {
 
         if (images.length > 0) {
           for (const image of images) {
-            await productsApi.addProductImage(Number(id), image);
+            await productsApi.addProductImage(Number(id), image.file);
           }
         }
         showNotification("Product updated", "success");
@@ -189,7 +202,7 @@ export default function AdminProductForm() {
             weight: weight ? Number(weight) : undefined,
             pieces: pieces ? Number(pieces) : undefined,
           },
-          images.length > 0 ? images : undefined,
+          images.length > 0 ? images.map((image) => image.file) : undefined,
         );
         showNotification("Product created", "success");
       }
@@ -239,9 +252,9 @@ export default function AdminProductForm() {
                       onRemove={handleRemoveExistingImage}
                     />
                   ))}
-                  {images.map((file, index) => (
-                    <div key={`new-${index}`} className={styles.imageItem}>
-                      <img src={URL.createObjectURL(file)} alt={`New image ${index + 1}`} />
+                  {images.map((image, index) => (
+                    <div key={image.previewUrl} className={styles.imageItem}>
+                      <img src={image.previewUrl} alt={`New image ${index + 1}`} />
                       <button
                         type="button"
                         onClick={() => handleRemoveNewImage(index)}
@@ -266,7 +279,7 @@ export default function AdminProductForm() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               multiple
               onChange={handleImageAdd}
               hidden

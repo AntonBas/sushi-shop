@@ -1,32 +1,48 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuditLogs } from "../../../hooks/features/useAudit";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import type { AuditAction } from "../../../types";
 import styles from "./AdminAuditPage.module.css";
 
+interface TextFilters {
+  entityName: string;
+  entityId: string;
+  performedBy: string;
+}
+
+const EMPTY_TEXT_FILTERS: TextFilters = { entityName: "", entityId: "", performedBy: "" };
+
 export default function AdminAuditPage() {
   const { logs, totalPages, loading, loadLogs } = useAuditLogs();
   const [page, setPage] = useState(0);
   const [action, setAction] = useState<AuditAction | "">("");
-  const [entityName, setEntityName] = useState("");
-  const [entityId, setEntityId] = useState("");
-  const [performedBy, setPerformedBy] = useState("");
+  const [textFilters, setTextFilters] = useState<TextFilters>(EMPTY_TEXT_FILTERS);
+  const [debouncedTextFilters, setDebouncedTextFilters] = useState<TextFilters>(EMPTY_TEXT_FILTERS);
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadLogs(page, {
       action: action || undefined,
-      entityName: entityName || undefined,
-      entityId: entityId ? Number(entityId) : undefined,
-      performedBy: performedBy || undefined,
-      start: start || undefined,
-      end: end || undefined,
+      entityName: debouncedTextFilters.entityName || undefined,
+      entityId: debouncedTextFilters.entityId ? Number(debouncedTextFilters.entityId) : undefined,
+      performedBy: debouncedTextFilters.performedBy || undefined,
+      start: start ? new Date(start).toISOString() : undefined,
+      end: end ? new Date(end).toISOString() : undefined,
     });
-  }, [page, action, entityName, entityId, performedBy, start, end, loadLogs]);
+  }, [page, action, debouncedTextFilters, start, end, loadLogs]);
 
-  if (loading) return <Loading text="Loading audit logs..." />;
+  const handleTextFilterChange = (key: keyof TextFilters, value: string) => {
+    const next = { ...textFilters, [key]: value };
+    setTextFilters(next);
+    setPage(0);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => setDebouncedTextFilters(next), 300);
+  };
+
+  if (loading && logs.length === 0) return <Loading text="Loading audit logs..." />;
 
   return (
     <div className={styles.page}>
@@ -52,35 +68,30 @@ export default function AdminAuditPage() {
         <input
           type="text"
           placeholder="Entity"
-          value={entityName}
-          onChange={(e) => {
-            setEntityName(e.target.value);
-            setPage(0);
-          }}
+          value={textFilters.entityName}
+          onChange={(e) => handleTextFilterChange("entityName", e.target.value)}
           className={styles.filterInput}
+          aria-label="Filter by entity"
         />
         <input
           type="number"
           placeholder="Entity ID"
-          value={entityId}
-          onChange={(e) => {
-            setEntityId(e.target.value);
-            setPage(0);
-          }}
+          value={textFilters.entityId}
+          onChange={(e) => handleTextFilterChange("entityId", e.target.value)}
           className={styles.filterInput}
+          aria-label="Filter by entity id"
         />
         <input
           type="text"
           placeholder="User"
-          value={performedBy}
-          onChange={(e) => {
-            setPerformedBy(e.target.value);
-            setPage(0);
-          }}
+          value={textFilters.performedBy}
+          onChange={(e) => handleTextFilterChange("performedBy", e.target.value)}
           className={styles.filterInput}
+          aria-label="Filter by user"
         />
         <input
           type="datetime-local"
+          aria-label="From date"
           value={start}
           onChange={(e) => {
             setStart(e.target.value);
@@ -90,6 +101,7 @@ export default function AdminAuditPage() {
         />
         <input
           type="datetime-local"
+          aria-label="To date"
           value={end}
           onChange={(e) => {
             setEnd(e.target.value);
