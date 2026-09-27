@@ -46,7 +46,7 @@ public class OrderQueryServiceTest {
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
         when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
-        when(orderMapper.toResponse(order)).thenReturn(expectedResponse);
+        when(orderMapper.toResponse(order, List.of())).thenReturn(expectedResponse);
 
         var result = orderQueryService.getAll(pageable, null, null, null, null);
 
@@ -67,7 +67,7 @@ public class OrderQueryServiceTest {
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
         when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
-        when(orderMapper.toResponse(order)).thenReturn(expectedResponse);
+        when(orderMapper.toResponse(order, List.of())).thenReturn(expectedResponse);
 
         var result = orderQueryService.getAll(pageable, OrderStatus.NEW, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "Anton");
 
@@ -98,7 +98,7 @@ public class OrderQueryServiceTest {
 
         when(orderRepository.findByUserEmail("test@test.com", pageable)).thenReturn(page);
         when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
-        when(orderMapper.toUserResponse(order)).thenReturn(expectedResponse);
+        when(orderMapper.toUserResponse(order, List.of())).thenReturn(expectedResponse);
 
         var result = orderQueryService.getByUser("test@test.com", pageable);
 

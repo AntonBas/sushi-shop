@@ -50,4 +50,5 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   ON_DELIVERY: "On Delivery",
   PENDING: "Pending",
   PAID: "Paid",
+  UNPAID: "Unpaid",
 }

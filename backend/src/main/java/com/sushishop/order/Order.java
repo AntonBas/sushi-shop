@@ -92,6 +92,10 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private DeliveryMethod deliveryMethod;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean paid = false;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();

@@ -172,4 +172,17 @@ public class OrderMapperTest {
 
         assertThat(responses).hasSize(2);
     }
+
+    @Test
+    public void shouldDerivePaymentStatusFromPaidFlagNotOrderStatus() {
+        var unpaidCancelled = Order.builder().paymentMethod(PaymentMethod.ONLINE).status(OrderStatus.CANCELLED).build();
+        var unpaidNew = Order.builder().paymentMethod(PaymentMethod.ONLINE).status(OrderStatus.NEW).build();
+        var paid = Order.builder().paymentMethod(PaymentMethod.ONLINE).status(OrderStatus.COOKING).paid(true).build();
+        var onDelivery = Order.builder().paymentMethod(PaymentMethod.ON_DELIVERY).status(OrderStatus.CONFIRMED).build();
+
+        assertThat(orderMapper.getPaymentStatus(unpaidCancelled)).isEqualTo("UNPAID");
+        assertThat(orderMapper.getPaymentStatus(unpaidNew)).isEqualTo("PENDING");
+        assertThat(orderMapper.getPaymentStatus(paid)).isEqualTo("PAID");
+        assertThat(orderMapper.getPaymentStatus(onDelivery)).isEqualTo("ON_DELIVERY");
+    }
 }

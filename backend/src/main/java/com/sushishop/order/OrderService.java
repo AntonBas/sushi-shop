@@ -5,7 +5,9 @@ import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.event.PaymentConfirmedEvent;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -56,11 +58,13 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
 
         order.getStatus().validateTransition(newStatus, order.getDeliveryMethod());
+        if (newStatus == OrderStatus.CONFIRMED && order.getPaymentMethod() == PaymentMethod.ONLINE && !order.isPaid()) {
+            throw new BadRequestException("Online order cannot be confirmed before it is paid");
+        }
         order.setStatus(newStatus);
         var updated = orderRepository.save(order);
 
-        messagingTemplate.convertAndSend("/topic/orders/" + id,
-                new OrderStatusUpdateResponse(updated.getId(), updated.getStatus().name()));
+        publishStatusUpdate(updated);
 
         log.info("Order {} status updated to {}", id, newStatus);
         return orderMapper.toResponse(updated);
@@ -75,8 +79,20 @@ public class OrderService {
     public void confirmOrder(Long orderId) {
         var order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
+        order.setPaid(true);
+        if (order.getStatus() != OrderStatus.NEW) {
+            orderRepository.save(order);
+            log.warn("Payment received for order {} in status {}, status left unchanged", orderId, order.getStatus());
+            return;
+        }
         order.setStatus(OrderStatus.CONFIRMED);
-        orderRepository.save(order);
+        var updated = orderRepository.save(order);
+        publishStatusUpdate(updated);
         log.info("Order {} confirmed after payment", orderId);
+    }
+
+    private void publishStatusUpdate(Order order) {
+        var update = new OrderStatusUpdateResponse(order.getId(), order.getStatus().name());
+        TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/" + order.getId(), update));
     }
 }
