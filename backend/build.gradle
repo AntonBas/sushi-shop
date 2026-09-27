@@ -74,6 +74,10 @@ tasks.named('test') {
     finalizedBy jacocoTestReport
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs << '-Werror'
+}
+
 tasks.named('jar') {
     enabled = false
 }
