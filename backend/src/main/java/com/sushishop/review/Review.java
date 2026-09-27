@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -37,7 +38,7 @@ import java.util.List;
 @Table(name = "reviews", indexes = {
         @Index(name = "idx_review_product_id", columnList = "product_id"),
         @Index(name = "idx_review_user_id", columnList = "user_id")
-})
+}, uniqueConstraints = @UniqueConstraint(name = "uk_reviews_user_product", columnNames = {"user_id", "product_id"}))
 public class Review extends BaseEntity {
 
     @Id
