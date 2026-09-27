@@ -55,7 +55,9 @@ export default function MyOrdersPage() {
         const update = JSON.parse(message.body) as OrderStatusUpdateResponse;
         setOrders((prev) =>
           prev.map((o) =>
-            o.id === update.orderId ? { ...o, status: update.status } : o,
+            o.id === update.orderId
+              ? { ...o, status: update.status, paymentStatus: update.paymentStatus }
+              : o,
           ),
         );
       });

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
+import type { Client, IMessage } from '@stomp/stompjs'
 import MyOrdersPage from './MyOrdersPage'
 import { useNotification } from '../../../context/useNotification'
 import { useOrderSocket } from '../../../hooks/features/useOrderSocket'
@@ -57,5 +58,38 @@ describe('MyOrdersPage', () => {
     fireEvent.keyDown(header, { key: 'a' })
 
     expect(header).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('updates order and payment status from a live socket message', async () => {
+    let onSocketConnect: ((client: Client) => void) | undefined
+    vi.mocked(useOrderSocket).mockImplementation((callback) => {
+      onSocketConnect = callback
+      return { current: null }
+    })
+    const handlers = new Map<string, (message: IMessage) => void>()
+    const client = {
+      connected: true,
+      subscribe: (destination: string, handler: (message: IMessage) => void) => {
+        handlers.set(destination, handler)
+        return { unsubscribe: vi.fn() }
+      },
+    } as unknown as Client
+    vi.mocked(getMyOrders).mockResolvedValue({
+      content: [{ ...order, paymentMethod: 'ONLINE', paymentStatus: 'PENDING' }],
+      page: { size: 12, number: 0, totalElements: 1, totalPages: 1 },
+    })
+
+    render(<MyOrdersPage />)
+    await screen.findByRole('button', { name: /Order #7/ })
+    expect(screen.getByText('Pending')).toBeInTheDocument()
+
+    act(() => onSocketConnect?.(client))
+    act(() => handlers.get('/topic/orders/7')?.({
+      body: JSON.stringify({ orderId: 7, status: 'CONFIRMED', paymentStatus: 'PAID' }),
+    } as IMessage))
+
+    expect(screen.getByText('Paid')).toBeInTheDocument()
+    expect(screen.getByText('Confirmed')).toBeInTheDocument()
+    expect(screen.queryByText('Pending')).not.toBeInTheDocument()
   })
 })

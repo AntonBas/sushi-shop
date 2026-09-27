@@ -54,7 +54,7 @@ public class OrderCreationService {
         }
 
         var saved = orderRepository.save(order);
-        var notification = new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name());
+        var notification = new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name(), orderMapper.getPaymentStatus(saved));
         TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/new", notification));
         log.info("Order created: {}", saved.getId());
         return orderMapper.toResponse(saved);

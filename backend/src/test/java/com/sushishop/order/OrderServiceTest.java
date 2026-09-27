@@ -235,12 +235,13 @@ class OrderServiceTest {
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.getPaymentStatus(order)).thenReturn("PAID");
 
         orderService.confirmOrder(1L);
 
         assertThat(order.isPaid()).isTrue();
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
-        verify(messagingTemplate).convertAndSend(eq("/topic/orders/1"), any(OrderStatusUpdateResponse.class));
+        verify(messagingTemplate).convertAndSend("/topic/orders/1", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
     }
 
     @Test

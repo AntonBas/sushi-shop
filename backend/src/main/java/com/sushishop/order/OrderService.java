@@ -102,7 +102,7 @@ public class OrderService {
     }
 
     private void publishStatusUpdate(Order order) {
-        var update = new OrderStatusUpdateResponse(order.getId(), order.getStatus().name());
+        var update = new OrderStatusUpdateResponse(order.getId(), order.getStatus().name(), orderMapper.getPaymentStatus(order));
         TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/" + order.getId(), update));
     }
 }

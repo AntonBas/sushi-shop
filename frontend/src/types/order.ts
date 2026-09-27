@@ -53,6 +53,7 @@ interface OrderItemResponse {
 export interface OrderStatusUpdateResponse {
   orderId: number
   status: OrderStatus
+  paymentStatus: string
 }
 
 export interface OrderFilters {
