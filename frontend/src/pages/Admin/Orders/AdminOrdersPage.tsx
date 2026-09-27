@@ -6,17 +6,17 @@ import * as ordersApi from "../../../api/orders";
 import { getErrorMessage } from "../../../api/errorMessage";
 import { formatPrice } from "../../../utils/formatPrice";
 import { getStatusFlow } from "../../../utils/orderStatusFlow";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../hooks/common/useListSearchParams";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import { Search } from "lucide-react";
-import type {
-  DeliveryMethod,
-  OrderStatus,
-  PaymentMethod,
-} from "../../../types";
+import type { OrderStatus } from "../../../types";
 import {
+  DELIVERY_METHODS,
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
+  ORDER_STATUSES,
+  PAYMENT_METHODS,
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
 import type { Client } from "@stomp/stompjs";
@@ -25,18 +25,19 @@ import styles from "./AdminOrdersPage.module.css";
 export default function AdminOrdersPage() {
   const { orders, totalPages, loading, loadOrders } = useAdminOrders();
   const { showNotification } = useNotification();
-  const [page, setPage] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
-  const [deliveryFilter, setDeliveryFilter] = useState<DeliveryMethod | "">("");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "">("");
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const statusFilter = pickAllowed(getParam("status"), ORDER_STATUSES);
+  const deliveryFilter = pickAllowed(getParam("delivery"), DELIVERY_METHODS);
+  const paymentFilter = pickAllowed(getParam("payment"), PAYMENT_METHODS);
+  const debouncedSearch = getParam("search");
+  const [search, handleSearchChange] = useDebouncedParamInput(debouncedSearch, (value) =>
+    updateParams({ search: value }, { replace: true }),
+  );
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const toggleExpanded = (id: number) =>
     setExpandedId((current) => (current === id ? null : id));
   const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch });
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     filtersRef.current = { page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch };
@@ -50,13 +51,6 @@ export default function AdminOrdersPage() {
       search: debouncedSearch || undefined,
     });
   }, [page, statusFilter, deliveryFilter, paymentFilter, debouncedSearch, loadOrders]);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(0);
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
-  };
 
   useOrderSocket((client: Client) => {
     client.subscribe("/topic/orders/new", () => {
@@ -112,34 +106,20 @@ export default function AdminOrdersPage() {
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value as OrderStatus | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ status: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by status"
         >
           <option value="">All Statuses</option>
-          {[
-            "NEW",
-            "CONFIRMED",
-            "COOKING",
-            "DELIVERING",
-            "READY",
-            "DELIVERED",
-            "CANCELLED",
-          ].map((s) => (
+          {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {ORDER_STATUS_LABELS[s as OrderStatus]}
+              {ORDER_STATUS_LABELS[s]}
             </option>
           ))}
         </select>
         <select
           value={deliveryFilter}
-          onChange={(e) => {
-            setDeliveryFilter(e.target.value as DeliveryMethod | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ delivery: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by delivery method"
         >
@@ -149,10 +129,7 @@ export default function AdminOrdersPage() {
         </select>
         <select
           value={paymentFilter}
-          onChange={(e) => {
-            setPaymentFilter(e.target.value as PaymentMethod | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ payment: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by payment method"
         >

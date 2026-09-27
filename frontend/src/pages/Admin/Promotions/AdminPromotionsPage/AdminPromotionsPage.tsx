@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
@@ -11,16 +11,20 @@ import Pagination from "../../../../components/UI/Pagination/Pagination";
 import Modal from "../../../../components/UI/Modal/Modal";
 import type { PromotionResponse } from "../../../../types";
 import type { Page } from "../../../../types/common";
+import { useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
+import { useReturnToState } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminPromotionsPage.module.css";
 
 export default function AdminPromotionsPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { data, loading, run } = useApi<Page<PromotionResponse>>();
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const debouncedSearch = getParam("search");
+  const [search, handleSearchChange] = useDebouncedParamInput(debouncedSearch, (value) =>
+    updateParams({ search: value }, { replace: true }),
+  );
+  const returnToState = useReturnToState();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteTitle, setDeleteTitle] = useState("");
 
@@ -34,13 +38,6 @@ export default function AdminPromotionsPage() {
   useEffect(() => {
     void loadPromotions(page, debouncedSearch || undefined);
   }, [page, debouncedSearch, loadPromotions]);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(0);
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
-  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -62,7 +59,7 @@ export default function AdminPromotionsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1>Promotions</h1>
-        <Button onClick={() => void navigate("/admin/promotions/new")}>
+        <Button onClick={() => void navigate("/admin/promotions/new", { state: returnToState })}>
           Add Promotion
         </Button>
       </div>
@@ -82,7 +79,7 @@ export default function AdminPromotionsPage() {
         <div className={styles.empty}>
           <h3>No promotions found</h3>
           <p>Create your first promotion</p>
-          <Button onClick={() => void navigate("/admin/promotions/new")}>
+          <Button onClick={() => void navigate("/admin/promotions/new", { state: returnToState })}>
             Add Promotion
           </Button>
         </div>
@@ -129,7 +126,7 @@ export default function AdminPromotionsPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            void navigate(`/admin/promotions/${promo.id}/edit`)
+                            void navigate(`/admin/promotions/${promo.id}/edit`, { state: returnToState })
                           }
                           className={styles.editBtn}
                           aria-label={`Edit ${promo.title}`}

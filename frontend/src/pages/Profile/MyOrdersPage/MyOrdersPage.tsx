@@ -16,13 +16,14 @@ import {
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
 import type { Client, StompSubscription } from "@stomp/stompjs";
+import { useListSearchParams } from "../../../hooks/common/useListSearchParams";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
   const { showNotification } = useNotification();
   const { data, loading, run } = useApi<Page<UserOrderResponse>>();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
-  const [page, setPage] = useState(0);
+  const { page, setPage } = useListSearchParams();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
   const ordersRef = useRef<UserOrderResponse[]>([]);

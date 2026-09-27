@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
@@ -10,24 +10,26 @@ import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
 import Modal from "../../../../components/UI/Modal/Modal";
-import { CATEGORY_DISPLAY } from "../../../../types/enums";
-import type { Category } from "../../../../types";
+import { CATEGORIES, CATEGORY_DISPLAY } from "../../../../types/enums";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
+import { useReturnToState } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminProductsPage.module.css";
 
 export default function AdminProductsPage() {
   const { products, totalPages, loading, loadProducts } = useProducts();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<Category | "">("");
-  const [availableFilter, setAvailableFilter] = useState<boolean | "">("");
+  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const debouncedSearch = getParam("search");
+  const categoryFilter = pickAllowed(getParam("category"), CATEGORIES);
+  const availableParam = getParam("available");
+  const availableFilter: boolean | "" = availableParam === "true" ? true : availableParam === "false" ? false : "";
+  const [search, handleSearchChange] = useDebouncedParamInput(debouncedSearch, (value) =>
+    updateParams({ search: value }, { replace: true }),
+  );
+  const returnToState = useReturnToState();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteName, setDeleteName] = useState("");
-  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const categories = Object.keys(CATEGORY_DISPLAY) as Category[];
 
   useEffect(() => {
     void loadProducts(page, {
@@ -36,13 +38,6 @@ export default function AdminProductsPage() {
       available: availableFilter === "" ? undefined : availableFilter,
     });
   }, [page, debouncedSearch, categoryFilter, availableFilter, loadProducts]);
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    setPage(0);
-    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    searchDebounceRef.current = setTimeout(() => setDebouncedSearch(value), 300);
-  };
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -80,7 +75,7 @@ export default function AdminProductsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1>Products</h1>
-        <Button onClick={() => void navigate("/admin/products/new")}>
+        <Button onClick={() => void navigate("/admin/products/new", { state: returnToState })}>
           Add Product
         </Button>
       </div>
@@ -98,15 +93,12 @@ export default function AdminProductsPage() {
         </div>
         <select
           value={categoryFilter}
-          onChange={(e) => {
-            setCategoryFilter(e.target.value as Category | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ category: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by category"
         >
           <option value="">All Categories</option>
-          {categories.map((c) => (
+          {CATEGORIES.map((c) => (
             <option key={c} value={c}>
               {CATEGORY_DISPLAY[c]}
             </option>
@@ -114,11 +106,7 @@ export default function AdminProductsPage() {
         </select>
         <select
           value={availableFilter === "" ? "" : availableFilter.toString()}
-          onChange={(e) => {
-            const val = e.target.value;
-            setAvailableFilter(val === "" ? "" : val === "true");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ available: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by availability"
         >
@@ -132,7 +120,7 @@ export default function AdminProductsPage() {
         <div className={styles.empty}>
           <h3>No products found</h3>
           <p>Get started by creating your first product</p>
-          <Button onClick={() => void navigate("/admin/products/new")}>
+          <Button onClick={() => void navigate("/admin/products/new", { state: returnToState })}>
             Add Product
           </Button>
         </div>
@@ -199,7 +187,7 @@ export default function AdminProductsPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            void navigate(`/admin/products/${product.id}/edit`)
+                            void navigate(`/admin/products/${product.id}/edit`, { state: returnToState })
                           }
                           className={styles.editBtn}
                           aria-label={`Edit ${product.name}`}

@@ -12,10 +12,12 @@ import Pagination from "../../../../components/UI/Pagination/Pagination";
 import type { PromotionResponse } from "../../../../types";
 import { toDateTimeLocalValue } from "../../../../utils/dateTimeLocal";
 import { formatPrice } from "../../../../utils/formatPrice";
+import { useReturnTo } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminPromotionForm.module.css";
 
 export default function AdminPromotionForm() {
   const navigate = useNavigate();
+  const backTo = useReturnTo("/admin/promotions");
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const { showNotification } = useNotification();
@@ -140,7 +142,7 @@ export default function AdminPromotionForm() {
     } catch {
       return;
     }
-    void navigate("/admin/promotions");
+    void navigate(backTo);
   };
 
   if (isEdit && getLoading) return <Loading text="Loading promotion..." />;
@@ -150,7 +152,7 @@ export default function AdminPromotionForm() {
       <div className={styles.header}>
         <button
           type="button"
-          onClick={() => void navigate("/admin/promotions")}
+          onClick={() => void navigate(backTo)}
           className={styles.backBtn}
           aria-label="Back to promotions"
         >
@@ -285,7 +287,7 @@ export default function AdminPromotionForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => void navigate("/admin/promotions")}
+            onClick={() => void navigate(backTo)}
           >
             Cancel
           </Button>

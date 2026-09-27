@@ -47,3 +47,12 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   PAID: "Paid",
   UNPAID: "Unpaid",
 }
+export const CATEGORIES = Object.keys(CATEGORY_DISPLAY) as Category[]
+
+export const ORDER_STATUSES = Object.keys(ORDER_STATUS_LABELS) as OrderStatus[]
+
+export const DELIVERY_METHODS: readonly DeliveryMethod[] = ['DELIVERY', 'PICKUP']
+
+export const PAYMENT_METHODS: readonly PaymentMethod[] = ['ONLINE', 'ON_DELIVERY']
+
+export const AUDIT_ACTIONS: readonly AuditAction[] = ['CREATE', 'UPDATE', 'DELETE']

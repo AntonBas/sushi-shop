@@ -149,6 +149,20 @@ describe('CheckoutPage', () => {
     expect(clearCart).toHaveBeenCalled()
   })
 
+  it('shows a redirect screen instead of the empty cart while starting online payment', async () => {
+    createOrder.mockResolvedValue({ id: 42 })
+    clearCart.mockImplementation(() => mockCart([]))
+    vi.mocked(paymentsApi.createCheckout).mockReturnValue(new Promise(() => {}))
+
+    renderCheckout()
+    fireEvent.click(screen.getByRole('button', { name: 'Pay Online' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Proceed to Payment' }))
+
+    expect(await screen.findByText('Redirecting to payment...')).toBeInTheDocument()
+    expect(clearCart).toHaveBeenCalled()
+    expect(screen.queryByText('Your cart is empty')).not.toBeInTheDocument()
+  })
+
   it('navigates to my orders when creating the payment session fails', async () => {
     createOrder.mockResolvedValue({ id: 42 })
     vi.mocked(paymentsApi.createCheckout).mockRejectedValue(new Error('Stripe down'))

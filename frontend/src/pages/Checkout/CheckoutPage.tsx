@@ -10,6 +10,7 @@ import * as productsApi from "../../api/products";
 import { formatPrice } from "../../utils/formatPrice";
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";
+import Loading from "../../components/UI/Loading/Loading";
 import type { DeliveryMethod, PaymentMethod } from "../../types";
 import styles from "./CheckoutPage.module.css";
 
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
   const { showNotification } = useNotification();
   const navigate = useNavigate();
   const submittingRef = useRef(false);
+  const [redirectingToPayment, setRedirectingToPayment] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
@@ -66,6 +68,15 @@ export default function CheckoutPage() {
     };
   }, [productIdsKey]);
 
+  useEffect(() => {
+    if (!redirectingToPayment) return;
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void navigate("/profile/orders", { replace: true });
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [redirectingToPayment, navigate]);
+
   if (user && user !== prefilledFrom) {
     setPrefilledFrom(user);
     setCustomerName(user.name);
@@ -104,17 +115,18 @@ export default function CheckoutPage() {
           quantity: i.quantity,
         })),
       });
-      clearCart();
       if (paymentMethod === "ONLINE") {
-        try {
-          const url = await paymentApi.execute(() =>
-            paymentsApi.createCheckout(order.id),
-          );
-          if (url) window.location.assign(url);
-        } catch {
-          void navigate("/profile/orders");
+        setRedirectingToPayment(true);
+        clearCart();
+        const url = await paymentApi.run(() => paymentsApi.createCheckout(order.id));
+        if (url) {
+          window.location.assign(url);
+          return;
         }
+        setRedirectingToPayment(false);
+        void navigate("/profile/orders");
       } else {
+        clearCart();
         showNotification("Order placed successfully!", "success");
         void navigate("/profile/orders");
       }
@@ -124,6 +136,10 @@ export default function CheckoutPage() {
       submittingRef.current = false;
     }
   };
+
+  if (redirectingToPayment) {
+    return <Loading text="Redirecting to payment..." />;
+  }
 
   if (items.length === 0) {
     return (

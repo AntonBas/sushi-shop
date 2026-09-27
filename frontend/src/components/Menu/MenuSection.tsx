@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useProducts } from "../../hooks/features/useProducts";
-import { CATEGORY_DISPLAY } from "../../types/enums";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../hooks/common/useListSearchParams";
+import { CATEGORIES, CATEGORY_DISPLAY } from "../../types/enums";
 import type { Category } from "../../types";
 import ProductCard from "../Product/ProductCard/ProductCard";
 import Pagination from "../UI/Pagination/Pagination";
@@ -9,80 +9,51 @@ import Loading from "../UI/Loading/Loading";
 import { Search } from "lucide-react";
 import styles from "./MenuSection.module.css";
 
+const SORT_OPTIONS = [
+  { value: "popularity,desc", label: "Most Popular" },
+  { value: "price,asc", label: "Price: Low to High" },
+  { value: "price,desc", label: "Price: High to Low" },
+  { value: "rating,desc", label: "Rating: High to Low" },
+] as const;
+
+const SORT_VALUES = SORT_OPTIONS.map((option) => option.value);
+
 export default function MenuSection() {
   const { products, totalPages, loading, loadMoreProducts } = useProducts();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { getParam, updateParams } = useListSearchParams();
+  const urlSearch = getParam("search");
+  const activeCategory = pickAllowed(getParam("category"), CATEGORIES);
+  const sort = pickAllowed(getParam("sort"), SORT_VALUES);
+  const [search, handleSearchChange] = useDebouncedParamInput(urlSearch, (value) =>
+    updateParams({ search: value }, { replace: true }),
+  );
+
+  const filtersKey = `${urlSearch}|${activeCategory}|${sort}`;
   const [page, setPage] = useState(0);
-  const categories: Category[] = Object.keys(CATEGORY_DISPLAY) as Category[];
-
-  const [search, setSearch] = useState(() => searchParams.get("search") || "");
-  const [activeCategory, setActiveCategory] = useState<Category | "">(() => {
-    const cat = searchParams.get("category") as Category | "";
-    return cat && categories.includes(cat) ? cat : "";
-  });
-  const [sort, setSort] = useState(() => searchParams.get("sort") || "");
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const [initialFilters] = useState(() => ({
-    search: search || undefined,
-    category: activeCategory || undefined,
-    sort: sort || undefined,
-  }));
+  const [pageFiltersKey, setPageFiltersKey] = useState(filtersKey);
+  if (pageFiltersKey !== filtersKey) {
+    setPageFiltersKey(filtersKey);
+    setPage(0);
+  }
 
   useEffect(() => {
-    void loadMoreProducts(0, initialFilters);
-  }, [loadMoreProducts, initialFilters]);
-
-  const buildSearchParams = (overrides: { search?: string; category?: Category | ""; sort?: string }) => {
-    const params: Record<string, string> = {};
-    if (overrides.search) params.search = overrides.search;
-    if (overrides.category) params.category = overrides.category;
-    if (overrides.sort) params.sort = overrides.sort;
-    return params;
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setPage(0);
-      setSearchParams(buildSearchParams({ search: value, category: activeCategory, sort }));
-      void loadMoreProducts(0, {
-        search: value || undefined,
-        category: activeCategory || undefined,
-        sort: sort || undefined,
-      });
-    }, 300);
-  };
-
-  const handleCategoryChange = (cat: Category | "") => {
-    setActiveCategory(cat);
-    setPage(0);
-    setSearchParams(buildSearchParams({ search, category: cat, sort }));
     void loadMoreProducts(0, {
-      search: search || undefined,
-      category: cat || undefined,
+      search: urlSearch || undefined,
+      category: activeCategory || undefined,
       sort: sort || undefined,
     });
-  };
+  }, [loadMoreProducts, urlSearch, activeCategory, sort]);
 
-  const handleSortChange = (value: string) => {
-    setSort(value);
-    setPage(0);
-    setSearchParams(buildSearchParams({ search, category: activeCategory, sort: value }));
-    void loadMoreProducts(0, {
-      search: search || undefined,
-      category: activeCategory || undefined,
-      sort: value || undefined,
-    });
-  };
+  const handleCategoryChange = (cat: Category | "") => updateParams({ category: cat });
+
+  const handleSortChange = (value: string) => updateParams({ sort: value });
 
   const handleLoadMore = () => {
     const nextPage = page + 1;
     if (nextPage >= totalPages) return;
     setPage(nextPage);
     void loadMoreProducts(nextPage, {
-      search: search || undefined,
+      search: urlSearch || undefined,
       category: activeCategory || undefined,
       sort: sort || undefined,
     });
@@ -113,7 +84,7 @@ export default function MenuSection() {
             >
               All
             </button>
-            {categories.map((cat) => (
+            {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 className={`${styles.categoryBtn} ${activeCategory === cat ? styles.active : ""}`}
@@ -131,10 +102,11 @@ export default function MenuSection() {
             aria-label="Sort products"
           >
             <option value="">Sort: Default</option>
-            <option value="popularity,desc">Most Popular</option>
-            <option value="price,asc">Price: Low to High</option>
-            <option value="price,desc">Price: High to Low</option>
-            <option value="rating,desc">Rating: High to Low</option>
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       </div>

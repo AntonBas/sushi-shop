@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import type { Client, IMessage } from '@stomp/stompjs'
 import MyOrdersPage from './MyOrdersPage'
 import { useNotification } from '../../../context/useNotification'
@@ -35,7 +36,7 @@ describe('MyOrdersPage', () => {
   })
 
   it('expands order details from the keyboard', async () => {
-    render(<MyOrdersPage />)
+    render(<MyOrdersPage />, { wrapper: MemoryRouter })
     const header = await screen.findByRole('button', { name: /Order #7/ })
 
     expect(header).toHaveAttribute('tabindex', '0')
@@ -52,7 +53,7 @@ describe('MyOrdersPage', () => {
   })
 
   it('ignores other keys', async () => {
-    render(<MyOrdersPage />)
+    render(<MyOrdersPage />, { wrapper: MemoryRouter })
     const header = await screen.findByRole('button', { name: /Order #7/ })
 
     fireEvent.keyDown(header, { key: 'a' })
@@ -79,7 +80,7 @@ describe('MyOrdersPage', () => {
       page: { size: 12, number: 0, totalElements: 1, totalPages: 1 },
     })
 
-    render(<MyOrdersPage />)
+    render(<MyOrdersPage />, { wrapper: MemoryRouter })
     await screen.findByRole('button', { name: /Order #7/ })
     expect(screen.getByText('Pending')).toBeInTheDocument()
 

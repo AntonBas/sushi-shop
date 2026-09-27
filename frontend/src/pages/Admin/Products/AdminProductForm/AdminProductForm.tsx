@@ -29,6 +29,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useReturnTo } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminProductForm.module.css";
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -89,6 +90,7 @@ export default function AdminProductForm() {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const backTo = useReturnTo("/admin/products");
   const { product, productLoading, getProduct } = useProducts();
   const { showNotification } = useNotification();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -220,7 +222,7 @@ export default function AdminProductForm() {
         );
         showNotification("Product created", "success");
       }
-      void navigate("/admin/products");
+      void navigate(backTo);
     } catch (err: unknown) {
       showNotification(getErrorMessage(err, "Failed to save product"), "error");
     } finally {
@@ -237,7 +239,7 @@ export default function AdminProductForm() {
       <div className={styles.header}>
         <button
           type="button"
-          onClick={() => void navigate("/admin/products")}
+          onClick={() => void navigate(backTo)}
           className={styles.backBtn}
           aria-label="Back to products"
         >
@@ -368,7 +370,7 @@ export default function AdminProductForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => void navigate("/admin/products")}
+            onClick={() => void navigate(backTo)}
           >
             Cancel
           </Button>
