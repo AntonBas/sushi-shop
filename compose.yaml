@@ -120,7 +120,7 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:12.1.1
+    image: grafana/grafana:12.4.11
     container_name: sushi-grafana
     profiles: [dev]
     environment:
