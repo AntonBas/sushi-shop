@@ -1,7 +1,9 @@
 package com.sushishop.review;
 
+import com.sushishop.audit.Auditable;
 import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ public class ReviewReplyService {
     private final UserRepository userRepository;
     private final ReviewMapper reviewMapper;
 
+    @Auditable(action = AuditAction.CREATE, entity = "ReviewReply")
     @Transactional
     public ReviewReplyResponse addReply(Long reviewId, CreateReviewReplyRequest request, String userEmail) {
         var review = reviewRepository.findById(reviewId)
@@ -37,10 +40,11 @@ public class ReviewReplyService {
         return reviewMapper.toReplyResponse(saved);
     }
 
+    @Auditable(action = AuditAction.UPDATE, entity = "ReviewReply")
     @Transactional
     public ReviewReplyResponse updateReply(Long replyId, CreateReviewReplyRequest request, String userEmail) {
         var reply = reviewReplyRepository.findById(replyId)
-                .orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
+                .orElseThrow(() -> new NotFoundException("Reply not found: " + replyId));
 
         OwnershipGuard.requireOwner(reply.getUser().getEmail(), userEmail, "You can only edit your own replies");
 
@@ -48,10 +52,11 @@ public class ReviewReplyService {
         return reviewMapper.toReplyResponse(reviewReplyRepository.save(reply));
     }
 
+    @Auditable(action = AuditAction.DELETE, entity = "ReviewReply")
     @Transactional
     public void deleteReply(Long replyId, String email) {
         var reply = reviewReplyRepository.findById(replyId)
-                .orElseThrow(() -> new NotFoundException("Review not found: " + replyId));
+                .orElseThrow(() -> new NotFoundException("Reply not found: " + replyId));
 
         OwnershipGuard.requireOwner(reply.getUser().getEmail(), email, "You can only delete your own replies");
 
