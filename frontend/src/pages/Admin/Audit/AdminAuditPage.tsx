@@ -14,7 +14,7 @@ function validDateTimeLocal(value: string): string {
 
 export default function AdminAuditPage() {
   const { logs, totalPages, loading, loadLogs } = useAuditLogs();
-  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
   const action = pickAllowed(getParam("action"), AUDIT_ACTIONS);
   const entityName = getParam("entity");
   const entityId = /^\d+$/.test(getParam("entityId")) ? getParam("entityId") : "";
@@ -41,6 +41,10 @@ export default function AdminAuditPage() {
       end: end ? new Date(end).toISOString() : undefined,
     });
   }, [page, action, entityName, entityId, performedBy, start, end, loadLogs]);
+
+  useEffect(() => {
+    keepPageInRange(totalPages);
+  }, [totalPages, keepPageInRange]);
 
   if (loading && logs.length === 0) return <Loading text="Loading audit logs..." />;
 

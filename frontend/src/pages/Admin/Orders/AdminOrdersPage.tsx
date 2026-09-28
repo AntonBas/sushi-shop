@@ -25,7 +25,7 @@ import styles from "./AdminOrdersPage.module.css";
 export default function AdminOrdersPage() {
   const { orders, totalPages, loading, loadOrders } = useAdminOrders();
   const { showNotification } = useNotification();
-  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
   const statusFilter = pickAllowed(getParam("status"), ORDER_STATUSES);
   const deliveryFilter = pickAllowed(getParam("delivery"), DELIVERY_METHODS);
   const paymentFilter = pickAllowed(getParam("payment"), PAYMENT_METHODS);
@@ -84,6 +84,10 @@ export default function AdminOrdersPage() {
       showNotification(getErrorMessage(err, "Failed to update status"), "error");
     }
   };
+
+  useEffect(() => {
+    keepPageInRange(totalPages);
+  }, [totalPages, keepPageInRange]);
 
   if (loading && orders.length === 0) return <Loading text="Loading orders..." />;
 

@@ -23,7 +23,7 @@ export default function MyOrdersPage() {
   const { showNotification } = useNotification();
   const { data, loading, run } = useApi<Page<UserOrderResponse>>();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
-  const { page, setPage } = useListSearchParams();
+  const { page, setPage, keepPageInRange } = useListSearchParams();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
   const ordersRef = useRef<UserOrderResponse[]>([]);
@@ -88,6 +88,10 @@ export default function MyOrdersPage() {
       setPayLoading(null);
     }
   };
+
+  useEffect(() => {
+    keepPageInRange(data?.page.totalPages ?? 0);
+  }, [data, keepPageInRange]);
 
   if (loading) return <Loading text="Loading orders..." />;
 

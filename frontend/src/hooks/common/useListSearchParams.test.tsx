@@ -47,6 +47,34 @@ describe('useListSearchParams', () => {
   })
 })
 
+describe('useListSearchParams keepPageInRange', () => {
+  it('moves an out-of-range page to the last existing page', () => {
+    const { result } = renderHook(() => useListWithLocation(), { wrapper: wrapperAt('/list?status=NEW&page=9') })
+
+    act(() => result.current.keepPageInRange(3))
+
+    expect(result.current.location.search).toBe('?status=NEW&page=3')
+    expect(result.current.page).toBe(2)
+  })
+
+  it('drops the page param when only one page is left', () => {
+    const { result } = renderHook(() => useListWithLocation(), { wrapper: wrapperAt('/list?page=2') })
+
+    act(() => result.current.keepPageInRange(1))
+
+    expect(result.current.location.search).toBe('')
+  })
+
+  it('keeps a valid page and ignores an unknown page count', () => {
+    const { result } = renderHook(() => useListWithLocation(), { wrapper: wrapperAt('/list?page=2') })
+
+    act(() => result.current.keepPageInRange(0))
+    act(() => result.current.keepPageInRange(5))
+
+    expect(result.current.location.search).toBe('?page=2')
+  })
+})
+
 describe('pickAllowed', () => {
   it('keeps allowed values and drops unknown ones', () => {
     expect(pickAllowed('NEW', ['NEW', 'CANCELLED'] as const)).toBe('NEW')

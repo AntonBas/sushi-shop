@@ -19,7 +19,7 @@ export default function AdminProductsPage() {
   const { products, totalPages, loading, loadProducts } = useProducts();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
-  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
   const debouncedSearch = getParam("search");
   const categoryFilter = pickAllowed(getParam("category"), CATEGORIES);
   const availableParam = getParam("available");
@@ -68,6 +68,10 @@ export default function AdminProductsPage() {
       showNotification(getErrorMessage(err, "Failed to update product"), "error");
     }
   };
+
+  useEffect(() => {
+    keepPageInRange(totalPages);
+  }, [totalPages, keepPageInRange]);
 
   if (loading && products.length === 0) return <Loading text="Loading products..." />;
 

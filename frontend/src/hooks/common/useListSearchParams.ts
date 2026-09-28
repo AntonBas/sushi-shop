@@ -38,7 +38,13 @@ export function useListSearchParams() {
     updateParams({ [PAGE_PARAM]: nextPage > 0 ? nextPage + 1 : null }, { keepPage: true })
   }, [updateParams])
 
-  return { page, getParam, updateParams, setPage }
+  const keepPageInRange = useCallback((totalPages: number) => {
+    if (totalPages > 0 && page >= totalPages) {
+      updateParams({ [PAGE_PARAM]: totalPages > 1 ? totalPages : null }, { keepPage: true, replace: true })
+    }
+  }, [page, updateParams])
+
+  return { page, getParam, updateParams, setPage, keepPageInRange }
 }
 
 export function pickAllowed<T extends string>(value: string, allowed: readonly T[]): T | '' {

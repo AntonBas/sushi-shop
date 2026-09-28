@@ -19,7 +19,7 @@ export default function AdminPromotionsPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
   const { data, loading, run } = useApi<Page<PromotionResponse>>();
-  const { page, getParam, updateParams, setPage } = useListSearchParams();
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
   const debouncedSearch = getParam("search");
   const [search, handleSearchChange] = useDebouncedParamInput(debouncedSearch, (value) =>
     updateParams({ search: value }, { replace: true }),
@@ -50,6 +50,10 @@ export default function AdminPromotionsPage() {
       showNotification(getErrorMessage(err, "Failed to delete promotion"), "error");
     }
   };
+
+  useEffect(() => {
+    keepPageInRange(data?.page.totalPages ?? 0);
+  }, [data, keepPageInRange]);
 
   if (loading && !data) return <Loading text="Loading promotions..." />;
 
