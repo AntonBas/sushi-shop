@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
-import { AxiosError } from 'axios'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
 import * as authApi from '../../../api/auth'
+import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import Modal from '../../../components/UI/Modal/Modal'
@@ -19,16 +19,26 @@ export default function ResetPassword() {
   const [loading, setLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
+  if (!token) {
+    return (
+      <div className={styles.container}>
+        <h1 className={styles.title}>Invalid reset link</h1>
+        <p className={styles.instruction}>
+          This password reset link is invalid. <Link to="/forgot-password">Request a new one</Link>.
+        </p>
+      </div>
+    )
+  }
+
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await authApi.resetPassword({ token: token!, newPassword, confirmPassword })
+      await authApi.resetPassword({ token, newPassword, confirmPassword })
       setShowSuccess(true)
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Something went wrong')
+      setError(getErrorMessage(err, 'Something went wrong'))
     } finally {
       setLoading(false)
     }
@@ -41,22 +51,22 @@ export default function ResetPassword() {
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <p className={styles.instruction}>Enter your new password below.</p>
-          <Input label="New Password" type="password" value={newPassword} onChange={setNewPassword} placeholder="Min 8 characters" />
-          <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
+          <Input label="New Password" name="newPassword" autoComplete="new-password" type="password" value={newPassword} onChange={setNewPassword} placeholder="Min 8 characters" />
+          <Input label="Confirm Password" name="confirmPassword" autoComplete="new-password" type="password" value={confirmPassword} onChange={setConfirmPassword} placeholder="Repeat password" />
           <Button type="submit" loading={loading} style={{ width: '100%' }}>
             {loading ? 'Resetting...' : 'Reset Password'}
           </Button>
         </form>
       </div>
 
-      <Modal isOpen={showSuccess} onClose={() => { setShowSuccess(false); navigate('/login') }}>
+      <Modal isOpen={showSuccess} onClose={() => { setShowSuccess(false); void navigate('/login') }}>
         <div className={styles.successModal}>
           <CheckCircle2 size={48} className={styles.successIcon} />
           <h2>Password Reset!</h2>
           <p>Your password has been successfully changed.</p>
-          <Button onClick={() => { setShowSuccess(false); navigate('/login') }} style={{ width: '100%', marginTop: 16 }}>
+          <Button onClick={() => { setShowSuccess(false); void navigate('/login') }} style={{ width: '100%', marginTop: 16 }}>
             Go to Login
           </Button>
         </div>

@@ -4,7 +4,9 @@ import com.sushishop.order.dto.request.CreateOrderRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.UserOrderResponse;
 import com.sushishop.security.Roles;
+import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.shared.service.LogSanitizer;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -22,7 +24,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
@@ -35,6 +44,7 @@ public class OrderController {
     private final OrderCreationService orderCreationService;
     private final OrderQueryService orderQueryService;
 
+    @RateLimit(value = 10, key = "user")
     @PostMapping
     @Operation(summary = "Create new order")
     @ApiResponses(value = {
@@ -57,7 +67,7 @@ public class OrderController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<UserOrderResponse>> getMyOrders(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @SortableFields({"createdAt", "id"}) @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/orders/my - user: {}", userDetails.getUsername());
         return ResponseEntity.ok(orderQueryService.getByUser(userDetails.getUsername(), pageable));
     }
@@ -67,7 +77,7 @@ public class OrderController {
     @Operation(summary = "Get all orders (admin, courier)")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Page<OrderResponse>> getAll(
-            @PageableDefault(size = 12, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @SortableFields({"createdAt", "id"}) @PageableDefault(size = 12, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable,
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(required = false) DeliveryMethod deliveryMethod,
             @RequestParam(required = false) PaymentMethod paymentMethod,

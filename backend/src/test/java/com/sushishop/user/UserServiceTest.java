@@ -1,5 +1,7 @@
 package com.sushishop.user;
 
+import com.sushishop.mail.MailService;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
@@ -7,9 +9,11 @@ import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -21,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
@@ -32,11 +36,17 @@ public class UserServiceTest {
     @Mock
     private UserMapper userMapper;
 
+    @Mock
+    private MailService mailService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private UserService userService;
 
     @Test
-    public void shouldCreateUser() {
+    void shouldCreateUser() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",
@@ -62,7 +72,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenEmailExists() {
+    void shouldThrowWhenEmailExists() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",
@@ -79,7 +89,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldGetByEmail() {
+    void shouldGetByEmail() {
         var user = User.builder()
                 .id(1L)
                 .name("Anton")
@@ -92,9 +102,11 @@ public class UserServiceTest {
                 1L,
                 "Anton",
                 "anton@example.com",
+                null,
                 "+380961791111",
                 UserRole.CUSTOMER,
-                null
+                null,
+                true
         );
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -107,7 +119,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldUpdateUser() {
+    void shouldUpdateUser() {
         var user = User.builder()
                 .id(1L)
                 .name("Old Name")
@@ -125,9 +137,11 @@ public class UserServiceTest {
                 1L,
                 "New Name",
                 "anton@example.com",
+                null,
                 "+380999999999",
                 UserRole.CUSTOMER,
-                null
+                null,
+                true
         );
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -142,7 +156,7 @@ public class UserServiceTest {
     }
 
     @Test
-    public void shouldChangePassword() {
+    void shouldChangePassword() {
         var request = new ChangePasswordRequest("oldPass", "newPass123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -160,10 +174,16 @@ public class UserServiceTest {
         assertThat(user.getPassword()).isEqualTo("hashedNew");
         assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
+        verify(mailService).sendPasswordChangedNotification("anton@example.com");
+
+        var eventCaptor = ArgumentCaptor.forClass(UserSessionsInvalidatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEmail()).isEqualTo("anton@example.com");
+        assertThat(eventCaptor.getValue().getPreviousTokenVersion()).isEqualTo(0);
     }
 
     @Test
-    public void shouldThrowWhenOldPasswordIncorrect() {
+    void shouldThrowWhenOldPasswordIncorrect() {
         var request = new ChangePasswordRequest("wrongOld", "newPass123");
         var user = User.builder()
                 .email("anton@example.com")
@@ -175,5 +195,26 @@ public class UserServiceTest {
 
         assertThatThrownBy(() -> userService.changePassword("anton@example.com", request))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void shouldClearAddress() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .city("Lviv")
+                .street("Zelena")
+                .house("204")
+                .apartment("280")
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.save(user)).thenReturn(user);
+
+        userService.clearAddress("anton@example.com");
+
+        assertThat(user.getCity()).isNull();
+        assertThat(user.getStreet()).isNull();
+        assertThat(user.getHouse()).isNull();
+        assertThat(user.getApartment()).isNull();
     }
 }

@@ -5,13 +5,13 @@ import type { AuditLogResponse, AuditLogFilters } from '../../types/audit'
 import type { Page } from '../../types/common'
 
 export function useAuditLogs() {
-  const { data, loading, error, execute } = useApi<Page<AuditLogResponse>>()
+  const { data, loading, error, run } = useApi<Page<AuditLogResponse>>()
   const [logs, setLogs] = useState<AuditLogResponse[]>([])
 
   const loadLogs = useCallback(async (page = 0, filters?: AuditLogFilters) => {
-    const result = await execute(() => auditApi.getAuditLogs(page, 20, 'performedAt,desc', filters))
-    setLogs(result.content)
-  }, [execute])
+    const result = await run(() => auditApi.getAuditLogs(page, 20, 'performedAt,desc', filters))
+    if (result) setLogs(result.content)
+  }, [run])
 
   return {
     logs,

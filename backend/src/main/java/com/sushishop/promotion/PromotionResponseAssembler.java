@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 
@@ -40,10 +39,10 @@ public class PromotionResponseAssembler {
     }
 
     private PromotionResponse assemble(Promotion promotion, Map<Long, Double> ratings) {
-        BigDecimal discount = promotion.isCurrentlyActive() ? promotion.getDiscountPercent().divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP) : null;
+        boolean currentlyActive = promotion.isCurrentlyActive();
 
         List<ProductListResponse> productResponses = promotion.getProducts().stream().map(product -> {
-            BigDecimal discountedPrice = discount != null ? product.getPrice().multiply(BigDecimal.ONE.subtract(discount)).setScale(2, RoundingMode.HALF_UP) : null;
+            BigDecimal discountedPrice = currentlyActive ? promotion.applyDiscount(product.getPrice()) : null;
             return productMapper.toListResponse(product, ratings.get(product.getId()), discountedPrice);
         }).toList();
 

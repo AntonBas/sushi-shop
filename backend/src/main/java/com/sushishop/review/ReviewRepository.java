@@ -19,6 +19,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Page<Long> findReviewIdsByProductId(@Param("productId") Long productId, Pageable pageable);
 
     @EntityGraph(attributePaths = {"user", "replies", "replies.user"})
-    @Query("SELECT r FROM Review r WHERE r.id IN :ids ORDER BY r.createdAt DESC")
+    @Query("SELECT r FROM Review r WHERE r.id IN :ids")
     List<Review> findReviewsByIds(@Param("ids") List<Long> ids);
 }

@@ -4,7 +4,11 @@ import com.sushishop.file.FileStorageService;
 import com.sushishop.product.dto.request.CreateProductRequest;
 import com.sushishop.product.dto.request.UpdateProductRequest;
 import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.promotion.Promotion;
+import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.review.ReviewRepository;
+import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.SlugService;
 import org.junit.jupiter.api.Test;
@@ -14,15 +18,25 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductServiceTest {
+class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -44,6 +58,9 @@ public class ProductServiceTest {
 
     @Mock
     private FileStorageService fileStorageService;
+
+    @Mock
+    private PromotionCacheService promotionCacheService;
 
     @Mock
     private ReviewRepository reviewRepository;
@@ -78,7 +95,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldCreateProduct() {
+    void shouldCreateProduct() {
         var request = new CreateProductRequest("Maki", "Desc", new BigDecimal("250.00"), Category.ROLL, 250, 8);
         var product = createProduct();
         var expected = createResponse();
@@ -101,7 +118,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldGetById() {
+    void shouldGetById() {
         var product = createProduct();
         var expected = createResponse();
 
@@ -119,7 +136,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenProductNotFound() {
+    void shouldThrowWhenProductNotFound() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getById(1L))
@@ -127,7 +144,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldUpdateProduct() {
+    void shouldUpdateProduct() {
         var request = new UpdateProductRequest("Updated", null, null, null, null, null);
         var product = createProduct();
         var expected = createResponse();
@@ -149,7 +166,25 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldToggleAvailability() {
+    void shouldKeepSlugWhenRenameProducesSameSlug() {
+        var request = new UpdateProductRequest("maki", null, null, null, null, null);
+        var product = createProduct();
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.findBySlug("maki")).thenReturn(Optional.of(product));
+        when(slugService.generateUniqueSlug(eq("maki"), any()))
+                .thenAnswer(inv -> new SlugService().generateUniqueSlug(inv.getArgument(0), inv.getArgument(1)));
+        when(productRepository.save(product)).thenReturn(product);
+        when(productMapper.toResponse(product)).thenReturn(createResponse());
+        when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of());
+
+        productService.update(1L, request);
+
+        assertThat(product.getSlug()).isEqualTo("maki");
+    }
+
+    @Test
+    void shouldToggleAvailability() {
         var product = createProduct();
         product.setAvailable(true);
 
@@ -162,13 +197,58 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void shouldDeleteProduct() {
+    void shouldDeleteProductAndItsImageFiles() {
         var product = createProduct();
+        product.getProductImages().add(ProductImage.builder().id(5L).url("/api/files/a.jpg").product(product).build());
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.isReferencedByOrders(1L)).thenReturn(false);
 
         productService.delete(1L);
 
         verify(productRepository).delete(product);
+        verify(fileStorageService).delete("/api/files/a.jpg");
+    }
+
+    @Test
+    void shouldRejectDeletingOrderedProductWithoutTouchingFiles() {
+        var product = createProduct();
+        product.getProductImages().add(ProductImage.builder().id(5L).url("/api/files/a.jpg").product(product).build());
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.isReferencedByOrders(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> productService.delete(1L)).isInstanceOf(ConflictException.class);
+
+        verify(productRepository, never()).delete(any());
+        verifyNoInteractions(fileStorageService);
+    }
+
+    @Test
+    void shouldRejectUpdateThatLeavesSetWithoutPieces() {
+        var request = new UpdateProductRequest(null, null, null, Category.SET, null, null);
+        var product = createProduct();
+        product.setPieces(null);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        doAnswer(inv -> {
+            product.setCategory(Category.SET);
+            return null;
+        }).when(productMapper).updateEntity(request, product);
+
+        assertThatThrownBy(() -> productService.update(1L, request)).isInstanceOf(BadRequestException.class);
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldEvictPromotionCacheWhenProductAvailabilityChanges() {
+        var product = createProduct();
+        product.getPromotions().add(Promotion.builder().id(7L).slug("summer").build());
+
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+
+        productService.toggleAvailability(1L);
+
+        verify(promotionCacheService).evict(7L, "summer");
     }
 }

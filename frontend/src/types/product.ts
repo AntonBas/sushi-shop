@@ -11,11 +11,11 @@ export interface CreateProductRequest {
 
 export interface UpdateProductRequest {
   name?: string
-  description?: string
+  description?: string | null
   price?: number
   category?: Category
   weight?: number
-  pieces?: number
+  pieces?: number | null
 }
 
 export interface ProductListResponse {
@@ -59,4 +59,5 @@ export interface ProductFilters {
   search?: string
   category?: Category
   available?: boolean
+  sort?: string
 }

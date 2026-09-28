@@ -1,32 +1,52 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useAuditLogs } from "../../../hooks/features/useAudit";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
-import type { AuditAction } from "../../../types";
+import { AUDIT_ACTIONS } from "../../../types/enums";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../hooks/common/useListSearchParams";
 import styles from "./AdminAuditPage.module.css";
+
+const DATE_TIME_LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+
+function validDateTimeLocal(value: string): string {
+  return DATE_TIME_LOCAL.test(value) && !Number.isNaN(new Date(value).getTime()) ? value : "";
+}
 
 export default function AdminAuditPage() {
   const { logs, totalPages, loading, loadLogs } = useAuditLogs();
-  const [page, setPage] = useState(0);
-  const [action, setAction] = useState<AuditAction | "">("");
-  const [entityName, setEntityName] = useState("");
-  const [entityId, setEntityId] = useState("");
-  const [performedBy, setPerformedBy] = useState("");
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
+  const action = pickAllowed(getParam("action"), AUDIT_ACTIONS);
+  const entityName = getParam("entity");
+  const entityId = /^\d+$/.test(getParam("entityId")) ? getParam("entityId") : "";
+  const performedBy = getParam("user");
+  const start = validDateTimeLocal(getParam("from"));
+  const end = validDateTimeLocal(getParam("to"));
+  const [entityNameInput, handleEntityNameChange] = useDebouncedParamInput(entityName, (value) =>
+    updateParams({ entity: value }, { replace: true }),
+  );
+  const [entityIdInput, handleEntityIdChange] = useDebouncedParamInput(entityId, (value) =>
+    updateParams({ entityId: value }, { replace: true }),
+  );
+  const [performedByInput, handlePerformedByChange] = useDebouncedParamInput(performedBy, (value) =>
+    updateParams({ user: value }, { replace: true }),
+  );
 
   useEffect(() => {
-    loadLogs(page, {
+    void loadLogs(page, {
       action: action || undefined,
       entityName: entityName || undefined,
       entityId: entityId ? Number(entityId) : undefined,
       performedBy: performedBy || undefined,
-      start: start || undefined,
-      end: end || undefined,
+      start: start ? new Date(start).toISOString() : undefined,
+      end: end ? new Date(end).toISOString() : undefined,
     });
   }, [page, action, entityName, entityId, performedBy, start, end, loadLogs]);
 
-  if (loading) return <Loading text="Loading audit logs..." />;
+  useEffect(() => {
+    keepPageInRange(totalPages);
+  }, [totalPages, keepPageInRange]);
+
+  if (loading && logs.length === 0) return <Loading text="Loading audit logs..." />;
 
   return (
     <div className={styles.page}>
@@ -37,10 +57,7 @@ export default function AdminAuditPage() {
       <div className={styles.filters}>
         <select
           value={action}
-          onChange={(e) => {
-            setAction(e.target.value as AuditAction | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ action: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by action"
         >
@@ -48,56 +65,43 @@ export default function AdminAuditPage() {
           <option value="CREATE">CREATE</option>
           <option value="UPDATE">UPDATE</option>
           <option value="DELETE">DELETE</option>
-          <option value="LOGIN">LOGIN</option>
-          <option value="LOGOUT">LOGOUT</option>
-          <option value="EXPORT">EXPORT</option>
         </select>
         <input
           type="text"
           placeholder="Entity"
-          value={entityName}
-          onChange={(e) => {
-            setEntityName(e.target.value);
-            setPage(0);
-          }}
+          value={entityNameInput}
+          onChange={(e) => handleEntityNameChange(e.target.value)}
           className={styles.filterInput}
+          aria-label="Filter by entity"
         />
         <input
           type="number"
           placeholder="Entity ID"
-          value={entityId}
-          onChange={(e) => {
-            setEntityId(e.target.value);
-            setPage(0);
-          }}
+          value={entityIdInput}
+          onChange={(e) => handleEntityIdChange(e.target.value)}
           className={styles.filterInput}
+          aria-label="Filter by entity id"
         />
         <input
           type="text"
           placeholder="User"
-          value={performedBy}
-          onChange={(e) => {
-            setPerformedBy(e.target.value);
-            setPage(0);
-          }}
+          value={performedByInput}
+          onChange={(e) => handlePerformedByChange(e.target.value)}
           className={styles.filterInput}
+          aria-label="Filter by user"
         />
         <input
           type="datetime-local"
+          aria-label="From date"
           value={start}
-          onChange={(e) => {
-            setStart(e.target.value);
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ from: e.target.value }, { replace: true })}
           className={styles.filterInput}
         />
         <input
           type="datetime-local"
+          aria-label="To date"
           value={end}
-          onChange={(e) => {
-            setEnd(e.target.value);
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ to: e.target.value }, { replace: true })}
           className={styles.filterInput}
         />
       </div>

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,14 +20,19 @@ import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ReviewControllerTest {
+class ReviewControllerTest {
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -41,13 +47,13 @@ public class ReviewControllerTest {
     private ReviewReplyService reviewReplyService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldCreateReview() throws Exception {
+    void shouldCreateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var response = new ReviewResponse(1L, 1L, "Anton", 5, "Very tasty!", null, null, null);
 
@@ -62,7 +68,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldUpdateReview() throws Exception {
+    void shouldUpdateReview() throws Exception {
         var request = new CreateReviewRequest(1L, 4, "Updated!");
         var response = new ReviewResponse(1L, 1L, "Anton", 4, "Updated!", null, null, null);
 
@@ -77,7 +83,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldAddReply() throws Exception {
+    void shouldAddReply() throws Exception {
         var request = new CreateReviewReplyRequest("Thank you!");
         var response = new ReviewReplyResponse(1L, "Thank you!", "Admin", null);
 
@@ -92,7 +98,7 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldUpdateReply() throws Exception {
+    void shouldUpdateReply() throws Exception {
         var request = new CreateReviewReplyRequest("Updated reply");
         var response = new ReviewReplyResponse(1L, "Updated reply", "Admin", null);
 
@@ -107,26 +113,63 @@ public class ReviewControllerTest {
 
     @Test
     @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
-    public void shouldDeleteReply() throws Exception {
+    void shouldDeleteReply() throws Exception {
         mockMvc.perform(delete("/api/reviews/replies/1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldDeleteReview() throws Exception {
+    void shouldDeleteReview() throws Exception {
         mockMvc.perform(delete("/api/reviews/1"))
                 .andExpect(status().isNoContent());
+
+        verify(reviewService).delete(1L, "anton@example.com", false);
+    }
+
+    @Test
+    @WithMockUser(username = "admin@example.com", roles = {"ADMIN"})
+    void shouldPassAdminFlagWhenAdminDeletesReview() throws Exception {
+        mockMvc.perform(delete("/api/reviews/1"))
+                .andExpect(status().isNoContent());
+
+        verify(reviewService).delete(1L, "admin@example.com", true);
     }
 
     @Test
     @WithMockUser(username = "anton@example.com")
-    public void shouldRejectNonAdminUserFromAddReply() throws Exception {
+    void shouldRejectNonAdminUserFromAddReply() throws Exception {
         var request = new CreateReviewReplyRequest("Thank you!");
 
         mockMvc.perform(post("/api/reviews/1/replies")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowSortingReviewsByRating() throws Exception {
+        when(reviewService.getByProduct(eq(1L), any())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/reviews/product/1").param("sort", "rating,desc"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRejectSortingReviewsByUserPhone() throws Exception {
+        mockMvc.perform(get("/api/reviews/product/1").param("sort", "user.phone"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(reviewService);
+    }
+
+    @Test
+    void shouldRejectUnknownPropertyInMultiPropertySort() throws Exception {
+        mockMvc.perform(get("/api/reviews/product/1")
+                        .param("sort", "createdAt,desc")
+                        .param("sort", "rating,user.city,asc"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(reviewService);
     }
 }

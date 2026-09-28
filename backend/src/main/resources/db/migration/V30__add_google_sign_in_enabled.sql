@@ -1,0 +1,2 @@
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS google_sign_in_enabled BOOLEAN NOT NULL DEFAULT TRUE;

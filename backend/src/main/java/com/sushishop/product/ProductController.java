@@ -6,6 +6,7 @@ import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.product.dto.response.ProductResponse;
 import com.sushishop.shared.service.LogSanitizer;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -23,7 +24,17 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -57,10 +68,11 @@ public class ProductController {
 
     @GetMapping
     @Operation(summary = "Get all products")
-    public ResponseEntity<Page<ProductListResponse>> getAll(@PageableDefault(size = 12, sort = "name") Pageable pageable,
-                                                            @RequestParam(required = false) String search,
-                                                            @RequestParam(required = false) Category category,
-                                                            @RequestParam(required = false) Boolean available) {
+    public ResponseEntity<Page<ProductListResponse>> getAll(
+            @SortableFields({"name", "price", "rating", "popularity", "id"}) @PageableDefault(size = 12, sort = {"name", "id"}) Pageable pageable,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Category category,
+            @RequestParam(required = false) Boolean available) {
         log.info("GET /api/products - search: {}, category: {}, page: {}",
                 LogSanitizer.sanitize(search), category, pageable.getPageNumber());
         return ResponseEntity.ok(productQueryService.getAll(pageable, search, category, available));
@@ -89,7 +101,7 @@ public class ProductController {
     }
 
     @GetMapping("/popular")
-    @Operation(summary = "Get popular products", description = "Returns top 10 products sorted by rating and review count")
+    @Operation(summary = "Get popular products", description = "Returns top 10 available products (excluding extras) sorted by units ordered in non-cancelled orders")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "List of popular products")
     })

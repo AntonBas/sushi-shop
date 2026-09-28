@@ -38,6 +38,7 @@ public class AuditLogService {
         log.info("Audit: {} {} [{}] by {}", action, entityName, entityId, performedBy);
     }
 
+    @Transactional(readOnly = true)
     public Page<AuditLogResponse> getAll(AuditAction action, String entityName, Long entityId,
                                          String performedBy, LocalDateTime start, LocalDateTime end,
                                          Pageable pageable) {

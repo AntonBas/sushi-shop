@@ -1,15 +1,17 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 246 backend tests across 50 test classes, zero-warning CI (ESLint + Java compiler), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Unit, controller and Testcontainers integration tests, zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.7-green)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
 ![CI](https://github.com/AntonBas/sushi-shop/workflows/CI/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+**Live demo:** [sushi-bas-shop.vercel.app](https://sushi-bas-shop.vercel.app)
 
 ---
 
@@ -64,15 +66,15 @@ The system supports three roles:
 - **Feature-based architecture** — organized the monolith by business domains with clear separation of controllers, services, repositories, DTOs, and mappers
 - **Database optimization** — eliminated N+1 queries using `EntityGraph`, batch fetching, and targeted database indexes
 - **Dynamic filtering** — implemented composable filtering with Spring Data JPA Specifications for products, orders, and audit logs
-- **Promotion conflict prevention** — prevents a product from being assigned to multiple active promotions
+- **Promotion conflict prevention** — prevents a product from being in two active promotions whose periods overlap
 - **Real-time order tracking** — WebSocket/STOMP updates order status automatically across clients
 - **Cross-cutting audit logging** — implemented with a custom `@Auditable` annotation and AOP
 - **Drag-and-drop image reordering** — admin can reorder product images
 - **Service layer separation** — split large services into focused services (OrderCreationService, OrderQueryService, ProductImageService, ReviewReplyService)
 - **Validation hierarchy** — custom exceptions for all HTTP error scenarios with centralized handling
 - **Token management** — separate TokenService for verification and password reset tokens
-- **Scheduled cleanup** — automated cleanup of expired tokens, rate-limit buckets, and product-cache entries for just-expired promotions
-- **Email verification flow** — async email sending with styled HTML templates
+- **Scheduled cleanup** — automated cleanup of expired tokens, stale unverified accounts, and product/promotion cache entries when a promotion starts or ends
+- **Email verification flow** — emails are sent asynchronously after the transaction commits, with styled HTML templates
 - **Accessibility (WCAG AA)** — dedicated audit and fixes: color-contrast across
   light/dark themes, focus-visible styles, focus trap/restoration in modals,
   ARIA labels on icon-only controls, full keyboard navigation
@@ -121,19 +123,19 @@ flowchart TD
 | `review/`                    | Product reviews, ratings, admin replies                            |
 | `audit/`                     | `@Auditable` AOP change log across admin actions                   |
 | `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
-| `mail/`                      | Async email sending (verification, notifications)                  |
+| `mail/`                      | Email sending via Brevo HTTP API (verification, notifications)     |
 | `file/`                      | Product image storage                                              |
-| `scheduler/`                 | Expired-token, rate-limit-bucket, and expired-promotion-cache cleanup |
-| `security/`                  | JWT filter, WebSocket auth, rate-limit config                      |
-| `shared/`                    | Cross-cutting config, exceptions, validation, enums, events        |
+| `scheduler/`                 | Expired-token, unverified-account, and promotion-cache cleanup     |
+| `security/`                  | JWT filter, OAuth2, WebSocket auth, CSRF header filter             |
+| `shared/`                    | Cross-cutting config, exceptions, validation, rate limiting, events |
 
 ---
 
 ## Security Highlights
 
 - **Role-Based Access Control (RBAC):** separate workflows and permissions for User, Admin, and Courier, enforced at both API and UI level.
-- **API rate limiting:** configurable per-endpoint throttling via Bucket4j, with scheduled cleanup of expired buckets.
-- **Security hardening:** CSP/HSTS/X-Frame-Options headers (via Nginx in the Docker Compose setup), Dependabot dependency scanning across npm/Gradle/GitHub Actions, authenticated WebSocket subscriptions.
+- **API rate limiting:** configurable per-endpoint throttling via Bucket4j backed by Redis, so limits are shared across instances; buckets expire via Redis TTL.
+- **Security hardening:** CSP/HSTS/X-Frame-Options headers (Nginx in Docker Compose, `vercel.json` on Vercel), Dependabot version updates across npm/Gradle/GitHub Actions/Docker, authenticated WebSocket subscriptions.
 - **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing.
 
 ---
@@ -142,40 +144,34 @@ flowchart TD
 
 ### Backend
 
-| Technology                  | Version               |
-| ----------------------------- | ------------------------ |
-| Java                         | 21                     |
-| Spring Boot                  | 4.0.7                  |
-| Spring Security               | Spring Boot-managed     |
-| Spring Data JPA / Hibernate   | Spring Boot-managed     |
-| PostgreSQL                   | 16                     |
-| Redis                         | 7                      |
-| Flyway                        | Spring Boot-managed     |
-| JWT (jjwt)                    | 0.12.6                 |
-| MapStruct                     | 1.6.3                  |
-| WebSocket / STOMP              | Spring Boot-managed     |
-| Stripe                        | 33.1.1                 |
-| Google OAuth2 Client           | Spring Boot-managed     |
-| Bucket4j                      | 8.10.1                 |
-| Testcontainers                | 1.20.6                 |
-| Spring AOP                    | Spring Boot-managed     |
-| Spring Scheduling              | Spring Boot-managed     |
-| Spring Mail                   | Spring Boot-managed     |
+| Technology                    | Purpose                                        |
+| :---------------------------- | :--------------------------------------------- |
+| Java 21, Spring Boot 4        | Application framework                          |
+| Spring Security, Google OAuth2 Client, jjwt | Authentication and authorization (JWT in httpOnly cookie) |
+| Spring Data JPA / Hibernate   | Persistence                                    |
+| PostgreSQL 16, Flyway         | Database and schema migrations                 |
+| Redis 7                       | Cache, JWT blacklist, rate-limit buckets       |
+| Bucket4j                      | Rate limiting                                  |
+| MapStruct                     | DTO mapping                                    |
+| WebSocket / STOMP             | Real-time order status updates                 |
+| Stripe                        | Online payments                                |
+| Brevo                         | Transactional email (HTTP API via `RestClient`) |
+| Cloudinary                    | Image storage                                  |
+| Spring AOP, Spring Scheduling | Audit logging, rate limiting, scheduled cleanup |
+| JUnit 5, Mockito, Testcontainers, ArchUnit | Testing                           |
 
 ### Frontend
 
-| Technology         | Version        |
-| -------------------- | ---------------- |
-| React                | 19.2.7          |
-| TypeScript            | 6.0.2           |
-| Vite                  | 8.1.1           |
-| React Router DOM       | 7.18.1          |
-| Axios                 | 1.18.1          |
-| STOMP.js              | 7.3.0           |
-| SockJS Client          | 1.6.1           |
-| dnd-kit               | 6.3.1           |
-| Tailwind CSS           | 4.3.2           |
-| CSS Modules            | native (Vite)   |
+| Technology                    | Purpose                                        |
+| :---------------------------- | :--------------------------------------------- |
+| React 19, TypeScript          | UI                                             |
+| Vite                          | Build and dev server                           |
+| React Router                  | Routing                                        |
+| Axios                         | HTTP client                                    |
+| STOMP.js, SockJS              | Real-time order tracking                       |
+| dnd-kit                       | Drag-and-drop in the admin panel               |
+| CSS Modules                   | Component-scoped styles                        |
+| Vitest, React Testing Library | Testing                                        |
 
 ### DevOps & Tools
 
@@ -201,8 +197,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Fill in the required values in `.env`.
-See [`.env.example`](.env.example) for all available variables.
+`.env` holds the values listed in [`.env.example`](.env.example).
 
 | Service     | URL                                   |
 | ----------- | ------------------------------------- |
@@ -210,29 +205,21 @@ See [`.env.example`](.env.example) for all available variables.
 | Backend API | http://localhost:8080                 |
 | Swagger     | http://localhost:8080/swagger-ui.html |
 
-Prometheus and Grafana are opt-in dev extras, not started by the command
-above — run `docker compose --profile dev up -d` to include them (plus
-ngrok, for local Stripe webhook testing) at http://localhost:9090 and
-http://localhost:3000 respectively.
+Monitoring (Prometheus at http://localhost:9090, Grafana at
+http://localhost:3000) and an ngrok tunnel for Stripe webhooks run with
+`docker compose --profile dev up -d`.
 
-Swagger UI is enabled under the `local` and `docker` Spring profiles used
-for development. The `prod` profile (see [Cloud Deployment](#cloud-deployment-free-tier))
-disables `springdoc` intentionally, so a public deployment doesn't expose it.
+Swagger UI is available in the `local` and `docker` profiles and disabled in `prod`.
 
 ### Option 2: Local Development Setup
 
-Run backend and frontend separately for faster iteration; only Postgres and
-Redis stay in Docker.
+Backend and frontend run on the host, Postgres and Redis in Docker.
 
 **Backend**
 
 ```bash
 cp .env.example .env
 ```
-
-Fill in the required values (same variables as Option 1 — JWT_SECRET,
-EMAIL_*, GOOGLE_*, STRIPE_*, APP_BASE_URL — the app fails to start without
-them, there are no defaults for secrets).
 
 ```bash
 docker compose up -d postgres redis
@@ -241,11 +228,7 @@ cp ../.env .env
 ./gradlew bootRun
 ```
 
-`./gradlew bootRun` activates the `local` Spring profile by default (see
-`build.gradle`), which already reads `DB_HOST`/`DB_PORT`/`REDIS_HOST`/
-`REDIS_PORT` with `localhost` defaults matching the values in
-`.env.example`, so only Postgres/Redis need no extra config. Backend
-available at http://localhost:8080.
+`bootRun` uses the `local` Spring profile. Backend: http://localhost:8080.
 
 **Frontend**
 
@@ -255,15 +238,14 @@ npm install
 npm run dev
 ```
 
-Frontend available at http://localhost:5173. Vite proxies `/api`, `/ws`,
-`/oauth2`, and `/login/oauth2` to `http://localhost:8080` — no CORS
-configuration or `VITE_API_URL` setup needed.
+Frontend: http://localhost:5173. Vite proxies `/api`, `/ws`, `/oauth2`
+and `/login/oauth2` to the backend.
 
 ### Cloud Deployment (Free Tier)
 
-Backend and frontend are on different domains here, unlike Options 1/2, so
-the frontend talks to the backend over CORS via an absolute `VITE_API_URL`
-instead of a same-origin proxy.
+Frontend and backend run on different domains. REST calls stay same-origin
+through a Vercel rewrite of `/api/*` to Render; the WebSocket connection and
+Google OAuth login go to Render directly.
 
 | Component  | Service                    |
 | ---------- | --------------------------- |
@@ -271,49 +253,57 @@ instead of a same-origin proxy.
 | Backend    | Render — Free Web Service, Docker (root dir: `backend`) |
 | PostgreSQL | Neon (free tier)             |
 | Redis      | Upstash (free tier, TLS)     |
+| Product images | Cloudinary (free tier) |
 
-On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "required everywhere"
-and "prod only" variables from [`.env.example`](.env.example). On Vercel,
-set `VITE_API_URL` to the Render backend's URL. Add
-`<Render URL>/login/oauth2/code/google` to Google Cloud Console's Authorized
-redirect URIs, and point the Stripe webhook at `<Render URL>/api/payments/webhook`.
+Configuration:
+- **Render:** `SPRING_PROFILES_ACTIVE=prod` plus the "All profiles" and "prod"
+  variables from [`.env.example`](.env.example)
+- **Vercel:** `VITE_API_URL` points to the Render backend
+- **Google OAuth:** `<Render URL>/login/oauth2/code/google` is an authorized redirect URI
+- **Stripe:** the webhook targets `<Render URL>/api/payments/webhook`
 
-Render's free tier sleeps after 15 minutes of inactivity; ping
-`/actuator/health` periodically (e.g. UptimeRobot or a GitHub Actions cron)
-to keep it warm.
+Render's free tier sleeps after 15 minutes of inactivity, so the first
+request after a pause can take up to a minute.
 
 ---
 
 ## Testing
 
 Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
-(fails the build on any warning), and the Java compiler is warning-free
-(unchecked operations, MapStruct unmapped properties).
+and the Java compiler runs with `-Werror` (unchecked operations, MapStruct
+unmapped properties), so any warning fails the build. Code rules are
+enforced automatically: Checkstyle (no wildcard or unused imports, no tabs,
+no code comments), ESLint with
+`jsx-a11y` (keyboard-accessible interactions), type-aware `no-unsafe-*`
+rules (no `any` leaking from API responses or `JSON.parse`), `no-floating-promises` /
+`no-misused-promises` (no unhandled rejections), `no-console`
+and a no-comments rule, plus Knip for unused files, exports and dependencies.
 
 ### Backend
 
 - **Unit tests:** JUnit 5 + Mockito — services, mappers, validators, aspects
-- **Integration tests:** Testcontainers with real PostgreSQL — Flyway migrations, repository queries
+- **Integration tests:** Testcontainers with real PostgreSQL and Redis — Flyway migrations, repository queries, full HTTP → service → database scenarios
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
-- **Coverage:** Jacoco (~79% instruction coverage). Run `./gradlew jacocoTestReport`
+- **Coverage:** JaCoCo. Run `./gradlew jacocoTestReport`
   and open `backend/build/reports/jacoco/test/html/index.html`.
 
 ### Frontend
 
 - **Unit/component tests:** Vitest + React Testing Library
+- **Covered flows:** authentication and route guards, cart and checkout,
+  live order updates over WebSocket, admin order status rules, reviews,
+  list state in the URL
 - **Coverage:** `npm run test:coverage` (v8 provider), report at
-  `frontend/coverage/index.html`. Test suite is a starting baseline, not
-  full coverage yet — see `frontend/src/**/*.test.{ts,tsx}` for what's
-  covered so far.
+  `frontend/coverage/index.html`
 
 ---
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on every push/PR: backend
-build + tests (Gradle), frontend lint + tests + build (ESLint, Vitest,
-`tsc -b`, Vite). There is no deployment step — this is CI only, deployment
+GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs to `master`/`develop`: backend
+build + Checkstyle + tests (Gradle), frontend lint + unused-code check + tests + build (ESLint, Knip, Vitest,
+`tsc -b`, Vite), then builds both Docker images. There is no deployment step — this is CI only, deployment
 is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +
 Neon + Upstash (see [Getting Started](#getting-started)).
 
@@ -321,10 +311,7 @@ Neon + Upstash (see [Getting Started](#getting-started)).
 
 ## Test Users
 
-Not seeded by default. Set `SEED_DEMO_USERS=true` in `.env` to have these
-accounts created on startup. **Never enable this on a publicly reachable
-deployment** (e.g. with the `ngrok` tunnel active) — the admin password is
-public in this repository.
+Created on startup with `SEED_DEMO_USERS=true`, local environment only.
 
 | Role    | Email             | Password |
 |---------|-------------------|----------|

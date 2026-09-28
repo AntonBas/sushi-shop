@@ -7,4 +7,8 @@ public class BadRequestException extends SushiShopException {
     public BadRequestException(String message) {
         super(BAD_REQUEST, message);
     }
+
+    public BadRequestException(String message, String code) {
+        super(BAD_REQUEST, message, code);
+    }
 }

@@ -1,6 +1,7 @@
 package com.sushishop.user;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,21 +14,19 @@ public class CustomUserDetails implements UserDetails {
     private final String email;
     private final String password;
     private final UserRole userRole;
-    private final boolean emailVerified;
 
     public CustomUserDetails(User user) {
-        this(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified());
+        this(user.getEmail(), user.getPassword(), user.getUserRole());
     }
 
     public CustomUserDetails(CachedAuthUser cachedUser) {
-        this(cachedUser.email(), cachedUser.password(), cachedUser.userRole(), cachedUser.emailVerified());
+        this(cachedUser.email(), null, cachedUser.userRole());
     }
 
-    private CustomUserDetails(String email, String password, UserRole userRole, boolean emailVerified) {
+    private CustomUserDetails(String email, String password, UserRole userRole) {
         this.email = email;
         this.password = password;
         this.userRole = userRole;
-        this.emailVerified = emailVerified;
     }
 
     @Override
@@ -37,7 +36,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     @Override
-    @Nonnull
+    @Nullable
     public String getPassword() {
         return password;
     }
@@ -46,10 +45,5 @@ public class CustomUserDetails implements UserDetails {
     @Nonnull
     public String getUsername() {
         return email;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return emailVerified;
     }
 }

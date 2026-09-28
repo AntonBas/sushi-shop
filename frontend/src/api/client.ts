@@ -1,28 +1,47 @@
-import axios from "axios";
-import { API_BASE_URL } from "../config/env";
-import { clearAuthToken, getAuthToken } from "./authToken";
+import axios, { type AxiosError } from "axios";
+
+declare module "axios" {
+    export interface AxiosRequestConfig {
+        skipAuthRedirect?: boolean;
+        _sessionRechecked?: boolean;
+    }
+}
+
+let onUnauthorized: (() => void) | null = null;
+
+export const setUnauthorizedHandler = (handler: (() => void) | null) => {
+    onUnauthorized = handler;
+};
 
 const api = axios.create({
-    baseURL: `${API_BASE_URL}/api`,
+    baseURL: "/api",
+    withCredentials: true,
+    headers: {
+        "X-Requested-With": "XMLHttpRequest",
+    },
 });
 
-api.interceptors.request.use((config) => {
-    const token = getAuthToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
+export const handleResponseError = async (error: AxiosError) => {
+    const config = error.config;
 
-api.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            clearAuthToken();
-            window.location.href = "/login";
-        }
+    if (error.response?.status !== 401 || !config || config.skipAuthRedirect) {
         return Promise.reject(error);
     }
-);
+
+    if (!config._sessionRechecked) {
+        config._sessionRechecked = true;
+        const sessionAlive = await api
+            .get("/users/me", { skipAuthRedirect: true })
+            .then(() => true, () => false);
+        if (sessionAlive) {
+            return api.request(config);
+        }
+    }
+
+    onUnauthorized?.();
+    return Promise.reject(error);
+};
+
+api.interceptors.response.use((response) => response, handleResponseError);
 
 export default api;

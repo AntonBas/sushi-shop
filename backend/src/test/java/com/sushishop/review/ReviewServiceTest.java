@@ -14,17 +14,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ReviewServiceTest {
+class ReviewServiceTest {
 
     @Mock
     private ReviewRepository reviewRepository;
@@ -45,7 +50,7 @@ public class ReviewServiceTest {
     private ReviewService reviewService;
 
     @Test
-    public void shouldCreateReview() {
+    void shouldCreateReview() {
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
@@ -64,7 +69,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldUpdateReview() {
+    void shouldUpdateReview() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
         var review = Review.builder().id(1L).user(user).product(product).rating(4).comment("Good").build();
@@ -82,7 +87,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDuplicateReview() {
+    void shouldThrowWhenDuplicateReview() {
         var request = new CreateReviewRequest(1L, 5, "Great!");
         var user = User.builder().id(1L).email("anton@example.com").build();
         var product = Product.builder().id(1L).build();
@@ -96,7 +101,7 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUserNotFound() {
+    void shouldThrowWhenUserNotFound() {
         var request = new CreateReviewRequest(1L, 5, "Great!");
 
         when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
@@ -106,7 +111,26 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUpdateReviewNotOwner() {
+    void shouldPreserveRequestedSortOrderWhenFetchingReviews() {
+        var pageable = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "rating"));
+        var idsPage = new PageImpl<>(List.of(2L, 1L), pageable, 2);
+        var review1 = Review.builder().id(1L).rating(3).build();
+        var review2 = Review.builder().id(2L).rating(5).build();
+        var response1 = new ReviewResponse(1L, 1L, "Anton", 3, null, null, null, null);
+        var response2 = new ReviewResponse(2L, 1L, "Bas", 5, null, null, null, null);
+
+        when(reviewRepository.findReviewIdsByProductId(1L, pageable)).thenReturn(idsPage);
+        when(reviewRepository.findReviewsByIds(List.of(2L, 1L))).thenReturn(List.of(review1, review2));
+        when(reviewMapper.toResponse(review2)).thenReturn(response2);
+        when(reviewMapper.toResponse(review1)).thenReturn(response1);
+
+        var result = reviewService.getByProduct(1L, pageable);
+
+        assertThat(result.getContent()).extracting(ReviewResponse::id).containsExactly(2L, 1L);
+    }
+
+    @Test
+    void shouldThrowWhenUpdateReviewNotOwner() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var review = Review.builder().id(1L).user(user).build();
         var request = new CreateReviewRequest(1L, 5, "Very tasty!");
@@ -118,13 +142,27 @@ public class ReviewServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeleteReviewNotOwner() {
+    void shouldThrowWhenDeleteReviewNotOwner() {
         var user = User.builder().id(1L).email("anton@example.com").build();
         var review = Review.builder().id(1L).user(user).build();
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
 
-        assertThatThrownBy(() -> reviewService.delete(1L, "other@example.com"))
+        assertThatThrownBy(() -> reviewService.delete(1L, "other@example.com", false))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldLetAdminDeleteSomeoneElsesReview() {
+        var user = User.builder().id(1L).email("anton@example.com").build();
+        var product = Product.builder().id(3L).slug("maki").build();
+        var review = Review.builder().id(1L).user(user).product(product).build();
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+
+        reviewService.delete(1L, "admin@example.com", true);
+
+        verify(reviewRepository).delete(review);
+        verify(productCacheService).evict(3L, "maki");
     }
 }

@@ -16,15 +16,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PromotionValidatorTest {
+class PromotionValidatorTest {
+
+    private static final LocalDateTime START = LocalDateTime.of(2030, 1, 1, 0, 0);
+    private static final LocalDateTime END = LocalDateTime.of(2030, 1, 31, 0, 0);
 
     @Mock
     private PromotionRepository promotionRepository;
@@ -38,89 +41,84 @@ public class PromotionValidatorTest {
     private LocalDateTime now;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         now = LocalDateTime.now();
     }
 
     @Test
-    public void validateDates_shouldThrowWhenStartAfterEnd() {
+    void validateDates_shouldThrowWhenStartAfterEnd() {
         var start = now.plusDays(2);
         var end = now.plusDays(1);
 
-        assertThrows(BadRequestException.class,
-                () -> validator.validateDates(start, end));
+        assertThatThrownBy(() -> validator.validateDates(start, end)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
-    public void validateDates_shouldThrowWhenEndInPast() {
+    void validateDates_shouldThrowWhenEndInPast() {
         var start = now.minusDays(2);
         var end = now.minusDays(1);
 
-        assertThrows(BadRequestException.class,
-                () -> validator.validateDates(start, end));
+        assertThatThrownBy(() -> validator.validateDates(start, end)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
-    public void validateDates_shouldPassWhenDatesValid() {
+    void validateDates_shouldPassWhenDatesValid() {
         var start = now.plusDays(1);
         var end = now.plusDays(2);
 
-        assertDoesNotThrow(() -> validator.validateDates(start, end));
+        assertThatCode(() -> validator.validateDates(start, end)).doesNotThrowAnyException();
     }
 
     @Test
-    public void validateTitleUnique_shouldThrowWhenTitleExists() {
+    void validateTitleUnique_shouldThrowWhenTitleExists() {
         var title = "Existing Promotion";
         when(promotionRepository.findByTitle(title))
                 .thenReturn(Optional.of(new Promotion()));
 
-        assertThrows(BadRequestException.class,
-                () -> validator.validateTitleUnique(title));
+        assertThatThrownBy(() -> validator.validateTitleUnique(title)).isInstanceOf(BadRequestException.class);
     }
 
     @Test
-    public void validateTitleUnique_shouldPassWhenTitleFree() {
+    void validateTitleUnique_shouldPassWhenTitleFree() {
         var title = "New Promotion";
         when(promotionRepository.findByTitle(title))
                 .thenReturn(Optional.empty());
 
-        assertDoesNotThrow(() -> validator.validateTitleUnique(title));
+        assertThatCode(() -> validator.validateTitleUnique(title)).doesNotThrowAnyException();
     }
 
     @Test
-    public void validateProductsExist_shouldThrowWhenDuplicateIds() {
+    void validateProductsExist_shouldThrowWhenDuplicateIds() {
         var productIds = List.of(1L, 1L, 2L);
 
-        assertThrows(BadRequestException.class,
-                () -> validator.validateProductsExist(productIds));
+        assertThatThrownBy(() -> validator.validateProductsExist(productIds)).isInstanceOf(BadRequestException.class);
         verify(productRepository, never()).findAllById(any());
     }
 
     @Test
-    public void validateProductsExist_shouldThrowWhenSomeMissing() {
+    void validateProductsExist_shouldThrowWhenSomeMissing() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
         var product2 = Product.builder().id(2L).name("Roll 2").build();
 
         when(productRepository.findAllById(List.of(1L, 2L, 3L)))
                 .thenReturn(List.of(product1, product2));
 
-        assertThrows(NotFoundException.class,
-                () -> validator.validateProductsExist(List.of(1L, 2L, 3L)));
+        assertThatThrownBy(() -> validator.validateProductsExist(List.of(1L, 2L, 3L))).isInstanceOf(NotFoundException.class);
     }
 
     @Test
-    public void validateProductsExist_shouldPassWhenAllExist() {
+    void validateProductsExist_shouldPassWhenAllExist() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
         var product2 = Product.builder().id(2L).name("Roll 2").build();
 
         when(productRepository.findAllById(List.of(1L, 2L)))
                 .thenReturn(List.of(product1, product2));
 
-        assertDoesNotThrow(() -> validator.validateProductsExist(List.of(1L, 2L)));
+        assertThatCode(() -> validator.validateProductsExist(List.of(1L, 2L))).doesNotThrowAnyException();
     }
 
     @Test
-    public void validateProductsNotInOtherActivePromotions_shouldThrowWhenConflict() {
+    void validateProductsNotInOverlappingPromotions_shouldThrowWhenConflict() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
         var product2 = Product.builder().id(2L).name("Roll 2").build();
 
@@ -130,18 +128,15 @@ public class PromotionValidatorTest {
                 .products(new HashSet<>(List.of(product1, product2)))
                 .build();
 
-        when(promotionRepository.findActiveAt(any(LocalDateTime.class)))
+        when(promotionRepository.findActiveOverlapping(START, END))
                 .thenReturn(List.of(existingPromotion));
 
-        when(productRepository.findAllById(List.of(1L)))
-                .thenReturn(List.of(product1));
-
-        assertThrows(BadRequestException.class,
-                () -> validator.validateProductsNotInOtherActivePromotions(List.of(1L), null));
+        assertThatThrownBy(() -> validator.validateProductsNotInOverlappingPromotions(List.of(1L), START, END, null))
+                .isInstanceOf(BadRequestException.class);
     }
 
     @Test
-    public void validateProductsNotInOtherActivePromotions_shouldSkipExcludedPromotion() {
+    void validateProductsNotInOverlappingPromotions_shouldSkipExcludedPromotion() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
 
         var existingPromotion = Promotion.builder()
@@ -150,15 +145,15 @@ public class PromotionValidatorTest {
                 .products(new HashSet<>(List.of(product1)))
                 .build();
 
-        when(promotionRepository.findActiveAt(any(LocalDateTime.class)))
+        when(promotionRepository.findActiveOverlapping(START, END))
                 .thenReturn(List.of(existingPromotion));
 
-        assertDoesNotThrow(() ->
-                validator.validateProductsNotInOtherActivePromotions(List.of(1L), 10L));
+        assertThatCode(() -> validator.validateProductsNotInOverlappingPromotions(List.of(1L), START, END, 10L))
+                .doesNotThrowAnyException();
     }
 
     @Test
-    public void validateProductsNotInOtherActivePromotions_shouldPassWhenNoConflict() {
+    void validateProductsNotInOverlappingPromotions_shouldPassWhenNoConflict() {
         var product1 = Product.builder().id(1L).name("Roll 1").build();
         var product2 = Product.builder().id(2L).name("Roll 2").build();
 
@@ -168,10 +163,10 @@ public class PromotionValidatorTest {
                 .products(new HashSet<>(List.of(product1)))
                 .build();
 
-        when(promotionRepository.findActiveAt(any(LocalDateTime.class)))
+        when(promotionRepository.findActiveOverlapping(START, END))
                 .thenReturn(List.of(existingPromotion));
 
-        assertDoesNotThrow(() ->
-                validator.validateProductsNotInOtherActivePromotions(List.of(2L), null));
+        assertThatCode(() -> validator.validateProductsNotInOverlappingPromotions(List.of(2L), START, END, null))
+                .doesNotThrowAnyException();
     }
 }

@@ -15,14 +15,14 @@ describe('useDelayedLoading', () => {
     const { result } = renderHook(() => useDelayedLoading(true, { delay: 150, minDisplayTime: 300 }))
     expect(result.current).toBe(false)
 
-    act(() => vi.advanceTimersByTime(100))
+    act(() => { vi.advanceTimersByTime(100) })
     expect(result.current).toBe(false)
   })
 
   it('shows loading once the delay has elapsed', () => {
     const { result } = renderHook(() => useDelayedLoading(true, { delay: 150, minDisplayTime: 300 }))
 
-    act(() => vi.advanceTimersByTime(150))
+    act(() => { vi.advanceTimersByTime(150) })
     expect(result.current).toBe(true)
   })
 
@@ -32,9 +32,9 @@ describe('useDelayedLoading', () => {
       { initialProps: { isLoading: true } }
     )
 
-    act(() => vi.advanceTimersByTime(100))
+    act(() => { vi.advanceTimersByTime(100) })
     rerender({ isLoading: false })
-    act(() => vi.advanceTimersByTime(100))
+    act(() => { vi.advanceTimersByTime(100) })
 
     expect(result.current).toBe(false)
   })
@@ -45,14 +45,14 @@ describe('useDelayedLoading', () => {
       { initialProps: { isLoading: true } }
     )
 
-    act(() => vi.advanceTimersByTime(150))
+    act(() => { vi.advanceTimersByTime(150) })
     expect(result.current).toBe(true)
 
     rerender({ isLoading: false })
-    act(() => vi.advanceTimersByTime(200))
+    act(() => { vi.advanceTimersByTime(200) })
     expect(result.current).toBe(true)
 
-    act(() => vi.advanceTimersByTime(100))
+    act(() => { vi.advanceTimersByTime(100) })
     expect(result.current).toBe(false)
   })
 })

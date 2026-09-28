@@ -1,77 +1,97 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useApi } from "../../../hooks/common/useApi";
+import { useNotification } from "../../../context/useNotification";
+import { getErrorMessage } from "../../../api/errorMessage";
+import { useOrderSocket } from "../../../hooks/features/useOrderSocket";
 import * as ordersApi from "../../../api/orders";
 import * as paymentsApi from "../../../api/payments";
-import { getAuthToken } from "../../../api/authToken";
-import { API_BASE_URL } from "../../../config/env";
+import { formatPrice } from "../../../utils/formatPrice";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
-import type { UserOrderResponse } from "../../../types";
+import type { OrderStatusUpdateResponse, UserOrderResponse } from "../../../types";
 import type { Page } from "../../../types/common";
 import {
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import type { Client, StompSubscription } from "@stomp/stompjs";
+import { useListSearchParams } from "../../../hooks/common/useListSearchParams";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {
-  const { data, loading, execute } = useApi<Page<UserOrderResponse>>();
+  const { showNotification } = useNotification();
+  const { data, loading, run } = useApi<Page<UserOrderResponse>>();
   const [orders, setOrders] = useState<UserOrderResponse[]>([]);
-  const [page, setPage] = useState(0);
+  const { page, setPage, keepPageInRange } = useListSearchParams();
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [payLoading, setPayLoading] = useState<number | null>(null);
-  const stompRef = useRef<Client | null>(null);
   const ordersRef = useRef<UserOrderResponse[]>([]);
+  const subscriptionsRef = useRef<Map<number, StompSubscription>>(new Map());
+
+  const toggleExpanded = (id: number) =>
+    setExpandedId((current) => (current === id ? null : id));
 
   useEffect(() => {
-    execute(() => ordersApi.getMyOrders(page)).then((res) =>
-      setOrders(res.content),
-    );
-  }, [page, execute]);
+    void run(() => ordersApi.getMyOrders(page)).then((res) => {
+      if (res) setOrders(res.content);
+    });
+  }, [page, run]);
+
+  const syncSubscriptions = useCallback((client: Client) => {
+    if (!client.connected) return;
+
+    const currentIds = new Set(ordersRef.current.map((order) => order.id));
+
+    subscriptionsRef.current.forEach((subscription, id) => {
+      if (!currentIds.has(id)) {
+        subscription.unsubscribe();
+        subscriptionsRef.current.delete(id);
+      }
+    });
+
+    currentIds.forEach((id) => {
+      if (subscriptionsRef.current.has(id)) return;
+      const subscription = client.subscribe(`/topic/orders/${id}`, (message) => {
+        const update = JSON.parse(message.body) as OrderStatusUpdateResponse;
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === update.orderId
+              ? { ...o, status: update.status, paymentStatus: update.paymentStatus }
+              : o,
+          ),
+        );
+      });
+      subscriptionsRef.current.set(id, subscription);
+    });
+  }, []);
+
+  const stompRef = useOrderSocket((client: Client) => {
+    subscriptionsRef.current.clear();
+    syncSubscriptions(client);
+  });
 
   useEffect(() => {
     ordersRef.current = orders;
-  }, [orders]);
-
-  useEffect(() => {
-    const client = new Client({
-      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      connectHeaders: {
-        Authorization: `Bearer ${getAuthToken()}`,
-      },
-      onConnect: () => {
-        ordersRef.current.forEach((order) => {
-          client.subscribe(`/topic/orders/${order.id}`, (message) => {
-            const update = JSON.parse(message.body);
-            setOrders((prev) =>
-              prev.map((o) =>
-                o.id === update.orderId ? { ...o, status: update.status } : o,
-              ),
-            );
-          });
-        });
-      },
-    });
-    client.activate();
-    stompRef.current = client;
-
-    return () => {
-      client.deactivate();
-    };
-  }, [orders.length]);
+    const client = stompRef.current;
+    if (client) syncSubscriptions(client);
+  }, [orders, syncSubscriptions, stompRef]);
 
   const handlePay = async (order: UserOrderResponse) => {
     setPayLoading(order.id);
     try {
       const url = await paymentsApi.createCheckout(order.id);
-      if (url) window.location.href = url;
+      if (url) window.location.assign(url);
+    } catch (err) {
+      showNotification(getErrorMessage(err, "Could not start payment"), "error");
     } finally {
       setPayLoading(null);
     }
   };
+
+  useEffect(() => {
+    keepPageInRange(data?.page.totalPages ?? 0);
+  }, [data, keepPageInRange]);
 
   if (loading) return <Loading text="Loading orders..." />;
 
@@ -91,9 +111,17 @@ export default function MyOrdersPage() {
               <div key={order.id} className={styles.orderCard}>
                 <div
                   className={styles.orderHeader}
-                  onClick={() =>
-                    setExpandedId(expandedId === order.id ? null : order.id)
-                  }
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={expandedId === order.id}
+                  aria-controls={`order-details-${order.id}`}
+                  onClick={() => toggleExpanded(order.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleExpanded(order.id);
+                    }
+                  }}
                 >
                   <div>
                     <span className={styles.orderId}>Order #{order.id}</span>
@@ -118,7 +146,7 @@ export default function MyOrdersPage() {
                         order.paymentStatus}
                     </span>
                     <span className={styles.orderTotal}>
-                      {order.totalAmount}₴
+                      {formatPrice(order.totalAmount)}₴
                     </span>
                     <span
                       className={styles.statusBadge}
@@ -137,7 +165,7 @@ export default function MyOrdersPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePay(order);
+                        void handlePay(order);
                       }}
                       disabled={payLoading === order.id}
                       className={styles.payBtn}
@@ -148,7 +176,7 @@ export default function MyOrdersPage() {
                 )}
 
                 {expandedId === order.id && (
-                  <div className={styles.orderDetails}>
+                  <div id={`order-details-${order.id}`} className={styles.orderDetails}>
                     <div className={styles.itemsList}>
                       {order.items.map((item) => (
                         <div key={item.productId} className={styles.item}>
@@ -163,7 +191,7 @@ export default function MyOrdersPage() {
                           <span>
                             {item.productName} × {item.quantity}
                           </span>
-                          <span>{item.unitPrice * item.quantity}₴</span>
+                          <span>{formatPrice(item.unitPrice * item.quantity)}₴</span>
                         </div>
                       ))}
                     </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
@@ -10,16 +10,20 @@ import Input from "../../../../components/UI/Input/Input";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
 import type { PromotionResponse } from "../../../../types";
+import { toDateTimeLocalValue } from "../../../../utils/dateTimeLocal";
+import { formatPrice } from "../../../../utils/formatPrice";
+import { useReturnTo } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminPromotionForm.module.css";
 
 export default function AdminPromotionForm() {
   const navigate = useNavigate();
+  const backTo = useReturnTo("/admin/promotions");
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const { showNotification } = useNotification();
   const createApi = useApi<PromotionResponse>();
   const updateApi = useApi<PromotionResponse>();
-  const { loading: getLoading, execute: getPromotion } = useApi<PromotionResponse>();
+  const { loading: getLoading, run: getPromotion } = useApi<PromotionResponse>();
   const { products, totalPages, loading, loadProducts } = useProducts();
 
   const [title, setTitle] = useState("");
@@ -27,24 +31,30 @@ export default function AdminPromotionForm() {
   const [discountPercent, setDiscountPercent] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [loadedDates, setLoadedDates] = useState({ startDate: "", endDate: "" });
   const [active, setActive] = useState(true);
   const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
   const [selectedProductNames, setSelectedProductNames] = useState<
     Record<number, string>
   >({});
   const [productSearch, setProductSearch] = useState("");
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState("");
+  const productSearchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [productPage, setProductPage] = useState(0);
 
   useEffect(() => {
     if (isEdit) {
-      getPromotion(() => promotionsApi.getPromotionById(Number(id)))
+      void getPromotion(() => promotionsApi.getPromotionById(Number(id)))
         .then((promo) => {
           if (!promo) return;
           setTitle(promo.title);
           setDescription(promo.description || "");
           setDiscountPercent(String(promo.discountPercent));
-          setStartDate(promo.startDate?.slice(0, 16) || "");
-          setEndDate(promo.endDate?.slice(0, 16) || "");
+          const loadedStart = promo.startDate ? toDateTimeLocalValue(promo.startDate) : "";
+          const loadedEnd = promo.endDate ? toDateTimeLocalValue(promo.endDate) : "";
+          setStartDate(loadedStart);
+          setEndDate(loadedEnd);
+          setLoadedDates({ startDate: loadedStart, endDate: loadedEnd });
           setActive(promo.active);
           setSelectedProductIds(promo.products.map((p) => p.id));
           setSelectedProductNames(
@@ -55,11 +65,22 @@ export default function AdminPromotionForm() {
   }, [id, isEdit, getPromotion]);
 
   useEffect(() => {
-    loadProducts(productPage, {
-      search: productSearch || undefined,
+    void loadProducts(productPage, {
+      search: debouncedProductSearch || undefined,
       available: true,
     });
-  }, [productPage, productSearch, loadProducts]);
+  }, [productPage, debouncedProductSearch, loadProducts]);
+
+  useEffect(() => () => {
+    if (productSearchDebounceRef.current) clearTimeout(productSearchDebounceRef.current);
+  }, []);
+
+  const handleProductSearchChange = (value: string) => {
+    setProductSearch(value);
+    setProductPage(0);
+    if (productSearchDebounceRef.current) clearTimeout(productSearchDebounceRef.current);
+    productSearchDebounceRef.current = setTimeout(() => setDebouncedProductSearch(value), 300);
+  };
 
   const toggleProduct = (pid: number, name: string) => {
     setSelectedProductIds((prev) => {
@@ -88,33 +109,40 @@ export default function AdminPromotionForm() {
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (!startDate || !endDate) {
+      showNotification("Start and end dates are required", "error");
+      return;
+    }
+    const startIso = new Date(startDate).toISOString();
+    const endIso = new Date(endDate).toISOString();
     const payload = {
       title,
       description: description || undefined,
       discountPercent: Number(discountPercent),
-      startDate: new Date(startDate).toISOString(),
-      endDate: new Date(endDate).toISOString(),
+      startDate: startIso,
+      endDate: endIso,
       productIds: selectedProductIds,
-      ...(isEdit && { active }),
     };
 
     try {
       if (isEdit) {
         await updateApi.execute(() =>
-          promotionsApi.updatePromotion(Number(id), payload),
+          promotionsApi.updatePromotion(Number(id), {
+            ...payload,
+            startDate: startDate !== loadedDates.startDate ? startIso : undefined,
+            endDate: endDate !== loadedDates.endDate ? endIso : undefined,
+            active,
+          }),
         );
         showNotification("Promotion updated", "success");
       } else {
         await createApi.execute(() => promotionsApi.createPromotion(payload));
         showNotification("Promotion created", "success");
       }
-      navigate("/admin/promotions");
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || `Failed to ${isEdit ? "update" : "create"} promotion`;
-      showNotification(message, "error");
+    } catch {
+      return;
     }
+    void navigate(backTo);
   };
 
   if (isEdit && getLoading) return <Loading text="Loading promotion..." />;
@@ -124,7 +152,7 @@ export default function AdminPromotionForm() {
       <div className={styles.header}>
         <button
           type="button"
-          onClick={() => navigate("/admin/promotions")}
+          onClick={() => void navigate(backTo)}
           className={styles.backBtn}
           aria-label="Back to promotions"
         >
@@ -132,7 +160,7 @@ export default function AdminPromotionForm() {
         </button>
         <h1>{isEdit ? "Edit Promotion" : "New Promotion"}</h1>
       </div>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <Input
           label="Title"
           value={title}
@@ -140,8 +168,10 @@ export default function AdminPromotionForm() {
           placeholder="Weekend Sale"
         />
         <div className={styles.fieldGroup}>
-          <label className={styles.label}>Description</label>
+          <label htmlFor="promotion-description" className={styles.label}>Description</label>
           <textarea
+            id="promotion-description"
+            name="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
@@ -173,10 +203,11 @@ export default function AdminPromotionForm() {
         </div>
         {isEdit && (
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>Status</label>
-            <div className={styles.toggleRow}>
+            <span id="promotion-status-label" className={styles.label}>Status</span>
+            <div className={styles.toggleRow} role="group" aria-labelledby="promotion-status-label">
               <button
                 type="button"
+                aria-pressed={active}
                 onClick={() => setActive(true)}
                 className={`${styles.statusBtn} ${active ? styles.statusBtnActive : ""}`}
               >
@@ -184,6 +215,7 @@ export default function AdminPromotionForm() {
               </button>
               <button
                 type="button"
+                aria-pressed={!active}
                 onClick={() => setActive(false)}
                 className={`${styles.statusBtn} ${!active ? styles.statusBtnInactive : ""}`}
               >
@@ -193,20 +225,22 @@ export default function AdminPromotionForm() {
           </div>
         )}
         <div className={styles.fieldGroup}>
-          <label className={styles.label}>
+          <span className={styles.label}>
             Products ({selectedProductIds.length} selected)
-          </label>
+          </span>
           {selectedProductIds.length > 0 && (
             <div className={styles.selectedList}>
               {selectedProductIds.map((pid) => (
-                <span
+                <button
+                  type="button"
                   key={pid}
                   className={styles.selectedTag}
                   onClick={() => removeSelected(pid)}
+                  aria-label={`Remove ${selectedProductNames[pid] || `#${pid}`}`}
                 >
                   {selectedProductNames[pid] || `#${pid}`}
-                  <X size={12} />
-                </span>
+                  <X size={12} aria-hidden="true" />
+                </button>
               ))}
             </div>
           )}
@@ -215,11 +249,9 @@ export default function AdminPromotionForm() {
             <input
               type="text"
               placeholder="Search products..."
+              aria-label="Search products"
               value={productSearch}
-              onChange={(e) => {
-                setProductSearch(e.target.value);
-                setProductPage(0);
-              }}
+              onChange={(e) => handleProductSearchChange(e.target.value)}
             />
           </div>
           {loading ? (
@@ -236,7 +268,7 @@ export default function AdminPromotionForm() {
                   >
                     <span>{product.name}</span>
                     <span className={styles.productPrice}>
-                      ₴{product.price}
+                      ₴{formatPrice(product.price)}
                     </span>
                   </button>
                 ))}
@@ -255,7 +287,7 @@ export default function AdminPromotionForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate("/admin/promotions")}
+            onClick={() => void navigate(backTo)}
           >
             Cancel
           </Button>

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "../../context/useCart";
 import Button from "../../components/UI/Button/Button";
+import { formatPrice } from "../../utils/formatPrice";
 import styles from "./CartPage.module.css";
 
 export default function CartPage() {
@@ -45,12 +46,12 @@ export default function CartPage() {
             )}
             <div className={styles.itemInfo}>
               <h3>{item.name}</h3>
-              <span className={styles.itemPrice}>{item.price}₴</span>
+              <span className={styles.itemPrice}>{formatPrice(item.price)}₴</span>
             </div>
             <div className={styles.itemActions}>
               <span className={styles.quantity}>× {item.quantity}</span>
               <span className={styles.itemTotal}>
-                {item.price * item.quantity}₴
+                {formatPrice(item.price * item.quantity)}₴
               </span>
               <button
                 type="button"
@@ -68,7 +69,7 @@ export default function CartPage() {
       <div className={styles.footer}>
         <div className={styles.total}>
           <span>Total</span>
-          <span className={styles.totalPrice}>{total}₴</span>
+          <span className={styles.totalPrice}>{formatPrice(total)}₴</span>
         </div>
         <Link to="/checkout">
           <Button style={{ width: "100%" }}>Proceed to Checkout</Button>

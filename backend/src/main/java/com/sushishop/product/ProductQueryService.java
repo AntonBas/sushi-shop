@@ -7,12 +7,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 @Slf4j
 @Service
@@ -32,6 +36,21 @@ public class ProductQueryService {
                 .and(ProductSpecification.hasCategory(category))
                 .and(ProductSpecification.isAvailable(available));
 
+        var ratingOrder = pageable.getSort().getOrderFor("rating");
+        if (ratingOrder != null) {
+            return getAllSortedInMemory(spec, pageable, products -> ratingComparator(products, ratingOrder.getDirection()));
+        }
+
+        var priceOrder = pageable.getSort().getOrderFor("price");
+        if (priceOrder != null) {
+            return getAllSortedInMemory(spec, pageable, products -> priceComparator(products, priceOrder.getDirection()));
+        }
+
+        var popularityOrder = pageable.getSort().getOrderFor("popularity");
+        if (popularityOrder != null) {
+            return getAllSortedInMemory(spec, pageable, products -> popularityComparator(products, popularityOrder.getDirection()));
+        }
+
         var page = productRepository.findAll(spec, pageable);
         List<Product> products = page.getContent();
 
@@ -41,6 +60,48 @@ public class ProductQueryService {
 
         var enriched = enrichProducts(products);
         return new PageImpl<>(enriched, pageable, page.getTotalElements());
+    }
+
+    private Page<ProductListResponse> getAllSortedInMemory(Specification<Product> spec, Pageable pageable, Function<List<Product>, Comparator<Product>> comparatorFactory) {
+        List<Product> matching = productRepository.findAll(spec);
+        if (matching.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        var comparator = comparatorFactory.apply(matching);
+        var sorted = matching.stream().sorted(comparator).toList();
+
+        int start = Math.min((int) pageable.getOffset(), sorted.size());
+        int end = Math.min(start + pageable.getPageSize(), sorted.size());
+
+        var enriched = enrichProducts(sorted.subList(start, end));
+        return new PageImpl<>(enriched, pageable, sorted.size());
+    }
+
+    private Comparator<Product> ratingComparator(List<Product> products, Sort.Direction direction) {
+        var ratings = enrichmentService.getAverageRatings(products.stream().map(Product::getId).toList());
+        Comparator<Product> byRating = Comparator.comparingDouble(p -> ratings.getOrDefault(p.getId(), 0.0));
+        if (direction == Sort.Direction.DESC) byRating = byRating.reversed();
+        return byRating.thenComparing(Product::getId);
+    }
+
+    private Comparator<Product> priceComparator(List<Product> products, Sort.Direction direction) {
+        enrichmentService.enrichProductsWithImagesAndPromotions(products);
+        Comparator<Product> byPrice = Comparator.comparing(this::effectivePrice);
+        if (direction == Sort.Direction.DESC) byPrice = byPrice.reversed();
+        return byPrice.thenComparing(Product::getId);
+    }
+
+    private Comparator<Product> popularityComparator(List<Product> products, Sort.Direction direction) {
+        var orderQuantities = enrichmentService.getOrderQuantities(products.stream().map(Product::getId).toList());
+        Comparator<Product> byOrderQuantity = Comparator.comparingLong(p -> orderQuantities.getOrDefault(p.getId(), 0L));
+        if (direction == Sort.Direction.DESC) byOrderQuantity = byOrderQuantity.reversed();
+        return byOrderQuantity.thenComparing(Product::getId);
+    }
+
+    private BigDecimal effectivePrice(Product product) {
+        var discounted = enrichmentService.calculateDiscountedPrice(product);
+        return discounted != null ? discounted : product.getPrice();
     }
 
     @Transactional(readOnly = true)

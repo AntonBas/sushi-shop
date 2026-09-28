@@ -17,6 +17,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Nonnull
     Page<Product> findAll(Specification<Product> spec, @Nonnull Pageable pageable);
 
+    @Nonnull
+    List<Product> findAll(Specification<Product> spec);
+
     @EntityGraph(attributePaths = {"promotions", "productImages"})
     @Nonnull
     Optional<Product> findById(@Nonnull Long id);
@@ -24,12 +27,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @EntityGraph(attributePaths = {"promotions", "productImages"})
     Optional<Product> findBySlug(String slug);
 
+    @Query("SELECT COUNT(oi) > 0 FROM OrderItem oi WHERE oi.product.id = :productId")
+    boolean isReferencedByOrders(@Param("productId") Long productId);
+
     @Query("""
                 SELECT p FROM Product p
-                LEFT JOIN OrderItem oi ON oi.product = p
+                LEFT JOIN OrderItem oi ON oi.product = p AND oi.order.status <> 'CANCELLED'
                 WHERE p.available = true AND p.category <> 'EXTRA'
                 GROUP BY p
-                ORDER BY COUNT(oi) DESC
+                ORDER BY COALESCE(SUM(oi.quantity), 0) DESC, p.id ASC
             """)
     List<Product> findPopular(Pageable pageable);
 
@@ -38,6 +44,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT r.product.id, AVG(r.rating) FROM Review r WHERE r.product.id IN :productIds GROUP BY r.product.id")
     List<Object[]> findAverageRatingsByProductIds(@Param("productIds") List<Long> productIds);
+
+    @Query("SELECT oi.product.id, SUM(oi.quantity) FROM OrderItem oi WHERE oi.product.id IN :productIds AND oi.order.status <> 'CANCELLED' GROUP BY oi.product.id")
+    List<Object[]> findOrderQuantitiesByProductIds(@Param("productIds") List<Long> productIds);
 
     @Query("SELECT pi FROM ProductImage pi WHERE pi.product.id IN :productIds ORDER BY pi.sortOrder")
     List<ProductImage> findImagesByProductIds(@Param("productIds") List<Long> productIds);

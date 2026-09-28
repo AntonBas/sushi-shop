@@ -12,28 +12,26 @@ import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DockerProfileConfigTest {
+class DockerProfileConfigTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldNestConnectionPropertiesUnderSpringNotSpringdoc() throws IOException {
+    void shouldNestConnectionPropertiesUnderSpringNotSpringdoc() throws IOException {
         Resource resource = new ClassPathResource("application-docker.yml");
         var sources = new YamlPropertySourceLoader().load("application-docker", resource);
         PropertySource<?> source = sources.getFirst();
         Map<String, Object> properties = (Map<String, Object>) source.getSource();
 
         assertThat(properties)
-                .as("datasource, redis, mail and oauth2 must live under spring.*, not springdoc.*")
+                .as("datasource, redis and oauth2 must live under spring.*, not springdoc.*")
                 .containsKeys(
                         "spring.datasource.url",
                         "spring.data.redis.host",
-                        "spring.mail.host",
-                        "spring.security.oauth2.client.registration.google.client-id"
+                        "spring.security.oauth2.client.registration.google.redirect-uri"
                 )
                 .doesNotContainKeys(
                         "springdoc.datasource.url",
-                        "springdoc.data.redis.host",
-                        "springdoc.mail.host"
+                        "springdoc.data.redis.host"
                 );
 
         assertThat(Objects.toString(properties.get("springdoc.api-docs.enabled"))).isEqualTo("true");

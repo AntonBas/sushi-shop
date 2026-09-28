@@ -2,6 +2,7 @@ package com.sushishop.order;
 
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.shared.event.OrderCancelledEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.User;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.math.BigDecimal;
@@ -20,10 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderServiceTest {
+class OrderServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -34,11 +39,14 @@ public class OrderServiceTest {
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private OrderService orderService;
 
     @Test
-    public void shouldGetByIdForOwner() {
+    void shouldGetByIdForOwner() {
         var order = new Order();
         order.setUser(User.builder().email("anton@example.com").build());
         var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
@@ -54,7 +62,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldGetByIdForStaffRegardlessOfOwner() {
+    void shouldGetByIdForStaffRegardlessOfOwner() {
         var order = new Order();
         order.setUser(User.builder().email("anton@example.com").build());
         var expected = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111", null,
@@ -70,7 +78,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowNotFoundWhenRequesterIsNotOwnerOrStaff() {
+    void shouldThrowNotFoundWhenRequesterIsNotOwnerOrStaff() {
         var order = new Order();
         order.setUser(User.builder().email("anton@example.com").build());
 
@@ -81,7 +89,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldUpdateStatusForDelivery() {
+    void shouldUpdateStatusForDelivery() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.NEW)
@@ -102,7 +110,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldUpdateStatusToReadyForPickup() {
+    void shouldUpdateStatusToReadyForPickup() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -122,7 +130,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldUpdateStatusToDeliveredForPickup() {
+    void shouldUpdateStatusToDeliveredForPickup() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.READY)
@@ -142,7 +150,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeliveringForPickup() {
+    void shouldThrowWhenDeliveringForPickup() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -157,7 +165,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenReadyForDelivery() {
+    void shouldThrowWhenReadyForDelivery() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -172,7 +180,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenSameStatus() {
+    void shouldThrowWhenSameStatus() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.NEW)
@@ -187,7 +195,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenCancelNonNewOrder() {
+    void shouldThrowWhenCancelNonNewOrder() {
         var order = Order.builder()
                 .id(1L)
                 .status(OrderStatus.COOKING)
@@ -199,5 +207,115 @@ public class OrderServiceTest {
         assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.CANCELLED))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("Cannot cancel order with status");
+    }
+
+    @Test
+    void shouldRejectConfirmingUnpaidOnlineOrder() {
+        var order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.NEW)
+                .deliveryMethod(DeliveryMethod.DELIVERY)
+                .paymentMethod(PaymentMethod.ONLINE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.CONFIRMED))
+                .isInstanceOf(BadRequestException.class);
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldConfirmNewOrderAfterPaymentAndNotifySubscribers() {
+        var order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.NEW)
+                .paymentMethod(PaymentMethod.ONLINE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+        when(orderMapper.getPaymentStatus(order)).thenReturn("PAID");
+
+        orderService.confirmOrder(1L);
+
+        assertThat(order.isPaid()).isTrue();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+        verify(messagingTemplate).convertAndSend("/topic/orders/1", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
+        verify(messagingTemplate).convertAndSend("/topic/orders/new", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
+    }
+
+    @Test
+    void shouldMarkCancelledOrderPaidWithoutReopeningIt() {
+        var order = Order.builder()
+                .id(1L)
+                .status(OrderStatus.CANCELLED)
+                .paymentMethod(PaymentMethod.ONLINE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        orderService.confirmOrder(1L);
+
+        assertThat(order.isPaid()).isTrue();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(messagingTemplate, never()).convertAndSend(any(String.class), any(Object.class));
+    }
+
+    @Test
+    void shouldPublishCancellationForUnpaidOnlineOrder() {
+        var order = orderWith(PaymentMethod.ONLINE, false);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.updateStatus(1L, OrderStatus.CANCELLED);
+
+        verify(eventPublisher).publishEvent(isA(OrderCancelledEvent.class));
+    }
+
+    @Test
+    void shouldNotPublishCancellationForPayOnDeliveryOrder() {
+        var order = orderWith(PaymentMethod.ON_DELIVERY, false);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.updateStatus(1L, OrderStatus.CANCELLED);
+
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void shouldCancelConfirmedCashOnDeliveryOrder() {
+        var order = orderWith(PaymentMethod.ON_DELIVERY, false);
+        order.setStatus(OrderStatus.CONFIRMED);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderRepository.save(order)).thenReturn(order);
+
+        orderService.updateStatus(1L, OrderStatus.CANCELLED);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
+    }
+
+    @Test
+    void shouldRejectCancellingConfirmedOnlineOrder() {
+        var order = orderWith(PaymentMethod.ONLINE, true);
+        order.setStatus(OrderStatus.CONFIRMED);
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.updateStatus(1L, OrderStatus.CANCELLED))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Cannot cancel order with status");
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+    }
+
+    private Order orderWith(PaymentMethod paymentMethod, boolean paid) {
+        var order = new Order();
+        order.setId(1L);
+        order.setStatus(OrderStatus.NEW);
+        order.setPaymentMethod(paymentMethod);
+        order.setDeliveryMethod(DeliveryMethod.PICKUP);
+        order.setPaid(paid);
+        return order;
     }
 }

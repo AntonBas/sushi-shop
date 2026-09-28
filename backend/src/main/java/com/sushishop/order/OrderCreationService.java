@@ -6,10 +6,12 @@ import com.sushishop.order.dto.request.OrderItemRequest;
 import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductEnrichmentService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.TransactionCallbacks;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +32,7 @@ public class OrderCreationService {
 
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
+    private final ProductEnrichmentService productEnrichmentService;
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
@@ -50,8 +54,8 @@ public class OrderCreationService {
         }
 
         var saved = orderRepository.save(order);
-        messagingTemplate.convertAndSend("/topic/orders/new",
-                new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name()));
+        var notification = new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name(), orderMapper.getPaymentStatus(saved));
+        TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/new", notification));
         log.info("Order created: {}", saved.getId());
         return orderMapper.toResponse(saved);
     }
@@ -64,6 +68,10 @@ public class OrderCreationService {
 
     private List<OrderItem> createOrderItems(List<OrderItemRequest> items) {
         var productIds = items.stream().map(OrderItemRequest::productId).toList();
+        if (new HashSet<>(productIds).size() != productIds.size()) {
+            throw new BadRequestException("Duplicate product IDs are not allowed");
+        }
+
         Map<Long, Product> productsById = productRepository.findAllById(productIds).stream()
                 .collect(Collectors.toMap(Product::getId, p -> p));
 
@@ -78,7 +86,8 @@ public class OrderCreationService {
             if (!product.isAvailable()) {
                 throw new BadRequestException("Product is not available: " + product.getName());
             }
-            var unitPrice = product.getPrice();
+            var discountedPrice = productEnrichmentService.calculateDiscountedPrice(product);
+            var unitPrice = discountedPrice != null ? discountedPrice : product.getPrice();
             var subtotal = unitPrice.multiply(BigDecimal.valueOf(item.quantity()));
             return OrderItem.builder()
                     .product(product)

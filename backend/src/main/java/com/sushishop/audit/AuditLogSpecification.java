@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class AuditLogSpecification {
 
@@ -18,13 +19,13 @@ public class AuditLogSpecification {
                 predicates.add(cb.equal(root.get("action"), action));
             }
             if (entityName != null && !entityName.isBlank()) {
-                predicates.add(cb.equal(root.get("entityName"), entityName));
+                predicates.add(cb.equal(cb.lower(root.get("entityName")), entityName.toLowerCase(Locale.ROOT)));
             }
             if (entityId != null) {
                 predicates.add(cb.equal(root.get("entityId"), entityId));
             }
             if (performedBy != null && !performedBy.isBlank()) {
-                predicates.add(cb.equal(root.get("performedBy"), performedBy));
+                predicates.add(cb.equal(cb.lower(root.get("performedBy")), performedBy.toLowerCase(Locale.ROOT)));
             }
             if (start != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("performedAt"), start));

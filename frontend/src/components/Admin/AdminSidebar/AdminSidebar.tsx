@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   UtensilsCrossed,
@@ -51,24 +51,61 @@ export default function AdminSidebar({
   const menuItems = allMenuItems.filter((item) => !item.adminOnly || isAdmin);
 
   useEffect(() => {
-    if (isOpen && isMobile) {
-      document.body.style.overflow = "hidden";
-    } else {
+    if (!isOpen || !isMobile) {
       document.body.style.overflow = "auto";
+      return;
     }
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = "auto";
+      document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, isMobile]);
+  }, [isOpen, isMobile, onClose]);
 
   const handleItemClick = () => {
     if (isMobile) onClose();
   };
 
+  const overlayTouchStart = useRef<{ x: number; y: number } | null>(null);
+  const overlayDragged = useRef(false);
+
+  const handleOverlayTouchStart = (e: React.TouchEvent) => {
+    overlayTouchStart.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    overlayDragged.current = false;
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent) => {
+    if (!overlayTouchStart.current) return;
+    const dx = e.touches[0].clientX - overlayTouchStart.current.x;
+    const dy = e.touches[0].clientY - overlayTouchStart.current.y;
+    if (Math.abs(dx) > 10 || Math.abs(dy) > 10) overlayDragged.current = true;
+  };
+
+  const handleOverlayClick = () => {
+    if (overlayDragged.current) {
+      overlayDragged.current = false;
+      return;
+    }
+    onClose();
+  };
+
   return (
     <>
       {isOpen && isMobile && (
-        <div className={styles.overlay} onClick={onClose} />
+        <div
+          className={styles.overlay}
+          role="presentation"
+          onClick={handleOverlayClick}
+          onTouchStart={handleOverlayTouchStart}
+          onTouchMove={handleOverlayTouchMove}
+        />
       )}
 
       <aside
@@ -112,7 +149,7 @@ export default function AdminSidebar({
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <button className={styles.backButton} onClick={() => navigate("/")}>
+          <button className={styles.backButton} onClick={() => void navigate("/")}>
             <ArrowLeft size={18} />
             <span>Back to Website</span>
           </button>

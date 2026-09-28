@@ -45,7 +45,6 @@ Thumbs.db
 docker-compose.override.yml
 
 ### Application ###
-src/main/resources/application-local.yml
 *.log
 logs/
 

@@ -1,35 +1,42 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Tag, Clock, Menu as MenuIcon } from "lucide-react";
 import { useApi } from "../../hooks/common/useApi";
 import * as promotionsApi from "../../api/promotions";
 import ProductCard from "../../components/Product/ProductCard/ProductCard";
 import Loading from "../../components/UI/Loading/Loading";
+import NotFoundPage from "../NotFound/NotFoundPage";
 import type { PromotionResponse } from "../../types";
 import styles from "./PromotionPage.module.css";
 
 export default function PromotionPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { data: promotion, loading, execute } = useApi<PromotionResponse>();
+  const [now] = useState(Date.now);
+  const { data: promotion, loading, errorStatus, run } = useApi<PromotionResponse>();
 
   useEffect(() => {
-    if (slug) execute(() => promotionsApi.getPromotionBySlug(slug));
-  }, [slug, execute]);
+    if (slug) void run(() => promotionsApi.getPromotionBySlug(slug), { silentStatuses: [404] });
+  }, [slug, run]);
 
   if (loading) return <Loading text="Loading promotion..." />;
+  if (errorStatus === 404) return <NotFoundPage />;
   if (!promotion) return null;
 
-  /* eslint-disable react-hooks/purity */
-  const daysLeft = Math.ceil(
-    (new Date(promotion.endDate).getTime() - Date.now()) /
-      (1000 * 60 * 60 * 24),
-  );
-  /* eslint-enable react-hooks/purity */
+  const startsAt = new Date(promotion.startDate).getTime();
+  const endsAt = new Date(promotion.endDate).getTime();
+  const isRunning = promotion.active && startsAt <= now && now < endsAt;
+  const isUpcoming = promotion.active && now < startsAt;
+  const daysLeft = Math.ceil((endsAt - now) / (1000 * 60 * 60 * 24));
+  const statusText = isRunning
+    ? `${daysLeft} day${daysLeft !== 1 ? "s" : ""} left`
+    : isUpcoming
+      ? `Starts ${new Date(startsAt).toLocaleDateString("en-US", { day: "numeric", month: "long" })}`
+      : "This promotion has ended";
 
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
-        <Link to="/" className={styles.breadcrumbLink}>
+        <Link to="/menu" className={styles.breadcrumbLink}>
           <MenuIcon size={14} /> Menu
         </Link>
         <span className={styles.separator}>/</span>
@@ -49,7 +56,7 @@ export default function PromotionPage() {
           <div className={styles.meta}>
             <span className={styles.daysLeft}>
               <Clock size={14} />
-              {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+              {statusText}
             </span>
             <span className={styles.productCount}>
               {promotion.products.length} product
@@ -57,12 +64,14 @@ export default function PromotionPage() {
             </span>
           </div>
         </div>
-        <div className={styles.discountBadge}>
-          <span className={styles.discountValue}>
-            {promotion.discountPercent}%
-          </span>
-          <span className={styles.discountLabel}>OFF</span>
-        </div>
+        {isRunning && (
+          <div className={styles.discountBadge}>
+            <span className={styles.discountValue}>
+              {promotion.discountPercent}%
+            </span>
+            <span className={styles.discountLabel}>OFF</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.products}>

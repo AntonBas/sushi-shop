@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ReactNode } from "react";
 import Button from "../UI/Button/Button";
 import styles from "./ErrorBoundary.module.css";
 
@@ -15,10 +15,6 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(): State {
     return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("Unhandled render error", error, errorInfo);
   }
 
   handleReload = () => {

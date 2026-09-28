@@ -68,34 +68,6 @@
   text-decoration: underline;
 }
 
-.successModal {
-  text-align: center;
-  padding: 20px;
-}
-
-.successIcon {
-  color: var(--color-primary);
-  margin: 0 auto 16px;
-}
-
-.successModal h2 {
-  font-size: 20px;
-  margin-bottom: 8px;
-  color: var(--color-text);
-}
-
-.successModal p {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.successModal .hint {
-  font-size: 13px;
-  color: var(--color-text-muted);
-  margin-top: 12px;
-}
-
 @media (max-width: 768px) {
   .container {
     margin: 20px auto;

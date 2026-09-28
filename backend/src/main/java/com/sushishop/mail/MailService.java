@@ -1,67 +1,152 @@
 package com.sushishop.mail;
 
-import lombok.RequiredArgsConstructor;
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.mail.javamail.MimeMessagePreparator;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
+import org.springframework.web.client.RestClient;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MailService {
 
-    private final JavaMailSender mailSender;
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long RETRY_DELAY_MS = 200;
 
-    @Value("${app.base-url}")
+    private final RestClient restClient;
+    private final TaskExecutor taskExecutor;
+    private final String fromEmail;
+    private final String fromName;
+
+    @Value("${app.frontend-url}")
     private String baseUrl;
 
-    @Async
+    public MailService(@Value("${app.mail.api-key}") String apiKey,
+                        @Value("${app.mail.from-email}") String fromEmail,
+                        @Value("${app.mail.from-name}") String fromName,
+                        @Qualifier("mailTaskExecutor") TaskExecutor taskExecutor) {
+        this.taskExecutor = taskExecutor;
+        this.fromEmail = fromEmail;
+        this.fromName = fromName;
+        this.restClient = RestClient.builder()
+                .baseUrl("https://api.brevo.com/v3/smtp/email")
+                .defaultHeader("api-key", apiKey)
+                .build();
+    }
+
     public void sendVerificationEmail(String to, String token) {
-        sendStyledEmail(to, "Verify your Sushi Bas Shop account",
+        dispatch(() -> sendStyledEmail(to, "Verify your Sushi Bas Shop account",
                 "Welcome!",
                 "Thanks for creating an account. Click the button below to verify your email address.",
                 "Verify Email",
-                baseUrl + "/verify-email?token=" + token);
+                baseUrl + "/verify-email?token=" + token));
     }
 
-    @Async
     public void sendPasswordResetEmail(String to, String token) {
-        sendStyledEmail(to, "Reset your Sushi Bas Shop password",
+        dispatch(() -> sendStyledEmail(to, "Reset your Sushi Bas Shop password",
                 "Reset Password",
                 "Click the button below to reset your password.",
                 "Reset Password",
-                baseUrl + "/reset-password?token=" + token);
+                baseUrl + "/reset-password?token=" + token));
+    }
+
+    public void sendPasswordChangedNotification(String to) {
+        dispatch(() -> sendPlainEmail(to, "Your Sushi Bas Shop password was changed",
+                "Password Changed",
+                "Your account password was just changed. If you didn't do this, please reset your password immediately."));
+    }
+
+    public void sendEmailChangeVerification(String to, String token) {
+        dispatch(() -> sendStyledEmail(to, "Confirm your new Sushi Bas Shop email",
+                "Confirm Your New Email",
+                "Click the button below to confirm this address as your new account email.",
+                "Confirm Email",
+                baseUrl + "/verify-email-change?token=" + token));
+    }
+
+    public void sendEmailChangeRequestedNotification(String to, String newEmail) {
+        dispatch(() -> sendPlainEmail(to, "Your Sushi Bas Shop email change request",
+                "Email Change Requested",
+                "A request was made to change your account email to " + HtmlUtils.htmlEscape(newEmail)
+                        + ". If this wasn't you, please contact support immediately."));
+    }
+
+    private void dispatch(Runnable send) {
+        TransactionCallbacks.afterCommit(() -> taskExecutor.execute(send));
     }
 
     private void sendStyledEmail(String to, String subject, String title, String body, String buttonText, String buttonUrl) {
-        var message = (MimeMessagePreparator) mimeMessage -> {
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText("""
-                    <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
-                      <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
-                        <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
-                      </div>
-                      <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
-                        <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
-                        <p style="margin:0 0 24px;color:#6b7280;font-size:15px;line-height:1.5">%s</p>
-                        <a href="%s" style="display:block;background:#F97316;color:#fff;text-align:center;padding:14px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">%s</a>
-                        <p style="margin:24px 0 0;color:#9ca3af;font-size:13px">If you didn't request this, you can ignore this email.</p>
-                      </div>
-                    </div>
-                    """.formatted(title, body, buttonUrl, buttonText), true);
-        };
+        String html = """
+                <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
+                  <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+                    <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
+                  </div>
+                  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                    <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
+                    <p style="margin:0 0 24px;color:#6b7280;font-size:15px;line-height:1.5">%s</p>
+                    <a href="%s" style="display:block;background:#F97316;color:#fff;text-align:center;padding:14px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">%s</a>
+                    <p style="margin:24px 0 0;color:#9ca3af;font-size:13px">If you didn't request this, you can ignore this email.</p>
+                  </div>
+                </div>
+                """.formatted(title, body, buttonUrl, buttonText);
 
+        deliver(to, subject, html);
+    }
+
+    private void sendPlainEmail(String to, String subject, String title, String body) {
+        String html = """
+                <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
+                  <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+                    <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
+                  </div>
+                  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                    <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
+                    <p style="margin:0;color:#6b7280;font-size:15px;line-height:1.5">%s</p>
+                  </div>
+                </div>
+                """.formatted(title, body);
+
+        deliver(to, subject, html);
+    }
+
+    private void deliver(String to, String subject, String html) {
+        var payload = Map.of(
+                "sender", Map.of("name", fromName, "email", fromEmail),
+                "to", List.of(Map.of("email", to)),
+                "subject", subject,
+                "htmlContent", html
+        );
+
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                restClient.post()
+                        .body(payload)
+                        .retrieve()
+                        .toBodilessEntity();
+                log.info("{} email sent to {}", subject, to);
+                return;
+            } catch (Exception e) {
+                if (attempt == MAX_ATTEMPTS) {
+                    log.error("Failed to send {} email to {} after {} attempts", subject, to, MAX_ATTEMPTS, e);
+                    return;
+                }
+                log.warn("Attempt {}/{} failed to send {} email to {}, retrying", attempt, MAX_ATTEMPTS, subject, to, e);
+                sleepBeforeRetry();
+            }
+        }
+    }
+
+    private void sleepBeforeRetry() {
         try {
-            mailSender.send(message);
-            log.info("{} email sent to {}", subject, to);
-        } catch (Exception e) {
-            log.error("Failed to send {} email to {}", subject, to, e);
+            Thread.sleep(RETRY_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

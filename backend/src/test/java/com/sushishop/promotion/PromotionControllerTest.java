@@ -20,19 +20,24 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class PromotionControllerTest {
+class PromotionControllerTest {
 
     private static final Long PROMOTION_ID = 1L;
     private static final String PROMOTION_SLUG = "weekend-sale";
@@ -51,7 +56,7 @@ public class PromotionControllerTest {
     private PromotionService promotionService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
@@ -72,7 +77,7 @@ public class PromotionControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void shouldCreatePromotion() throws Exception {
+    void shouldCreatePromotion() throws Exception {
         var request = new CreatePromotionRequest(PROMOTION_TITLE, "20% off", DISCOUNT_PERCENT, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), List.of(1L));
 
         var response = createPromotionResponse(PROMOTION_ID, PROMOTION_SLUG, PROMOTION_TITLE, DISCOUNT_PERCENT);
@@ -90,7 +95,34 @@ public class PromotionControllerTest {
     }
 
     @Test
-    public void shouldGetActivePromotions() throws Exception {
+    @WithMockUser(roles = "ADMIN")
+    void shouldRejectPromotionWithoutProducts() throws Exception {
+        var request = new CreatePromotionRequest(PROMOTION_TITLE, "20% off", DISCOUNT_PERCENT, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), null);
+
+        mockMvc.perform(post("/api/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.subErrors[0].field").value("productIds"));
+
+        verify(promotionService, never()).create(any());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void shouldRejectPromotionWithNullProductId() throws Exception {
+        var request = new CreatePromotionRequest(PROMOTION_TITLE, "20% off", DISCOUNT_PERCENT, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(7), Arrays.asList(1L, null));
+
+        mockMvc.perform(post("/api/promotions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verify(promotionService, never()).create(any());
+    }
+
+    @Test
+    void shouldGetActivePromotions() throws Exception {
         var response = createPromotionResponse(PROMOTION_ID, PROMOTION_SLUG, PROMOTION_TITLE, DISCOUNT_PERCENT);
 
         when(promotionService.getActive()).thenReturn(List.of(response));
@@ -104,7 +136,7 @@ public class PromotionControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void shouldGetAllPromotions() throws Exception {
+    void shouldGetAllPromotions() throws Exception {
         var response = createPromotionResponse(PROMOTION_ID, PROMOTION_SLUG, PROMOTION_TITLE, DISCOUNT_PERCENT);
 
         when(promotionService.getAll(any(), any())).thenReturn(new PageImpl<>(List.of(response)));
@@ -118,7 +150,7 @@ public class PromotionControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void shouldGetById() throws Exception {
+    void shouldGetById() throws Exception {
         var response = createPromotionResponse(PROMOTION_ID, PROMOTION_SLUG, PROMOTION_TITLE, DISCOUNT_PERCENT);
 
         when(promotionService.getById(PROMOTION_ID)).thenReturn(response);
@@ -131,7 +163,7 @@ public class PromotionControllerTest {
     }
 
     @Test
-    public void shouldGetBySlug() throws Exception {
+    void shouldGetBySlug() throws Exception {
         var response = createPromotionResponse(PROMOTION_ID, PROMOTION_SLUG, PROMOTION_TITLE, DISCOUNT_PERCENT);
 
         when(promotionService.getBySlug(PROMOTION_SLUG)).thenReturn(response);
@@ -145,7 +177,7 @@ public class PromotionControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void shouldUpdatePromotion() throws Exception {
+    void shouldUpdatePromotion() throws Exception {
         var request = new UpdatePromotionRequest("Updated Sale", "Updated description", new BigDecimal("30.00"), null, null, null, false);
 
         var response = createPromotionResponse(PROMOTION_ID, "updated-sale", "Updated Sale", new BigDecimal("30.00"));
@@ -163,7 +195,7 @@ public class PromotionControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void shouldDeletePromotion() throws Exception {
+    void shouldDeletePromotion() throws Exception {
         mockMvc.perform(delete("/api/promotions/{id}", PROMOTION_ID))
                 .andExpect(status().isNoContent());
 
@@ -172,7 +204,7 @@ public class PromotionControllerTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    public void shouldRejectNonAdminUser() throws Exception {
+    void shouldRejectNonAdminUser() throws Exception {
         mockMvc.perform(delete("/api/promotions/{id}", PROMOTION_ID))
                 .andExpect(status().isForbidden());
     }

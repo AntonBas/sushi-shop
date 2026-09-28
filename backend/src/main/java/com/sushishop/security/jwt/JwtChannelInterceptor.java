@@ -23,11 +23,12 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class JwtChannelInterceptor implements ChannelInterceptor {
 
+    private static final String NEW_ORDERS_TOPIC = "/topic/orders/new";
     private static final Pattern ORDER_TOPIC_PATTERN = Pattern.compile("^/topic/orders/(\\d+)$");
     private static final String ROLE_ADMIN = "ROLE_" + Roles.ADMIN;
     private static final String ROLE_COURIER = "ROLE_" + Roles.COURIER;
 
-    private final JwtUtil jwtUtil;
+    private final WsTicketService wsTicketService;
     private final UserCacheService userCacheService;
     private final OrderRepository orderRepository;
 
@@ -44,6 +45,8 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             accessor.setUser(authenticate(accessor));
         } else if (StompCommand.SUBSCRIBE.equals(command)) {
             authorizeSubscription(accessor);
+        } else if (StompCommand.SEND.equals(command)) {
+            throw new AccessDeniedException("Clients are not allowed to send messages");
         }
 
         return MessageBuilder.createMessage(message.getPayload(), accessor.getMessageHeaders());
@@ -52,14 +55,12 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     private UsernamePasswordAuthenticationToken authenticate(StompHeaderAccessor accessor) {
         var header = accessor.getFirstNativeHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            throw new BadCredentialsException("Missing WebSocket authentication token");
+            throw new BadCredentialsException("Missing WebSocket authentication ticket");
         }
 
-        var token = header.substring(7);
-        var payload = jwtUtil.parseToken(token);
-        if (payload == null) {
-            throw new BadCredentialsException("Invalid WebSocket authentication token");
-        }
+        var ticket = header.substring(7);
+        var payload = wsTicketService.consume(ticket)
+                .orElseThrow(() -> new BadCredentialsException("Invalid or expired WebSocket authentication ticket"));
 
         var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
         if (cachedUser == null) {
@@ -71,28 +72,25 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     }
 
     private void authorizeSubscription(StompHeaderAccessor accessor) {
-        var destination = accessor.getDestination();
-        if (destination == null) {
-            return;
-        }
-
         if (!(accessor.getUser() instanceof UsernamePasswordAuthenticationToken auth)) {
             throw new AccessDeniedException("Not authenticated");
         }
 
-        if ("/topic/orders/new".equals(destination)) {
-            requireRole(auth, ROLE_ADMIN);
+        var destination = accessor.getDestination();
+        if (NEW_ORDERS_TOPIC.equals(destination)) {
+            requireStaff(auth);
             return;
         }
 
-        var matcher = ORDER_TOPIC_PATTERN.matcher(destination);
-        if (matcher.matches()) {
-            authorizeOrderTopic(auth, Long.valueOf(matcher.group(1)));
+        var matcher = destination == null ? null : ORDER_TOPIC_PATTERN.matcher(destination);
+        if (matcher == null || !matcher.matches()) {
+            throw new AccessDeniedException("Subscription destination is not allowed");
         }
+        authorizeOrderTopic(auth, Long.valueOf(matcher.group(1)));
     }
 
     private void authorizeOrderTopic(UsernamePasswordAuthenticationToken auth, Long orderId) {
-        if (hasRole(auth, ROLE_ADMIN) || hasRole(auth, ROLE_COURIER)) {
+        if (isStaff(auth)) {
             return;
         }
 
@@ -105,10 +103,14 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
         }
     }
 
-    private void requireRole(UsernamePasswordAuthenticationToken auth, String role) {
-        if (!hasRole(auth, role)) {
-            throw new AccessDeniedException("Requires " + role);
+    private void requireStaff(UsernamePasswordAuthenticationToken auth) {
+        if (!isStaff(auth)) {
+            throw new AccessDeniedException("Requires staff role");
         }
+    }
+
+    private boolean isStaff(UsernamePasswordAuthenticationToken auth) {
+        return hasRole(auth, ROLE_ADMIN) || hasRole(auth, ROLE_COURIER);
     }
 
     private boolean hasRole(UsernamePasswordAuthenticationToken auth, String role) {

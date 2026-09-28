@@ -4,33 +4,40 @@ import { Pencil, Trash2, Search } from "lucide-react";
 import { useApi } from "../../../../hooks/common/useApi";
 import { useNotification } from "../../../../context/useNotification";
 import * as promotionsApi from "../../../../api/promotions";
+import { getErrorMessage } from "../../../../api/errorMessage";
 import Button from "../../../../components/UI/Button/Button";
 import Loading from "../../../../components/UI/Loading/Loading";
 import Pagination from "../../../../components/UI/Pagination/Pagination";
 import Modal from "../../../../components/UI/Modal/Modal";
 import type { PromotionResponse } from "../../../../types";
 import type { Page } from "../../../../types/common";
+import { useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
+import { useReturnToState } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminPromotionsPage.module.css";
 
 export default function AdminPromotionsPage() {
   const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const { data, loading, execute } = useApi<Page<PromotionResponse>>();
-  const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
+  const { data, loading, run } = useApi<Page<PromotionResponse>>();
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
+  const debouncedSearch = getParam("search");
+  const [search, handleSearchChange] = useDebouncedParamInput(debouncedSearch, (value) =>
+    updateParams({ search: value }, { replace: true }),
+  );
+  const returnToState = useReturnToState();
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteTitle, setDeleteTitle] = useState("");
 
   const loadPromotions = useCallback(
     (p: number, s?: string) => {
-      return execute(() => promotionsApi.getPromotions(p, 12, s));
+      return run(() => promotionsApi.getPromotions(p, 12, s));
     },
-    [execute],
+    [run],
   );
 
   useEffect(() => {
-    loadPromotions(page, search || undefined);
-  }, [page, search, loadPromotions]);
+    void loadPromotions(page, debouncedSearch || undefined);
+  }, [page, debouncedSearch, loadPromotions]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -38,14 +45,15 @@ export default function AdminPromotionsPage() {
       await promotionsApi.deletePromotion(deleteId);
       setDeleteId(null);
       showNotification("Promotion deleted", "success");
-      loadPromotions(page, search || undefined);
+      void loadPromotions(page, debouncedSearch || undefined);
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to delete promotion";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to delete promotion"), "error");
     }
   };
+
+  useEffect(() => {
+    keepPageInRange(data?.page.totalPages ?? 0);
+  }, [data, keepPageInRange]);
 
   if (loading && !data) return <Loading text="Loading promotions..." />;
 
@@ -55,7 +63,7 @@ export default function AdminPromotionsPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1>Promotions</h1>
-        <Button onClick={() => navigate("/admin/promotions/new")}>
+        <Button onClick={() => void navigate("/admin/promotions/new", { state: returnToState })}>
           Add Promotion
         </Button>
       </div>
@@ -66,10 +74,8 @@ export default function AdminPromotionsPage() {
             type="text"
             placeholder="Search promotions..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            aria-label="Search promotions"
           />
         </div>
       </div>
@@ -77,7 +83,7 @@ export default function AdminPromotionsPage() {
         <div className={styles.empty}>
           <h3>No promotions found</h3>
           <p>Create your first promotion</p>
-          <Button onClick={() => navigate("/admin/promotions/new")}>
+          <Button onClick={() => void navigate("/admin/promotions/new", { state: returnToState })}>
             Add Promotion
           </Button>
         </div>
@@ -124,10 +130,10 @@ export default function AdminPromotionsPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            navigate(`/admin/promotions/${promo.id}/edit`)
+                            void navigate(`/admin/promotions/${promo.id}/edit`, { state: returnToState })
                           }
                           className={styles.editBtn}
-                          aria-label="Edit promotion"
+                          aria-label={`Edit ${promo.title}`}
                         >
                           <Pencil size={16} />
                         </button>
@@ -138,7 +144,7 @@ export default function AdminPromotionsPage() {
                             setDeleteTitle(promo.title);
                           }}
                           className={styles.deleteBtn}
-                          aria-label="Delete promotion"
+                          aria-label={`Delete ${promo.title}`}
                         >
                           <Trash2 size={16} />
                         </button>
@@ -173,7 +179,7 @@ export default function AdminPromotionsPage() {
           <Button onClick={() => setDeleteId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} variant="danger">
+          <Button onClick={() => void handleDelete()} variant="danger">
             Delete
           </Button>
         </div>

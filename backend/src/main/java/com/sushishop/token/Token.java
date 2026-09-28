@@ -2,11 +2,25 @@ package com.sushishop.token;
 
 import com.sushishop.shared.BaseEntity;
 import com.sushishop.user.User;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Future;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +33,6 @@ import java.time.LocalDateTime;
 @Table(name = "tokens", indexes = {
         @Index(name = "idx_token_user_id", columnList = "user_id")
 })
-@EqualsAndHashCode(callSuper = true, exclude = "user")
 public class Token extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +52,6 @@ public class Token extends BaseEntity {
     private User user;
 
     @NotNull
-    @Future
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 

@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,11 +22,7 @@ public class ProductEnrichmentService {
         var bestPromo = getBestPromo(product);
         if (bestPromo == null) return null;
 
-        var discount = bestPromo.getDiscountPercent()
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-        return product.getPrice()
-                .multiply(BigDecimal.ONE.subtract(discount))
-                .setScale(2, RoundingMode.HALF_UP);
+        return bestPromo.applyDiscount(product.getPrice());
     }
 
     public BigDecimal getDiscountPercent(Product product) {
@@ -53,6 +52,17 @@ public class ProductEnrichmentService {
                 .collect(Collectors.toMap(
                         row -> (Long) row[0],
                         row -> (Double) row[1]
+                ));
+    }
+
+    public Map<Long, Long> getOrderQuantities(List<Long> productIds) {
+        if (productIds == null || productIds.isEmpty()) return Map.of();
+
+        return productRepository.findOrderQuantitiesByProductIds(productIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
                 ));
     }
 

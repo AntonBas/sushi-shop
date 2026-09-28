@@ -4,6 +4,7 @@ import { useAuth } from "../../../context/useAuth";
 import { useApi } from "../../../hooks/common/useApi";
 import * as reviewsApi from "../../../api/reviews";
 import { useNotification } from "../../../context/useNotification";
+import { getErrorMessage } from "../../../api/errorMessage";
 import Button from "../../UI/Button/Button";
 import Pagination from "../../UI/Pagination/Pagination";
 import Modal from "../../UI/Modal/Modal";
@@ -24,6 +25,8 @@ export default function ReviewSection({ productId }: Props) {
   const [reviews, setReviews] = useState<ReviewResponse[]>([]);
   const [reviewPage, setReviewPage] = useState(0);
   const [totalReviewPages, setTotalReviewPages] = useState(0);
+  const [totalReviews, setTotalReviews] = useState(0);
+  const [reviewSort, setReviewSort] = useState("createdAt,desc");
   const [newRating, setNewRating] = useState(5);
   const [newComment, setNewComment] = useState("");
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -37,21 +40,37 @@ export default function ReviewSection({ productId }: Props) {
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
 
   const loadReviews = useCallback((page: number) => {
-    reviewsApi.getReviews(productId, page).then((res) => {
-      setReviews(res.content);
-      setTotalReviewPages(res.page.totalPages);
-    });
-  }, [productId]);
+    const fetchPage = (target: number) => {
+      reviewsApi.getReviews(productId, target, 5, reviewSort)
+        .then((res) => {
+          const lastPage = res.page.totalPages - 1;
+          if (res.content.length === 0 && target > 0 && lastPage >= 0) {
+            fetchPage(Math.min(target - 1, lastPage));
+            return;
+          }
+          setReviewPage(target);
+          setReviews(res.content);
+          setTotalReviewPages(res.page.totalPages);
+          setTotalReviews(res.page.totalElements);
+        })
+        .catch((err: unknown) => {
+          showNotification(getErrorMessage(err, "Failed to load reviews"), "error");
+        });
+    };
+    fetchPage(page);
+  }, [productId, reviewSort, showNotification]);
 
   useEffect(() => {
     loadReviews(0);
   }, [loadReviews]);
 
+  const handleReviewSortChange = (value: string) => {
+    setReviewSort(value);
+    setReviewPage(0);
+  };
+
   const showError = (err: unknown, fallback: string) => {
-    const message =
-      (err as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message || fallback;
-    showNotification(message, "error");
+    showNotification(getErrorMessage(err, fallback), "error");
   };
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
@@ -64,13 +83,12 @@ export default function ReviewSection({ productId }: Props) {
           comment: newComment || undefined,
         }),
       );
-      setNewComment("");
-      setNewRating(5);
-      showNotification("Review submitted", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to submit review");
+    } catch {
+      return;
     }
+    setNewComment("");
+    setNewRating(5);
+    loadReviews(reviewPage);
   };
 
   const handleUpdate = async (reviewId: number) => {
@@ -82,12 +100,11 @@ export default function ReviewSection({ productId }: Props) {
           comment: editComment || undefined,
         }),
       );
-      setEditingId(null);
-      showNotification("Review updated", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to update review");
+    } catch {
+      return;
     }
+    setEditingId(null);
+    loadReviews(reviewPage);
   };
 
   const handleDelete = async () => {
@@ -95,7 +112,6 @@ export default function ReviewSection({ productId }: Props) {
     try {
       await reviewsApi.deleteReview(deleteId);
       setDeleteId(null);
-      showNotification("Review deleted", "success");
       loadReviews(reviewPage);
     } catch (err: unknown) {
       showError(err, "Failed to delete review");
@@ -108,13 +124,12 @@ export default function ReviewSection({ productId }: Props) {
       await replyApi.execute(() =>
         reviewsApi.addReply(reviewId, { message: replyMessage }),
       );
-      setReplyMessage("");
-      setReplyingId(null);
-      showNotification("Reply added", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to add reply");
+    } catch {
+      return;
     }
+    setReplyMessage("");
+    setReplyingId(null);
+    loadReviews(reviewPage);
   };
 
   const handleUpdateReply = async () => {
@@ -123,13 +138,12 @@ export default function ReviewSection({ productId }: Props) {
       await updateReplyApi.execute(() =>
         reviewsApi.updateReply(editingReplyId, { message: editReplyMessage }),
       );
-      setEditingReplyId(null);
-      setEditReplyMessage("");
-      showNotification("Reply updated", "success");
-      loadReviews(reviewPage);
-    } catch (err: unknown) {
-      showError(err, "Failed to update reply");
+    } catch {
+      return;
     }
+    setEditingReplyId(null);
+    setEditReplyMessage("");
+    loadReviews(reviewPage);
   };
 
   const handleDeleteReply = async () => {
@@ -137,7 +151,6 @@ export default function ReviewSection({ productId }: Props) {
     try {
       await reviewsApi.deleteReply(deleteReplyId);
       setDeleteReplyId(null);
-      showNotification("Reply deleted", "success");
       loadReviews(reviewPage);
     } catch (err: unknown) {
       showError(err, "Failed to delete reply");
@@ -157,9 +170,24 @@ export default function ReviewSection({ productId }: Props) {
 
   return (
     <div className={styles.section}>
-      <h2 className={styles.title}>Reviews ({reviews.length})</h2>
+      <div className={styles.titleRow}>
+        <h2 className={styles.title}>Reviews ({totalReviews})</h2>
+        {reviews.length > 0 && (
+          <select
+            value={reviewSort}
+            onChange={(e) => handleReviewSortChange(e.target.value)}
+            className={styles.sortSelect}
+            aria-label="Sort reviews"
+          >
+            <option value="createdAt,desc">Newest</option>
+            <option value="createdAt,asc">Oldest</option>
+            <option value="rating,desc">Highest Rating</option>
+            <option value="rating,asc">Lowest Rating</option>
+          </select>
+        )}
+      </div>
       {user && (
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <div className={styles.stars}>
             {[1, 2, 3, 4, 5].map((star) => (
               <button
@@ -183,7 +211,7 @@ export default function ReviewSection({ productId }: Props) {
             placeholder="Share your thoughts... (optional)"
             rows={3}
             className={styles.textarea}
-            maxLength={100}
+            maxLength={250}
           />
           <Button type="submit" loading={createApi.loading}>
             Submit Review
@@ -213,16 +241,18 @@ export default function ReviewSection({ productId }: Props) {
                       <span className={styles.edited}> (edited)</span>
                     )}
                 </span>
-                {review.userId === user?.id && (
+                {(review.userId === user?.id || isAdmin) && (
                   <div className={styles.actions}>
-                    <button
-                      type="button"
-                      onClick={() => startEdit(review)}
-                      className={styles.editBtn}
-                      aria-label="Edit review"
-                    >
-                      <Pencil size={14} />
-                    </button>
+                    {review.userId === user?.id && (
+                      <button
+                        type="button"
+                        onClick={() => startEdit(review)}
+                        className={styles.editBtn}
+                        aria-label="Edit review"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setDeleteId(review.id)}
@@ -258,7 +288,7 @@ export default function ReviewSection({ productId }: Props) {
                     onChange={(e) => setEditComment(e.target.value)}
                     rows={2}
                     className={styles.textarea}
-                    maxLength={100}
+                    maxLength={250}
                   />
                   <div className={styles.editActions}>
                     <Button
@@ -268,7 +298,7 @@ export default function ReviewSection({ productId }: Props) {
                       Cancel
                     </Button>
                     <Button
-                      onClick={() => handleUpdate(review.id)}
+                      onClick={() => void handleUpdate(review.id)}
                       loading={updateApi.loading}
                     >
                       Save
@@ -321,7 +351,7 @@ export default function ReviewSection({ productId }: Props) {
                             }
                             rows={2}
                             className={styles.textarea}
-                            maxLength={100}
+                            maxLength={250}
                           />
                           <div className={styles.editActions}>
                             <Button
@@ -331,7 +361,7 @@ export default function ReviewSection({ productId }: Props) {
                               Cancel
                             </Button>
                             <Button
-                              onClick={handleUpdateReply}
+                              onClick={() => void handleUpdateReply()}
                               loading={updateReplyApi.loading}
                             >
                               Save
@@ -355,7 +385,7 @@ export default function ReviewSection({ productId }: Props) {
                         placeholder="Reply to this review..."
                         rows={2}
                         className={styles.textarea}
-                        maxLength={100}
+                        maxLength={250}
                       />
                       <div className={styles.editActions}>
                         <Button
@@ -368,7 +398,7 @@ export default function ReviewSection({ productId }: Props) {
                           Cancel
                         </Button>
                         <Button
-                          onClick={() => handleReply(review.id)}
+                          onClick={() => void handleReply(review.id)}
                           loading={replyApi.loading}
                         >
                           Reply
@@ -411,7 +441,7 @@ export default function ReviewSection({ productId }: Props) {
           <Button onClick={() => setDeleteId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDelete} variant="danger">
+          <Button onClick={() => void handleDelete()} variant="danger">
             Delete
           </Button>
         </div>
@@ -426,7 +456,7 @@ export default function ReviewSection({ productId }: Props) {
           <Button onClick={() => setDeleteReplyId(null)} variant="secondary">
             Cancel
           </Button>
-          <Button onClick={handleDeleteReply} variant="danger">
+          <Button onClick={() => void handleDeleteReply()} variant="danger">
             Delete
           </Button>
         </div>

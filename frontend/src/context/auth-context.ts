@@ -8,7 +8,7 @@ export interface AuthContextType {
   isAdmin: boolean;
   isCourier: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (userData: RegisterRequest) => Promise<UserResponse>;
+  register: (userData: RegisterRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }

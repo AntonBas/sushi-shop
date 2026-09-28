@@ -1,24 +1,23 @@
 package com.sushishop.user;
 
+import com.sushishop.shared.address.AddressConverter;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.response.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class UserMapperTest {
+@SpringJUnitConfig({UserMapperImpl.class, AddressConverter.class})
+class UserMapperTest {
 
     @Autowired
     private UserMapper userMapper;
 
     @Test
-    public void shouldMapToResponse() {
+    void shouldMapToResponse() {
         User user = User.builder()
                 .id(1L)
                 .name("Anton")
@@ -47,7 +46,7 @@ public class UserMapperTest {
     }
 
     @Test
-    public void shouldMapToEntity() {
+    void shouldMapToEntity() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",

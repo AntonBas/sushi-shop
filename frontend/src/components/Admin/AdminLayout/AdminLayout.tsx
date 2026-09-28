@@ -1,24 +1,24 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
 import AdminSidebar from '../AdminSidebar/AdminSidebar'
 import AdminHeader from '../AdminHeader/AdminHeader'
+import Loading from '../../UI/Loading/Loading'
 import styles from './AdminLayout.module.css'
 
+const MOBILE_QUERY = '(max-width: 768px)'
+
 export default function AdminLayout() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia(MOBILE_QUERY).matches)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => !window.matchMedia(MOBILE_QUERY).matches)
 
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 768
-      setIsMobile(mobile)
-      if (mobile) setIsSidebarOpen(false)
-      else setIsSidebarOpen(true)
+    const mediaQuery = window.matchMedia(MOBILE_QUERY)
+    const handleBreakpointChange = (event: MediaQueryListEvent) => {
+      setIsMobile(event.matches)
+      setIsSidebarOpen(!event.matches)
     }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    mediaQuery.addEventListener('change', handleBreakpointChange)
+    return () => mediaQuery.removeEventListener('change', handleBreakpointChange)
   }, [])
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
@@ -32,7 +32,9 @@ export default function AdminLayout() {
         <AdminHeader onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
         <main className={styles.content}>
-          <Outlet />
+          <Suspense fallback={<Loading text="Loading..." />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <footer className={styles.adminFooter}>

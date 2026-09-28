@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class ProductControllerTest {
+class ProductControllerTest {
 
     private MockMvc mockMvc;
 
@@ -47,12 +48,12 @@ public class ProductControllerTest {
     private ProductImageService productImageService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
-    public void shouldGetAllProducts() throws Exception {
+    void shouldGetAllProducts() throws Exception {
         var response = new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), null, null, Category.ROLL, null, true, 250, 8);
         Page<ProductListResponse> page = new PageImpl<>(List.of(response));
 
@@ -64,7 +65,23 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void shouldGetById() throws Exception {
+    void shouldAllowWhitelistedSortProperty() throws Exception {
+        when(productQueryService.getAll(any(Pageable.class), isNull(), isNull(), isNull())).thenReturn(Page.empty());
+
+        mockMvc.perform(get("/api/products").param("sort", "price,desc"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRejectSortByNestedUserProperty() throws Exception {
+        mockMvc.perform(get("/api/products").param("sort", "reviews.user.phone,asc"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(productQueryService);
+    }
+
+    @Test
+    void shouldGetById() throws Exception {
         var response = new ProductResponse(1L, "maki", "Maki", "Desc", new BigDecimal("250.00"), null, null, null, Category.ROLL, List.of(), 0, null, true, 250, 8);
 
         when(productService.getById(1L)).thenReturn(response);
@@ -75,7 +92,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void shouldGetPopular() throws Exception {
+    void shouldGetPopular() throws Exception {
         var response = new ProductListResponse(1L, "maki", "Maki", new BigDecimal("250.00"), null, 4.5, Category.ROLL, null, true, 250, 8);
 
         when(productQueryService.getPopular()).thenReturn(List.of(response));
@@ -86,7 +103,7 @@ public class ProductControllerTest {
     }
 
     @Test
-    public void shouldReturn404WhenProductNotFound() throws Exception {
+    void shouldReturn404WhenProductNotFound() throws Exception {
         when(productService.getById(99L)).thenThrow(new NotFoundException("Product not found: 99"));
 
         mockMvc.perform(get("/api/products/99"))
@@ -95,20 +112,20 @@ public class ProductControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void shouldDeleteProduct() throws Exception {
+    void shouldDeleteProduct() throws Exception {
         mockMvc.perform(delete("/api/products/1"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     @WithMockUser(roles = "USER")
-    public void shouldRejectNonAdminUser() throws Exception {
+    void shouldRejectNonAdminUser() throws Exception {
         mockMvc.perform(delete("/api/products/1"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    public void shouldGetRelated() throws Exception {
+    void shouldGetRelated() throws Exception {
         var response = new ProductListResponse(2L, "related", "Related", new BigDecimal("200.00"), null, null, Category.ROLL, null, true, null, null);
 
         when(productQueryService.getRelated(1L)).thenReturn(List.of(response));

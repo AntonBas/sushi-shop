@@ -1,7 +1,9 @@
 package com.sushishop.auth;
 
 import com.sushishop.auth.dto.request.LoginRequest;
+import com.sushishop.security.jwt.JwtBlacklistService;
 import com.sushishop.security.jwt.JwtUtil;
+import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
 import com.sushishop.user.User;
@@ -17,21 +19,26 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
+import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class AuthServiceTest {
+class AuthServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
@@ -54,18 +61,25 @@ public class AuthServiceTest {
     @Mock
     private TokenService tokenService;
 
+    @Mock
+    private OAuth2ExchangeCodeService oAuth2ExchangeCodeService;
+
+    @Mock
+    private JwtBlacklistService jwtBlacklistService;
+
     @InjectMocks
     private AuthService authService;
 
     @Test
-    public void shouldLogin() {
+    void shouldLogin() {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
+                .password("encoded-password")
                 .emailVerified(true)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
         var authority = new SimpleGrantedAuthority("ROLE_CUSTOMER");
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
@@ -80,22 +94,69 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenEmailNotVerified() {
+    void shouldThrowWhenEmailNotVerified() {
         var request = new LoginRequest("anton@example.com", "password123");
         var user = User.builder()
                 .email("anton@example.com")
+                .password("encoded-password")
                 .emailVerified(false)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(authentication);
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Please verify your email before login")
+                .extracting("code").isEqualTo("EMAIL_NOT_VERIFIED");
+    }
+
+    @Test
+    void shouldCheckPasswordBeforeRevealingThatEmailIsNotVerified() {
+        var request = new LoginRequest("anton@example.com", "wrong-password");
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("encoded-password")
+                .emailVerified(false)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void shouldThrowBadCredentialsForUnknownEmail() {
+        var request = new LoginRequest("ghost@example.com", "password123");
+
+        when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.login(request))
+                .isInstanceOf(BadCredentialsException.class);
+    }
+
+    @Test
+    void shouldThrowWhenOAuthAccountHasNoPassword() {
+        var request = new LoginRequest("anton@example.com", "password123");
+        var user = User.builder()
+                .email("anton@example.com")
+                .emailVerified(true)
+                .password(null)
                 .build();
 
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
 
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Please verify your email before login");
+                .hasMessageContaining("This account uses Google sign-in")
+                .extracting("code").isEqualTo("PASSWORD_NOT_SET");
     }
 
     @Test
-    public void shouldRegister() {
+    void shouldRegister() {
         var request = new RegisterRequest(
                 "Anton",
                 "anton@example.com",
@@ -109,15 +170,70 @@ public class AuthServiceTest {
                 .userRole(UserRole.CUSTOMER)
                 .tokenVersion(0)
                 .build();
-        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(userService.create(request)).thenReturn(user);
         when(userMapper.toResponse(user)).thenReturn(userResponse);
-        when(jwtUtil.generateToken("anton@example.com", "CUSTOMER", 0)).thenReturn("jwt-token");
 
         var result = authService.register(request);
 
-        assertThat(result.token()).isEqualTo("jwt-token");
+        assertThat(result).isEqualTo(userResponse);
+        verifyNoInteractions(jwtUtil);
         verify(tokenService).createVerificationToken(user);
+    }
+
+    @Test
+    void shouldExchangeOAuth2Code() {
+        var user = User.builder()
+                .email("anton@example.com")
+                .userRole(UserRole.CUSTOMER)
+                .tokenVersion(0)
+                .build();
+        var userResponse = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+
+        when(oAuth2ExchangeCodeService.consume("valid-code")).thenReturn(Optional.of("anton@example.com"));
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(jwtUtil.generateToken("anton@example.com", "CUSTOMER", 0)).thenReturn("jwt-token");
+        when(userMapper.toResponse(user)).thenReturn(userResponse);
+
+        var result = authService.exchangeOAuth2Code("valid-code");
+
+        assertThat(result.token()).isEqualTo("jwt-token");
+    }
+
+    @Test
+    void shouldThrowWhenExchangeCodeInvalidOrExpired() {
+        when(oAuth2ExchangeCodeService.consume("bad-code")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.exchangeOAuth2Code("bad-code"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Invalid or expired code");
+    }
+
+    @Test
+    void shouldBlacklistTokenOnLogout() {
+        var expiration = new Date(System.currentTimeMillis() + 60_000);
+        var payload = new JwtUtil.JwtPayload("anton@example.com", 0, "jti-123", expiration);
+        when(jwtUtil.parseToken("token123")).thenReturn(payload);
+
+        authService.logout("token123");
+
+        verify(jwtBlacklistService).blacklist(eq("jti-123"), any(Duration.class));
+    }
+
+    @Test
+    void shouldDoNothingOnLogoutWhenTokenIsNull() {
+        authService.logout(null);
+
+        verifyNoInteractions(jwtBlacklistService);
+    }
+
+    @Test
+    void shouldDoNothingOnLogoutWhenTokenIsInvalid() {
+        when(jwtUtil.parseToken("bad-token")).thenReturn(null);
+
+        authService.logout("bad-token");
+
+        verifyNoInteractions(jwtBlacklistService);
     }
 }

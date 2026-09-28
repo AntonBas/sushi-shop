@@ -1,5 +1,6 @@
 package com.sushishop.product;
 
+import com.sushishop.shared.service.LikePattern;
 import org.springframework.data.jpa.domain.Specification;
 
 public class ProductSpecification {
@@ -7,7 +8,7 @@ public class ProductSpecification {
     public static Specification<Product> hasSearch(String search) {
         return (root, query, cb) -> {
             if (search == null || search.isBlank()) return null;
-            return cb.like(cb.lower(root.get("name")), "%" + search.toLowerCase() + "%");
+            return cb.like(cb.lower(root.get("name")), LikePattern.containsIgnoreCase(search), LikePattern.ESCAPE);
         };
     }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   Star,
@@ -11,34 +11,48 @@ import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 import { useProducts } from "../../hooks/features/useProducts";
 import { useCart } from "../../context/useCart";
+import { MAX_CART_QUANTITY } from "../../context/cart-context";
 import { useNotification } from "../../context/useNotification";
 import { CATEGORY_DISPLAY } from "../../types/enums";
+import { formatPrice } from "../../utils/formatPrice";
 import ProductSkeleton from "../../components/Product/ProductSkeleton/ProductSkeleton";
 import Button from "../../components/UI/Button/Button";
 import ReviewSection from "../../components/Product/ReviewSection/ReviewSection";
 import RelatedProducts from "../../components/Product/RelatedProducts/RelatedProducts";
+import NotFoundPage from "../NotFound/NotFoundPage";
 import styles from "./ProductPage.module.css";
 
 export default function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { product, productLoading, getProductBySlug } = useProducts();
+  const { product, productLoading, productNotFound, getProductBySlug } = useProducts();
   const { addItem } = useCart();
   const { showNotification } = useNotification();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
+  const touchStartRef = useRef<{
+    x: number | null;
+    y: number | null;
+    swiped: boolean;
+  }>({ x: null, y: null, swiped: false });
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (slug) getProductBySlug(slug);
+  const [shownSlug, setShownSlug] = useState(slug);
+
+  if (slug !== shownSlug) {
+    setShownSlug(slug);
     setQuantity(1);
     setActiveImage(0);
+  }
+
+  useEffect(() => {
+    if (slug) void getProductBySlug(slug);
   }, [slug, getProductBySlug]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (productLoading) return <ProductSkeleton />;
+  if (productNotFound) return <NotFoundPage />;
   if (!product) return null;
 
   const handleAddToCart = () => {
+    if (!product.available) return;
     addItem({
       productId: product.id,
       name: product.name,
@@ -64,6 +78,42 @@ export default function ProductPage() {
     );
   };
 
+  const touchStart = touchStartRef.current;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.x = e.touches[0].clientX;
+    touchStart.y = e.touches[0].clientY;
+    touchStart.swiped = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart.x === null || touchStart.y === null) return;
+    const dx = e.touches[0].clientX - touchStart.x;
+    const dy = e.touches[0].clientY - touchStart.y;
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      touchStart.swiped = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.x === null || touchStart.y === null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    touchStart.x = null;
+    touchStart.y = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) prevImage();
+      else nextImage();
+    }
+  };
+
+  const handleImageClickCapture = (e: React.MouseEvent) => {
+    if (touchStart.swiped) {
+      e.preventDefault();
+      e.stopPropagation();
+      touchStart.swiped = false;
+    }
+  };
+
   return (
     <div className={styles.page}>
       <div className={styles.breadcrumbs}>
@@ -83,10 +133,16 @@ export default function ProductPage() {
 
       <div className={styles.layout}>
         <div className={styles.images}>
-          <div className={styles.mainImageWrapper}>
+          <div
+            className={styles.mainImageWrapper}
+            onTouchStart={product.images.length > 1 ? handleTouchStart : undefined}
+            onTouchMove={product.images.length > 1 ? handleTouchMove : undefined}
+            onTouchEnd={product.images.length > 1 ? handleTouchEnd : undefined}
+            onClickCapture={product.images.length > 1 ? handleImageClickCapture : undefined}
+          >
             <Zoom>
               <img
-                src={product.images[activeImage]?.url || "/placeholder.jpg"}
+                src={product.images[activeImage]?.url || "/placeholder.svg"}
                 alt={product.name}
                 className={styles.mainImage}
               />
@@ -148,14 +204,14 @@ export default function ProductPage() {
           <div className={styles.priceRow}>
             {discounted && (
               <>
-                <span className={styles.oldPrice}>{product.price}₴</span>
+                <span className={styles.oldPrice}>{formatPrice(product.price)}₴</span>
                 <span className={styles.discount}>
                   -{product.discountPercent}%
                 </span>
               </>
             )}
             <span className={styles.price}>
-              {product.discountedPrice || product.price}₴
+              {formatPrice(product.discountedPrice || product.price)}₴
             </span>
           </div>
 
@@ -191,22 +247,29 @@ export default function ProductPage() {
               <span>{quantity}</span>
               <button
                 type="button"
-                onClick={() => setQuantity((q) => q + 1)}
+                onClick={() => setQuantity((q) => Math.min(MAX_CART_QUANTITY, q + 1))}
+                disabled={quantity >= MAX_CART_QUANTITY}
                 aria-label="Increase quantity"
               >
                 +
               </button>
             </div>
-            <Button onClick={handleAddToCart} className={styles.addBtn}>
-              <ShoppingCart size={18} /> Add to Cart —{" "}
-              {(product.discountedPrice || product.price) * quantity}₴
+            <Button onClick={handleAddToCart} className={styles.addBtn} disabled={!product.available}>
+              {product.available ? (
+                <>
+                  <ShoppingCart size={18} /> Add to Cart —{" "}
+                  {formatPrice((product.discountedPrice || product.price) * quantity)}₴
+                </>
+              ) : (
+                "Currently unavailable"
+              )}
             </Button>
           </div>
         </div>
       </div>
 
       <RelatedProducts productId={product.id} />
-      <ReviewSection productId={product.id} />
+      <ReviewSection key={product.id} productId={product.id} />
     </div>
   );
 }

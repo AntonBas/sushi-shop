@@ -8,7 +8,7 @@ export const getAuditLogs = async (
   sort = 'performedAt,desc',
   filters?: AuditLogFilters
 ): Promise<Page<AuditLogResponse>> => {
-  const { data } = await api.get('/admin/audit', {
+  const { data } = await api.get<Page<AuditLogResponse>>('/admin/audit', {
     params: {
       page,
       size,

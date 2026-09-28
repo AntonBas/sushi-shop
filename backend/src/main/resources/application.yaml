@@ -29,22 +29,10 @@ spring:
   servlet:
     multipart:
       max-file-size: 5MB
-      max-request-size: 5MB
+      max-request-size: 30MB
 
   cache:
     type: redis
-
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${EMAIL_USERNAME}
-    password: ${EMAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
 
   security:
     oauth2:
@@ -77,6 +65,8 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration: 86400000
+    cookie-secure: false
+    cookie-same-site: Lax
   upload:
     dir: uploads
     allowed-types: image/jpeg,image/png,image/webp
@@ -89,10 +79,14 @@ app:
   stripe:
     secret-key: ${STRIPE_SECRET_KEY}
     webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  mail:
+    api-key: ${BREVO_API_KEY}
+    from-email: ${MAIL_FROM_EMAIL}
+    from-name: ${MAIL_FROM_NAME:Sushi Bas Shop}
   seed-demo-users: false
   monitoring:
     username: ${PROMETHEUS_USER:prometheus}
-    password: ${PROMETHEUS_PASSWORD:changeme}
+    password: ${PROMETHEUS_PASSWORD}
 
 management:
   endpoints:

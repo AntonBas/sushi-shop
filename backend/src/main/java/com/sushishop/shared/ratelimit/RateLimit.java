@@ -12,5 +12,5 @@ public @interface RateLimit {
 
     int duration() default 60;
 
-    String key() default "ip";
+    String[] key() default {"ip"};
 }

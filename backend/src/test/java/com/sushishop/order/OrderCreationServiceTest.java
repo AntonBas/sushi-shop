@@ -6,6 +6,7 @@ import com.sushishop.order.dto.response.OrderResponse;
 import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
+import com.sushishop.product.ProductEnrichmentService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.shared.address.AddressResponse;
@@ -18,6 +19,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,17 +30,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderCreationServiceTest {
+class OrderCreationServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private ProductEnrichmentService productEnrichmentService;
 
     @Mock
     private UserRepository userRepository;
@@ -52,7 +59,7 @@ public class OrderCreationServiceTest {
     private OrderCreationService orderCreationService;
 
     @Test
-    public void shouldCreateOrder() {
+    void shouldCreateOrder() {
         var address = new AddressRequest("Lviv", "Zelena", "204", "280", "code 123");
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, address, List.of(itemRequest));
@@ -66,6 +73,7 @@ public class OrderCreationServiceTest {
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
         when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(productEnrichmentService.calculateDiscountedPrice(product)).thenReturn(null);
         when(orderRepository.save(any())).thenReturn(order);
         when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
 
@@ -78,7 +86,59 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenProductNotAvailable() {
+    void shouldNotifyAdminsAboutNewOrderOnlyAfterCommit() {
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP,
+                null, List.of(new OrderItemRequest(1L, 1)));
+        var user = User.builder().id(1L).email("test@test.com").build();
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
+        var order = new Order();
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderRepository.save(any())).thenReturn(order);
+
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            orderCreationService.create(request, "test@test.com");
+            verify(messagingTemplate, never()).convertAndSend(eq("/topic/orders/new"), any(OrderStatusUpdateResponse.class));
+
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+
+        verify(messagingTemplate).convertAndSend(eq("/topic/orders/new"), any(OrderStatusUpdateResponse.class));
+    }
+
+    @Test
+    void shouldApplyActivePromotionDiscount() {
+        var address = new AddressRequest("Lviv", "Zelena", "204", "280", "code 123");
+        var itemRequest = new OrderItemRequest(1L, 2);
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, address, List.of(itemRequest));
+
+        var user = User.builder().id(1L).email("test@test.com").build();
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
+        var order = new Order();
+        var expectedResponse = new OrderResponse(1L, "Anton", "test@test.com", "+380961791111",
+                new AddressResponse("Lviv", "Zelena", "204", "280", "code 123"),
+                DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "ON_DELIVERY", OrderStatus.NEW, new BigDecimal("400.00"), null, List.of());
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(productEnrichmentService.calculateDiscountedPrice(product)).thenReturn(new BigDecimal("200.00"));
+        when(orderRepository.save(any())).thenReturn(order);
+        when(orderMapper.toResponse(any())).thenReturn(expectedResponse);
+
+        orderCreationService.create(request, "test@test.com");
+
+        var orderCaptor = org.mockito.ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(orderCaptor.capture());
+        assertThat(orderCaptor.getValue().getTotalAmount()).isEqualByComparingTo(new BigDecimal("400.00"));
+        assertThat(orderCaptor.getValue().getItems().get(0).getUnitPrice()).isEqualByComparingTo(new BigDecimal("200.00"));
+    }
+
+    @Test
+    void shouldThrowWhenProductNotAvailable() {
         var itemRequest = new OrderItemRequest(1L, 2);
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of(itemRequest));
 
@@ -94,7 +154,7 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeliveryWithoutAddress() {
+    void shouldThrowWhenDeliveryWithoutAddress() {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.DELIVERY, null, List.of());
 
         var user = User.builder().id(1L).email("test@test.com").build();
@@ -105,7 +165,21 @@ public class OrderCreationServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUserNotFound() {
+    void shouldThrowWhenDuplicateProductIds() {
+        var itemRequest1 = new OrderItemRequest(1L, 2);
+        var itemRequest2 = new OrderItemRequest(1L, 3);
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of(itemRequest1, itemRequest2));
+
+        var user = User.builder().id(1L).email("test@test.com").build();
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> orderCreationService.create(request, "test@test.com"))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Duplicate product IDs");
+    }
+
+    @Test
+    void shouldThrowWhenUserNotFound() {
         var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP, null, List.of());
 
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.empty());

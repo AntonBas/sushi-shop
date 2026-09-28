@@ -12,11 +12,17 @@ export interface ChangePasswordRequest {
   newPassword: string
 }
 
+export interface ChangeEmailRequest {
+  newEmail: string
+}
+
 export interface UserResponse {
   id: number
   name: string
   email: string
+  pendingEmail?: string
   phone: string
   userRole: UserRole
   address?: AddressResponse
+  hasPassword: boolean
 }

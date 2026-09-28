@@ -24,6 +24,17 @@ public interface OrderMapper {
     @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
     UserOrderResponse toUserResponse(Order order);
 
+    @Mapping(target = "address", expression = "java(mapAddress(order))")
+    @Mapping(target = "userEmail", source = "order.user.email")
+    @Mapping(target = "items", source = "items")
+    @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
+    OrderResponse toResponse(Order order, List<OrderItem> items);
+
+    @Mapping(target = "userEmail", source = "order.user.email")
+    @Mapping(target = "items", source = "items")
+    @Mapping(target = "paymentStatus", expression = "java(getPaymentStatus(order))")
+    UserOrderResponse toUserResponse(Order order, List<OrderItem> items);
+
     @Mapping(target = "productId", source = "product.id")
     @Mapping(target = "productName", source = "product.name")
     @Mapping(target = "mainImage", source = "product.productImages", qualifiedByName = "mainImage")
@@ -44,6 +55,7 @@ public interface OrderMapper {
 
     default String getPaymentStatus(Order order) {
         if (order.getPaymentMethod() == PaymentMethod.ON_DELIVERY) return "ON_DELIVERY";
-        return order.getStatus() == OrderStatus.NEW ? "PENDING" : "PAID";
+        if (order.isPaid()) return "PAID";
+        return order.getStatus() == OrderStatus.CANCELLED ? "UNPAID" : "PENDING";
     }
 }

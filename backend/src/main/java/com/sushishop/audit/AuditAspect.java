@@ -1,11 +1,18 @@
 package com.sushishop.audit;
 
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
+import java.util.Optional;
+
+@Slf4j
 @Aspect
 @Component
 @RequiredArgsConstructor
@@ -19,7 +26,8 @@ public class AuditAspect {
         String user = auditorAware.getCurrentAuditor().orElse("system");
         Long entityId = extractId(result);
         String details = auditable.action() + " " + auditable.entity() + (entityId != null ? " #" + entityId : "");
-        auditLogService.log(auditable.action(), auditable.entity(), entityId, details, user);
+        TransactionCallbacks.afterCommit(
+                () -> auditLogService.log(auditable.action(), auditable.entity(), entityId, details, user));
     }
 
     private Long extractId(Object result) {
@@ -29,16 +37,22 @@ public class AuditAspect {
             return number.longValue();
         }
 
-        try {
-            var idField = result.getClass().getDeclaredField("id");
-            idField.setAccessible(true);
-            var id = idField.get(result);
-            if (id instanceof Long longId) {
-                return longId;
-            }
-        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+        var idField = findIdField(result.getClass());
+        if (idField.isEmpty()) {
+            log.warn("Auditable result of type {} has no 'id' field; logging entityId as null", result.getClass().getSimpleName());
+            return null;
         }
 
-        return null;
+        try {
+            idField.get().setAccessible(true);
+            return idField.get().get(result) instanceof Long longId ? longId : null;
+        } catch (IllegalAccessException e) {
+            log.warn("Could not read 'id' field of {}", result.getClass().getSimpleName(), e);
+            return null;
+        }
+    }
+
+    private Optional<Field> findIdField(Class<?> type) {
+        return Optional.ofNullable(ReflectionUtils.findField(type, "id"));
     }
 }

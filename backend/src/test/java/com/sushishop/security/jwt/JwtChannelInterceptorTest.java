@@ -7,6 +7,8 @@ import com.sushishop.user.User;
 import com.sushishop.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,7 +32,7 @@ import static org.mockito.Mockito.when;
 class JwtChannelInterceptorTest {
 
     @Mock
-    private JwtUtil jwtUtil;
+    private WsTicketService wsTicketService;
 
     @Mock
     private UserCacheService userCacheService;
@@ -79,7 +81,7 @@ class JwtChannelInterceptorTest {
 
     @Test
     void shouldRejectConnectWithInvalidToken() {
-        when(jwtUtil.parseToken("bad")).thenReturn(null);
+        when(wsTicketService.consume("bad")).thenReturn(Optional.empty());
         var message = connectMessage("bad");
 
         assertThatThrownBy(() -> interceptor.preSend(message, channel))
@@ -89,9 +91,9 @@ class JwtChannelInterceptorTest {
     @Test
     void shouldAuthenticateConnectWithValidToken() {
         var user = buildUser("user@test.com", UserRole.CUSTOMER);
-        when(jwtUtil.parseToken("good")).thenReturn(new JwtUtil.JwtPayload("user@test.com", 0));
+        when(wsTicketService.consume("good")).thenReturn(Optional.of(new WsTicketService.WsTicketPayload("user@test.com", 0)));
         when(userCacheService.getCachedUser("user@test.com", 0))
-                .thenReturn(new CachedAuthUser(user.getEmail(), user.getPassword(), user.getUserRole(), user.isEmailVerified()));
+                .thenReturn(new CachedAuthUser(user.getEmail(), user.getUserRole(), user.isEmailVerified()));
 
         var result = interceptor.preSend(connectMessage("good"), channel);
 
@@ -110,7 +112,7 @@ class JwtChannelInterceptorTest {
     }
 
     @Test
-    void shouldRejectNewOrdersSubscribeForNonAdmin() {
+    void shouldRejectNewOrdersSubscribeForCustomer() {
         var message = subscribeMessage("/topic/orders/new", authFor("user@test.com", UserRole.CUSTOMER));
 
         assertThatThrownBy(() -> interceptor.preSend(message, channel))
@@ -152,5 +154,52 @@ class JwtChannelInterceptorTest {
         var result = interceptor.preSend(message, channel);
 
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    void shouldAllowNewOrdersSubscribeForCourier() {
+        var message = subscribeMessage("/topic/orders/new", authFor("courier@test.com", UserRole.COURIER));
+
+        var result = interceptor.preSend(message, channel);
+
+        assertThat(result).isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/topic/orders/*", "/topic/orders/**", "/topic/**", "/topic/*/1", "/topic/orders", "/topic/orders/1/x", "/queue/orders/1"})
+    void shouldRejectWildcardAndUnknownDestinationsForCustomer(String destination) {
+        var message = subscribeMessage(destination, authFor("user@test.com", UserRole.CUSTOMER));
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldRejectWildcardDestinationEvenForAdmin() {
+        var message = subscribeMessage("/topic/**", authFor("admin@test.com", UserRole.ADMIN));
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void shouldRejectSubscribeWithoutDestination() {
+        var message = subscribeMessage(null, authFor("user@test.com", UserRole.CUSTOMER));
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/topic/orders/new", "/topic/orders/1", "/app/anything"})
+    void shouldRejectClientSendEvenForAdmin(String destination) {
+        var accessor = StompHeaderAccessor.create(StompCommand.SEND);
+        accessor.setDestination(destination);
+        accessor.setUser(authFor("admin@test.com", UserRole.ADMIN));
+        accessor.setLeaveMutable(true);
+        var message = MessageBuilder.createMessage("{\"orderId\":1,\"status\":\"DELIVERED\"}".getBytes(), accessor.getMessageHeaders());
+
+        assertThatThrownBy(() -> interceptor.preSend(message, channel))
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

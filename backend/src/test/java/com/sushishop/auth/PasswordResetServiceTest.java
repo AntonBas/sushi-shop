@@ -1,7 +1,8 @@
 package com.sushishop.auth;
 
+import com.sushishop.mail.MailService;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
-import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
@@ -9,20 +10,25 @@ import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PasswordResetServiceTest {
+class PasswordResetServiceTest {
 
     @Mock
     private TokenService tokenService;
@@ -33,48 +39,91 @@ public class PasswordResetServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private MailService mailService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     @InjectMocks
     private PasswordResetService passwordResetService;
 
     @Test
-    public void shouldForgotPassword() {
+    void shouldForgotPassword() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
                 .emailVerified(true)
                 .build();
 
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
 
         passwordResetService.forgotPassword("anton@example.com");
 
         verify(tokenService).createPasswordResetToken(user);
+        assertThat(user.getLastPasswordResetSentAt()).isNotNull();
+        verify(userRepository).save(user);
     }
 
     @Test
-    public void shouldThrowWhenForgotPasswordForUnverifiedUser() {
+    void shouldSilentlyIgnoreForgotPasswordForUnverifiedUser() {
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(false)
                 .build();
 
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> passwordResetService.forgotPassword("anton@example.com"))
-                .isInstanceOf(BadRequestException.class)
-                .hasMessageContaining("Please verify your email first");
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService, never()).createPasswordResetToken(user);
     }
 
     @Test
-    public void shouldThrowWhenForgotPasswordForNonExistentUser() {
-        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.empty());
+    void shouldSilentlyIgnoreForgotPasswordForNonExistentUser() {
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> passwordResetService.forgotPassword("anton@example.com"))
-                .isInstanceOf(NotFoundException.class);
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService, never()).createPasswordResetToken(any());
     }
 
     @Test
-    public void shouldResetPassword() {
+    void shouldSilentlyIgnoreForgotPasswordWithinCooldown() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(true)
+                .lastPasswordResetSentAt(LocalDateTime.now().minusSeconds(10))
+                .build();
+
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
+
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService, never()).createPasswordResetToken(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void shouldSendForgotPasswordAgainAfterCooldownElapsed() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(true)
+                .lastPasswordResetSentAt(LocalDateTime.now().minusSeconds(61))
+                .build();
+
+        when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
+
+        passwordResetService.forgotPassword("anton@example.com");
+
+        verify(tokenService).createPasswordResetToken(user);
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldResetPassword() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -99,10 +148,16 @@ public class PasswordResetServiceTest {
         assertThat(user.getTokenVersion()).isEqualTo(1);
         verify(userRepository).save(user);
         verify(tokenService).invalidateAllByUserAndType(1L, TokenType.PASSWORD_RESET);
+        verify(mailService).sendPasswordChangedNotification("anton@example.com");
+
+        var eventCaptor = ArgumentCaptor.forClass(UserSessionsInvalidatedEvent.class);
+        verify(eventPublisher).publishEvent(eventCaptor.capture());
+        assertThat(eventCaptor.getValue().getEmail()).isEqualTo("anton@example.com");
+        assertThat(eventCaptor.getValue().getPreviousTokenVersion()).isEqualTo(0);
     }
 
     @Test
-    public void shouldThrowWhenResetPasswordSameAsOld() {
+    void shouldThrowWhenResetPasswordSameAsOld() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")

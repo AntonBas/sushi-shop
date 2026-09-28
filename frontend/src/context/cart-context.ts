@@ -1,5 +1,7 @@
 import { createContext } from "react";
 
+export const MAX_CART_QUANTITY = 99;
+
 export interface CartItem {
   productId: number;
   name: string;
@@ -13,6 +15,7 @@ export interface CartContextType {
   addItem: (item: CartItem) => void;
   removeItem: (productId: number) => void;
   clearCart: () => void;
+  updatePrices: (prices: Record<number, number>) => void;
   total: number;
   count: number;
 }

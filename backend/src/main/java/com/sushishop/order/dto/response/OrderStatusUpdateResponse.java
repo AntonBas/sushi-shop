@@ -8,6 +8,9 @@ public record OrderStatusUpdateResponse(
         Long orderId,
 
         @Schema(description = "New order status", example = "COOKING")
-        String status
+        String status,
+
+        @Schema(description = "Payment status", example = "PAID")
+        String paymentStatus
 ) {
 }

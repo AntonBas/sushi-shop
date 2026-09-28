@@ -1,7 +1,7 @@
 .page {
   max-width: 1000px;
   margin: 0 auto;
-  padding-top: 24px;
+  padding: 24px 20px 0;
 }
 
 .breadcrumbs {
@@ -85,7 +85,8 @@
   z-index: 1;
 }
 
-.mainImageWrapper:hover .arrow {
+.mainImageWrapper:hover .arrow,
+.arrow:focus-visible {
   opacity: 1;
 }
 
@@ -170,8 +171,8 @@
 
 .discount {
   padding: 4px 8px;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  color: var(--color-error);
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
@@ -252,6 +253,10 @@
 }
 
 @media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 0;
+  }
+
   .layout {
     grid-template-columns: 1fr;
     gap: 24px;

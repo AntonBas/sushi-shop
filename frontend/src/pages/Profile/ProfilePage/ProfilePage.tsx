@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
 import { useNotification } from "../../../context/useNotification";
 import { useApi } from "../../../hooks/common/useApi";
@@ -8,15 +9,23 @@ import Input from "../../../components/UI/Input/Input";
 import type { UserResponse } from "../../../types";
 import styles from "./ProfilePage.module.css";
 
-type Tab = "profile" | "address" | "password";
+type Tab = "profile" | "address" | "security";
+
+function tabFromPath(pathname: string): Tab {
+  if (pathname.endsWith("/address")) return "address";
+  if (pathname.endsWith("/security")) return "security";
+  return "profile";
+}
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const { showNotification } = useNotification();
   const updateApi = useApi<UserResponse>();
   const passwordApi = useApi<void>();
+  const emailApi = useApi<void>();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState<Tab>("profile");
+  const activeTab = tabFromPath(location.pathname);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
@@ -25,106 +34,124 @@ export default function ProfilePage() {
   const [apartment, setApartment] = useState("");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (user) {
-      setName(user.name);
-      setPhone(user.phone);
-      setCity(user.address?.city || "");
-      setStreet(user.address?.street || "");
-      setHouse(user.address?.house || "");
-      setApartment(user.address?.apartment || "");
-    }
-  }, [user]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [syncedUser, setSyncedUser] = useState<UserResponse | null>(null);
 
-  const showError = (err: unknown, fallback: string) => {
-    const message =
-      (err as { response?: { data?: { message?: string } } })?.response?.data
-        ?.message || fallback;
-    showNotification(message, "error");
-  };
+  if (user && user !== syncedUser) {
+    setSyncedUser(user);
+    setName(user.name);
+    setPhone(user.phone);
+    setCity(user.address?.city || "");
+    setStreet(user.address?.street || "");
+    setHouse(user.address?.house || "");
+    setApartment(user.address?.apartment || "");
+  }
 
   const handleUpdateProfile = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
-      const updated = await updateApi.execute(() =>
+      await updateApi.execute(() =>
         usersApi.updateProfile({
           name: name || undefined,
           phone: phone || undefined,
         }),
       );
-      if (updated) {
-        await refreshUser();
-        showNotification("Profile updated", "success");
-      }
-    } catch (err: unknown) {
-      showError(err, "Failed to update profile");
+      await refreshUser();
+      showNotification("Profile updated", "success");
+    } catch {
+      return;
     }
   };
 
   const handleUpdateAddress = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
-      const updated = await updateApi.execute(() =>
+      await updateApi.execute(() =>
         usersApi.updateProfile({
           address: city
             ? { city, street, house, apartment: apartment || undefined }
             : undefined,
         }),
       );
-      if (updated) {
-        await refreshUser();
-        showNotification("Address updated", "success");
-      }
-    } catch (err: unknown) {
-      showError(err, "Failed to update address");
+      await refreshUser();
+      showNotification("Address updated", "success");
+    } catch {
+      return;
     }
+  };
+
+  const handleClearAddress = async () => {
+    try {
+      await updateApi.execute(() => usersApi.clearAddress());
+      await refreshUser();
+      showNotification("Address removed", "success");
+    } catch {
+      return;
+    }
+  };
+
+  const handleRequestEmailChange = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    try {
+      await emailApi.execute(() => usersApi.requestEmailChange({ newEmail }));
+    } catch {
+      return;
+    }
+    await refreshUser();
+    setNewEmail("");
+    showNotification(`Confirmation link sent to ${newEmail}`, "success");
   };
 
   const handleChangePassword = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      showNotification("New passwords do not match", "error");
+      return;
+    }
     try {
       await passwordApi.execute(() =>
         usersApi.changePassword({ oldPassword, newPassword }),
       );
-      setOldPassword("");
-      setNewPassword("");
-      showNotification("Password changed", "success");
-    } catch (err: unknown) {
-      showError(err, "Failed to change password");
+    } catch {
+      return;
     }
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    showNotification("Password changed", "success");
   };
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>My Profile</h1>
       <div className={styles.tabs}>
-        <button
+        <Link
+          to="/profile"
           className={`${styles.tab} ${activeTab === "profile" ? styles.active : ""}`}
-          onClick={() => setActiveTab("profile")}
         >
           Profile
-        </button>
-        <button
+        </Link>
+        <Link
+          to="/profile/address"
           className={`${styles.tab} ${activeTab === "address" ? styles.active : ""}`}
-          onClick={() => setActiveTab("address")}
         >
           Address
-        </button>
-        <button
-          className={`${styles.tab} ${activeTab === "password" ? styles.active : ""}`}
-          onClick={() => setActiveTab("password")}
+        </Link>
+        <Link
+          to="/profile/security"
+          className={`${styles.tab} ${activeTab === "security" ? styles.active : ""}`}
         >
-          Password
-        </button>
+          Security
+        </Link>
       </div>
       {activeTab === "profile" && (
-        <form onSubmit={handleUpdateProfile} className={styles.form}>
+        <form onSubmit={(e) => void handleUpdateProfile(e)} className={styles.form}>
           <div className={styles.fieldReadonly}>
-            <label className={styles.label}>Email</label>
+            <label htmlFor="profile-email" className={styles.label}>Email</label>
             <input
+              id="profile-email"
               value={user?.email || ""}
               disabled
               className={styles.input}
@@ -132,12 +159,16 @@ export default function ProfilePage() {
           </div>
           <Input
             label="Name"
+            name="name"
+            autoComplete="name"
             value={name}
             onChange={setName}
             placeholder="Your name"
           />
           <Input
             label="Phone"
+            name="phone"
+            autoComplete="tel"
             value={phone}
             onChange={setPhone}
             placeholder="+380991234567"
@@ -148,15 +179,19 @@ export default function ProfilePage() {
         </form>
       )}
       {activeTab === "address" && (
-        <form onSubmit={handleUpdateAddress} className={styles.form}>
+        <form onSubmit={(e) => void handleUpdateAddress(e)} className={styles.form}>
           <Input
             label="City"
+            name="city"
+            autoComplete="address-level2"
             value={city}
             onChange={setCity}
             placeholder="City"
           />
           <Input
             label="Street"
+            name="street"
+            autoComplete="address-line1"
             value={street}
             onChange={setStreet}
             placeholder="Street"
@@ -164,12 +199,14 @@ export default function ProfilePage() {
           <div className={styles.row}>
             <Input
               label="House"
+              name="house"
               value={house}
               onChange={setHouse}
               placeholder="House"
             />
             <Input
               label="Apartment"
+              name="apartment"
               value={apartment}
               onChange={setApartment}
               placeholder="Apt"
@@ -178,28 +215,77 @@ export default function ProfilePage() {
           <Button type="submit" loading={updateApi.loading}>
             Save Address
           </Button>
+          {user?.address && (
+            <Button type="button" variant="secondary" onClick={() => void handleClearAddress()} disabled={updateApi.loading}>
+              Remove Address
+            </Button>
+          )}
         </form>
       )}
-      {activeTab === "password" && (
-        <form onSubmit={handleChangePassword} className={styles.form}>
-          <Input
-            label="Current Password"
-            type="password"
-            value={oldPassword}
-            onChange={setOldPassword}
-            placeholder="••••••••"
-          />
-          <Input
-            label="New Password"
-            type="password"
-            value={newPassword}
-            onChange={setNewPassword}
-            placeholder="Min 8 characters"
-          />
-          <Button type="submit" loading={passwordApi.loading}>
-            Change Password
-          </Button>
-        </form>
+      {activeTab === "security" && (
+        <>
+          <h2 className={styles.sectionTitle}>Change Password</h2>
+          {user?.hasPassword ? (
+            <form onSubmit={(e) => void handleChangePassword(e)} className={styles.form}>
+              <Input
+                label="Current Password"
+                name="currentPassword"
+                autoComplete="current-password"
+                type="password"
+                value={oldPassword}
+                onChange={setOldPassword}
+                placeholder="••••••••"
+              />
+              <Input
+                label="New Password"
+                name="newPassword"
+                autoComplete="new-password"
+                type="password"
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Min 8 characters"
+              />
+              <Input
+                label="Confirm New Password"
+                name="confirmPassword"
+                autoComplete="new-password"
+                type="password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                placeholder="Repeat new password"
+              />
+              <Button type="submit" loading={passwordApi.loading}>
+                Change Password
+              </Button>
+            </form>
+          ) : (
+            <p className={styles.pendingNotice}>
+              This account signs in with Google and has no password yet.{" "}
+              <Link to="/forgot-password">Set a password</Link> to also sign in with email.
+            </p>
+          )}
+
+          <h2 className={styles.sectionTitle}>Change Email</h2>
+          <form onSubmit={(e) => void handleRequestEmailChange(e)} className={styles.form}>
+            {user?.pendingEmail && (
+              <p className={styles.pendingNotice}>
+                Confirmation pending for <strong>{user.pendingEmail}</strong>. Check your inbox to complete the change.
+              </p>
+            )}
+            <Input
+              label="New Email"
+              name="newEmail"
+              autoComplete="email"
+              type="email"
+              value={newEmail}
+              onChange={setNewEmail}
+              placeholder="new@example.com"
+            />
+            <Button type="submit" loading={emailApi.loading} disabled={!newEmail}>
+              Send Confirmation Link
+            </Button>
+          </form>
+        </>
       )}
     </div>
   );

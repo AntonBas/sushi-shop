@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class OrderQueryServiceTest {
+class OrderQueryServiceTest {
 
     @Mock
     private OrderRepository orderRepository;
@@ -36,7 +36,7 @@ public class OrderQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldGetAllOrders() {
+    void shouldGetAllOrders() {
         Pageable pageable = PageRequest.of(0, 20);
         var order = Order.builder().id(1L).customerName("Anton").totalAmount(new BigDecimal("500.00")).build();
         var page = new PageImpl<>(List.of(order), pageable, 1);
@@ -46,7 +46,7 @@ public class OrderQueryServiceTest {
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
         when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
-        when(orderMapper.toResponse(order)).thenReturn(expectedResponse);
+        when(orderMapper.toResponse(order, List.of())).thenReturn(expectedResponse);
 
         var result = orderQueryService.getAll(pageable, null, null, null, null);
 
@@ -57,7 +57,7 @@ public class OrderQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldGetAllOrdersWithFilters() {
+    void shouldGetAllOrdersWithFilters() {
         Pageable pageable = PageRequest.of(0, 20);
         var order = Order.builder().id(1L).status(OrderStatus.NEW).build();
         var page = new PageImpl<>(List.of(order), pageable, 1);
@@ -67,7 +67,7 @@ public class OrderQueryServiceTest {
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
         when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
-        when(orderMapper.toResponse(order)).thenReturn(expectedResponse);
+        when(orderMapper.toResponse(order, List.of())).thenReturn(expectedResponse);
 
         var result = orderQueryService.getAll(pageable, OrderStatus.NEW, DeliveryMethod.DELIVERY, PaymentMethod.ON_DELIVERY, "Anton");
 
@@ -77,7 +77,7 @@ public class OrderQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldReturnEmptyPageWhenNoOrders() {
+    void shouldReturnEmptyPageWhenNoOrders() {
         Pageable pageable = PageRequest.of(0, 20);
         var page = new PageImpl<Order>(List.of(), pageable, 0);
 
@@ -89,7 +89,7 @@ public class OrderQueryServiceTest {
     }
 
     @Test
-    public void shouldGetByUser() {
+    void shouldGetByUser() {
         Pageable pageable = PageRequest.of(0, 20);
         var order = Order.builder().id(1L).customerName("Anton").build();
         var page = new PageImpl<>(List.of(order), pageable, 1);
@@ -98,7 +98,7 @@ public class OrderQueryServiceTest {
 
         when(orderRepository.findByUserEmail("test@test.com", pageable)).thenReturn(page);
         when(orderRepository.findItemsByOrderIds(anyList())).thenReturn(List.of());
-        when(orderMapper.toUserResponse(order)).thenReturn(expectedResponse);
+        when(orderMapper.toUserResponse(order, List.of())).thenReturn(expectedResponse);
 
         var result = orderQueryService.getByUser("test@test.com", pageable);
 

@@ -10,6 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
@@ -24,11 +25,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductQueryServiceTest {
+class ProductQueryServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -76,7 +78,7 @@ public class ProductQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldGetAllProducts() {
+    void shouldGetAllProducts() {
         var product = createProduct(1L, "Maki");
         var pageable = PageRequest.of(0, 12);
         var page = new PageImpl<>(List.of(product), pageable, 1);
@@ -96,7 +98,7 @@ public class ProductQueryServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void shouldReturnEmptyPageWhenNoProducts() {
+    void shouldReturnEmptyPageWhenNoProducts() {
         var pageable = PageRequest.of(0, 12);
         var page = new PageImpl<Product>(List.of(), pageable, 0);
 
@@ -108,7 +110,51 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldGetPopularProducts() {
+    @SuppressWarnings("unchecked")
+    void shouldSortProductsByRatingDescending() {
+        var lowRated = createProduct(1L, "Low");
+        var highRated = createProduct(2L, "High");
+        var noReviews = createProduct(3L, "NoReviews");
+        var pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.DESC, "rating"));
+
+        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of(lowRated, highRated, noReviews));
+        when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of(1L, 3.0, 2L, 4.8));
+        when(enrichmentService.calculateDiscountedPrice(any())).thenReturn(null);
+        when(productMapper.toListResponse(eq(highRated), eq(4.8), any())).thenReturn(createListResponse(2L, "High", 4.8));
+        when(productMapper.toListResponse(eq(lowRated), eq(3.0), any())).thenReturn(createListResponse(1L, "Low", 3.0));
+        when(productMapper.toListResponse(eq(noReviews), isNull(), any())).thenReturn(createListResponse(3L, "NoReviews", null));
+
+        var result = productQueryService.getAll(pageable, null, null, null);
+
+        assertThat(result.getContent()).extracting(ProductListResponse::name)
+                .containsExactly("High", "Low", "NoReviews");
+        assertThat(result.getTotalElements()).isEqualTo(3);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldSortProductsByEffectivePriceAccountingForDiscount() {
+        var expensive = createProduct(1L, "Expensive");
+        expensive.setPrice(new BigDecimal("300.00"));
+        var mid = createProduct(2L, "Mid");
+        mid.setPrice(new BigDecimal("200.00"));
+        var pageable = PageRequest.of(0, 12, Sort.by(Sort.Direction.ASC, "price"));
+
+        when(productRepository.findAll(any(Specification.class))).thenReturn(List.of(expensive, mid));
+        when(enrichmentService.getAverageRatings(anyList())).thenReturn(Map.of());
+        when(enrichmentService.calculateDiscountedPrice(expensive)).thenReturn(new BigDecimal("150.00"));
+        when(enrichmentService.calculateDiscountedPrice(mid)).thenReturn(null);
+        when(productMapper.toListResponse(eq(expensive), any(), eq(new BigDecimal("150.00")))).thenReturn(createListResponse(1L, "Expensive", null));
+        when(productMapper.toListResponse(eq(mid), any(), isNull())).thenReturn(createListResponse(2L, "Mid", null));
+
+        var result = productQueryService.getAll(pageable, null, null, null);
+
+        assertThat(result.getContent()).extracting(ProductListResponse::name)
+                .containsExactly("Expensive", "Mid");
+    }
+
+    @Test
+    void shouldGetPopularProducts() {
         var product = createProduct(1L, "Maki");
         var listResponse = createListResponse(1L, "Maki", 4.5);
 
@@ -124,7 +170,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldReturnEmptyListForPopularWhenNoProducts() {
+    void shouldReturnEmptyListForPopularWhenNoProducts() {
         when(productRepository.findPopular(any(Pageable.class))).thenReturn(List.of());
 
         var result = productQueryService.getPopular();
@@ -133,7 +179,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldGetRelatedProducts() {
+    void shouldGetRelatedProducts() {
         var product = createProduct(1L, "Maki");
         var relatedProduct = createProduct(2L, "Related");
         var listResponse = createListResponse(2L, "Related", 3.0);
@@ -152,7 +198,7 @@ public class ProductQueryServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenRelatedProductNotFound() {
+    void shouldThrowWhenRelatedProductNotFound() {
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productQueryService.getRelated(1L))

@@ -14,23 +14,27 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PromotionServiceTest {
+class PromotionServiceTest {
 
     private static final Long PROMOTION_ID = 1L;
     private static final String PROMOTION_SLUG = "weekend-sale";
@@ -60,7 +64,7 @@ public class PromotionServiceTest {
     private ProductCacheService productCacheService;
 
     @Mock
-    private CacheManager cacheManager;
+    private PromotionCacheService promotionCacheService;
 
     @InjectMocks
     private PromotionService promotionService;
@@ -93,7 +97,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldCreatePromotion() {
+    void shouldCreatePromotion() {
         var request = new CreatePromotionRequest(
                 PROMOTION_TITLE,
                 "20% off",
@@ -131,12 +135,12 @@ public class PromotionServiceTest {
         verify(validator).validateDates(request.startDate(), request.endDate());
         verify(validator).validateTitleUnique(PROMOTION_TITLE);
         verify(validator).validateProductsExist(List.of(PRODUCT_ID));
-        verify(validator).validateProductsNotInOtherActivePromotions(List.of(PRODUCT_ID), null);
+        verify(validator).validateProductsNotInOverlappingPromotions(List.of(PRODUCT_ID), request.startDate(), request.endDate(), null);
         verify(promotionRepository).save(any());
     }
 
     @Test
-    public void shouldGetActivePromotions() {
+    void shouldGetActivePromotions() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -160,7 +164,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetAllWithSearch() {
+    void shouldGetAllWithSearch() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -174,7 +178,7 @@ public class PromotionServiceTest {
 
         var mappedResponse = createPromotionResponse();
 
-        when(promotionRepository.findIdsBySearch(eq("week"), any()))
+        when(promotionRepository.findIdsByTitlePattern(eq("%week%"), any()))
                 .thenReturn(new PageImpl<>(List.of(PROMOTION_ID)));
         when(promotionRepository.findPromotionsByIds(List.of(PROMOTION_ID)))
                 .thenReturn(List.of(promotion));
@@ -183,12 +187,32 @@ public class PromotionServiceTest {
         var result = promotionService.getAll(Pageable.unpaged(), "week");
 
         assertThat(result.getContent()).hasSize(1);
-        verify(promotionRepository).findIdsBySearch(eq("week"), any());
+        verify(promotionRepository).findIdsByTitlePattern(eq("%week%"), any());
         verify(promotionRepository).findPromotionsByIds(List.of(PROMOTION_ID));
     }
 
     @Test
-    public void shouldGetAllWithoutSearch() {
+    void shouldPreserveRequestedOrderWhenFetchingPromotionsByIds() {
+        var second = Promotion.builder().id(2L).slug("second").title("Second").discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(1)).active(ACTIVE).products(Set.of()).build();
+        var first = Promotion.builder().id(1L).slug("first").title("First").discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now()).endDate(LocalDateTime.now().plusDays(1)).active(ACTIVE).products(Set.of()).build();
+        var firstResponse = new PromotionResponse(1L, "first", "First", null, DISCOUNT_PERCENT, null, null, ACTIVE, IS_CURRENTLY_ACTIVE, List.of());
+        var secondResponse = new PromotionResponse(2L, "second", "Second", null, DISCOUNT_PERCENT, null, null, ACTIVE, IS_CURRENTLY_ACTIVE, List.of());
+
+        when(promotionRepository.findIds(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(2L, 1L)));
+        when(promotionRepository.findPromotionsByIds(List.of(2L, 1L)))
+                .thenReturn(List.of(first, second));
+        when(assembler.toResponseList(List.of(second, first))).thenReturn(List.of(secondResponse, firstResponse));
+
+        var result = promotionService.getAll(Pageable.unpaged(), null);
+
+        assertThat(result.getContent()).extracting(PromotionResponse::id).containsExactly(2L, 1L);
+    }
+
+    @Test
+    void shouldGetAllWithoutSearch() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -216,7 +240,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetById() {
+    void shouldGetById() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -241,7 +265,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldGetBySlug() {
+    void shouldGetBySlug() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -265,7 +289,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenPromotionNotFound() {
+    void shouldThrowWhenPromotionNotFound() {
         when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> promotionService.getById(PROMOTION_ID))
@@ -273,7 +297,7 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldUpdatePromotion() {
+    void shouldUpdatePromotion() {
         var request = new UpdatePromotionRequest(
                 "Updated Sale",
                 "Updated desc",
@@ -324,7 +348,32 @@ public class PromotionServiceTest {
     }
 
     @Test
-    public void shouldUpdatePartialDates() {
+    void shouldKeepSlugWhenRenameProducesSameSlug() {
+        var request = new UpdatePromotionRequest(PROMOTION_TITLE + "!", null, null, null, null, null, null);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now().minusDays(1))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(ACTIVE)
+                .products(new HashSet<>())
+                .build();
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.findBySlug(PROMOTION_SLUG)).thenReturn(Optional.of(promotion));
+        when(slugService.generateUniqueSlug(eq(PROMOTION_TITLE + "!"), any()))
+                .thenAnswer(inv -> new SlugService().generateUniqueSlug(inv.getArgument(0), inv.getArgument(1)));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        assertThat(promotion.getSlug()).isEqualTo(PROMOTION_SLUG);
+    }
+
+    @Test
+    void shouldUpdatePartialDates() {
         var request = new UpdatePromotionRequest(
                 null,
                 null,
@@ -369,11 +418,12 @@ public class PromotionServiceTest {
 
         assertThat(result.id()).isEqualTo(PROMOTION_ID);
         assertThat(result.startDate()).isEqualTo(request.startDate());
-        verify(validator).validateDates(request.startDate(), promotion.getEndDate());
+        verify(validator).validateDateOrder(request.startDate(), promotion.getEndDate());
+        verify(validator, never()).validateEndDateNotInPast(any());
     }
 
     @Test
-    public void shouldDeletePromotion() {
+    void shouldDeletePromotion() {
         var promotion = Promotion.builder()
                 .id(PROMOTION_ID)
                 .slug(PROMOTION_SLUG)
@@ -387,5 +437,100 @@ public class PromotionServiceTest {
 
         verify(promotionRepository).save(promotion);
         verify(promotionRepository).delete(promotion);
+    }
+
+    @Test
+    void shouldCheckOverlapWithEffectiveDatesWhenDatesChange() {
+        var newEnd = LocalDateTime.now().plusDays(10);
+        var request = new UpdatePromotionRequest(null, null, null, null, newEnd, null, null);
+        var product = Product.builder().id(PRODUCT_ID).slug("maki").build();
+        var start = LocalDateTime.now().minusDays(1);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(start)
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(new HashSet<>(Set.of(product)))
+                .build();
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        verify(validator).validateProductsNotInOverlappingPromotions(List.of(PRODUCT_ID), start, newEnd, PROMOTION_ID);
+    }
+
+    @Test
+    void shouldSkipOverlapCheckWhenOnlyDescriptionChanges() {
+        var request = new UpdatePromotionRequest(null, "New desc", null, null, null, null, null);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now().minusDays(10))
+                .endDate(LocalDateTime.now().minusDays(1))
+                .active(true)
+                .products(new HashSet<>())
+                .build();
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        verify(validator, never()).validateProductsNotInOverlappingPromotions(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldAllowDeactivatingEndedPromotionWhenDatesAreUnchanged() {
+        var start = LocalDateTime.now().minusDays(10);
+        var end = LocalDateTime.now().minusDays(1);
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(start)
+                .endDate(end)
+                .active(true)
+                .products(new HashSet<>())
+                .build();
+        var request = new UpdatePromotionRequest(null, null, null, start, end, null, false);
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        assertThat(promotion.isActive()).isFalse();
+        verify(validator, never()).validateEndDateNotInPast(any());
+    }
+
+    @Test
+    void shouldRejectMovingEndDateIntoThePast() {
+        var promotion = Promotion.builder()
+                .id(PROMOTION_ID)
+                .slug(PROMOTION_SLUG)
+                .title(PROMOTION_TITLE)
+                .discountPercent(DISCOUNT_PERCENT)
+                .startDate(LocalDateTime.now().minusDays(10))
+                .endDate(LocalDateTime.now().plusDays(1))
+                .active(true)
+                .products(new HashSet<>())
+                .build();
+        var newEnd = LocalDateTime.now().minusDays(1);
+        var request = new UpdatePromotionRequest(null, null, null, null, newEnd, null, null);
+
+        when(promotionRepository.findById(PROMOTION_ID)).thenReturn(Optional.of(promotion));
+        when(promotionRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        promotionService.update(PROMOTION_ID, request);
+
+        verify(validator).validateEndDateNotInPast(newEnd);
     }
 }

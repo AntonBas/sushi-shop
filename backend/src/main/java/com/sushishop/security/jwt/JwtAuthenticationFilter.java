@@ -20,20 +20,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserCacheService userCacheService;
+    private final JwtCookieService jwtCookieService;
+    private final JwtBlacklistService jwtBlacklistService;
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
+        String token = jwtCookieService.extractToken(request);
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-
+        if (token != null) {
             var payload = jwtUtil.parseToken(token);
 
-            if (payload != null) {
+            if (payload != null && jwtBlacklistService.isBlacklisted(payload.jti())) {
+                SecurityContextHolder.clearContext();
+            } else if (payload != null) {
                 var cachedUser = userCacheService.getCachedUser(payload.email(), payload.tokenVersion());
 
-                if (cachedUser != null) {
+                if (cachedUser != null && cachedUser.emailVerified()) {
                     var principal = new CustomUserDetails(cachedUser);
                     var auth = new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);

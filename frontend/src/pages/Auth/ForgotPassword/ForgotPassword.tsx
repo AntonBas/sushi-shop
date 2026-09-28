@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { AxiosError } from 'axios'
 import { Mail } from 'lucide-react'
 import * as authApi from '../../../api/auth'
+import { getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
 import Modal from '../../../components/UI/Modal/Modal'
@@ -22,8 +22,7 @@ export default function ForgotPassword() {
       await authApi.forgotPassword({ email })
       setShowSuccess(true)
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Something went wrong')
+      setError(getErrorMessage(err, 'Something went wrong'))
     } finally {
       setLoading(false)
     }
@@ -36,11 +35,12 @@ export default function ForgotPassword() {
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <p className={styles.instruction}>
             Enter your email and we'll send you instructions to reset your password.
+            Signed up with Google and don't have a password yet? Use this to set one.
           </p>
-          <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
+          <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
           <Button type="submit" loading={loading} style={{ width: '100%' }}>
             {loading ? 'Sending...' : 'Send Reset Instructions'}
           </Button>

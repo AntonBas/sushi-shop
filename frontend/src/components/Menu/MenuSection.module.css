@@ -37,17 +37,38 @@
   background: var(--color-input-bg);
   color: var(--color-text);
   font-size: 15px;
-  outline: none;
 }
 
 .searchInput:focus {
   border-color: var(--color-primary);
 }
 
+.sortRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 .categories {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.sortSelect {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sortSelect:focus {
+  border-color: var(--color-primary);
 }
 
 .categoryBtn {
@@ -73,7 +94,7 @@
 }
 
 .active:hover {
-  color: #fff;
+  color: var(--color-on-primary);
 }
 
 .grid {

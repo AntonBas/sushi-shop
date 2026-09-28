@@ -6,8 +6,7 @@ import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.product.dto.response.ProductResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -15,15 +14,14 @@ import java.util.HashSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
-@ActiveProfiles("test")
-public class ProductMapperTest {
+@SpringJUnitConfig({ProductMapperImpl.class, ProductImageMapper.class})
+class ProductMapperTest {
 
     @Autowired
     private ProductMapper productMapper;
 
     @Test
-    public void shouldMapToResponse() {
+    void shouldMapToResponse() {
         Product product = new Product();
         product.setId(1L);
         product.setName("Maki");
@@ -45,7 +43,7 @@ public class ProductMapperTest {
     }
 
     @Test
-    public void shouldMapToEntity() {
+    void shouldMapToEntity() {
         var request = new CreateProductRequest(
                 "Maki",
                 "Salmon roll",
@@ -66,7 +64,7 @@ public class ProductMapperTest {
     }
 
     @Test
-    public void shouldUpdateEntity() {
+    void shouldUpdateEntity() {
         var request = new UpdateProductRequest(
                 "Updated Maki",
                 "Updated description",
@@ -95,7 +93,25 @@ public class ProductMapperTest {
     }
 
     @Test
-    public void shouldMapToListResponse() {
+    void shouldClearDescriptionAndPiecesButKeepOtherFieldsWhenNull() {
+        Product product = new Product();
+        product.setName("Maki");
+        product.setDescription("Salmon roll");
+        product.setPrice(new BigDecimal("250.00"));
+        product.setWeight(250);
+        product.setPieces(8);
+
+        productMapper.updateEntity(new UpdateProductRequest(null, null, null, null, null, null), product);
+
+        assertThat(product.getDescription()).isNull();
+        assertThat(product.getPieces()).isNull();
+        assertThat(product.getName()).isEqualTo("Maki");
+        assertThat(product.getPrice()).isEqualByComparingTo("250.00");
+        assertThat(product.getWeight()).isEqualTo(250);
+    }
+
+    @Test
+    void shouldMapToListResponse() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -122,7 +138,7 @@ public class ProductMapperTest {
     }
 
     @Test
-    public void shouldMapToListResponseWithDiscountedPrice() {
+    void shouldMapToListResponseWithDiscountedPrice() {
         Product product = Product.builder()
                 .id(1L)
                 .name("Maki")
@@ -139,7 +155,7 @@ public class ProductMapperTest {
     }
 
     @Test
-    public void shouldMapToListResponseWithNullRating() {
+    void shouldMapToListResponseWithNullRating() {
         Product product = Product.builder()
                 .id(2L)
                 .name("Uramaki")

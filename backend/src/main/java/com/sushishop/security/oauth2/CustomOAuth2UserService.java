@@ -1,11 +1,16 @@
 package com.sushishop.security.oauth2;
 
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.shared.service.EmailNormalizer;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserRole;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -13,14 +18,27 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
+    private static final String UNVERIFIED_EMAIL_ERROR_CODE = "unverified_email";
+
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest request) {
         var oauthUser = super.loadUser(request);
+        linkOrCreateUser(oauthUser);
+        return oauthUser;
+    }
+
+    void linkOrCreateUser(OAuth2User oauthUser) {
         var attributes = oauthUser.getAttributes();
-        String email = (String) attributes.get("email");
+        String email = EmailNormalizer.normalize((String) attributes.get("email"));
         String name = (String) attributes.get("name");
+
+        if (!Boolean.TRUE.equals(attributes.get("email_verified"))) {
+            OAuth2Error error = new OAuth2Error(UNVERIFIED_EMAIL_ERROR_CODE, "Google account email is not verified", null);
+            throw new OAuth2AuthenticationException(error, error.toString());
+        }
 
         var user = userRepository.findByEmail(email).orElseGet(() -> {
             var newUser = User.builder()
@@ -35,10 +53,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         });
 
         if (!user.isEmailVerified()) {
+            var oldTokenVersion = user.getTokenVersion();
             user.setEmailVerified(true);
+            user.setPassword(null);
+            user.setTokenVersion(oldTokenVersion + 1);
             userRepository.save(user);
+            eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, email, oldTokenVersion));
         }
-
-        return oauthUser;
     }
 }

@@ -18,14 +18,13 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PromotionResponseAssemblerTest {
+class PromotionResponseAssemblerTest {
 
     @Mock
     private PromotionMapper promotionMapper;
@@ -45,7 +44,7 @@ public class PromotionResponseAssemblerTest {
     private PromotionResponse baseResponse;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         product1 = Product.builder()
                 .id(1L)
                 .name("Roll 1")
@@ -101,7 +100,7 @@ public class PromotionResponseAssemblerTest {
     }
 
     @Test
-    public void toResponse_shouldApplyDiscountWhenPromotionActive() {
+    void toResponse_shouldApplyDiscountWhenPromotionActive() {
         when(promotionMapper.toResponse(promotion)).thenReturn(baseResponse);
         when(productEnrichmentService.getAverageRatings(anyList()))
                 .thenReturn(Map.of(1L, 4.5, 2L, 4.0));
@@ -116,14 +115,14 @@ public class PromotionResponseAssemblerTest {
 
         var result = assembler.toResponse(promotion);
 
-        assertNotNull(result);
-        assertEquals(1L, result.id());
-        assertEquals(2, result.products().size());
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isEqualTo(1L);
+        assertThat(result.products()).hasSize(2);
         verify(productEnrichmentService).getAverageRatings(anyList());
     }
 
     @Test
-    public void toResponse_shouldNotApplyDiscountWhenPromotionInactive() {
+    void toResponse_shouldNotApplyDiscountWhenPromotionInactive() {
         promotion.setActive(false);
         when(promotionMapper.toResponse(promotion)).thenReturn(baseResponse);
         when(productEnrichmentService.getAverageRatings(anyList()))
@@ -139,13 +138,13 @@ public class PromotionResponseAssemblerTest {
 
         var result = assembler.toResponse(promotion);
 
-        assertNotNull(result);
+        assertThat(result).isNotNull();
         verify(productMapper).toListResponse(product1, 4.5, null);
         verify(productMapper).toListResponse(product2, 4.0, null);
     }
 
     @Test
-    public void toResponse_shouldNotApplyDiscountWhenNotInDateRange() {
+    void toResponse_shouldNotApplyDiscountWhenNotInDateRange() {
         promotion.setStartDate(LocalDateTime.now().plusDays(1));
         promotion.setEndDate(LocalDateTime.now().plusDays(2));
 
@@ -163,7 +162,7 @@ public class PromotionResponseAssemblerTest {
 
         var result = assembler.toResponse(promotion);
 
-        assertNotNull(result);
+        assertThat(result).isNotNull();
         verify(productMapper).toListResponse(product1, 4.5, null);
     }
 }

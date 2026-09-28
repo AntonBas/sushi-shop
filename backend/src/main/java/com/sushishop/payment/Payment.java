@@ -2,12 +2,27 @@ package com.sushishop.payment;
 
 import com.sushishop.order.Order;
 import com.sushishop.shared.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -20,7 +35,6 @@ import java.math.BigDecimal;
 @Table(name = "payments", indexes = {
         @Index(name = "idx_payment_order_id", columnList = "order_id")
 })
-@EqualsAndHashCode(callSuper = true, exclude = "order")
 public class Payment extends BaseEntity {
 
     @Id

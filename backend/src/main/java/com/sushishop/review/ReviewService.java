@@ -17,7 +17,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -64,8 +66,11 @@ public class ReviewService {
             return Page.empty(pageable);
         }
 
-        var reviews = reviewRepository.findReviewsByIds(ids);
-        var responses = reviews.stream()
+        Map<Long, Review> reviewsById = new LinkedHashMap<>();
+        reviewRepository.findReviewsByIds(ids).forEach(r -> reviewsById.put(r.getId(), r));
+
+        var responses = ids.stream()
+                .map(reviewsById::get)
                 .map(reviewMapper::toResponse)
                 .toList();
 
@@ -90,11 +95,11 @@ public class ReviewService {
 
     @Auditable(action = AuditAction.DELETE, entity = "Review")
     @Transactional
-    public void delete(Long reviewId, String email) {
+    public void delete(Long reviewId, String email, boolean isAdmin) {
         var review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review not found: " + reviewId));
 
-        OwnershipGuard.requireOwner(review.getUser().getEmail(), email, "You can only delete your own reviews");
+        OwnershipGuard.requireOwnerOrAdmin(review.getUser().getEmail(), email, isAdmin, "You can only delete your own reviews");
 
         var product = review.getProduct();
         reviewRepository.delete(review);

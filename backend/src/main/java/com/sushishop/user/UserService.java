@@ -1,10 +1,12 @@
 package com.sushishop.user;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.mail.MailService;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.user.dto.request.ChangePasswordRequest;
 import com.sushishop.user.dto.request.RegisterRequest;
 import com.sushishop.user.dto.request.UpdateUserRequest;
@@ -13,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +28,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final MailService mailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Auditable(action = AuditAction.CREATE, entity = "User")
     @Transactional
@@ -76,6 +81,20 @@ public class UserService {
 
     @Auditable(action = AuditAction.UPDATE, entity = "User")
     @Transactional
+    @CacheEvict(value = "users", key = "#email")
+    public UserResponse clearAddress(String email) {
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+        user.setCity(null);
+        user.setStreet(null);
+        user.setHouse(null);
+        user.setApartment(null);
+        log.info("Address cleared for user: {}", email);
+        return userMapper.toResponse(userRepository.save(user));
+    }
+
+    @Auditable(action = AuditAction.UPDATE, entity = "User")
+    @Transactional
     public void changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
@@ -88,9 +107,12 @@ public class UserService {
             throw new BadRequestException("New password must be different from old password");
         }
 
+        var oldTokenVersion = user.getTokenVersion();
         user.setPassword(passwordEncoder.encode(request.newPassword()));
-        user.setTokenVersion(user.getTokenVersion() + 1);
+        user.setTokenVersion(oldTokenVersion + 1);
         userRepository.save(user);
+        eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, email, oldTokenVersion));
+        mailService.sendPasswordChangedNotification(email);
         log.info("Password changed for {}", email);
     }
 }

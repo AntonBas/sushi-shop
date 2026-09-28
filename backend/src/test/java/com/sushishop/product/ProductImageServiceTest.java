@@ -1,6 +1,7 @@
 package com.sushishop.product;
 
 import com.sushishop.file.FileStorageService;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,8 +9,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,10 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ProductImageServiceTest {
+class ProductImageServiceTest {
 
     @Mock
     private ProductRepository productRepository;
@@ -41,7 +45,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldAddImage() {
+    void shouldAddImage() {
         var product = createProduct();
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
 
@@ -56,7 +60,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldSkipWhenFileIsEmpty() {
+    void shouldSkipWhenFileIsEmpty() {
         var product = createProduct();
         var file = new MockMultipartFile("empty.jpg", "empty.jpg", "image/jpeg", new byte[0]);
 
@@ -70,7 +74,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenProductNotFoundForAddImage() {
+    void shouldThrowWhenProductNotFoundForAddImage() {
         var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
 
         when(productRepository.findById(1L)).thenReturn(Optional.empty());
@@ -79,7 +83,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldDeleteImage() {
+    void shouldDeleteImage() {
         var product = createProduct();
         var image = ProductImage.builder().id(10L).url("/api/files/test.jpg").sortOrder(0).product(product).build();
         product.getProductImages().add(image);
@@ -94,7 +98,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenImageNotFound() {
+    void shouldThrowWhenImageNotFound() {
         var product = createProduct();
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -103,7 +107,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldReorderImages() {
+    void shouldReorderImages() {
         var product = createProduct();
         var image1 = ProductImage.builder().id(1L).url("1.jpg").sortOrder(0).product(product).build();
         var image2 = ProductImage.builder().id(2L).url("2.jpg").sortOrder(1).product(product).build();
@@ -121,7 +125,7 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldAddImagesToProduct() {
+    void shouldAddImagesToProduct() {
         var product = createProduct();
         var file1 = new MockMultipartFile("1.jpg", "1.jpg", "image/jpeg", "1".getBytes());
         var file2 = new MockMultipartFile("2.jpg", "2.jpg", "image/jpeg", "2".getBytes());
@@ -137,11 +141,22 @@ public class ProductImageServiceTest {
     }
 
     @Test
-    public void shouldSkipNullImagesInAddImagesToProduct() {
+    void shouldSkipNullImagesInAddImagesToProduct() {
         var product = createProduct();
 
         productImageService.addImagesToProduct(product, null);
 
         assertThat(product.getProductImages()).isEmpty();
+    }
+
+    @Test
+    void shouldRejectTooManyImagesInOneUpload() {
+        var product = createProduct();
+        var images = Collections.nCopies(ProductImageService.MAX_IMAGES_PER_UPLOAD + 1, (MultipartFile) new MockMultipartFile("images", new byte[0]));
+
+        assertThatThrownBy(() -> productImageService.addImagesToProduct(product, images))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessage("You can upload at most 5 images at once");
+        verifyNoInteractions(fileStorageService);
     }
 }

@@ -15,6 +15,9 @@ public record UserResponse(
         @Schema(description = "Email address", example = "user@example.com")
         String email,
 
+        @Schema(description = "New email awaiting confirmation, if a change is in progress", example = "new-address@example.com")
+        String pendingEmail,
+
         @Schema(description = "Phone number", example = "+380961791111")
         String phone,
 
@@ -22,6 +25,9 @@ public record UserResponse(
         UserRole userRole,
 
         @Schema(description = "Default delivery address")
-        AddressResponse address
+        AddressResponse address,
+
+        @Schema(description = "Whether the account has a password (false for Google-only accounts)", example = "true")
+        boolean hasPassword
 ) {
 }

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { isAxiosError } from "axios";
 import * as authApi from "../api/auth";
 import * as usersApi from "../api/user";
-import { clearAuthToken, getAuthToken, setAuthToken } from "../api/authToken";
+import { setUnauthorizedHandler } from "../api/client";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
 import { AuthContext } from "./auth-context";
 
@@ -9,61 +10,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<UserResponse | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const fetchedRef = useRef(false);
-  const loading = initialLoading;
+  const [loading, setLoading] = useState(true);
 
-  const token = getAuthToken();
   const isAuthenticated = !!user;
   const isAdmin = user?.userRole === "ADMIN";
   const isCourier = user?.userRole === "COURIER";
 
   useEffect(() => {
-    if (token && !fetchedRef.current) {
-      fetchedRef.current = true;
-      usersApi
-        .getMe()
-        .then(setUser)
-        .catch(() => {
-          clearAuthToken();
-          setUser(null);
-        })
-        .finally(() => setInitialLoading(false));
-    } else {
-      setInitialLoading(false);
-    }
-  }, [token]);
+    usersApi
+      .getMe()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const login = async (credentials: LoginRequest) => {
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
+  const login = useCallback(async (credentials: LoginRequest) => {
     const response = await authApi.login(credentials);
-    setAuthToken(response.token);
-    fetchedRef.current = true;
     setUser(response.user);
-  };
+  }, []);
 
-  const register = async (userData: RegisterRequest) => {
-    const response = await authApi.register(userData);
-    setAuthToken(response.token);
-    fetchedRef.current = true;
-    setUser(response.user);
-    return response.user;
-  };
+  const register = useCallback(async (userData: RegisterRequest) => {
+    await authApi.register(userData);
+  }, []);
 
-  const logout = () => {
-    clearAuthToken();
-    setUser(null);
-    fetchedRef.current = false;
-    window.location.href = "/login";
-  };
+  const logout = useCallback(() => {
+    void authApi.logout().catch(() => undefined).finally(() => {
+      setUser(null);
+      window.location.href = "/login";
+    });
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const data = await usersApi.getMe();
       setUser(data);
-    } catch {
-      logout();
+    } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 401) {
+        setUser(null);
+      }
+      throw error;
     }
-  };
+  }, []);
 
   return (
     <AuthContext.Provider

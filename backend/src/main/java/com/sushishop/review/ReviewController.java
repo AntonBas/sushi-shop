@@ -5,6 +5,8 @@ import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.shared.ratelimit.RateLimit;
+import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -21,7 +23,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
@@ -33,6 +42,7 @@ public class ReviewController {
     private final ReviewService reviewService;
     private final ReviewReplyService reviewReplyService;
 
+    @RateLimit(value = 10, key = "user")
     @PostMapping
     @Operation(summary = "Create a review")
     @ApiResponse(responseCode = "201", description = "Review created")
@@ -70,7 +80,7 @@ public class ReviewController {
     @Operation(summary = "Get reviews by product")
     public ResponseEntity<Page<ReviewResponse>> getByProduct(
             @PathVariable Long productId,
-            @PageableDefault(size = 5, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @SortableFields({"createdAt", "rating", "id"}) @PageableDefault(size = 5, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/reviews/product/{}", productId);
         return ResponseEntity.ok(reviewService.getByProduct(productId, pageable));
     }
@@ -88,13 +98,13 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a review")
+    @Operation(summary = "Delete a review (owner or admin)")
     @ApiResponse(responseCode = "204", description = "Review deleted")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Void> delete(@PathVariable Long id,
                                        @AuthenticationPrincipal UserDetails userDetails) {
         log.info("DELETE /api/reviews/{}", id);
-        reviewService.delete(id, userDetails.getUsername());
+        reviewService.delete(id, userDetails.getUsername(), isAdmin(userDetails));
         return ResponseEntity.noContent().build();
     }
 
@@ -108,5 +118,10 @@ public class ReviewController {
         log.info("DELETE /api/reviews/replies/{}", id);
         reviewReplyService.deleteReply(id, userDetails.getUsername());
         return ResponseEntity.noContent().build();
+    }
+
+    private boolean isAdmin(UserDetails userDetails) {
+        return userDetails.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_" + Roles.ADMIN));
     }
 }

@@ -10,7 +10,7 @@ export interface CreateOrderRequest {
   items: OrderItemRequest[]
 }
 
-export interface OrderItemRequest {
+interface OrderItemRequest {
   productId: number
   quantity: number
 }
@@ -42,7 +42,7 @@ export interface UserOrderResponse {
   items: OrderItemResponse[]
 }
 
-export interface OrderItemResponse {
+interface OrderItemResponse {
   productId: number
   productName: string
   quantity: number
@@ -53,6 +53,7 @@ export interface OrderItemResponse {
 export interface OrderStatusUpdateResponse {
   orderId: number
   status: OrderStatus
+  paymentStatus: string
 }
 
 export interface OrderFilters {

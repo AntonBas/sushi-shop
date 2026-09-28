@@ -56,8 +56,8 @@ services:
       REDIS_PORT: 6379
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET}
-      EMAIL_USERNAME: ${EMAIL_USERNAME}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      BREVO_API_KEY: ${BREVO_API_KEY}
+      MAIL_FROM_EMAIL: ${MAIL_FROM_EMAIL}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
@@ -86,13 +86,13 @@ services:
       backend:
         condition: service_healthy
     ports:
-      - '5173:80'
+      - '127.0.0.1:5173:80'
     networks:
       - sushi-net
     restart: unless-stopped
 
   prometheus-config:
-    image: alpine:3.20
+    image: alpine:3.24
     container_name: sushi-prometheus-config
     profiles: [dev]
     env_file:
@@ -105,14 +105,14 @@ services:
       - sushi-net
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.14.0
     container_name: sushi-prometheus
     profiles: [dev]
     depends_on:
       prometheus-config:
         condition: service_completed_successfully
     ports:
-      - '9090:9090'
+      - '127.0.0.1:9090:9090'
     volumes:
       - prometheus_config:/etc/prometheus
     networks:
@@ -120,17 +120,20 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:12.4.11
     container_name: sushi-grafana
     profiles: [dev]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     ports:
-      - '3000:3000'
+      - '127.0.0.1:3000:3000'
     networks:
       - sushi-net
     restart: unless-stopped
 
   ngrok:
-    image: ngrok/ngrok:latest
+    image: ngrok/ngrok:3
     container_name: sushi-ngrok
     profiles: [dev]
     depends_on:
@@ -140,7 +143,7 @@ services:
       - NGROK_AUTHTOKEN=${NGROK_AUTH_TOKEN}
     command: http backend:8080 --log=stdout --log-level=info
     ports:
-      - '4040:4040'
+      - '127.0.0.1:4040:4040'
     networks:
       - sushi-net
     restart: unless-stopped

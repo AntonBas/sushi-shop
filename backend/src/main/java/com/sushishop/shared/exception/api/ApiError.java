@@ -25,10 +25,10 @@ public class ApiError {
     private final LocalDateTime timestamp = LocalDateTime.now();
 
     @Setter
-    private String message;
+    private String code;
 
     @Setter
-    private String debugMessage;
+    private String message;
 
     @Setter
     private String path;
@@ -38,13 +38,6 @@ public class ApiError {
     public ApiError(HttpStatus status) {
         this.status = status;
         this.statusCode = status.value();
-    }
-
-    public ApiError(HttpStatus status, String message, Throwable ex) {
-        this.status = status;
-        this.statusCode = status.value();
-        this.message = message;
-        this.debugMessage = ex.getLocalizedMessage();
     }
 
     public ApiError(HttpStatus status, String message) {

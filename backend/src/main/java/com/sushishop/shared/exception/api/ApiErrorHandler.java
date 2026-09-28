@@ -9,24 +9,35 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.CONTENT_TOO_LARGE;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
@@ -36,13 +47,24 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Override
     @Nonnull
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(@Nonnull MaxUploadSizeExceededException ex,
+                                                                          @Nonnull HttpHeaders headers,
+                                                                          @Nonnull HttpStatusCode status,
+                                                                          @Nonnull WebRequest request) {
+        log.warn("Upload rejected: {}", ex.getMessage());
+        return buildResponseEntity(new ApiError(CONTENT_TOO_LARGE,
+                "Uploaded files are too large: max 5 MB per image and 30 MB per request"), request);
+    }
+
+    @Override
+    @Nonnull
     protected ResponseEntity<Object> handleHttpMessageNotReadable(@Nonnull HttpMessageNotReadableException ex,
                                                                   @Nonnull HttpHeaders headers,
                                                                   @Nonnull HttpStatusCode status,
                                                                   @Nonnull WebRequest request) {
         String error = "Malformed JSON request";
         log.warn("Malformed JSON request: {}", ex.getMessage());
-        return buildResponseEntity(new ApiError(BAD_REQUEST, error, ex), request);
+        return buildResponseEntity(new ApiError(BAD_REQUEST, error), request);
     }
 
     @Override
@@ -74,7 +96,11 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         ApiError apiError = new ApiError(TOO_MANY_REQUESTS);
         apiError.setMessage("Rate limit exceeded. Please try again later.");
         log.warn("Rate limit exceeded: {}", ex.getMessage());
-        return buildResponseEntity(apiError, request);
+        HttpHeaders headers = new HttpHeaders();
+        if (ex.getRetryAfterSeconds() != null) {
+            headers.add(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()));
+        }
+        return buildResponseEntity(apiError, request, headers);
     }
 
     @ExceptionHandler(SushiShopException.class)
@@ -82,21 +108,50 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
                                                               @Nonnull WebRequest request) {
         ApiError apiError = new ApiError(ex.getStatus());
         apiError.setMessage(ex.getMessage());
-        apiError.setDebugMessage(ex.getDebugMessage());
-        log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
+        apiError.setCode(ex.getCode());
+        if (ex.getStatus().is5xxServerError()) {
+            log.error("Server exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage(), ex);
+        } else {
+            log.warn("Business exception [{}]: {}", ex.getClass().getSimpleName(), ex.getMessage());
+        }
         return buildResponseEntity(apiError, request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     protected ResponseEntity<Object> handleDataIntegrityViolation(@Nonnull DataIntegrityViolationException ex,
                                                                   @Nonnull WebRequest request) {
-        if (ex.getCause() instanceof ConstraintViolationException) {
-            ApiError apiError = new ApiError(CONFLICT, "Database constraint violation", ex.getCause());
+        if (ex.getCause() instanceof org.hibernate.exception.ConstraintViolationException) {
+            ApiError apiError = new ApiError(CONFLICT, "Database constraint violation");
             log.warn("Database constraint violation: {}", ex.getMessage());
             return buildResponseEntity(apiError, request);
         }
         ApiError apiError = new ApiError(INTERNAL_SERVER_ERROR, "Database error");
         log.error("Database error: ", ex);
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    protected ResponseEntity<Object> handleOptimisticLocking(@Nonnull OptimisticLockingFailureException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(CONFLICT, "The resource was modified concurrently, please retry");
+        log.warn("Optimistic locking failure: {}", ex.getMessage());
+        return buildResponseEntity(apiError, request);
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    protected ResponseEntity<Object> handleTransactionSystem(@Nonnull TransactionSystemException ex,
+                                                             @Nonnull WebRequest request) {
+        if (ex.getRootCause() instanceof ConstraintViolationException constraintViolation) {
+            return handleConstraintViolation(constraintViolation, request);
+        }
+        return handleAllExceptions(ex, request);
+    }
+
+    @ExceptionHandler(PropertyReferenceException.class)
+    protected ResponseEntity<Object> handlePropertyReference(@Nonnull PropertyReferenceException ex,
+                                                             @Nonnull WebRequest request) {
+        ApiError apiError = new ApiError(BAD_REQUEST, String.format("Unknown property '%s'", ex.getPropertyName()));
+        log.warn("Invalid property reference: {}", ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
 
@@ -107,7 +162,6 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         String requiredType = Optional.ofNullable(ex.getRequiredType()).map(Class::getSimpleName).orElse("unknown");
         apiError.setMessage(String.format("The parameter '%s' of value '%s' could not be converted to type '%s'",
                 ex.getName(), ex.getValue(), requiredType));
-        apiError.setDebugMessage(ex.getMessage());
         log.warn("Type mismatch for parameter '{}': {}", ex.getName(), ex.getMessage());
         return buildResponseEntity(apiError, request);
     }
@@ -148,12 +202,18 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Nonnull
     private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request) {
+        return buildResponseEntity(apiError, request, new HttpHeaders());
+    }
+
+    @Nonnull
+    private ResponseEntity<Object> buildResponseEntity(@Nonnull ApiError apiError, @Nonnull WebRequest request,
+                                                        @Nonnull HttpHeaders headers) {
         if (request instanceof ServletWebRequest servletWebRequest) {
             apiError.setPath(servletWebRequest.getRequest().getRequestURI());
         } else {
             apiError.setPath("unknown");
         }
-        return new ResponseEntity<>(apiError,
+        return new ResponseEntity<>(apiError, headers,
                 Objects.requireNonNull(apiError.getStatus(), "ApiError status must not be null"));
     }
 }

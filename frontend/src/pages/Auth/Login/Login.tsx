@@ -1,30 +1,53 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { AxiosError } from 'axios'
+import { useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../../context/useAuth'
 import { API_BASE_URL } from '../../../config/env'
+import { getErrorCode, getErrorMessage } from '../../../api/errorMessage'
 import Button from '../../../components/UI/Button/Button'
 import Input from '../../../components/UI/Input/Input'
+import { useResendVerification } from '../../../hooks/common/useResendVerification'
 import styles from './Login.module.css'
+
+const OAUTH2_ERROR_MESSAGES: Record<string, string> = {
+  access_denied: 'Google login was cancelled.',
+  unverified_email: 'Your Google account email is not verified. Please verify it with Google first.',
+  oauth2_failed: 'Google login failed. Please try again.',
+}
+
+const EMAIL_NOT_VERIFIED_CODE = 'EMAIL_NOT_VERIFIED'
+const PASSWORD_NOT_SET_CODE = 'PASSWORD_NOT_SET'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [error, setError] = useState(() => {
+    const oauthError = searchParams.get('error')
+    return oauthError ? (OAUTH2_ERROR_MESSAGES[oauthError] || OAUTH2_ERROR_MESSAGES.oauth2_failed) : ''
+  })
+  const [errorCode, setErrorCode] = useState<string | undefined>()
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
   const navigate = useNavigate()
+  const { resend, cooldown, sending, message, messageType } = useResendVerification()
+
+  useEffect(() => {
+    if (searchParams.get('error')) {
+      setSearchParams({}, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     setError('')
+    setErrorCode(undefined)
     setLoading(true)
     try {
       await login({ email, password })
-      navigate('/')
+      void navigate('/')
     } catch (err) {
-      const error = err as AxiosError<{ message: string }>
-      setError(error.response?.data?.message || 'Invalid email or password')
+      setError(getErrorMessage(err, 'Invalid email or password'))
+      setErrorCode(getErrorCode(err))
     } finally {
       setLoading(false)
     }
@@ -40,9 +63,38 @@ export default function Login() {
 
       {error && <div className={styles.error}>{error}</div>}
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
-        <Input label="Password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
+      {errorCode === EMAIL_NOT_VERIFIED_CODE && (
+        <div className={styles.resendBlock}>
+          {message && (
+            <p className={messageType === 'error' ? styles.resendMessageError : styles.resendMessageSuccess}>{message}</p>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => void resend(email)}
+            loading={sending}
+            disabled={cooldown > 0 || !email}
+            style={{ width: '100%' }}
+          >
+            {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend verification email'}
+          </Button>
+        </div>
+      )}
+
+      {errorCode === PASSWORD_NOT_SET_CODE && (
+        <div className={styles.resendBlock}>
+          <Button type="button" variant="secondary" onClick={handleGoogleLogin} style={{ width: '100%' }}>
+            Continue with Google
+          </Button>
+          <p className={styles.link}>
+            Or <Link to="/forgot-password">set a password</Link> for this account.
+          </p>
+        </div>
+      )}
+
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
+        <Input label="Email" name="email" autoComplete="email" type="email" value={email} onChange={setEmail} placeholder="your@email.com" />
+        <Input label="Password" name="password" autoComplete="current-password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
         <div className={styles.forgot}>
           <Link to="/forgot-password">Forgot password?</Link>
         </div>

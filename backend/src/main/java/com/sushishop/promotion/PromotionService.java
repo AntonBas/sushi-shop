@@ -9,11 +9,11 @@ import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
 import com.sushishop.promotion.dto.response.PromotionResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.NotFoundException;
+import com.sushishop.shared.service.LikePattern;
 import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.service.SlugService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,7 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Slf4j
@@ -38,7 +40,7 @@ public class PromotionService {
     private final PromotionResponseAssembler assembler;
     private final SlugService slugService;
     private final ProductCacheService productCacheService;
-    private final CacheManager cacheManager;
+    private final PromotionCacheService promotionCacheService;
 
     @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
@@ -46,7 +48,7 @@ public class PromotionService {
         validator.validateDates(request.startDate(), request.endDate());
         validator.validateTitleUnique(request.title());
         validator.validateProductsExist(request.productIds());
-        validator.validateProductsNotInOtherActivePromotions(request.productIds(), null);
+        validator.validateProductsNotInOverlappingPromotions(request.productIds(), request.startDate(), request.endDate(), null);
 
         var products = new HashSet<>(productRepository.findAllById(request.productIds()));
 
@@ -77,7 +79,7 @@ public class PromotionService {
     public Page<PromotionResponse> getAll(Pageable pageable, String search) {
         Page<Long> idsPage;
         if (search != null && !search.isBlank()) {
-            idsPage = promotionRepository.findIdsBySearch(search, pageable);
+            idsPage = promotionRepository.findIdsByTitlePattern(LikePattern.containsIgnoreCase(search), pageable);
         } else {
             idsPage = promotionRepository.findIds(pageable);
         }
@@ -87,7 +89,10 @@ public class PromotionService {
             return Page.empty(pageable);
         }
 
-        var promotions = promotionRepository.findPromotionsByIds(ids);
+        Map<Long, Promotion> promotionsById = new LinkedHashMap<>();
+        promotionRepository.findPromotionsByIds(ids).forEach(p -> promotionsById.put(p.getId(), p));
+
+        var promotions = ids.stream().map(promotionsById::get).toList();
         var responses = assembler.toResponseList(promotions);
 
         return new PageImpl<>(responses, pageable, idsPage.getTotalElements());
@@ -123,12 +128,16 @@ public class PromotionService {
         updateDates(promotion, request.startDate(), request.endDate());
         updateProducts(promotion, request.productIds());
         updateActive(promotion, request.active());
+        if (promotion.isActive() && affectsOverlap(request)) {
+            var productIds = promotion.getProducts().stream().map(Product::getId).toList();
+            validator.validateProductsNotInOverlappingPromotions(productIds, promotion.getStartDate(), promotion.getEndDate(), id);
+        }
 
         var saved = promotionRepository.save(promotion);
 
-        evictPromotionCache(id, oldSlug);
+        promotionCacheService.evict(id, oldSlug);
         if (!oldSlug.equals(saved.getSlug())) {
-            evictPromotionCache(id, saved.getSlug());
+            promotionCacheService.evict(id, saved.getSlug());
         }
         var affectedProducts = new HashSet<>(oldProducts);
         affectedProducts.addAll(saved.getProducts());
@@ -150,18 +159,9 @@ public class PromotionService {
         promotionRepository.save(promotion);
         promotionRepository.delete(promotion);
 
-        evictPromotionCache(id, slug);
+        promotionCacheService.evict(id, slug);
         evictProductsCache(products);
         log.info("Promotion deleted: id={}", id);
-    }
-
-    private void evictPromotionCache(Long id, String slug) {
-        var cache = cacheManager.getCache("promotions");
-        if (cache == null) {
-            return;
-        }
-        cache.evict("id:" + id);
-        cache.evict("slug:" + slug);
     }
 
     private void evictProductsCache(Set<Product> products) {
@@ -173,7 +173,9 @@ public class PromotionService {
             validator.validateTitleUnique(newTitle);
             promotion.setTitle(newTitle);
             promotion.setSlug(slugService.generateUniqueSlug(newTitle,
-                    slug -> promotionRepository.findBySlug(slug).isPresent()));
+                    slug -> promotionRepository.findBySlug(slug)
+                            .filter(other -> !other.getId().equals(promotion.getId()))
+                            .isPresent()));
         }
     }
 
@@ -193,7 +195,10 @@ public class PromotionService {
         if (newStartDate != null || newEndDate != null) {
             var effectiveStart = newStartDate != null ? newStartDate : promotion.getStartDate();
             var effectiveEnd = newEndDate != null ? newEndDate : promotion.getEndDate();
-            validator.validateDates(effectiveStart, effectiveEnd);
+            validator.validateDateOrder(effectiveStart, effectiveEnd);
+            if (!effectiveEnd.equals(promotion.getEndDate())) {
+                validator.validateEndDateNotInPast(effectiveEnd);
+            }
             promotion.setStartDate(effectiveStart);
             promotion.setEndDate(effectiveEnd);
         }
@@ -202,9 +207,13 @@ public class PromotionService {
     private void updateProducts(Promotion promotion, List<Long> newProductIds) {
         if (newProductIds != null) {
             validator.validateProductsExist(newProductIds);
-            validator.validateProductsNotInOtherActivePromotions(newProductIds, promotion.getId());
             promotion.setProducts(new HashSet<>(productRepository.findAllById(newProductIds)));
         }
+    }
+
+    private boolean affectsOverlap(UpdatePromotionRequest request) {
+        return request.productIds() != null || request.startDate() != null
+                || request.endDate() != null || request.active() != null;
     }
 
     private void updateActive(Promotion promotion, Boolean newActive) {

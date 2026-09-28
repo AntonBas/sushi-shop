@@ -1,36 +1,27 @@
 package com.sushishop.shared.ratelimit;
 
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.ConsumptionProbe;
+import io.github.bucket4j.BucketConfiguration;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@RequiredArgsConstructor
 public class RateLimitService {
 
-    private record BucketEntry(Bucket bucket, long capacity) {
-    }
-
-    private final Map<String, BucketEntry> buckets = new ConcurrentHashMap<>();
+    private final ProxyManager<String> proxyManager;
 
     public boolean tryConsume(String key, int tokens, int capacity, int durationInSeconds) {
         String bucketKey = key + ":" + capacity + ":" + durationInSeconds;
 
-        BucketEntry entry = buckets.computeIfAbsent(bucketKey, k -> new BucketEntry(
-                Bucket.builder()
-                        .addLimit(limit -> limit.capacity(capacity)
-                                .refillIntervally(capacity, Duration.ofSeconds(durationInSeconds)))
-                        .build(),
-                capacity));
+        var configuration = BucketConfiguration.builder()
+                .addLimit(limit -> limit.capacity(capacity)
+                        .refillIntervally(capacity, Duration.ofSeconds(durationInSeconds)))
+                .build();
 
-        ConsumptionProbe probe = entry.bucket().tryConsumeAndReturnRemaining(tokens);
-        return probe.isConsumed();
-    }
-
-    public void cleanupBuckets() {
-        buckets.entrySet().removeIf(entry -> entry.getValue().bucket().getAvailableTokens() >= entry.getValue().capacity());
+        var bucket = proxyManager.builder().build(bucketKey, () -> configuration);
+        return bucket.tryConsume(tokens);
     }
 }

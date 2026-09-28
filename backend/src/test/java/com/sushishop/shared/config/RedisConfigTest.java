@@ -7,7 +7,7 @@ import org.springframework.data.redis.RedisConnectionFailureException;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-public class RedisConfigTest {
+class RedisConfigTest {
 
     private final RedisConfig redisConfig = new RedisConfig();
     private final Cache cache = Mockito.mock(Cache.class);
@@ -15,25 +15,25 @@ public class RedisConfigTest {
             new RedisConnectionFailureException("Redis unavailable");
 
     @Test
-    public void shouldNotPropagateOnCacheGetError() {
+    void shouldNotPropagateOnCacheGetError() {
         assertThatCode(() -> redisConfig.errorHandler().handleCacheGetError(redisDown, cache, "key"))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    public void shouldNotPropagateOnCachePutError() {
+    void shouldNotPropagateOnCachePutError() {
         assertThatCode(() -> redisConfig.errorHandler().handleCachePutError(redisDown, cache, "key", "value"))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    public void shouldNotPropagateOnCacheEvictError() {
+    void shouldNotPropagateOnCacheEvictError() {
         assertThatCode(() -> redisConfig.errorHandler().handleCacheEvictError(redisDown, cache, "key"))
                 .doesNotThrowAnyException();
     }
 
     @Test
-    public void shouldNotPropagateOnCacheClearError() {
+    void shouldNotPropagateOnCacheClearError() {
         assertThatCode(() -> redisConfig.errorHandler().handleCacheClearError(redisDown, cache))
                 .doesNotThrowAnyException();
     }

@@ -55,8 +55,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
+  background: color-mix(in srgb, var(--color-error) 15%, transparent);
+  color: var(--color-error);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 11px;
@@ -102,7 +102,7 @@
   align-items: center;
   justify-content: center;
   min-width: 120px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   border-radius: 16px;
   padding: 24px;
 }

@@ -4,6 +4,7 @@ import { ArrowLeft, Upload, X, GripVertical } from "lucide-react";
 import { useProducts } from "../../../../hooks/features/useProducts";
 import { useNotification } from "../../../../context/useNotification";
 import * as productsApi from "../../../../api/products";
+import { getErrorMessage } from "../../../../api/errorMessage";
 import Button from "../../../../components/UI/Button/Button";
 import Input from "../../../../components/UI/Input/Input";
 import Loading from "../../../../components/UI/Loading/Loading";
@@ -28,7 +29,11 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useReturnTo } from "../../../../hooks/common/useReturnTo";
 import styles from "./AdminProductForm.module.css";
+
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_NEW_IMAGES = 5;
 
 interface SortableImageProps {
   img: ProductImageResponse;
@@ -54,7 +59,7 @@ function SortableImage({ img, index, onRemove }: SortableImageProps) {
 
   return (
     <div ref={setNodeRef} style={style} className={styles.imageItem}>
-      <img src={img.url} alt={`Product image ${index + 1}`} />
+      <img src={img.url} alt={`Uploaded file ${index + 1}`} />
       <button
         type="button"
         className={styles.dragHandle}
@@ -76,10 +81,16 @@ function SortableImage({ img, index, onRemove }: SortableImageProps) {
   );
 }
 
+interface NewImage {
+  file: File;
+  previewUrl: string;
+}
+
 export default function AdminProductForm() {
   const { id } = useParams<{ id: string }>();
   const isEdit = !!id;
   const navigate = useNavigate();
+  const backTo = useReturnTo("/admin/products");
   const { product, productLoading, getProduct } = useProducts();
   const { showNotification } = useNotification();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +101,9 @@ export default function AdminProductForm() {
   const [category, setCategory] = useState<Category>("ROLL");
   const [weight, setWeight] = useState("");
   const [pieces, setPieces] = useState("");
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<NewImage[]>([]);
+  const [removedImageIds, setRemovedImageIds] = useState<number[]>([]);
+  const previewUrlsRef = useRef<string[]>([]);
   const [existingImages, setExistingImages] = useState<ProductImageResponse[]>(
     [],
   );
@@ -102,48 +115,57 @@ export default function AdminProductForm() {
   );
 
   useEffect(() => {
-    if (isEdit && id) getProduct(Number(id));
+    if (isEdit && id) void getProduct(Number(id));
   }, [isEdit, id, getProduct]);
 
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (isEdit && product) {
-      setName(product.name);
-      setDescription(product.description || "");
-      setPrice(product.price.toString());
-      setCategory(product.category as Category);
-      setWeight(product.weight?.toString() || "");
-      setPieces(product.pieces?.toString() || "");
-      setExistingImages(product.images);
-    }
-  }, [isEdit, product]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  const [loadedProduct, setLoadedProduct] = useState<typeof product>(null);
+
+  if (isEdit && product && product !== loadedProduct) {
+    setLoadedProduct(product);
+    setName(product.name);
+    setDescription(product.description || "");
+    setPrice(product.price.toString());
+    setCategory(product.category as Category);
+    setWeight(product.weight?.toString() || "");
+    setPieces(product.pieces?.toString() || "");
+    setExistingImages(product.images);
+  }
+
+  useEffect(() => () => previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)), []);
 
   const handleImageAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files) setImages((prev) => [...prev, ...Array.from(files)]);
+    if (!files) return;
+    const selected = Array.from(files);
+    e.target.value = "";
+    const withinSize = selected.filter((file) => file.size <= MAX_IMAGE_SIZE_BYTES);
+    if (withinSize.length < selected.length) {
+      showNotification("Images larger than 5 MB were skipped", "warning");
+    }
+    const slotsLeft = isEdit ? withinSize.length : MAX_NEW_IMAGES - images.length;
+    if (withinSize.length > slotsLeft) {
+      showNotification(`You can add up to ${MAX_NEW_IMAGES} images when creating a product`, "warning");
+    }
+    const added = withinSize
+      .slice(0, Math.max(0, slotsLeft))
+      .map((file) => ({ file, previewUrl: URL.createObjectURL(file) }));
+    previewUrlsRef.current.push(...added.map((image) => image.previewUrl));
+    setImages((prev) => [...prev, ...added]);
   };
 
   const handleRemoveNewImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImages((prev) => {
+      URL.revokeObjectURL(prev[index].previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
   };
 
-  const handleRemoveExistingImage = async (imageId: number) => {
-    if (isEdit && id) {
-      try {
-        await productsApi.deleteProductImage(Number(id), imageId);
-        setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
-        showNotification("Image removed", "success");
-      } catch (err: unknown) {
-        const message =
-          (err as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Failed to remove image";
-        showNotification(message, "error");
-      }
-    }
+  const handleRemoveExistingImage = (imageId: number) => {
+    setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+    setRemovedImageIds((prev) => [...prev, imageId]);
   };
 
-  const handleDragEnd = async (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -164,12 +186,16 @@ export default function AdminProductForm() {
       if (isEdit && id) {
         await productsApi.updateProduct(Number(id), {
           name: name || undefined,
-          description: description || undefined,
+          description: description || null,
           price: price ? Number(price) : undefined,
           category: category || undefined,
           weight: weight ? Number(weight) : undefined,
-          pieces: pieces ? Number(pieces) : undefined,
+          pieces: pieces ? Number(pieces) : null,
         });
+
+        for (const imageId of removedImageIds) {
+          await productsApi.deleteProductImage(Number(id), imageId);
+        }
 
         const imageIds = existingImages.map((img) => img.id);
         if (imageIds.length > 0) {
@@ -178,7 +204,7 @@ export default function AdminProductForm() {
 
         if (images.length > 0) {
           for (const image of images) {
-            await productsApi.addProductImage(Number(id), image);
+            await productsApi.addProductImage(Number(id), image.file);
           }
         }
         showNotification("Product updated", "success");
@@ -192,16 +218,13 @@ export default function AdminProductForm() {
             weight: weight ? Number(weight) : undefined,
             pieces: pieces ? Number(pieces) : undefined,
           },
-          images.length > 0 ? images : undefined,
+          images.length > 0 ? images.map((image) => image.file) : undefined,
         );
         showNotification("Product created", "success");
       }
-      navigate("/admin/products");
+      void navigate(backTo);
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to save product";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to save product"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -215,18 +238,20 @@ export default function AdminProductForm() {
     <div className={styles.page}>
       <div className={styles.header}>
         <button
-          onClick={() => navigate("/admin/products")}
+          type="button"
+          onClick={() => void navigate(backTo)}
           className={styles.backBtn}
+          aria-label="Back to products"
         >
           <ArrowLeft size={20} />
         </button>
         <h1>{isEdit ? "Edit Product" : "New Product"}</h1>
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <div className={styles.layout}>
           <div className={styles.imagesSection}>
-            <label className={styles.label}>Images</label>
+            <span className={styles.label}>Images</span>
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -245,9 +270,9 @@ export default function AdminProductForm() {
                       onRemove={handleRemoveExistingImage}
                     />
                   ))}
-                  {images.map((file, index) => (
-                    <div key={`new-${index}`} className={styles.imageItem}>
-                      <img src={URL.createObjectURL(file)} alt={`New image ${index + 1}`} />
+                  {images.map((image, index) => (
+                    <div key={image.previewUrl} className={styles.imageItem}>
+                      <img src={image.previewUrl} alt={`New upload ${index + 1}`} />
                       <button
                         type="button"
                         onClick={() => handleRemoveNewImage(index)}
@@ -272,7 +297,7 @@ export default function AdminProductForm() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               multiple
               onChange={handleImageAdd}
               hidden
@@ -287,14 +312,16 @@ export default function AdminProductForm() {
               placeholder="Product name"
             />
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Description</label>
+              <label htmlFor="product-description" className={styles.label}>Description</label>
               <textarea
+                id="product-description"
+                name="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 className={styles.textarea}
                 placeholder="Product description"
-                maxLength={250}
+                maxLength={500}
               />
             </div>
             <div className={styles.row}>
@@ -321,8 +348,10 @@ export default function AdminProductForm() {
               type="number"
             />
             <div className={styles.fieldGroup}>
-              <label className={styles.label}>Category</label>
+              <label htmlFor="product-category" className={styles.label}>Category</label>
               <select
+                id="product-category"
+                name="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as Category)}
                 className={styles.select}
@@ -341,7 +370,7 @@ export default function AdminProductForm() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate("/admin/products")}
+            onClick={() => void navigate(backTo)}
           >
             Cancel
           </Button>

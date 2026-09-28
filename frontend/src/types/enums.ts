@@ -8,7 +8,7 @@ export type PaymentMethod = 'ONLINE' | 'ON_DELIVERY'
 
 export type UserRole = 'CUSTOMER' | 'ADMIN' | 'COURIER'
 
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'EXPORT'
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE'
 
 export const CATEGORY_DISPLAY: Record<Category, string> = {
   ROLL: 'Roll',
@@ -22,13 +22,13 @@ export const CATEGORY_DISPLAY: Record<Category, string> = {
 }
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-  NEW: "#6366f1",
-  CONFIRMED: "#3b82f6",
-  COOKING: "#f59e0b",
-  DELIVERING: "#8b5cf6",
-  READY: "#10b981",
-  DELIVERED: "#22c55e",
-  CANCELLED: "#ef4444",
+  NEW: "#4f46e5",
+  CONFIRMED: "#1d4ed8",
+  COOKING: "#b45309",
+  DELIVERING: "#6d28d9",
+  READY: "#047857",
+  DELIVERED: "#15803d",
+  CANCELLED: "#b91c1c",
 }
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
@@ -41,13 +41,18 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: "Cancelled",
 }
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  ONLINE: "Online",
-  ON_DELIVERY: "On Delivery",
-}
-
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   ON_DELIVERY: "On Delivery",
   PENDING: "Pending",
   PAID: "Paid",
+  UNPAID: "Unpaid",
 }
+export const CATEGORIES = Object.keys(CATEGORY_DISPLAY) as Category[]
+
+export const ORDER_STATUSES = Object.keys(ORDER_STATUS_LABELS) as OrderStatus[]
+
+export const DELIVERY_METHODS: readonly DeliveryMethod[] = ['DELIVERY', 'PICKUP']
+
+export const PAYMENT_METHODS: readonly PaymentMethod[] = ['ONLINE', 'ON_DELIVERY']
+
+export const AUDIT_ACTIONS: readonly AuditAction[] = ['CREATE', 'UPDATE', 'DELETE']

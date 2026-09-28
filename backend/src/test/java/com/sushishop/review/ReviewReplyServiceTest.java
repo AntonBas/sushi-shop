@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class ReviewReplyServiceTest {
+class ReviewReplyServiceTest {
 
     @Mock
     private ReviewRepository reviewRepository;
@@ -39,7 +39,7 @@ public class ReviewReplyServiceTest {
     private ReviewReplyService reviewReplyService;
 
     @Test
-    public void shouldAddReply() {
+    void shouldAddReply() {
         var user = User.builder().id(1L).email("admin@example.com").name("Admin").build();
         var review = Review.builder().id(1L).build();
         var request = new CreateReviewReplyRequest("Thank you!");
@@ -58,7 +58,7 @@ public class ReviewReplyServiceTest {
     }
 
     @Test
-    public void shouldUpdateReply() {
+    void shouldUpdateReply() {
         var user = User.builder().id(1L).email("admin@example.com").name("Admin").build();
         var reply = ReviewReply.builder().id(1L).user(user).message("Old message").build();
         var request = new CreateReviewReplyRequest("Updated message");
@@ -74,7 +74,7 @@ public class ReviewReplyServiceTest {
     }
 
     @Test
-    public void shouldDeleteReply() {
+    void shouldDeleteReply() {
         var user = User.builder().id(1L).email("admin@example.com").build();
         var reply = ReviewReply.builder().id(1L).user(user).build();
 
@@ -86,7 +86,7 @@ public class ReviewReplyServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUpdateReplyNotOwner() {
+    void shouldThrowWhenUpdateReplyNotOwner() {
         var user = User.builder().id(1L).email("admin@example.com").build();
         var reply = ReviewReply.builder().id(1L).user(user).build();
         var request = new CreateReviewReplyRequest("Test");
@@ -98,7 +98,7 @@ public class ReviewReplyServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenDeleteReplyNotOwner() {
+    void shouldThrowWhenDeleteReplyNotOwner() {
         var user = User.builder().id(1L).email("admin@example.com").build();
         var reply = ReviewReply.builder().id(1L).user(user).build();
 
@@ -109,7 +109,7 @@ public class ReviewReplyServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenReviewNotFound() {
+    void shouldThrowWhenReviewNotFound() {
         var request = new CreateReviewReplyRequest("Test");
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.empty());
@@ -119,7 +119,7 @@ public class ReviewReplyServiceTest {
     }
 
     @Test
-    public void shouldThrowWhenUserNotFound() {
+    void shouldThrowWhenUserNotFound() {
         var review = Review.builder().id(1L).build();
         var request = new CreateReviewReplyRequest("Test");
 

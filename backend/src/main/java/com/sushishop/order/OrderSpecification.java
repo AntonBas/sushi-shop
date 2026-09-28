@@ -1,5 +1,6 @@
 package com.sushishop.order;
 
+import com.sushishop.shared.service.LikePattern;
 import org.springframework.data.jpa.domain.Specification;
 
 public class OrderSpecification {
@@ -19,8 +20,8 @@ public class OrderSpecification {
         return (root, query, cb) -> {
             if (search == null || search.isBlank()) return null;
             return cb.or(
-                    cb.like(root.get("customerName"), "%" + search + "%"),
-                    cb.like(root.get("phone"), "%" + search + "%")
+                    cb.like(cb.lower(root.get("customerName")), LikePattern.containsIgnoreCase(search), LikePattern.ESCAPE),
+                    cb.like(root.get("phone"), LikePattern.contains(search), LikePattern.ESCAPE)
             );
         };
     }

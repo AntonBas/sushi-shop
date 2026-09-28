@@ -13,15 +13,16 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class UserControllerTest {
+class UserControllerTest {
 
     private MockMvc mockMvc;
 
@@ -32,14 +33,14 @@ public class UserControllerTest {
     private UserService userService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context).build();
     }
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    public void shouldGetCurrentUser() throws Exception {
-        var response = new UserResponse(1L, "Anton", "anton@example.com", "+380961791111", UserRole.CUSTOMER, null);
+    void shouldGetCurrentUser() throws Exception {
+        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
 
         when(userService.getByEmail("anton@example.com")).thenReturn(response);
 
@@ -50,7 +51,7 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
-    public void shouldChangePassword() throws Exception {
+    void shouldChangePassword() throws Exception {
         var request = """
                 {
                     "oldPassword": "oldPass",
@@ -62,5 +63,17 @@ public class UserControllerTest {
                         .contentType(APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
+    void shouldClearAddress() throws Exception {
+        var response = new UserResponse(1L, "Anton", "anton@example.com", null, "+380961791111", UserRole.CUSTOMER, null, true);
+
+        when(userService.clearAddress("anton@example.com")).thenReturn(response);
+
+        mockMvc.perform(delete("/api/users/me/address").header("X-Requested-With", "XMLHttpRequest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.address").doesNotExist());
     }
 }

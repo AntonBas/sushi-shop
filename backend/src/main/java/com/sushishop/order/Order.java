@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +24,6 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -43,7 +43,6 @@ import java.util.List;
         @Index(name = "idx_order_status", columnList = "status"),
         @Index(name = "idx_order_created_at", columnList = "created_at")
 })
-@EqualsAndHashCode(callSuper = true, exclude = "items")
 public class Order extends BaseEntity {
 
     @Id
@@ -60,8 +59,8 @@ public class Order extends BaseEntity {
     private String customerName;
 
     @NotBlank
-    @Size(max = 15)
-    @Column(nullable = false, length = 15)
+    @Size(max = 16)
+    @Column(nullable = false, length = 20)
     private String phone;
 
     @Column(length = 50)
@@ -94,6 +93,10 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private DeliveryMethod deliveryMethod;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean paid = false;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
@@ -103,4 +106,7 @@ public class Order extends BaseEntity {
     @Digits(integer = 8, fraction = 2)
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
+
+    @Version
+    private Long version;
 }

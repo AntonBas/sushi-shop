@@ -3,6 +3,7 @@ package com.sushishop.payment;
 import com.sushishop.order.Order;
 import com.sushishop.order.OrderService;
 import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.exception.core.ConflictException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +16,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -27,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class PaymentControllerTest {
+class PaymentControllerTest {
 
     private MockMvc mockMvc;
 
@@ -63,6 +67,34 @@ public class PaymentControllerTest {
         mockMvc.perform(post("/api/payments/order/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.url").value("https://checkout.stripe.com/session_123"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void shouldExpirePreviousPendingSessionsBeforeCreatingNewOne() throws Exception {
+        var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
+        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
+        when(paymentService.expirePendingPayments(1L)).thenReturn(List.of("sess_old"));
+        when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
+                .thenReturn(new StripeService.CheckoutSessionInfo("sess_new", "https://checkout.stripe.com/new"));
+
+        mockMvc.perform(post("/api/payments/order/1"))
+                .andExpect(status().isOk());
+
+        verify(stripeService).expireCheckoutSession("sess_old");
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    void shouldNotCreateStripeSessionForNonPayableOrder() throws Exception {
+        var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
+        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
+        doThrow(new ConflictException("Order is already paid")).when(paymentService).ensurePayable(order);
+
+        mockMvc.perform(post("/api/payments/order/1"))
+                .andExpect(status().isConflict());
+
+        verify(stripeService, never()).createCheckoutSession(any(), any(), any());
     }
 
     @Test

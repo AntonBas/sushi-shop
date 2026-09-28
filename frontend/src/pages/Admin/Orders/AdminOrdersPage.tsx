@@ -1,94 +1,68 @@
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { useAdminOrders } from "../../../hooks/features/useAdminOrders";
+import { useOrderSocket } from "../../../hooks/features/useOrderSocket";
 import { useNotification } from "../../../context/useNotification";
 import * as ordersApi from "../../../api/orders";
-import { getAuthToken } from "../../../api/authToken";
-import { API_BASE_URL } from "../../../config/env";
+import { getErrorMessage } from "../../../api/errorMessage";
+import { formatPrice } from "../../../utils/formatPrice";
+import { getStatusFlow } from "../../../utils/orderStatusFlow";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../hooks/common/useListSearchParams";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
 import { Search } from "lucide-react";
-import type {
-  DeliveryMethod,
-  OrderStatus,
-  PaymentMethod,
-} from "../../../types";
+import type { OrderStatus } from "../../../types";
 import {
+  DELIVERY_METHODS,
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
+  ORDER_STATUSES,
+  PAYMENT_METHODS,
   PAYMENT_STATUS_LABELS,
 } from "../../../types/enums";
-import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
+import type { Client } from "@stomp/stompjs";
 import styles from "./AdminOrdersPage.module.css";
-
-const getStatusFlow = (
-  currentStatus: OrderStatus,
-  deliveryMethod: DeliveryMethod,
-): OrderStatus[] => {
-  switch (currentStatus) {
-    case "NEW":
-      return ["CONFIRMED", "CANCELLED"];
-    case "CONFIRMED":
-      return ["COOKING", "CANCELLED"];
-    case "COOKING":
-      return deliveryMethod === "DELIVERY" ? ["DELIVERING"] : ["READY"];
-    case "DELIVERING":
-      return ["DELIVERED"];
-    case "READY":
-      return ["DELIVERED"];
-    default:
-      return [];
-  }
-};
 
 export default function AdminOrdersPage() {
   const { orders, totalPages, loading, loadOrders } = useAdminOrders();
   const { showNotification } = useNotification();
-  const [page, setPage] = useState(0);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | "">("");
-  const [deliveryFilter, setDeliveryFilter] = useState<DeliveryMethod | "">("");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "">("");
-  const [search, setSearch] = useState("");
+  const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
+  const statusFilter = pickAllowed(getParam("status"), ORDER_STATUSES);
+  const deliveryFilter = pickAllowed(getParam("delivery"), DELIVERY_METHODS);
+  const paymentFilter = pickAllowed(getParam("payment"), PAYMENT_METHODS);
+  const debouncedSearch = getParam("search");
+  const [search, handleSearchChange] = useDebouncedParamInput(debouncedSearch, (value) =>
+    updateParams({ search: value }, { replace: true }),
+  );
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const stompRef = useRef<Client | null>(null);
+
+  const toggleExpanded = (id: number) =>
+    setExpandedId((current) => (current === id ? null : id));
+  const filtersRef = useRef({ page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch });
 
   useEffect(() => {
-    loadOrders(0);
-  }, [loadOrders]);
+    filtersRef.current = { page, statusFilter, deliveryFilter, paymentFilter, search: debouncedSearch };
+  }, [page, statusFilter, deliveryFilter, paymentFilter, debouncedSearch]);
 
   useEffect(() => {
-    loadOrders(page, 12, {
+    void loadOrders(page, 12, {
       status: statusFilter || undefined,
       deliveryMethod: deliveryFilter || undefined,
       paymentMethod: paymentFilter || undefined,
-      search: search || undefined,
+      search: debouncedSearch || undefined,
     });
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
+  }, [page, statusFilter, deliveryFilter, paymentFilter, debouncedSearch, loadOrders]);
 
-  useEffect(() => {
-    const client = new Client({
-      webSocketFactory: () => new SockJS(`${API_BASE_URL}/ws`),
-      connectHeaders: {
-        Authorization: `Bearer ${getAuthToken()}`,
-      },
-      onConnect: () => {
-        client.subscribe("/topic/orders/new", () => {
-          loadOrders(page, 12, {
-            status: statusFilter || undefined,
-            deliveryMethod: deliveryFilter || undefined,
-            paymentMethod: paymentFilter || undefined,
-            search: search || undefined,
-          });
-        });
-      },
+  useOrderSocket((client: Client) => {
+    client.subscribe("/topic/orders/new", () => {
+      const f = filtersRef.current;
+      void loadOrders(f.page, 12, {
+        status: f.statusFilter || undefined,
+        deliveryMethod: f.deliveryFilter || undefined,
+        paymentMethod: f.paymentFilter || undefined,
+        search: f.search || undefined,
+      });
     });
-    client.activate();
-    stompRef.current = client;
-
-    return () => {
-      client.deactivate();
-    };
-  }, [page, statusFilter, deliveryFilter, paymentFilter, search, loadOrders]);
+  });
 
   const handleStatusChange = async (
     orderId: number,
@@ -100,21 +74,22 @@ export default function AdminOrdersPage() {
         `Order #${orderId} → ${ORDER_STATUS_LABELS[newStatus]}`,
         "success",
       );
-      loadOrders(page, 12, {
+      void loadOrders(page, 12, {
         status: statusFilter || undefined,
         deliveryMethod: deliveryFilter || undefined,
         paymentMethod: paymentFilter || undefined,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
       });
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to update status";
-      showNotification(message, "error");
+      showNotification(getErrorMessage(err, "Failed to update status"), "error");
     }
   };
 
-  if (loading) return <Loading text="Loading orders..." />;
+  useEffect(() => {
+    keepPageInRange(totalPages);
+  }, [totalPages, keepPageInRange]);
+
+  if (loading && orders.length === 0) return <Loading text="Loading orders..." />;
 
   return (
     <div className={styles.page}>
@@ -128,43 +103,27 @@ export default function AdminOrdersPage() {
           <input
             type="text"
             placeholder="Search customer or phone..."
+            aria-label="Search orders by customer or phone"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(0);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value as OrderStatus | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ status: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by status"
         >
           <option value="">All Statuses</option>
-          {[
-            "NEW",
-            "CONFIRMED",
-            "COOKING",
-            "DELIVERING",
-            "READY",
-            "DELIVERED",
-            "CANCELLED",
-          ].map((s) => (
+          {ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {ORDER_STATUS_LABELS[s as OrderStatus]}
+              {ORDER_STATUS_LABELS[s]}
             </option>
           ))}
         </select>
         <select
           value={deliveryFilter}
-          onChange={(e) => {
-            setDeliveryFilter(e.target.value as DeliveryMethod | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ delivery: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by delivery method"
         >
@@ -174,10 +133,7 @@ export default function AdminOrdersPage() {
         </select>
         <select
           value={paymentFilter}
-          onChange={(e) => {
-            setPaymentFilter(e.target.value as PaymentMethod | "");
-            setPage(0);
-          }}
+          onChange={(e) => updateParams({ payment: e.target.value })}
           className={styles.filterSelect}
           aria-label="Filter by payment method"
         >
@@ -208,15 +164,27 @@ export default function AdminOrdersPage() {
               </thead>
               <tbody>
                 {orders.map((order) => (
-                  <>
+                  <Fragment key={order.id}>
                     <tr
                       key={order.id}
                       className={styles.orderRow}
-                      onClick={() =>
-                        setExpandedId(expandedId === order.id ? null : order.id)
-                      }
+                      onClick={() => toggleExpanded(order.id)}
                     >
-                      <td data-label="ID">#{order.id}</td>
+                      <td data-label="ID">
+                        <button
+                          type="button"
+                          className={styles.expandBtn}
+                          aria-expanded={expandedId === order.id}
+                          aria-controls={`order-details-${order.id}`}
+                          aria-label={`Order #${order.id} details`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleExpanded(order.id);
+                          }}
+                        >
+                          #{order.id}
+                        </button>
+                      </td>
                       <td data-label="Customer">{order.customerName}</td>
                       <td data-label="Method">
                         {order.deliveryMethod === "DELIVERY"
@@ -227,7 +195,7 @@ export default function AdminOrdersPage() {
                         {PAYMENT_STATUS_LABELS[order.paymentStatus] ||
                           order.paymentStatus}
                       </td>
-                      <td data-label="Total">{order.totalAmount}₴</td>
+                      <td data-label="Total">{formatPrice(order.totalAmount)}₴</td>
                       <td data-label="Status">
                         <span
                           className={styles.statusBadge}
@@ -240,15 +208,12 @@ export default function AdminOrdersPage() {
                       </td>
                       <td data-label="Actions">
                         <div className={styles.actions}>
-                          {getStatusFlow(
-                            order.status,
-                            order.deliveryMethod,
-                          ).map((nextStatus) => (
+                          {getStatusFlow(order).map((nextStatus) => (
                             <button
                               key={nextStatus}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleStatusChange(order.id, nextStatus);
+                                void handleStatusChange(order.id, nextStatus);
                               }}
                               className={styles.actionBtn}
                               style={{
@@ -262,7 +227,7 @@ export default function AdminOrdersPage() {
                       </td>
                     </tr>
                     {expandedId === order.id && (
-                      <tr className={styles.expandedRow}>
+                      <tr id={`order-details-${order.id}`} className={styles.expandedRow}>
                         <td colSpan={7}>
                           <div className={styles.expandedContent}>
                             <div className={styles.detailRow}>
@@ -302,7 +267,7 @@ export default function AdminOrdersPage() {
                                   <span>
                                     {item.productName} × {item.quantity}
                                   </span>
-                                  <span>{item.unitPrice * item.quantity}₴</span>
+                                  <span>{formatPrice(item.unitPrice * item.quantity)}₴</span>
                                 </div>
                               ))}
                             </div>
@@ -310,7 +275,7 @@ export default function AdminOrdersPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>

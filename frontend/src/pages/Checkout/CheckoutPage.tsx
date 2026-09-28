@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/useAuth";
 import { useCart } from "../../context/useCart";
@@ -6,18 +6,23 @@ import { useOrders } from "../../hooks/features/useOrders";
 import { useApi } from "../../hooks/common/useApi";
 import { useNotification } from "../../context/useNotification";
 import * as paymentsApi from "../../api/payments";
+import * as productsApi from "../../api/products";
+import { formatPrice } from "../../utils/formatPrice";
 import Button from "../../components/UI/Button/Button";
 import Input from "../../components/UI/Input/Input";
+import Loading from "../../components/UI/Loading/Loading";
 import type { DeliveryMethod, PaymentMethod } from "../../types";
 import styles from "./CheckoutPage.module.css";
 
 export default function CheckoutPage() {
   const { user } = useAuth();
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, updatePrices } = useCart();
   const { createOrder, loading } = useOrders();
   const paymentApi = useApi<string>();
   const { showNotification } = useNotification();
   const navigate = useNavigate();
+  const submittingRef = useRef(false);
+  const [redirectingToPayment, setRedirectingToPayment] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [phone, setPhone] = useState("");
@@ -31,24 +36,64 @@ export default function CheckoutPage() {
   const [apartment, setApartment] = useState("");
   const [comment, setComment] = useState("");
 
-  /* eslint-disable react-hooks/set-state-in-effect */
+  const [prefilledFrom, setPrefilledFrom] = useState<typeof user>(null);
+  const productIdsKey = items.map((i) => i.productId).join(",");
+
+  const applyCurrentPrices = useEffectEvent((currentPrices: Record<number, number>) => {
+    const changed = items.some(
+      (i) => currentPrices[i.productId] !== undefined && currentPrices[i.productId] !== i.price,
+    );
+    if (!changed) return;
+    updatePrices(currentPrices);
+    showNotification("Prices in your cart were updated to current prices", "warning");
+  });
+
   useEffect(() => {
-    if (user) {
-      setCustomerName(user.name);
-      setPhone(user.phone);
-      if (user.address) {
-        setCity(user.address.city);
-        setStreet(user.address.street);
-        setHouse(user.address.house);
-        setApartment(user.address.apartment || "");
-        setDeliveryMethod("DELIVERY");
-      }
+    if (!productIdsKey) return;
+    let cancelled = false;
+    const ids = productIdsKey.split(",").map(Number);
+    void Promise.allSettled(ids.map((id) => productsApi.getProduct(id))).then((results) => {
+      if (cancelled) return;
+      const currentPrices: Record<number, number> = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const product = result.value;
+          currentPrices[product.id] = product.discountedPrice ?? product.price;
+        }
+      });
+      applyCurrentPrices(currentPrices);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [productIdsKey]);
+
+  useEffect(() => {
+    if (!redirectingToPayment) return;
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void navigate("/profile/orders", { replace: true });
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [redirectingToPayment, navigate]);
+
+  if (user && user !== prefilledFrom) {
+    setPrefilledFrom(user);
+    setCustomerName(user.name);
+    setPhone(user.phone);
+    if (user.address) {
+      setCity(user.address.city);
+      setStreet(user.address.street);
+      setHouse(user.address.house);
+      setApartment(user.address.apartment || "");
+      setDeliveryMethod("DELIVERY");
     }
-  }, [user]);
-  /* eslint-enable react-hooks/set-state-in-effect */
+  }
 
   const handleSubmit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     try {
       const order = await createOrder({
         customerName,
@@ -70,25 +115,31 @@ export default function CheckoutPage() {
           quantity: i.quantity,
         })),
       });
-      if (order) {
-        if (paymentMethod === "ONLINE") {
-          const url = await paymentApi.execute(() =>
-            paymentsApi.createCheckout(order.id),
-          );
-          if (url) window.location.href = url;
-        } else {
-          clearCart();
-          showNotification("Order placed successfully!", "success");
-          navigate("/profile/orders");
+      if (paymentMethod === "ONLINE") {
+        setRedirectingToPayment(true);
+        clearCart();
+        const url = await paymentApi.run(() => paymentsApi.createCheckout(order.id));
+        if (url) {
+          window.location.assign(url);
+          return;
         }
+        setRedirectingToPayment(false);
+        void navigate("/profile/orders");
+      } else {
+        clearCart();
+        showNotification("Order placed successfully!", "success");
+        void navigate("/profile/orders");
       }
-    } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to place order";
-      showNotification(message, "error");
+    } catch {
+      return;
+    } finally {
+      submittingRef.current = false;
     }
   };
+
+  if (redirectingToPayment) {
+    return <Loading text="Redirecting to payment..." />;
+  }
 
   if (items.length === 0) {
     return (
@@ -107,17 +158,21 @@ export default function CheckoutPage() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Checkout</h1>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Contact Info</h2>
           <Input
             label="Name"
+            name="name"
+            autoComplete="name"
             value={customerName}
             onChange={setCustomerName}
             placeholder="Your name"
           />
           <Input
             label="Phone"
+            name="phone"
+            autoComplete="tel"
             value={phone}
             onChange={setPhone}
             placeholder="+380991234567"
@@ -129,6 +184,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${deliveryMethod === "PICKUP" ? styles.activeMethod : ""}`}
+              aria-pressed={deliveryMethod === "PICKUP"}
               onClick={() => setDeliveryMethod("PICKUP")}
             >
               Pickup
@@ -136,6 +192,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${deliveryMethod === "DELIVERY" ? styles.activeMethod : ""}`}
+              aria-pressed={deliveryMethod === "DELIVERY"}
               onClick={() => setDeliveryMethod("DELIVERY")}
             >
               Delivery
@@ -148,24 +205,30 @@ export default function CheckoutPage() {
             <div className={styles.addressGrid}>
               <Input
                 label="City"
+                name="city"
+                autoComplete="address-level2"
                 value={city}
                 onChange={setCity}
                 placeholder="City"
               />
               <Input
                 label="Street"
+                name="street"
+                autoComplete="address-line1"
                 value={street}
                 onChange={setStreet}
                 placeholder="Street"
               />
               <Input
                 label="House"
+                name="house"
                 value={house}
                 onChange={setHouse}
                 placeholder="House"
               />
               <Input
                 label="Apartment"
+                name="apartment"
                 value={apartment}
                 onChange={setApartment}
                 placeholder="Apt"
@@ -173,6 +236,7 @@ export default function CheckoutPage() {
             </div>
             <Input
               label="Comment"
+              name="comment"
               value={comment}
               onChange={setComment}
               placeholder="Floor, intercom code, etc."
@@ -185,6 +249,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${paymentMethod === "ON_DELIVERY" ? styles.activeMethod : ""}`}
+              aria-pressed={paymentMethod === "ON_DELIVERY"}
               onClick={() => setPaymentMethod("ON_DELIVERY")}
             >
               Pay on {deliveryMethod === "PICKUP" ? "Pickup" : "Delivery"}
@@ -192,6 +257,7 @@ export default function CheckoutPage() {
             <button
               type="button"
               className={`${styles.methodBtn} ${paymentMethod === "ONLINE" ? styles.activeMethod : ""}`}
+              aria-pressed={paymentMethod === "ONLINE"}
               onClick={() => setPaymentMethod("ONLINE")}
             >
               Pay Online
@@ -206,13 +272,13 @@ export default function CheckoutPage() {
                 <span>
                   {item.name} × {item.quantity}
                 </span>
-                <span>{item.price * item.quantity}₴</span>
+                <span>{formatPrice(item.price * item.quantity)}₴</span>
               </div>
             ))}
           </div>
           <div className={styles.total}>
             <span>Total</span>
-            <span className={styles.totalPrice}>{total}₴</span>
+            <span className={styles.totalPrice}>{formatPrice(total)}₴</span>
           </div>
         </div>
         <Button

@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
+import org.hibernate.proxy.HibernateProxy;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -32,4 +33,29 @@ public abstract class BaseEntity {
     @LastModifiedBy
     @Column(name = "updated_by")
     private String updatedBy;
+
+    public abstract Long getId();
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other == null || persistentClass(this) != persistentClass(other)) {
+            return false;
+        }
+        Long id = getId();
+        return id != null && id.equals(((BaseEntity) other).getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return persistentClass(this).hashCode();
+    }
+
+    private static Class<?> persistentClass(Object entity) {
+        return entity instanceof HibernateProxy proxy
+                ? proxy.getHibernateLazyInitializer().getPersistentClass()
+                : entity.getClass();
+    }
 }
