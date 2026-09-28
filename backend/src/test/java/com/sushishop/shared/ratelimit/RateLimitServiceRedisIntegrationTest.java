@@ -20,12 +20,6 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Proves rate-limit state is now shared across app instances via Redis, unlike the old
- * per-JVM {@code ConcurrentHashMap} which let each instance enforce its own independent
- * limit. Two {@link RateLimitService} instances here stand in for two separate app
- * instances, each with its own Redis connection, both pointed at the same Redis.
- */
 @Testcontainers
 class RateLimitServiceRedisIntegrationTest {
 

@@ -14,16 +14,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
-/**
- * oauth2Login() registers a default AuthenticationEntryPoint that redirects
- * unauthenticated requests to its generated "choose a login provider" page.
- * The client follows that redirect and lands on a 200 OK HTML response, not
- * a 401 — so the frontend's getMe() call "succeeds" with an HTML string as
- * the user object, making an unauthenticated visitor appear logged in. This
- * backend is API-only (the frontend drives OAuth2 login itself via
- * /oauth2/authorization/{id}), so every unauthenticated request here should
- * get a plain 401 instead of that redirect.
- */
 @Component
 @RequiredArgsConstructor
 public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {

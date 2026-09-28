@@ -58,12 +58,6 @@ public class CloudinaryFileStorageService implements FileStorageService {
         }
     }
 
-    /**
-     * Cloudinary URLs are absolute and public, so the browser fetches them
-     * directly and never through this backend.
-     *
-     * @return always {@code null}
-     */
     @Override
     public Resource load(String fileName) {
         return null;

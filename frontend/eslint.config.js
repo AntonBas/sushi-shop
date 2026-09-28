@@ -12,21 +12,17 @@ const TRIPLE_SLASH_REFERENCE = /^\/\s*<reference\s/
 
 function isAllowedComment(comment) {
   if (comment.type === 'Block') {
-    return comment.value.startsWith('*') || DIRECTIVE_COMMENT.test(comment.value)
+    return DIRECTIVE_COMMENT.test(comment.value)
   }
   return DIRECTIVE_COMMENT.test(comment.value)
     || TS_DIRECTIVE_COMMENT.test(comment.value)
     || TRIPLE_SLASH_REFERENCE.test(comment.value)
 }
 
-/**
- * Project rule: code comments are not allowed. JSDoc blocks, eslint directives,
- * `@ts-expect-error` and triple-slash references are the only exceptions.
- */
 const noCodeComments = {
   meta: {
     type: 'suggestion',
-    messages: { noComment: 'Code comments are not allowed, use JSDoc if documentation is needed' },
+    messages: { noComment: 'Code comments are not allowed' },
     schema: [],
   },
   create(context) {

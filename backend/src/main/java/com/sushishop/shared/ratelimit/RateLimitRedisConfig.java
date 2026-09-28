@@ -44,11 +44,6 @@ public class RateLimitRedisConfig {
         return redisClient.connect(RedisCodec.of(StringCodec.UTF8, ByteArrayCodec.INSTANCE));
     }
 
-    /**
-     * {@code withExpirationStrategy} is bucket4j-redis 8.10.1's only public API for TTL-ing
-     * bucket keys in Redis; it's deprecated with no in-version replacement. Without it, bucket
-     * keys (one per client IP x rate-limited endpoint) would never expire.
-     */
     @Bean
     @SuppressWarnings("deprecation")
     public ProxyManager<String> rateLimitProxyManager(StatefulRedisConnection<String, byte[]> connection) {

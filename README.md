@@ -171,8 +171,6 @@ flowchart TD
 | CSS Modules                   | Component-scoped styles                        |
 | Vitest, React Testing Library | Testing                                        |
 
-Exact dependency versions live in `backend/build.gradle` and `frontend/package.json`.
-
 ### DevOps & Tools
 
 | Technology     | Description                   |
@@ -197,8 +195,7 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Fill in the required values in `.env`.
-See [`.env.example`](.env.example) for all available variables.
+`.env` holds the values listed in [`.env.example`](.env.example).
 
 | Service     | URL                                   |
 | ----------- | ------------------------------------- |
@@ -206,30 +203,21 @@ See [`.env.example`](.env.example) for all available variables.
 | Backend API | http://localhost:8080                 |
 | Swagger     | http://localhost:8080/swagger-ui.html |
 
-Prometheus and Grafana are opt-in dev extras, not started by the command
-above — run `docker compose --profile dev up -d` to include them (plus
-ngrok, for local Stripe webhook testing) at http://localhost:9090 and
-http://localhost:3000 respectively.
+Monitoring (Prometheus at http://localhost:9090, Grafana at
+http://localhost:3000) and an ngrok tunnel for Stripe webhooks run with
+`docker compose --profile dev up -d`.
 
-Swagger UI is enabled under the `local` and `docker` Spring profiles used
-for development. The `prod` profile (see [Cloud Deployment](#cloud-deployment-free-tier))
-disables `springdoc` intentionally, so a public deployment doesn't expose it.
+Swagger UI is available in the `local` and `docker` profiles and disabled in `prod`.
 
 ### Option 2: Local Development Setup
 
-Run backend and frontend separately for faster iteration; only Postgres and
-Redis stay in Docker.
+Backend and frontend run on the host, Postgres and Redis in Docker.
 
 **Backend**
 
 ```bash
 cp .env.example .env
 ```
-
-Fill in the required values (same variables as Option 1 — JWT_SECRET,
-BREVO_API_KEY, MAIL_FROM_EMAIL, GOOGLE_*, STRIPE_*, PROMETHEUS_PASSWORD,
-APP_BASE_URL — the app fails to start without them, there are no defaults
-for secrets).
 
 ```bash
 docker compose up -d postgres redis
@@ -238,11 +226,7 @@ cp ../.env .env
 ./gradlew bootRun
 ```
 
-`./gradlew bootRun` activates the `local` Spring profile by default (see
-`build.gradle`), which already reads `DB_HOST`/`DB_PORT`/`REDIS_HOST`/
-`REDIS_PORT` with `localhost` defaults matching the values in
-`.env.example`, so Postgres/Redis need no extra config. Backend
-available at http://localhost:8080.
+`bootRun` uses the `local` Spring profile. Backend: http://localhost:8080.
 
 **Frontend**
 
@@ -252,17 +236,14 @@ npm install
 npm run dev
 ```
 
-Frontend available at http://localhost:5173. Vite proxies `/api`, `/ws`,
-`/oauth2`, and `/login/oauth2` to `http://localhost:8080` — no CORS
-configuration or `VITE_API_URL` setup needed.
+Frontend: http://localhost:5173. Vite proxies `/api`, `/ws`, `/oauth2`
+and `/login/oauth2` to the backend.
 
 ### Cloud Deployment (Free Tier)
 
-Backend and frontend are on different domains here. REST calls still stay
-same-origin: `frontend/vercel.json` rewrites `/api/*` to the Render backend
-(the backend URL is hardcoded there). `VITE_API_URL` is only used for the
-WebSocket connection and to start Google OAuth login, which go to Render
-directly (allowed by CORS).
+Frontend and backend run on different domains. REST calls stay same-origin
+through a Vercel rewrite of `/api/*` to Render; the WebSocket connection and
+Google OAuth login go to Render directly.
 
 | Component  | Service                    |
 | ---------- | --------------------------- |
@@ -270,17 +251,17 @@ directly (allowed by CORS).
 | Backend    | Render — Free Web Service, Docker (root dir: `backend`) |
 | PostgreSQL | Neon (free tier)             |
 | Redis      | Upstash (free tier, TLS)     |
-| Product images | Cloudinary (free tier) — Render's disk is wiped on every redeploy, so `prod` uploads go to Cloudinary instead of local disk (`local`/`docker` still use local disk) |
+| Product images | Cloudinary (free tier) |
 
-On Render, set `SPRING_PROFILES_ACTIVE=prod` plus the "required everywhere"
-and "prod only" variables from [`.env.example`](.env.example). On Vercel,
-set `VITE_API_URL` to the Render backend's URL. Add
-`<Render URL>/login/oauth2/code/google` to Google Cloud Console's Authorized
-redirect URIs, and point the Stripe webhook at `<Render URL>/api/payments/webhook`.
+Configuration:
+- **Render:** `SPRING_PROFILES_ACTIVE=prod` plus the "All profiles" and "prod"
+  variables from [`.env.example`](.env.example)
+- **Vercel:** `VITE_API_URL` points to the Render backend
+- **Google OAuth:** `<Render URL>/login/oauth2/code/google` is an authorized redirect URI
+- **Stripe:** the webhook targets `<Render URL>/api/payments/webhook`
 
-Render's free tier sleeps after 15 minutes of inactivity; ping
-`/actuator/health` periodically (e.g. UptimeRobot or a GitHub Actions cron)
-to keep it warm.
+Render's free tier sleeps after 15 minutes of inactivity, so the first
+request after a pause can take up to a minute.
 
 ---
 
@@ -288,9 +269,9 @@ to keep it warm.
 
 Codebase is kept at zero warnings: ESLint runs with `--max-warnings 0` in CI
 and the Java compiler runs with `-Werror` (unchecked operations, MapStruct
-unmapped properties), so any warning fails the build. Project rules are
-enforced by tooling rather than review: Checkstyle (no wildcard or unused
-imports, no tabs, no code comments except Javadoc), ESLint with
+unmapped properties), so any warning fails the build. Code rules are
+enforced automatically: Checkstyle (no wildcard or unused imports, no tabs,
+no code comments), ESLint with
 `jsx-a11y` (keyboard-accessible interactions), type-aware `no-unsafe-*`
 rules (no `any` leaking from API responses or `JSON.parse`), `no-floating-promises` /
 `no-misused-promises` (no unhandled rejections), `no-console`
@@ -308,10 +289,11 @@ and a no-comments rule, plus Knip for unused files, exports and dependencies.
 ### Frontend
 
 - **Unit/component tests:** Vitest + React Testing Library
+- **Covered flows:** authentication and route guards, cart and checkout,
+  live order updates over WebSocket, admin order status rules, reviews,
+  list state in the URL
 - **Coverage:** `npm run test:coverage` (v8 provider), report at
-  `frontend/coverage/index.html`. Test suite is a starting baseline, not
-  full coverage yet — see `frontend/src/**/*.test.{ts,tsx}` for what's
-  covered so far.
+  `frontend/coverage/index.html`
 
 ---
 
@@ -327,10 +309,7 @@ Neon + Upstash (see [Getting Started](#getting-started)).
 
 ## Test Users
 
-Not seeded by default. Set `SEED_DEMO_USERS=true` in `.env` to have these
-accounts created on startup. **Never enable this on a publicly reachable
-deployment** (e.g. with the `ngrok` tunnel active) — the admin password is
-public in this repository.
+Created on startup with `SEED_DEMO_USERS=true`, local environment only.
 
 | Role    | Email             | Password |
 |---------|-------------------|----------|

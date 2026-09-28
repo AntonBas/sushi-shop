@@ -35,12 +35,6 @@ public class OrderService {
         return orderMapper.toResponse(getOwnedOrder(id, requesterEmail, isStaff));
     }
 
-    /**
-     * Fetches an order by id without any ownership check. For internal/system
-     * use only (e.g. payment creation right after {@link #getOwnedOrder} has
-     * already verified access, or webhook-driven flows with no requester).
-     * User-facing endpoints must go through {@link #getOwnedOrder} instead.
-     */
     @Transactional(readOnly = true)
     public Order getOrderByIdInternal(Long id) {
         return orderRepository.findById(id)
