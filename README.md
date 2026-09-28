@@ -11,6 +11,8 @@ Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and re
 ![CI](https://github.com/AntonBas/sushi-shop/workflows/CI/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+**Live demo:** [sushi-bas-shop.vercel.app](https://sushi-bas-shop.vercel.app)
+
 ---
 
 ## Overview
