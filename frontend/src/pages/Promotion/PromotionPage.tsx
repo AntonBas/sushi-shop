@@ -15,7 +15,7 @@ export default function PromotionPage() {
   const { data: promotion, loading, errorStatus, run } = useApi<PromotionResponse>();
 
   useEffect(() => {
-    if (slug) void run(() => promotionsApi.getPromotionBySlug(slug));
+    if (slug) void run(() => promotionsApi.getPromotionBySlug(slug), { silentStatuses: [404] });
   }, [slug, run]);
 
   if (loading) return <Loading text="Loading promotion..." />;

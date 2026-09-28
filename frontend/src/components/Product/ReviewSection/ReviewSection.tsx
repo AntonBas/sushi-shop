@@ -88,7 +88,6 @@ export default function ReviewSection({ productId }: Props) {
     }
     setNewComment("");
     setNewRating(5);
-    showNotification("Review submitted", "success");
     loadReviews(reviewPage);
   };
 
@@ -105,7 +104,6 @@ export default function ReviewSection({ productId }: Props) {
       return;
     }
     setEditingId(null);
-    showNotification("Review updated", "success");
     loadReviews(reviewPage);
   };
 
@@ -114,7 +112,6 @@ export default function ReviewSection({ productId }: Props) {
     try {
       await reviewsApi.deleteReview(deleteId);
       setDeleteId(null);
-      showNotification("Review deleted", "success");
       loadReviews(reviewPage);
     } catch (err: unknown) {
       showError(err, "Failed to delete review");
@@ -132,7 +129,6 @@ export default function ReviewSection({ productId }: Props) {
     }
     setReplyMessage("");
     setReplyingId(null);
-    showNotification("Reply added", "success");
     loadReviews(reviewPage);
   };
 
@@ -147,7 +143,6 @@ export default function ReviewSection({ productId }: Props) {
     }
     setEditingReplyId(null);
     setEditReplyMessage("");
-    showNotification("Reply updated", "success");
     loadReviews(reviewPage);
   };
 
@@ -156,7 +151,6 @@ export default function ReviewSection({ productId }: Props) {
     try {
       await reviewsApi.deleteReply(deleteReplyId);
       setDeleteReplyId(null);
-      showNotification("Reply deleted", "success");
       loadReviews(reviewPage);
     } catch (err: unknown) {
       showError(err, "Failed to delete reply");

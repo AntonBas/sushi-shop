@@ -11,6 +11,7 @@ vi.mock('../../context/useNotification')
 vi.mock('../../api/promotions')
 
 const DAY = 24 * 60 * 60 * 1000
+const showNotification = vi.fn()
 
 function promotion(overrides: Partial<PromotionResponse>): PromotionResponse {
   return {
@@ -40,7 +41,7 @@ function renderPage() {
 describe('PromotionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(useNotification).mockReturnValue({ showNotification: vi.fn() } as unknown as ReturnType<typeof useNotification>)
+    vi.mocked(useNotification).mockReturnValue({ showNotification } as unknown as ReturnType<typeof useNotification>)
   })
 
   it('shows the discount and days left for a running promotion', async () => {
@@ -94,5 +95,6 @@ describe('PromotionPage', () => {
     renderPage()
 
     expect(await screen.findByText('Page Not Found')).toBeInTheDocument()
+    expect(showNotification).not.toHaveBeenCalled()
   })
 })

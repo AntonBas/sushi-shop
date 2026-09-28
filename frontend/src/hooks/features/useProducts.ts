@@ -41,7 +41,7 @@ export function useProducts() {
 
   const getProduct = useCallback((id: number) => itemRun(() => productsApi.getProduct(id)), [itemRun])
 
-  const getProductBySlug = useCallback((slug: string) => itemRun(() => productsApi.getProductBySlug(slug)), [itemRun])
+  const getProductBySlug = useCallback((slug: string) => itemRun(() => productsApi.getProductBySlug(slug), { silentStatuses: [404] }), [itemRun])
 
   return {
     products,

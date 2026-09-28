@@ -11,6 +11,10 @@ interface ApiState<T> {
   errorStatus: number | null
 }
 
+interface RequestOptions {
+  silentStatuses?: number[]
+}
+
 export function useApi<T>() {
   const [state, setState] = useState<ApiState<T>>({
     data: null,
@@ -21,25 +25,26 @@ export function useApi<T>() {
   const { showNotification } = useNotification()
   const loading = useDelayedLoading(state.loading)
 
-  const execute = useCallback(async (apiCall: () => Promise<T>, successMessage?: string) => {
+  const execute = useCallback(async (apiCall: () => Promise<T>, options: RequestOptions = {}) => {
     setState(prev => ({ ...prev, loading: true, error: null, errorStatus: null }))
     try {
       const data = await apiCall()
       setState({ data, loading: false, error: null, errorStatus: null })
-      if (successMessage) showNotification(successMessage, 'success')
       return data
     } catch (err) {
       const message = getErrorMessage(err, 'Something went wrong')
       const errorStatus = err instanceof AxiosError ? err.response?.status ?? null : null
       setState(prev => ({ ...prev, loading: false, error: message, errorStatus }))
-      showNotification(message, 'error')
+      if (errorStatus === null || !options.silentStatuses?.includes(errorStatus)) {
+        showNotification(message, 'error')
+      }
       throw err
     }
   }, [showNotification])
 
-  const run = useCallback(async (apiCall: () => Promise<T>, successMessage?: string): Promise<T | null> => {
+  const run = useCallback(async (apiCall: () => Promise<T>, options?: RequestOptions): Promise<T | null> => {
     try {
-      return await execute(apiCall, successMessage)
+      return await execute(apiCall, options)
     } catch {
       return null
     }
