@@ -4,6 +4,7 @@ import com.sushishop.product.dto.response.ProductListResponse;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -105,6 +106,7 @@ public class ProductQueryService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "popularProducts", key = "'all'")
     public List<ProductListResponse> getPopular() {
         List<Product> products = productRepository.findPopular(Pageable.ofSize(POPULAR_PRODUCTS_LIMIT));
         return enrichProducts(products);

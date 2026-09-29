@@ -17,5 +17,13 @@ public class ProductCacheService {
         }
         cache.evict("id:" + id);
         cache.evict("slug:" + slug);
+        evictPopular();
+    }
+
+    public void evictPopular() {
+        var cache = cacheManager.getCache("popularProducts");
+        if (cache != null) {
+            cache.evict("all");
+        }
     }
 }

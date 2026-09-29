@@ -17,5 +17,13 @@ public class PromotionCacheService {
         }
         cache.evict("id:" + id);
         cache.evict("slug:" + slug);
+        evictActive();
+    }
+
+    public void evictActive() {
+        var cache = cacheManager.getCache("activePromotions");
+        if (cache != null) {
+            cache.evict("all");
+        }
     }
 }

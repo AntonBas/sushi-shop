@@ -137,6 +137,7 @@ class PromotionServiceTest {
         verify(validator).validateProductsExist(List.of(PRODUCT_ID));
         verify(validator).validateProductsNotInOverlappingPromotions(List.of(PRODUCT_ID), request.startDate(), request.endDate(), null);
         verify(promotionRepository).save(any());
+        verify(promotionCacheService).evictActive();
     }
 
     @Test
