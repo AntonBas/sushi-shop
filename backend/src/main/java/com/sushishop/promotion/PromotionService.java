@@ -66,11 +66,13 @@ public class PromotionService {
 
         var saved = promotionRepository.save(promotion);
         evictProductsCache(products);
+        promotionCacheService.evictActive();
         log.info("Promotion created: id={}, title={}", saved.getId(), LogSanitizer.sanitize(saved.getTitle()));
         return assembler.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "activePromotions", key = "'all'")
     public List<PromotionResponse> getActive() {
         return assembler.toResponseList(promotionRepository.findActiveAt(LocalDateTime.now()));
     }
