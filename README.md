@@ -285,7 +285,7 @@ and a no-comments rule, plus Knip for unused files, exports and dependencies.
 - **Integration tests:** Testcontainers with real PostgreSQL and Redis — Flyway migrations, repository queries, full HTTP → service → database scenarios
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
-- **Coverage:** JaCoCo. Run `./gradlew jacocoTestReport`
+- **500+ tests, ~89% line / 75% branch coverage** (JaCoCo). Run `./gradlew jacocoTestReport`
   and open `backend/build/reports/jacoco/test/html/index.html`.
 
 ### Frontend
