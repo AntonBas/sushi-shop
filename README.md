@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** Unit, controller and Testcontainers integration tests, zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 500+ unit, controller and Testcontainers integration tests (~89% line coverage), zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-green)
@@ -11,7 +11,7 @@ Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and re
 ![CI](https://github.com/AntonBas/sushi-shop/workflows/CI/badge.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**Live demo:** [sushi-bas-shop.vercel.app](https://sushi-bas-shop.vercel.app)
+**Live demo:** [sushi-bas-shop.vercel.app](https://sushi-bas-shop.vercel.app) — hosted on free tiers, so the first request may take up to a minute while the backend wakes up. Sign in with Google to try an order.
 
 ---
 
@@ -63,6 +63,9 @@ The system supports three roles:
 
 ## Key Engineering Highlights
 
+- **Safe Stripe webhooks** — every webhook's signature is verified, and the event id is stored in Redis with SET-if-absent and a 24-hour TTL, so a duplicate delivery is skipped; if processing fails, the key is removed so Stripe's retry can process the event again
+- **Real-time updates only after commit** — WebSocket/STOMP messages and emails are sent in an `afterCommit` callback, so clients never see an order status that is later rolled back
+- **Redis caching** — active promotions and popular products are cached and evicted when a promotion starts or ends; Redis also holds the JWT blacklist and Bucket4j rate-limit buckets shared across instances
 - **Feature-based architecture** — organized the monolith by business domains with clear separation of controllers, services, repositories, DTOs, and mappers
 - **Database optimization** — eliminated N+1 queries using `EntityGraph`, batch fetching, and targeted database indexes
 - **Dynamic filtering** — implemented composable filtering with Spring Data JPA Specifications for products, orders, and audit logs
