@@ -48,7 +48,7 @@ dependencies {
     implementation "com.stripe:stripe-java:33.4.2"
     implementation 'com.bucket4j:bucket4j-core:8.10.1'
     implementation 'com.bucket4j:bucket4j-redis:8.10.1'
-    implementation 'com.cloudinary:cloudinary-http5:2.4.0'
+    implementation 'com.cloudinary:cloudinary-http5:2.5.0'
 
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
