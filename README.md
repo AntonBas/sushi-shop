@@ -210,7 +210,8 @@ docker compose up -d
 
 Monitoring (Prometheus at http://localhost:9090, Grafana at
 http://localhost:3000) and an ngrok tunnel for Stripe webhooks run with
-`docker compose --profile dev up -d`.
+`docker compose --profile dev up -d`. Grafana starts with Prometheus already
+connected and a "Sushi Backend" dashboard (HTTP traffic, JVM, DB pool, cache, logs).
 
 Swagger UI is available in the `local` and `docker` profiles and disabled in `prod`.
 

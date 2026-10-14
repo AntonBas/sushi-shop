@@ -123,11 +123,19 @@ services:
     image: grafana/grafana:12.4.12
     container_name: sushi-grafana
     profiles: [dev]
+    depends_on:
+      - prometheus
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/sushi-backend.json
     ports:
       - '127.0.0.1:3000:3000'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/dashboards:/etc/grafana/dashboards:ro
     networks:
       - sushi-net
     restart: unless-stopped
@@ -155,3 +163,4 @@ networks:
 volumes:
   postgres_data:
   prometheus_config:
+  grafana_data:
