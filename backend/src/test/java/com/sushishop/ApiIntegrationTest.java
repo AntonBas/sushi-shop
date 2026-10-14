@@ -2,6 +2,7 @@ package com.sushishop;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sushishop.audit.AuditLogRepository;
+import com.sushishop.mail.MailService;
 import com.sushishop.order.OrderRepository;
 import com.sushishop.order.OrderStatus;
 import com.sushishop.product.Category;
@@ -18,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -74,6 +76,9 @@ class ApiIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @MockitoBean
+    private MailService mailService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

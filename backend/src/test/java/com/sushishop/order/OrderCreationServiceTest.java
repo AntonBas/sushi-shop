@@ -55,6 +55,9 @@ class OrderCreationServiceTest {
     @Mock
     private SimpMessagingTemplate messagingTemplate;
 
+    @Mock
+    private OrderConfirmationNotifier orderConfirmationNotifier;
+
     @InjectMocks
     private OrderCreationService orderCreationService;
 
@@ -83,6 +86,23 @@ class OrderCreationServiceTest {
         assertThat(result.totalAmount()).isEqualByComparingTo(new BigDecimal("500.00"));
         verify(orderRepository).save(any());
         verify(messagingTemplate).convertAndSend(eq("/topic/orders/new"), any(OrderStatusUpdateResponse.class));
+        verify(orderConfirmationNotifier).notifyCustomer(order);
+    }
+
+    @Test
+    void shouldNotEmailCustomerBeforeOnlinePayment() {
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ONLINE, DeliveryMethod.PICKUP,
+                null, List.of(new OrderItemRequest(1L, 1)));
+        var user = User.builder().id(1L).email("test@test.com").build();
+        var product = Product.builder().id(1L).name("Maki").price(new BigDecimal("250.00")).category(Category.ROLL).available(true).build();
+
+        when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(user));
+        when(productRepository.findAllById(List.of(1L))).thenReturn(List.of(product));
+        when(orderRepository.save(any())).thenReturn(new Order());
+
+        orderCreationService.create(request, "test@test.com");
+
+        verify(orderConfirmationNotifier, never()).notifyCustomer(any());
     }
 
     @Test
