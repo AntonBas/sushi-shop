@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -29,6 +30,9 @@ class EmailVerificationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ResendCooldownService resendCooldownService;
 
     @InjectMocks
     private EmailVerificationService emailVerificationService;
@@ -164,6 +168,23 @@ class EmailVerificationServiceTest {
 
         verify(tokenService, never()).createVerificationToken(org.mockito.ArgumentMatchers.any());
         assertThat(cooldownSeconds).isEqualTo(60);
+    }
+
+    @Test
+    void shouldRateLimitRepeatedResendForUnknownEmailLikeExistingAccount() {
+        when(userRepository.findByEmailForUpdate("unknown@example.com")).thenReturn(Optional.empty());
+        when(resendCooldownService.acquire("unknown@example.com", Duration.ofSeconds(60))).thenReturn(42L);
+
+        assertThatThrownBy(() -> emailVerificationService.resendVerification("unknown@example.com"))
+                .isInstanceOf(RateLimitExceededException.class);
+    }
+
+    @Test
+    void shouldReportRemainingCooldownForUnknownEmail() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+        when(resendCooldownService.remaining("unknown@example.com")).thenReturn(42L);
+
+        assertThat(emailVerificationService.getResendCooldownStatus("unknown@example.com")).isEqualTo(42);
     }
 
     @Test

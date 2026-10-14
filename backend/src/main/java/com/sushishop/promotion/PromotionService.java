@@ -12,6 +12,7 @@ import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.LikePattern;
 import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.service.SlugService;
+import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -41,6 +42,7 @@ public class PromotionService {
     private final SlugService slugService;
     private final ProductCacheService productCacheService;
     private final PromotionCacheService promotionCacheService;
+    private final PromotionBoundaryTracker boundaryTracker;
 
     @Auditable(action = AuditAction.CREATE, entity = "Promotion")
     @Transactional
@@ -67,6 +69,7 @@ public class PromotionService {
         var saved = promotionRepository.save(promotion);
         evictProductsCache(products);
         promotionCacheService.evictActive();
+        TransactionCallbacks.afterCommit(boundaryTracker::reset);
         log.info("Promotion created: id={}, title={}", saved.getId(), LogSanitizer.sanitize(saved.getTitle()));
         return assembler.toResponse(saved);
     }
@@ -144,6 +147,7 @@ public class PromotionService {
         var affectedProducts = new HashSet<>(oldProducts);
         affectedProducts.addAll(saved.getProducts());
         evictProductsCache(affectedProducts);
+        TransactionCallbacks.afterCommit(boundaryTracker::reset);
 
         log.info("Promotion updated: id={}, title={}", saved.getId(), LogSanitizer.sanitize(saved.getTitle()));
         return assembler.toResponse(saved);
@@ -163,6 +167,7 @@ public class PromotionService {
 
         promotionCacheService.evict(id, slug);
         evictProductsCache(products);
+        TransactionCallbacks.afterCommit(boundaryTracker::reset);
         log.info("Promotion deleted: id={}", id);
     }
 

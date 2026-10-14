@@ -66,6 +66,9 @@ class PromotionServiceTest {
     @Mock
     private PromotionCacheService promotionCacheService;
 
+    @Mock
+    private PromotionBoundaryTracker boundaryTracker;
+
     @InjectMocks
     private PromotionService promotionService;
 
@@ -138,6 +141,7 @@ class PromotionServiceTest {
         verify(validator).validateProductsNotInOverlappingPromotions(List.of(PRODUCT_ID), request.startDate(), request.endDate(), null);
         verify(promotionRepository).save(any());
         verify(promotionCacheService).evictActive();
+        verify(boundaryTracker).reset();
     }
 
     @Test
@@ -438,6 +442,7 @@ class PromotionServiceTest {
 
         verify(promotionRepository).save(promotion);
         verify(promotionRepository).delete(promotion);
+        verify(boundaryTracker).reset();
     }
 
     @Test

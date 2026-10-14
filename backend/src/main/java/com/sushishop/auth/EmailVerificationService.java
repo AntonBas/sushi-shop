@@ -25,6 +25,7 @@ public class EmailVerificationService {
 
     private final TokenService tokenService;
     private final UserRepository userRepository;
+    private final ResendCooldownService resendCooldownService;
 
     @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Email verified")
     @Transactional
@@ -47,16 +48,16 @@ public class EmailVerificationService {
     @Transactional
     public int resendVerification(String email) {
         var userOpt = userRepository.findByEmailForUpdate(email);
-        if (userOpt.isEmpty()) {
-            log.info("Resend verification requested for unknown email {}", email);
+        if (userOpt.isEmpty() || userOpt.get().isEmailVerified()) {
+            log.info("Resend verification requested for unknown or already verified email {}", email);
+            long remaining = resendCooldownService.acquire(email, RESEND_COOLDOWN);
+            if (remaining > 0) {
+                throw new RateLimitExceededException(remaining);
+            }
             return (int) RESEND_COOLDOWN.toSeconds();
         }
 
         var user = userOpt.get();
-        if (user.isEmailVerified()) {
-            log.info("Resend verification requested for already verified email {}", email);
-            return (int) RESEND_COOLDOWN.toSeconds();
-        }
 
         var lastSentAt = user.getLastVerificationEmailSentAt();
         if (lastSentAt != null) {
@@ -90,11 +91,12 @@ public class EmailVerificationService {
 
     @Transactional(readOnly = true)
     public int getResendCooldownStatus(String email) {
-        return userRepository.findByEmail(email)
-                .filter(user -> !user.isEmailVerified())
-                .map(User::getLastVerificationEmailSentAt)
+        var user = userRepository.findByEmail(email).filter(found -> !found.isEmailVerified());
+        if (user.isEmpty()) {
+            return (int) resendCooldownService.remaining(email);
+        }
+        return user.map(User::getLastVerificationEmailSentAt)
                 .map(this::remainingCooldownSeconds)
-                .filter(remaining -> remaining > 0)
                 .map(Long::intValue)
                 .orElse(0);
     }
