@@ -93,7 +93,7 @@ public class ReviewService {
         return reviewMapper.toResponse(saved);
     }
 
-    @Auditable(action = AuditAction.DELETE, entity = "Review")
+    @Auditable(action = AuditAction.DELETE, entity = "Review", idParam = "reviewId")
     @Transactional
     public void delete(Long reviewId, String email, boolean isAdmin) {
         var review = reviewRepository.findById(reviewId)

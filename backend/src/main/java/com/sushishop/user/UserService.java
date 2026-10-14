@@ -93,9 +93,9 @@ public class UserService {
         return userMapper.toResponse(userRepository.save(user));
     }
 
-    @Auditable(action = AuditAction.UPDATE, entity = "User")
+    @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Password changed")
     @Transactional
-    public void changePassword(String email, ChangePasswordRequest request) {
+    public Long changePassword(String email, ChangePasswordRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
@@ -114,5 +114,6 @@ public class UserService {
         eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, email, oldTokenVersion));
         mailService.sendPasswordChangedNotification(email);
         log.info("Password changed for {}", email);
+        return user.getId();
     }
 }

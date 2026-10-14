@@ -1,6 +1,8 @@
 package com.sushishop.audit;
 
 import com.sushishop.shared.enums.AuditAction;
+import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,18 +53,69 @@ class AuditAspectTest {
     private record NoIdResult(String name) {
     }
 
+    @Mock
+    private JoinPoint joinPoint;
+
+    @Mock
+    private MethodSignature methodSignature;
+
     private Auditable auditable(AuditAction action, String entity) {
+        return auditable(action, entity, "", "");
+    }
+
+    private Auditable auditable(AuditAction action, String entity, String idParam, String description) {
         var mock = org.mockito.Mockito.mock(Auditable.class);
         when(mock.action()).thenReturn(action);
         when(mock.entity()).thenReturn(entity);
+        when(mock.idParam()).thenReturn(idParam);
+        when(mock.description()).thenReturn(description);
         return mock;
+    }
+
+    private void stubArguments(String[] names, Object[] values) {
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+        when(methodSignature.getParameterNames()).thenReturn(names);
+        when(joinPoint.getArgs()).thenReturn(values);
+    }
+
+    @Test
+    void shouldTakeIdFromNamedArgumentWhenMethodReturnsVoid() {
+        when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@shop.com"));
+        stubArguments(new String[]{"reviewId", "email"}, new Object[]{15L, "admin@shop.com"});
+
+        auditAspect.audit(joinPoint, auditable(AuditAction.DELETE, "Review", "reviewId", ""), null);
+
+        verify(auditLogService).log(eq(AuditAction.DELETE), eq("Review"), eq(15L), eq("DELETE Review #15"),
+                eq("admin@shop.com"));
+    }
+
+    @Test
+    void shouldAppendDescriptionToDetails() {
+        when(auditorAware.getCurrentAuditor()).thenReturn(Optional.empty());
+
+        auditAspect.audit(joinPoint, auditable(AuditAction.UPDATE, "User", "", "Password reset"), 9L);
+
+        verify(auditLogService).log(eq(AuditAction.UPDATE), eq("User"), eq(9L), eq("UPDATE User #9: Password reset"),
+                eq("system"));
+    }
+
+    @Test
+    void shouldLogNullEntityIdWhenNamedArgumentIsMissing() {
+        when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@shop.com"));
+        stubArguments(new String[]{"id"}, new Object[]{3L});
+        when(joinPoint.getSignature()).thenReturn(methodSignature);
+
+        auditAspect.audit(joinPoint, auditable(AuditAction.DELETE, "Product", "productId", ""), null);
+
+        verify(auditLogService).log(eq(AuditAction.DELETE), eq("Product"), isNull(), eq("DELETE Product"),
+                eq("admin@shop.com"));
     }
 
     @Test
     void shouldExtractIdDeclaredDirectlyOnTheResultClass() {
         when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@shop.com"));
 
-        auditAspect.audit(auditable(AuditAction.CREATE, "Product"), new DirectIdResult(42L));
+        auditAspect.audit(joinPoint, auditable(AuditAction.CREATE, "Product"), new DirectIdResult(42L));
 
         verify(auditLogService).log(eq(AuditAction.CREATE), eq("Product"), eq(42L), any(), eq("admin@shop.com"));
     }
@@ -71,7 +124,7 @@ class AuditAspectTest {
     void shouldExtractIdDeclaredOnASuperclass() {
         when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@shop.com"));
 
-        auditAspect.audit(auditable(AuditAction.UPDATE, "User"), new InheritedIdResult(7L));
+        auditAspect.audit(joinPoint, auditable(AuditAction.UPDATE, "User"), new InheritedIdResult(7L));
 
         verify(auditLogService).log(eq(AuditAction.UPDATE), eq("User"), eq(7L), any(), eq("admin@shop.com"));
     }
@@ -80,7 +133,7 @@ class AuditAspectTest {
     void shouldLogNullEntityIdWithoutThrowingWhenResultHasNoIdField() {
         when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@shop.com"));
 
-        auditAspect.audit(auditable(AuditAction.CREATE, "Review"), new NoIdResult("no id here"));
+        auditAspect.audit(joinPoint, auditable(AuditAction.CREATE, "Review"), new NoIdResult("no id here"));
 
         verify(auditLogService).log(eq(AuditAction.CREATE), eq("Review"), isNull(), any(), eq("admin@shop.com"));
     }
@@ -89,7 +142,7 @@ class AuditAspectTest {
     void shouldLogNullEntityIdWhenResultIsVoid() {
         when(auditorAware.getCurrentAuditor()).thenReturn(Optional.of("admin@shop.com"));
 
-        auditAspect.audit(auditable(AuditAction.DELETE, "Product"), null);
+        auditAspect.audit(joinPoint, auditable(AuditAction.DELETE, "Product"), null);
 
         verify(auditLogService).log(eq(AuditAction.DELETE), eq("Product"), isNull(), any(), eq("admin@shop.com"));
     }
@@ -101,7 +154,7 @@ class AuditAspectTest {
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            auditAspect.audit(auditable, new DirectIdResult(5L));
+            auditAspect.audit(joinPoint, auditable, new DirectIdResult(5L));
             verifyNoInteractions(auditLogService);
 
             TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
@@ -119,7 +172,7 @@ class AuditAspectTest {
 
         TransactionSynchronizationManager.initSynchronization();
         try {
-            auditAspect.audit(auditable, new DirectIdResult(5L));
+            auditAspect.audit(joinPoint, auditable, new DirectIdResult(5L));
             TransactionSynchronizationManager.getSynchronizations()
                     .forEach(sync -> sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
         } finally {

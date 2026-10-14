@@ -1,8 +1,10 @@
 package com.sushishop.auth;
 
+import com.sushishop.audit.Auditable;
 import com.sushishop.mail.MailService;
-import com.sushishop.shared.exception.core.BadRequestException;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
 import com.sushishop.user.UserRepository;
@@ -57,8 +59,9 @@ public class PasswordResetService {
         log.info("Password reset email sent to {}", email);
     }
 
+    @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Password reset")
     @Transactional
-    public void resetPassword(String resetToken, String newPassword) {
+    public Long resetPassword(String resetToken, String newPassword) {
         var tokenEntity = tokenService.validateAndGetToken(resetToken, TokenType.PASSWORD_RESET);
         var user = tokenEntity.getUser();
 
@@ -75,5 +78,6 @@ public class PasswordResetService {
         eventPublisher.publishEvent(new UserSessionsInvalidatedEvent(this, user.getEmail(), oldTokenVersion));
         mailService.sendPasswordChangedNotification(user.getEmail());
         log.info("Password reset for {}", user.getEmail());
+        return user.getId();
     }
 }

@@ -149,7 +149,7 @@ public class PromotionService {
         return assembler.toResponse(saved);
     }
 
-    @Auditable(action = AuditAction.DELETE, entity = "Promotion")
+    @Auditable(action = AuditAction.DELETE, entity = "Promotion", idParam = "id")
     @Transactional
     public void delete(Long id) {
         var promotion = promotionRepository.findById(id)

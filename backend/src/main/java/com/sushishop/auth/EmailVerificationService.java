@@ -1,5 +1,7 @@
 package com.sushishop.auth;
 
+import com.sushishop.audit.Auditable;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
@@ -23,8 +25,9 @@ public class EmailVerificationService {
     private final TokenService tokenService;
     private final UserRepository userRepository;
 
+    @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Email verified")
     @Transactional
-    public void verifyEmail(String verificationToken) {
+    public Long verifyEmail(String verificationToken) {
         var tokenEntity = tokenService.validateAndGetToken(verificationToken, TokenType.EMAIL_VERIFICATION);
 
         var user = tokenEntity.getUser();
@@ -33,6 +36,7 @@ public class EmailVerificationService {
 
         tokenService.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
         log.info("Email verified for {}", user.getEmail());
+        return user.getId();
     }
 
     @Transactional

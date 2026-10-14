@@ -13,4 +13,8 @@ public @interface Auditable {
     AuditAction action();
 
     String entity();
+
+    String idParam() default "";
+
+    String description() default "";
 }
