@@ -16,6 +16,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LocalFileStorageServiceTest {
 
+    private static final byte[] JPEG_CONTENT = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
+
     private LocalFileStorageService fileStorageService;
 
     @TempDir
@@ -35,7 +37,7 @@ class LocalFileStorageServiceTest {
 
     @Test
     void shouldStoreFile() {
-        var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
+        var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", JPEG_CONTENT);
 
         var result = fileStorageService.store(file);
 
@@ -65,6 +67,15 @@ class LocalFileStorageServiceTest {
         assertThatThrownBy(() -> fileStorageService.store(file))
                 .isInstanceOf(BadRequestException.class)
                 .hasMessageContaining("File type not allowed");
+    }
+
+    @Test
+    void shouldRejectContentThatDoesNotMatchDeclaredType() {
+        var file = new MockMultipartFile("fake.png", "fake.png", "image/png", "<html></html>".getBytes());
+
+        assertThatThrownBy(() -> fileStorageService.store(file))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("File content does not match type");
     }
 
     @Test

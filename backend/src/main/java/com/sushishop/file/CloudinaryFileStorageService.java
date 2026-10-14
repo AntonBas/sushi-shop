@@ -49,7 +49,11 @@ public class CloudinaryFileStorageService implements FileStorageService {
         }
 
         try {
-            Map<?, ?> result = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap("folder", "products"));
+            byte[] content = file.getBytes();
+            if (!ImageSignatures.matches(content, contentType)) {
+                throw new BadRequestException("File content does not match type: " + contentType);
+            }
+            Map<?, ?> result = cloudinary.uploader().upload(content, ObjectUtils.asMap("folder", "products"));
             String url = (String) result.get("secure_url");
             log.info("File uploaded to Cloudinary: {}", url);
             return url;

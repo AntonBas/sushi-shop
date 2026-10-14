@@ -26,6 +26,8 @@ import static org.mockito.Mockito.when;
 
 class CloudinaryFileStorageServiceTest {
 
+    private static final byte[] JPEG_CONTENT = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0};
+
     private Cloudinary cloudinary;
     private Uploader uploader;
     private CloudinaryFileStorageService service;
@@ -43,7 +45,7 @@ class CloudinaryFileStorageServiceTest {
 
     @Test
     void shouldStoreFileAndReturnSecureUrl() throws IOException {
-        var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
+        var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", JPEG_CONTENT);
         when(uploader.upload(any(byte[].class), anyMap()))
                 .thenReturn(Map.of("secure_url", "https://res.cloudinary.com/demo/image/upload/v1699999999/products/abc123.jpg"));
 
@@ -73,6 +75,15 @@ class CloudinaryFileStorageServiceTest {
     }
 
     @Test
+    void shouldRejectContentThatDoesNotMatchDeclaredType() {
+        var file = new MockMultipartFile("fake.png", "fake.png", "image/png", "<html></html>".getBytes());
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("File content does not match type");
+    }
+
+    @Test
     void shouldThrowForTooLargeFile() {
         var file = new MockMultipartFile("large.jpg", "large.jpg", "image/jpeg", new byte[6_000_000]);
 
@@ -83,7 +94,7 @@ class CloudinaryFileStorageServiceTest {
 
     @Test
     void shouldWrapUploadIOException() throws IOException {
-        var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", "test".getBytes());
+        var file = new MockMultipartFile("test.jpg", "test.jpg", "image/jpeg", JPEG_CONTENT);
         when(uploader.upload(any(byte[].class), anyMap())).thenThrow(new IOException("network down"));
 
         assertThatThrownBy(() -> service.store(file))
