@@ -70,11 +70,12 @@ class ReviewControllerTest {
     @Test
     @WithMockUser(username = "anton@example.com")
     void shouldReturnMyReviewStatus() throws Exception {
-        when(reviewService.getStatus(1L, "anton@example.com")).thenReturn(new ReviewStatusResponse(true));
+        when(reviewService.getStatus(1L, "anton@example.com")).thenReturn(new ReviewStatusResponse(true, true));
 
         mockMvc.perform(get("/api/reviews/me/product/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reviewed").value(true));
+                .andExpect(jsonPath("$.reviewed").value(true))
+                .andExpect(jsonPath("$.purchased").value(true));
     }
 
     @Test

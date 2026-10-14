@@ -1,6 +1,8 @@
 package com.sushishop.review;
 
 import com.sushishop.audit.Auditable;
+import com.sushishop.order.OrderRepository;
+import com.sushishop.order.OrderStatus;
 import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewRequest;
@@ -8,6 +10,7 @@ import com.sushishop.review.dto.response.ReviewResponse;
 import com.sushishop.review.dto.response.ReviewStatusResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.ConflictException;
+import com.sushishop.shared.exception.core.ForbiddenException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +33,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
     private final ReviewMapper reviewMapper;
     private final ProductCacheService productCacheService;
 
@@ -43,6 +47,9 @@ public class ReviewService {
 
         if (reviewRepository.existsByUserIdAndProductId(user.getId(), product.getId())) {
             throw new ConflictException("You have already reviewed this product");
+        }
+        if (!hasDeliveredPurchase(email, product.getId())) {
+            throw new ForbiddenException("Only customers who received this product can review it", "REVIEW_REQUIRES_PURCHASE");
         }
 
         var review = Review.builder()
@@ -60,7 +67,13 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public ReviewStatusResponse getStatus(Long productId, String email) {
-        return new ReviewStatusResponse(reviewRepository.existsByUserEmailAndProductId(email, productId));
+        return new ReviewStatusResponse(
+                reviewRepository.existsByUserEmailAndProductId(email, productId),
+                hasDeliveredPurchase(email, productId));
+    }
+
+    private boolean hasDeliveredPurchase(String email, Long productId) {
+        return orderRepository.existsItemByUserEmailAndProductIdAndStatus(email, productId, OrderStatus.DELIVERED);
     }
 
     @Transactional(readOnly = true)

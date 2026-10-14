@@ -28,4 +28,5 @@ export interface ReviewResponse {
 
 export interface ReviewStatusResponse {
   reviewed: boolean
+  purchased: boolean
 }

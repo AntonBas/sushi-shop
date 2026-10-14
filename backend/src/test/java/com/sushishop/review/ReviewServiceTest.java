@@ -1,11 +1,14 @@
 package com.sushishop.review;
 
+import com.sushishop.order.OrderRepository;
+import com.sushishop.order.OrderStatus;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewResponse;
 import com.sushishop.shared.exception.core.ConflictException;
+import com.sushishop.shared.exception.core.ForbiddenException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
@@ -25,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +50,9 @@ class ReviewServiceTest {
     @Mock
     private ProductCacheService productCacheService;
 
+    @Mock
+    private OrderRepository orderRepository;
+
     @InjectMocks
     private ReviewService reviewService;
 
@@ -59,6 +66,8 @@ class ReviewServiceTest {
         when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         when(reviewRepository.existsByUserIdAndProductId(1L, 1L)).thenReturn(false);
+        when(orderRepository.existsItemByUserEmailAndProductIdAndStatus("anton@example.com", 1L, OrderStatus.DELIVERED))
+                .thenReturn(true);
         when(reviewRepository.save(any())).thenReturn(new Review());
         when(reviewMapper.toResponse(any())).thenReturn(expected);
 
@@ -103,8 +112,30 @@ class ReviewServiceTest {
     @Test
     void shouldReportReviewStatusForCurrentUser() {
         when(reviewRepository.existsByUserEmailAndProductId("anton@example.com", 1L)).thenReturn(true);
+        when(orderRepository.existsItemByUserEmailAndProductIdAndStatus("anton@example.com", 1L, OrderStatus.DELIVERED))
+                .thenReturn(true);
 
-        assertThat(reviewService.getStatus(1L, "anton@example.com").reviewed()).isTrue();
+        var status = reviewService.getStatus(1L, "anton@example.com");
+
+        assertThat(status.reviewed()).isTrue();
+        assertThat(status.purchased()).isTrue();
+    }
+
+    @Test
+    void shouldRejectReviewWithoutDeliveredPurchase() {
+        var request = new CreateReviewRequest(1L, 5, "Great!");
+        var user = User.builder().id(1L).email("anton@example.com").build();
+        var product = Product.builder().id(1L).build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(reviewRepository.existsByUserIdAndProductId(1L, 1L)).thenReturn(false);
+        when(orderRepository.existsItemByUserEmailAndProductIdAndStatus("anton@example.com", 1L, OrderStatus.DELIVERED))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> reviewService.create(request, "anton@example.com"))
+                .isInstanceOf(ForbiddenException.class);
+        verify(reviewRepository, never()).save(any());
     }
 
     @Test

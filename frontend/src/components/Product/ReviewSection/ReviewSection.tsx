@@ -8,7 +8,7 @@ import { getErrorMessage } from "../../../api/errorMessage";
 import Button from "../../UI/Button/Button";
 import Pagination from "../../UI/Pagination/Pagination";
 import Modal from "../../UI/Modal/Modal";
-import type { ReviewResponse, ReviewReplyResponse } from "../../../types";
+import type { ReviewResponse, ReviewReplyResponse, ReviewStatusResponse } from "../../../types";
 import styles from "./ReviewSection.module.css";
 
 interface Props {
@@ -38,7 +38,7 @@ export default function ReviewSection({ productId }: Props) {
   const [editReplyMessage, setEditReplyMessage] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
-  const [hasReviewed, setHasReviewed] = useState<boolean | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<ReviewStatusResponse | null>(null);
 
   const loadReviews = useCallback((page: number) => {
     const fetchPage = (target: number) => {
@@ -68,8 +68,8 @@ export default function ReviewSection({ productId }: Props) {
   const loadReviewStatus = useCallback(() => {
     if (!user) return;
     reviewsApi.getMyReviewStatus(productId)
-      .then((res) => setHasReviewed(res.reviewed))
-      .catch(() => setHasReviewed(false));
+      .then(setReviewStatus)
+      .catch(() => setReviewStatus(null));
   }, [productId, user]);
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export default function ReviewSection({ productId }: Props) {
     }
     setNewComment("");
     setNewRating(5);
-    setHasReviewed(true);
+    setReviewStatus((prev) => (prev ? { ...prev, reviewed: true } : prev));
     loadReviews(reviewPage);
   };
 
@@ -200,10 +200,13 @@ export default function ReviewSection({ productId }: Props) {
           </select>
         )}
       </div>
-      {user && hasReviewed && (
+      {user && reviewStatus?.reviewed && (
         <p className={styles.empty}>You have already reviewed this product.</p>
       )}
-      {user && hasReviewed === false && (
+      {user && reviewStatus && !reviewStatus.reviewed && !reviewStatus.purchased && (
+        <p className={styles.empty}>Only customers who received this product can leave a review.</p>
+      )}
+      {user && reviewStatus && !reviewStatus.reviewed && reviewStatus.purchased && (
         <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <div className={styles.stars}>
             {[1, 2, 3, 4, 5].map((star) => (

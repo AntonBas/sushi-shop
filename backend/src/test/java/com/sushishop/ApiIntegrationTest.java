@@ -1,6 +1,9 @@
 package com.sushishop;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sushishop.audit.AuditLogRepository;
+import com.sushishop.order.OrderRepository;
+import com.sushishop.order.OrderStatus;
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductRepository;
@@ -69,6 +72,11 @@ class ApiIntegrationTest {
     @Autowired
     private AuditLogRepository auditLogRepository;
 
+    @Autowired
+    private OrderRepository orderRepository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -87,6 +95,7 @@ class ApiIntegrationTest {
     @Test
     void shouldStoreReviewCommentUpToApiLimit() throws Exception {
         var product = saveProduct();
+        deliverToCustomer(product);
         var comment = "a".repeat(250);
 
         mockMvc.perform(asCustomer(post("/api/reviews"))
@@ -98,12 +107,23 @@ class ApiIntegrationTest {
     @Test
     void shouldRejectSecondReviewForSameProductWithConflict() throws Exception {
         var product = saveProduct();
+        deliverToCustomer(product);
         var body = "{\"productId\":" + product.getId() + ",\"rating\":4,\"comment\":\"Tasty\"}";
 
         mockMvc.perform(asCustomer(post("/api/reviews")).content(body))
                 .andExpect(status().isCreated());
         mockMvc.perform(asCustomer(post("/api/reviews")).content(body))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldRejectReviewWithoutDeliveredOrder() throws Exception {
+        var product = saveProduct();
+
+        mockMvc.perform(asCustomer(post("/api/reviews"))
+                        .content("{\"productId\":" + product.getId() + ",\"rating\":5}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("REVIEW_REQUIRES_PURCHASE"));
     }
 
     @Test
@@ -163,6 +183,19 @@ class ApiIntegrationTest {
                 .weight(250)
                 .available(true)
                 .build());
+    }
+
+    private void deliverToCustomer(Product product) throws Exception {
+        var response = mockMvc.perform(asCustomer(post("/api/orders"))
+                        .content("""
+                                {"customerName":"Test User","phone":"+380991234567","paymentMethod":"ON_DELIVERY",
+                                 "deliveryMethod":"PICKUP","items":[{"productId":%d,"quantity":1}]}
+                                """.formatted(product.getId())))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        var order = orderRepository.findById(objectMapper.readTree(response).get("id").asLong()).orElseThrow();
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
     }
 
     private MockHttpServletRequestBuilder asCustomer(MockHttpServletRequestBuilder request) {
