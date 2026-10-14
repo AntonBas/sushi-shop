@@ -2,9 +2,11 @@ package com.sushishop.shared.exception.api;
 
 import com.sushishop.shared.exception.core.InternalServerException;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +27,11 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.sql.SQLException;
 
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -93,6 +98,16 @@ class ApiErrorHandlerTest {
     }
 
     @Test
+    void shouldNotEchoPasswordInValidationErrors() throws Exception {
+        standaloneMockMvc.perform(post("/credentials").contentType("application/json")
+                        .content("{\"name\":\"ab\",\"newPassword\":\"secret1\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.subErrors[?(@.field == 'newPassword')].message").exists())
+                .andExpect(jsonPath("$.subErrors[?(@.field == 'name')].rejectedValue").value("ab"))
+                .andExpect(content().string(not(containsString("secret1"))));
+    }
+
+    @Test
     void shouldReturnBadRequestOnBeanValidationFailureAtCommit() throws Exception {
         standaloneMockMvc.perform(get("/commit-validation"))
                 .andExpect(status().isBadRequest())
@@ -115,6 +130,9 @@ class ApiErrorHandlerTest {
     }
 
     record Named(@NotBlank String name) {
+    }
+
+    record Credentials(@Size(min = 3) String name, @Size(min = 8) String newPassword) {
     }
 
     @RestController
@@ -157,6 +175,10 @@ class ApiErrorHandlerTest {
 
         @PostMapping("/malformed")
         public void malformed(@RequestBody Named body) {
+        }
+
+        @PostMapping("/credentials")
+        public void credentials(@Valid @RequestBody Credentials body) {
         }
 
         @GetMapping("/internal")

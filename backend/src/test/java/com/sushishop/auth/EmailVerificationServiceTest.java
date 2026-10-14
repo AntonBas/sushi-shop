@@ -1,6 +1,5 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;
@@ -77,7 +76,7 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    void shouldRejectResendWhenAlreadyVerified() {
+    void shouldSilentlyIgnoreResendWhenAlreadyVerifiedLikeUnknownEmail() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -86,10 +85,10 @@ class EmailVerificationServiceTest {
 
         when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> emailVerificationService.resendVerification("anton@example.com"))
-                .isInstanceOf(BadRequestException.class);
+        int cooldownSeconds = emailVerificationService.resendVerification("anton@example.com");
 
         verify(tokenService, never()).createVerificationToken(user);
+        assertThat(cooldownSeconds).isEqualTo(60);
     }
 
     @Test
@@ -125,6 +124,36 @@ class EmailVerificationServiceTest {
         emailVerificationService.resendVerification("anton@example.com");
 
         verify(tokenService).createVerificationToken(user);
+    }
+
+    @Test
+    void shouldSendVerificationSilentlyWhenCooldownElapsed() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(61))
+                .build();
+
+        emailVerificationService.resendIfCooldownElapsed(user);
+
+        verify(tokenService).createVerificationToken(user);
+        verify(userRepository).save(user);
+        assertThat(user.getLastVerificationEmailSentAt()).isAfter(LocalDateTime.now().minusSeconds(5));
+    }
+
+    @Test
+    void shouldSkipSilentVerificationWithinCooldown() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(30))
+                .build();
+
+        emailVerificationService.resendIfCooldownElapsed(user);
+
+        verify(tokenService, never()).createVerificationToken(user);
     }
 
     @Test

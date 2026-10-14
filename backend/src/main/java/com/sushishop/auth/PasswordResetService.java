@@ -28,6 +28,7 @@ public class PasswordResetService {
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
     private final ApplicationEventPublisher eventPublisher;
+    private final EmailVerificationService emailVerificationService;
 
     @Transactional
     public void forgotPassword(String email) {
@@ -40,6 +41,7 @@ public class PasswordResetService {
         var user = userOpt.get();
         if (!user.isEmailVerified()) {
             log.info("Password reset requested for unverified email {}", email);
+            emailVerificationService.resendIfCooldownElapsed(user);
             return;
         }
 

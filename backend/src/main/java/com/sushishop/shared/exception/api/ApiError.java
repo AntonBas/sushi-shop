@@ -12,6 +12,7 @@ import org.springframework.validation.ObjectError;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Getter
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -59,7 +60,12 @@ public class ApiError {
     }
 
     public void addValidationError(String object, String field, Object rejectedValue, String message) {
-        addSubError(new ApiSubError.ValidationError(object, field, rejectedValue, message));
+        var exposedValue = isSensitiveField(field) ? null : rejectedValue;
+        addSubError(new ApiSubError.ValidationError(object, field, exposedValue, message));
+    }
+
+    private static boolean isSensitiveField(String field) {
+        return field != null && field.toLowerCase(Locale.ROOT).contains("password");
     }
 
     public void addValidationError(FieldError fieldError) {

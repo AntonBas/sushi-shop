@@ -36,6 +36,7 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
 
   const [syncedUser, setSyncedUser] = useState<UserResponse | null>(null);
 
@@ -95,12 +96,18 @@ export default function ProfilePage() {
   const handleRequestEmailChange = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     try {
-      await emailApi.execute(() => usersApi.requestEmailChange({ newEmail }));
+      await emailApi.execute(() =>
+        usersApi.requestEmailChange({
+          newEmail,
+          currentPassword: user?.hasPassword ? emailPassword : undefined,
+        }),
+      );
     } catch {
       return;
     }
     await refreshUser();
     setNewEmail("");
+    setEmailPassword("");
     showNotification(`Confirmation link sent to ${newEmail}`, "success");
   };
 
@@ -281,7 +288,22 @@ export default function ProfilePage() {
               onChange={setNewEmail}
               placeholder="new@example.com"
             />
-            <Button type="submit" loading={emailApi.loading} disabled={!newEmail}>
+            {user?.hasPassword && (
+              <Input
+                label="Current Password"
+                name="emailCurrentPassword"
+                autoComplete="current-password"
+                type="password"
+                value={emailPassword}
+                onChange={setEmailPassword}
+                placeholder="••••••••"
+              />
+            )}
+            <Button
+              type="submit"
+              loading={emailApi.loading}
+              disabled={!newEmail || (user?.hasPassword === true && !emailPassword)}
+            >
               Send Confirmation Link
             </Button>
           </form>

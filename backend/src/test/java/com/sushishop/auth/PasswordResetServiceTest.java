@@ -45,6 +45,9 @@ class PasswordResetServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private EmailVerificationService emailVerificationService;
+
     @InjectMocks
     private PasswordResetService passwordResetService;
 
@@ -66,7 +69,7 @@ class PasswordResetServiceTest {
     }
 
     @Test
-    void shouldSilentlyIgnoreForgotPasswordForUnverifiedUser() {
+    void shouldSendVerificationInsteadOfResetForUnverifiedUser() {
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(false)
@@ -77,6 +80,7 @@ class PasswordResetServiceTest {
         passwordResetService.forgotPassword("anton@example.com");
 
         verify(tokenService, never()).createPasswordResetToken(user);
+        verify(emailVerificationService).resendIfCooldownElapsed(user);
     }
 
     @Test

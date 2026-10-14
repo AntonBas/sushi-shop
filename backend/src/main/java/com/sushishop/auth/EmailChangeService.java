@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ public class EmailChangeService {
     private final MailService mailService;
     private final CacheManager cacheManager;
     private final ApplicationEventPublisher eventPublisher;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public void requestEmailChange(String email, ChangeEmailRequest request) {
@@ -37,6 +39,11 @@ public class EmailChangeService {
 
         if (!user.isEmailVerified()) {
             throw new BadRequestException("Please verify your current email first");
+        }
+
+        if (user.getPassword() != null && (request.currentPassword() == null
+                || !passwordEncoder.matches(request.currentPassword(), user.getPassword()))) {
+            throw new BadRequestException("Current password does not match!");
         }
 
         if (request.newEmail().equals(email)) {

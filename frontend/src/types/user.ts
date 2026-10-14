@@ -14,6 +14,7 @@ export interface ChangePasswordRequest {
 
 export interface ChangeEmailRequest {
   newEmail: string
+  currentPassword?: string
 }
 
 export interface UserResponse {

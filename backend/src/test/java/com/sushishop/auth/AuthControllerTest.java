@@ -178,19 +178,6 @@ class AuthControllerTest {
     }
 
     @Test
-    void shouldReturn400WhenResendingForAlreadyVerifiedEmail() throws Exception {
-        var request = new ResendVerificationRequest("anton@example.com");
-
-        when(emailVerificationService.resendVerification("anton@example.com"))
-                .thenThrow(new BadRequestException("Email already verified"));
-
-        mockMvc.perform(post("/api/auth/resend-verification")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
     void shouldReturn429WithRetryAfterHeaderWhenResendCooldownActive() throws Exception {
         var request = new ResendVerificationRequest("anton@example.com");
 
@@ -254,7 +241,7 @@ class AuthControllerTest {
     @Test
     @WithMockUser(username = "anton@example.com", roles = {"CUSTOMER"})
     void shouldRequestEmailChange() throws Exception {
-        var request = new ChangeEmailRequest("new@example.com");
+        var request = new ChangeEmailRequest("new@example.com", null);
 
         mockMvc.perform(post("/api/auth/email-change")
                         .contentType(MediaType.APPLICATION_JSON)

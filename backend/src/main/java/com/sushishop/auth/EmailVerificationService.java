@@ -1,6 +1,5 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
@@ -46,7 +45,8 @@ public class EmailVerificationService {
 
         var user = userOpt.get();
         if (user.isEmailVerified()) {
-            throw new BadRequestException("Email already verified");
+            log.info("Resend verification requested for already verified email {}", email);
+            return (int) RESEND_COOLDOWN.toSeconds();
         }
 
         var lastSentAt = user.getLastVerificationEmailSentAt();
@@ -57,11 +57,26 @@ public class EmailVerificationService {
             }
         }
 
+        sendVerification(user);
+        log.info("Verification email resent to {}", email);
+        return (int) RESEND_COOLDOWN.toSeconds();
+    }
+
+    @Transactional
+    public void resendIfCooldownElapsed(User user) {
+        var lastSentAt = user.getLastVerificationEmailSentAt();
+        if (lastSentAt != null && remainingCooldownSeconds(lastSentAt) > 0) {
+            log.info("Verification email for {} within cooldown, skipping", user.getEmail());
+            return;
+        }
+        sendVerification(user);
+        log.info("Verification email sent to {} instead of password reset", user.getEmail());
+    }
+
+    private void sendVerification(User user) {
         tokenService.createVerificationToken(user);
         user.setLastVerificationEmailSentAt(LocalDateTime.now());
         userRepository.save(user);
-        log.info("Verification email resent to {}", email);
-        return (int) RESEND_COOLDOWN.toSeconds();
     }
 
     @Transactional(readOnly = true)
