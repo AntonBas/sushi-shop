@@ -1,10 +1,12 @@
 package com.sushishop;
 
+import com.sushishop.audit.AuditLogRepository;
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.Promotion;
 import com.sushishop.promotion.PromotionRepository;
+import com.sushishop.shared.enums.AuditAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +66,9 @@ class ApiIntegrationTest {
     @Autowired
     private PromotionRepository promotionRepository;
 
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -115,6 +120,19 @@ class ApiIntegrationTest {
                 .andExpect(status().isConflict());
 
         assertThat(productRepository.findById(product.getId())).isPresent();
+    }
+
+    @Test
+    void shouldAuditDeletedProductWithItsId() throws Exception {
+        var product = saveProduct();
+
+        mockMvc.perform(asAdmin(delete("/api/products/" + product.getId())))
+                .andExpect(status().isNoContent());
+
+        assertThat(auditLogRepository.findAll())
+                .anyMatch(entry -> entry.getAction() == AuditAction.DELETE
+                        && "Product".equals(entry.getEntityName())
+                        && product.getId().equals(entry.getEntityId()));
     }
 
     @Test
