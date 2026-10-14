@@ -1,5 +1,8 @@
 package com.sushishop.product;
 
+import com.sushishop.promotion.Promotion;
+import com.sushishop.promotion.PromotionRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,9 +12,11 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,6 +37,12 @@ class ProductRepositoryIntegrationTest {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private PromotionRepository promotionRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @Test
     void shouldSaveAndFindProduct() {
@@ -90,5 +101,48 @@ class ProductRepositoryIntegrationTest {
 
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo("Philadelphia");
+    }
+
+    @Test
+    @Transactional
+    void shouldNotDuplicateImagesWhenProductHasSeveralPromotions() {
+        var product = Product.builder()
+                .name("Dragon")
+                .slug("dragon-images-test")
+                .price(new BigDecimal("270.00"))
+                .category(Category.ROLL)
+                .weight(290)
+                .pieces(8)
+                .build();
+        for (int i = 0; i < 3; i++) {
+            product.getProductImages().add(ProductImage.builder()
+                    .url("https://example.com/dragon-" + i + ".jpg")
+                    .sortOrder(i)
+                    .product(product)
+                    .build());
+        }
+        productRepository.save(product);
+        for (int i = 0; i < 2; i++) {
+            var promotion = Promotion.builder()
+                    .slug("dragon-promo-" + i)
+                    .title("Dragon promo " + i)
+                    .discountPercent(new BigDecimal("10.00"))
+                    .startDate(LocalDateTime.now().minusDays(10 - i * 5L))
+                    .endDate(LocalDateTime.now().minusDays(6 - i * 5L))
+                    .build();
+            promotion.getProducts().add(product);
+            promotionRepository.save(promotion);
+        }
+        entityManager.flush();
+        entityManager.clear();
+
+        var byId = productRepository.findById(product.getId()).orElseThrow();
+        assertThat(byId.getPromotions()).hasSize(2);
+        assertThat(byId.getProductImages()).hasSize(3);
+
+        entityManager.clear();
+
+        var bySlug = productRepository.findBySlug("dragon-images-test").orElseThrow();
+        assertThat(bySlug.getProductImages()).hasSize(3);
     }
 }

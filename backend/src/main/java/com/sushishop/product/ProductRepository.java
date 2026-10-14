@@ -20,11 +20,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Nonnull
     List<Product> findAll(Specification<Product> spec);
 
-    @EntityGraph(attributePaths = {"promotions", "productImages"})
+    @EntityGraph(attributePaths = "promotions")
     @Nonnull
     Optional<Product> findById(@Nonnull Long id);
 
-    @EntityGraph(attributePaths = {"promotions", "productImages"})
+    @EntityGraph(attributePaths = "promotions")
     Optional<Product> findBySlug(String slug);
 
     @Query("SELECT COUNT(oi) > 0 FROM OrderItem oi WHERE oi.product.id = :productId")
