@@ -8,6 +8,13 @@ updates:
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+    groups:
+      frontend-dev:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+      frontend-prod:
+        dependency-type: "production"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "gradle"
     directory: "/backend"
@@ -18,12 +25,20 @@ updates:
       jjwt:
         patterns:
           - "io.jsonwebtoken:*"
+      backend:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directories:
@@ -37,6 +52,11 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: "docker-compose"
     directory: "/"
@@ -50,3 +70,8 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "grafana/grafana"
         update-types: ["version-update:semver-major"]
+    groups:
+      compose-images:
+        patterns:
+          - "*"
+        update-types: ["minor", "patch"]
