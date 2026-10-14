@@ -9,6 +9,8 @@ import { getStatusFlow } from "../../../utils/orderStatusFlow";
 import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../hooks/common/useListSearchParams";
 import Loading from "../../../components/UI/Loading/Loading";
 import Pagination from "../../../components/UI/Pagination/Pagination";
+import Button from "../../../components/UI/Button/Button";
+import Modal from "../../../components/UI/Modal/Modal";
 import { Search } from "lucide-react";
 import type { OrderStatus } from "../../../types";
 import {
@@ -25,6 +27,7 @@ import styles from "./AdminOrdersPage.module.css";
 export default function AdminOrdersPage() {
   const { orders, totalPages, loading, loadOrders } = useAdminOrders();
   const { showNotification } = useNotification();
+  const [cancelOrderId, setCancelOrderId] = useState<number | null>(null);
   const { page, getParam, updateParams, setPage, keepPageInRange } = useListSearchParams();
   const statusFilter = pickAllowed(getParam("status"), ORDER_STATUSES);
   const deliveryFilter = pickAllowed(getParam("delivery"), DELIVERY_METHODS);
@@ -83,6 +86,13 @@ export default function AdminOrdersPage() {
     } catch (err: unknown) {
       showNotification(getErrorMessage(err, "Failed to update status"), "error");
     }
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelOrderId) return;
+    const orderId = cancelOrderId;
+    setCancelOrderId(null);
+    await handleStatusChange(orderId, "CANCELLED");
   };
 
   useEffect(() => {
@@ -213,7 +223,11 @@ export default function AdminOrdersPage() {
                               key={nextStatus}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                void handleStatusChange(order.id, nextStatus);
+                                if (nextStatus === "CANCELLED") {
+                                  setCancelOrderId(order.id);
+                                } else {
+                                  void handleStatusChange(order.id, nextStatus);
+                                }
                               }}
                               className={styles.actionBtn}
                               style={{
@@ -288,6 +302,21 @@ export default function AdminOrdersPage() {
           />
         </>
       )}
+      <Modal
+        isOpen={!!cancelOrderId}
+        onClose={() => setCancelOrderId(null)}
+        title="Cancel Order"
+      >
+        <p>Are you sure you want to cancel order #{cancelOrderId}?</p>
+        <div className={styles.modalActions}>
+          <Button onClick={() => setCancelOrderId(null)} variant="secondary">
+            Keep Order
+          </Button>
+          <Button onClick={() => void handleConfirmCancel()} variant="danger">
+            Cancel Order
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

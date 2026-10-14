@@ -5,6 +5,7 @@ import com.sushishop.product.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.review.dto.response.ReviewStatusResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
@@ -55,6 +56,11 @@ public class ReviewService {
         productCacheService.evict(product.getId(), product.getSlug());
         log.info("Review created: {}", saved.getId());
         return reviewMapper.toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public ReviewStatusResponse getStatus(Long productId, String email) {
+        return new ReviewStatusResponse(reviewRepository.existsByUserEmailAndProductId(email, productId));
     }
 
     @Transactional(readOnly = true)

@@ -5,6 +5,7 @@ import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.review.dto.response.ReviewStatusResponse;
 import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;
@@ -83,6 +84,15 @@ public class ReviewController {
             @SortableFields({"createdAt", "rating", "id"}) @PageableDefault(size = 5, sort = {"createdAt", "id"}, direction = Sort.Direction.DESC) Pageable pageable) {
         log.info("GET /api/reviews/product/{}", productId);
         return ResponseEntity.ok(reviewService.getByProduct(productId, pageable));
+    }
+
+    @GetMapping("/me/product/{productId}")
+    @Operation(summary = "Check whether the current user has reviewed a product")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ReviewStatusResponse> getMyStatus(@PathVariable Long productId,
+                                                            @AuthenticationPrincipal UserDetails userDetails) {
+        log.info("GET /api/reviews/me/product/{}", productId);
+        return ResponseEntity.ok(reviewService.getStatus(productId, userDetails.getUsername()));
     }
 
     @PostMapping("/{id}/replies")

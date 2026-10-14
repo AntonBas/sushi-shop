@@ -38,6 +38,7 @@ export default function ReviewSection({ productId }: Props) {
   const [editReplyMessage, setEditReplyMessage] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleteReplyId, setDeleteReplyId] = useState<number | null>(null);
+  const [hasReviewed, setHasReviewed] = useState<boolean | null>(null);
 
   const loadReviews = useCallback((page: number) => {
     const fetchPage = (target: number) => {
@@ -64,6 +65,17 @@ export default function ReviewSection({ productId }: Props) {
     loadReviews(0);
   }, [loadReviews]);
 
+  const loadReviewStatus = useCallback(() => {
+    if (!user) return;
+    reviewsApi.getMyReviewStatus(productId)
+      .then((res) => setHasReviewed(res.reviewed))
+      .catch(() => setHasReviewed(false));
+  }, [productId, user]);
+
+  useEffect(() => {
+    loadReviewStatus();
+  }, [loadReviewStatus]);
+
   const handleReviewSortChange = (value: string) => {
     setReviewSort(value);
     setReviewPage(0);
@@ -88,6 +100,7 @@ export default function ReviewSection({ productId }: Props) {
     }
     setNewComment("");
     setNewRating(5);
+    setHasReviewed(true);
     loadReviews(reviewPage);
   };
 
@@ -113,6 +126,7 @@ export default function ReviewSection({ productId }: Props) {
       await reviewsApi.deleteReview(deleteId);
       setDeleteId(null);
       loadReviews(reviewPage);
+      loadReviewStatus();
     } catch (err: unknown) {
       showError(err, "Failed to delete review");
     }
@@ -186,7 +200,10 @@ export default function ReviewSection({ productId }: Props) {
           </select>
         )}
       </div>
-      {user && (
+      {user && hasReviewed && (
+        <p className={styles.empty}>You have already reviewed this product.</p>
+      )}
+      {user && hasReviewed === false && (
         <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
           <div className={styles.stars}>
             {[1, 2, 3, 4, 5].map((star) => (

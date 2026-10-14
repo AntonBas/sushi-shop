@@ -5,6 +5,7 @@ import com.sushishop.review.dto.request.CreateReviewReplyRequest;
 import com.sushishop.review.dto.request.CreateReviewRequest;
 import com.sushishop.review.dto.response.ReviewReplyResponse;
 import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.review.dto.response.ReviewStatusResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,16 @@ class ReviewControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.rating").value(5));
+    }
+
+    @Test
+    @WithMockUser(username = "anton@example.com")
+    void shouldReturnMyReviewStatus() throws Exception {
+        when(reviewService.getStatus(1L, "anton@example.com")).thenReturn(new ReviewStatusResponse(true));
+
+        mockMvc.perform(get("/api/reviews/me/product/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reviewed").value(true));
     }
 
     @Test

@@ -101,6 +101,13 @@ class ReviewServiceTest {
     }
 
     @Test
+    void shouldReportReviewStatusForCurrentUser() {
+        when(reviewRepository.existsByUserEmailAndProductId("anton@example.com", 1L)).thenReturn(true);
+
+        assertThat(reviewService.getStatus(1L, "anton@example.com").reviewed()).isTrue();
+    }
+
+    @Test
     void shouldThrowWhenUserNotFound() {
         var request = new CreateReviewRequest(1L, 5, "Great!");
 

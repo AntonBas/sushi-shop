@@ -25,3 +25,7 @@ export interface ReviewResponse {
   createdAt: string
   updatedAt?: string
 }
+
+export interface ReviewStatusResponse {
+  reviewed: boolean
+}
