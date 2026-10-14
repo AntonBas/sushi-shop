@@ -1,11 +1,9 @@
 package com.sushishop.shared.ratelimit;
 
 import com.sushishop.shared.exception.core.RateLimitExceededException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,12 +20,11 @@ import java.util.Optional;
 public class RateLimitAspect {
 
     private final RateLimitService rateLimitService;
-    private final String clientIpHeader;
+    private final ClientIpResolver clientIpResolver;
 
-    public RateLimitAspect(RateLimitService rateLimitService,
-                           @Value("${app.rate-limit.client-ip-header:}") String clientIpHeader) {
+    public RateLimitAspect(RateLimitService rateLimitService, ClientIpResolver clientIpResolver) {
         this.rateLimitService = rateLimitService;
-        this.clientIpHeader = clientIpHeader;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Before("@annotation(rateLimit)")
@@ -72,14 +69,7 @@ public class RateLimitAspect {
         if (attributes == null) {
             return "unknown";
         }
-        HttpServletRequest request = attributes.getRequest();
-        if (!clientIpHeader.isBlank()) {
-            String headerValue = request.getHeader(clientIpHeader);
-            if (headerValue != null && !headerValue.isBlank()) {
-                return headerValue.strip();
-            }
-        }
-        return request.getRemoteAddr();
+        return clientIpResolver.resolve(attributes.getRequest());
     }
 
     private String extractEmail(Object[] args) {
