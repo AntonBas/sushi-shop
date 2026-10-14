@@ -21,6 +21,7 @@ spring:
     web:
       pageable:
         max-page-size: 100
+        serialization-mode: via-dto
 
   flyway:
     enabled: true

@@ -32,6 +32,7 @@ import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -95,6 +96,25 @@ class ApiErrorHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Malformed JSON request"))
                 .andExpect(jsonPath("$.debugMessage").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnApiErrorFormatOnUnsupportedMediaType() throws Exception {
+        standaloneMockMvc.perform(post("/credentials").contentType("text/plain").content("x"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.statusCode").value(415))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.path").value("/credentials"))
+                .andExpect(jsonPath("$.detail").doesNotExist());
+    }
+
+    @Test
+    void shouldReturnApiErrorFormatOnMethodNotAllowedAndKeepAllowHeader() throws Exception {
+        standaloneMockMvc.perform(get("/credentials"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.statusCode").value(405))
+                .andExpect(jsonPath("$.title").doesNotExist())
+                .andExpect(header().exists("Allow"));
     }
 
     @Test

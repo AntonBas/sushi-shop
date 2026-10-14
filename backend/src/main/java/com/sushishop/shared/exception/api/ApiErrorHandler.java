@@ -3,6 +3,7 @@ package com.sushishop.shared.exception.api;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.shared.exception.core.SushiShopException;
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -54,6 +57,24 @@ public class ApiErrorHandler extends ResponseEntityExceptionHandler {
         log.warn("Upload rejected: {}", ex.getMessage());
         return buildResponseEntity(new ApiError(CONTENT_TOO_LARGE,
                 "Uploaded files are too large: max 5 MB per image and 30 MB per request"), request);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleExceptionInternal(@Nonnull Exception ex,
+                                                             @Nullable Object body,
+                                                             @Nonnull HttpHeaders headers,
+                                                             @Nonnull HttpStatusCode statusCode,
+                                                             @Nonnull WebRequest request) {
+        var status = HttpStatus.resolve(statusCode.value());
+        if (status == null || (body != null && !(body instanceof ProblemDetail))) {
+            return super.handleExceptionInternal(ex, body, headers, statusCode, request);
+        }
+        var message = status.is5xxServerError() || !(body instanceof ProblemDetail problemDetail)
+                || problemDetail.getDetail() == null
+                ? status.getReasonPhrase()
+                : problemDetail.getDetail();
+        log.warn("Request rejected with {}: {}", status.value(), message);
+        return buildResponseEntity(new ApiError(status, message), request, headers);
     }
 
     @Override
