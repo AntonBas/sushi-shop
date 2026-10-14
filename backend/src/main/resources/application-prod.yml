@@ -26,6 +26,13 @@ server:
   port: ${PORT:8080}
   forward-headers-strategy: framework
 
+management:
+  health:
+    db:
+      enabled: false
+    redis:
+      enabled: false
+
 springdoc:
   api-docs:
     enabled: false
@@ -42,6 +49,7 @@ app:
   seed-demo-users: false
   rate-limit:
     client-ip-header: CF-Connecting-IP
+    proxy-secret: ${PROXY_SECRET:}
   upload:
     cloudinary:
       cloud-name: ${CLOUDINARY_CLOUD_NAME}

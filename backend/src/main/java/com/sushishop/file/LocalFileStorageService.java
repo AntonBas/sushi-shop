@@ -64,6 +64,10 @@ public class LocalFileStorageService implements FileStorageService {
         }
 
         try {
+            byte[] content = file.getBytes();
+            if (!ImageSignatures.matches(content, contentType)) {
+                throw new BadRequestException("File content does not match type: " + contentType);
+            }
             String extension = getExtension(contentType);
             String fileName = UUID.randomUUID() + extension;
             Path filePath = resolveWithinUploadDir(fileName);
@@ -71,7 +75,7 @@ public class LocalFileStorageService implements FileStorageService {
                 throw new BadRequestException("Invalid file path");
             }
 
-            Files.write(filePath, file.getBytes());
+            Files.write(filePath, content);
 
             log.info("File stored: {}", fileName);
             return urlPrefix + fileName;

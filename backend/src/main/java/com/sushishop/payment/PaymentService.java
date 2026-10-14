@@ -79,9 +79,9 @@ public class PaymentService {
         return saved;
     }
 
-    @Auditable(action = AuditAction.UPDATE, entity = "Payment")
+    @Auditable(action = AuditAction.UPDATE, entity = "Payment", description = "Payment confirmed")
     @Transactional
-    public void confirmPayment(String stripeSessionId) {
+    public Payment confirmPayment(String stripeSessionId) {
         if (stripeSessionId == null || stripeSessionId.isBlank()) {
             throw new BadRequestException("Session ID is required");
         }
@@ -91,12 +91,13 @@ public class PaymentService {
 
         if (payment.getStatus() == PaymentStatus.PAID) {
             log.info("Payment already confirmed, skipping: {}", stripeSessionId);
-            return;
+            return payment;
         }
 
         payment.setStatus(PaymentStatus.PAID);
         paymentRepository.save(payment);
         eventPublisher.publishEvent(new PaymentConfirmedEvent(this, payment.getOrder().getId()));
         log.info("Payment confirmed: {}", stripeSessionId);
+        return payment;
     }
 }

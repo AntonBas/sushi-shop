@@ -42,6 +42,9 @@ class OrderServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private OrderConfirmationNotifier orderConfirmationNotifier;
+
     @InjectMocks
     private OrderService orderService;
 
@@ -243,6 +246,7 @@ class OrderServiceTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         verify(messagingTemplate).convertAndSend("/topic/orders/1", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
         verify(messagingTemplate).convertAndSend("/topic/orders/new", new OrderStatusUpdateResponse(1L, "CONFIRMED", "PAID"));
+        verify(orderConfirmationNotifier).notifyCustomer(order);
     }
 
     @Test
@@ -260,6 +264,7 @@ class OrderServiceTest {
         assertThat(order.isPaid()).isTrue();
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         verify(messagingTemplate, never()).convertAndSend(any(String.class), any(Object.class));
+        verify(orderConfirmationNotifier, never()).notifyCustomer(any());
     }
 
     @Test

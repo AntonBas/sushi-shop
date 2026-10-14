@@ -36,6 +36,7 @@ public class OrderCreationService {
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
+    private final OrderConfirmationNotifier orderConfirmationNotifier;
 
     @Auditable(action = AuditAction.CREATE, entity = "Order")
     @Transactional
@@ -56,6 +57,9 @@ public class OrderCreationService {
         var saved = orderRepository.save(order);
         var notification = new OrderStatusUpdateResponse(saved.getId(), saved.getStatus().name(), orderMapper.getPaymentStatus(saved));
         TransactionCallbacks.afterCommit(() -> messagingTemplate.convertAndSend("/topic/orders/new", notification));
+        if (request.paymentMethod() == PaymentMethod.ON_DELIVERY) {
+            orderConfirmationNotifier.notifyCustomer(saved);
+        }
         log.info("Order created: {}", saved.getId());
         return orderMapper.toResponse(saved);
     }

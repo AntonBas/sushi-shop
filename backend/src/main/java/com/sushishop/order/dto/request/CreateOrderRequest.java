@@ -38,9 +38,8 @@ public record CreateOrderRequest(
         AddressRequest address,
 
         @Schema(description = "List of products to order")
-        @Valid
         @NotEmpty(message = "Order must contain at least one item")
         @Size(max = 50, message = "Order cannot contain more than 50 items")
-        List<@NotNull(message = "Order item is required") OrderItemRequest> items
+        List<@NotNull(message = "Order item is required") @Valid OrderItemRequest> items
 ) {
 }

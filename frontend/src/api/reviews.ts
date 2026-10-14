@@ -1,5 +1,5 @@
 import api from './client'
-import type { CreateReviewRequest, CreateReviewReplyRequest, ReviewResponse, ReviewReplyResponse } from '../types'
+import type { CreateReviewRequest, CreateReviewReplyRequest, ReviewResponse, ReviewReplyResponse, ReviewStatusResponse } from '../types'
 import type { Page } from '../types/common'
 
 export const createReview = async (data: CreateReviewRequest): Promise<ReviewResponse> => {
@@ -14,6 +14,11 @@ export const updateReview = async (id: number, data: CreateReviewRequest): Promi
 
 export const getReviews = async (productId: number, page = 0, size = 5, sort = 'createdAt,desc'): Promise<Page<ReviewResponse>> => {
   const { data } = await api.get<Page<ReviewResponse>>(`/reviews/product/${productId}`, { params: { page, size, sort } })
+  return data
+}
+
+export const getMyReviewStatus = async (productId: number): Promise<ReviewStatusResponse> => {
+  const { data } = await api.get<ReviewStatusResponse>(`/reviews/me/product/${productId}`)
   return data
 }
 

@@ -11,6 +11,9 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.http.HttpMethod.POST;
@@ -132,6 +135,38 @@ class MailServiceTest {
                 .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
 
         mailService.sendEmailChangeRequestedNotification("old@example.com", "<b>x@example.com");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldSendOrderConfirmationWithEscapedLinesTotalAndOrderLink() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.to[0].email").value("anton@example.com"))
+                .andExpect(jsonPath("$.subject").value("Your Sushi Bas Shop order #7 is confirmed"))
+                .andExpect(jsonPath("$.htmlContent", containsString("Maki &lt;b&gt; × 2")))
+                .andExpect(jsonPath("$.htmlContent", containsString("500.00 ₴")))
+                .andExpect(jsonPath("$.htmlContent", containsString("Delivery to Lviv, Zelena, 204")))
+                .andExpect(jsonPath("$.htmlContent", containsString("Pay on delivery")))
+                .andExpect(jsonPath("$.htmlContent", containsString("http://localhost:5173/profile/orders")))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendOrderConfirmation("anton@example.com", new OrderConfirmationEmail(7L, "Anton",
+                List.of(new OrderConfirmationEmail.Line("Maki <b>", 2, new BigDecimal("500"))),
+                new BigDecimal("500"), "Delivery to Lviv, Zelena, 204", false));
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldUsePaymentReceivedSubjectForOnlineOrders() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andExpect(jsonPath("$.subject").value("Payment received for your Sushi Bas Shop order #8"))
+                .andExpect(jsonPath("$.htmlContent", containsString("Paid online")))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendOrderConfirmation("anton@example.com", new OrderConfirmationEmail(8L, "Anton",
+                List.of(), new BigDecimal("250.00"), "Pickup from the restaurant", true));
 
         mockServer.verify();
     }

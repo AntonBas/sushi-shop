@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -41,6 +42,13 @@ public class TokenService {
     public void createEmailChangeToken(User user, String newEmail) {
         String rawToken = issueToken(user, TokenType.EMAIL_CHANGE);
         mailService.sendEmailChangeVerification(newEmail, rawToken);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> findTokenOwner(String rawToken, TokenType type) {
+        return tokenRepository.findByToken(hash(rawToken))
+                .filter(token -> token.getTokenType() == type)
+                .map(Token::getUser);
     }
 
     @Transactional(readOnly = true)

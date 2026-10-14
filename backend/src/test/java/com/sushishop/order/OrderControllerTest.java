@@ -83,6 +83,18 @@ class OrderControllerTest {
     }
 
     @Test
+    void shouldValidateNestedOrderItems() throws Exception {
+        var request = new CreateOrderRequest("Anton", "+380961791111", PaymentMethod.ON_DELIVERY, DeliveryMethod.PICKUP,
+                null, List.of(new OrderItemRequest(1L, 0)));
+
+        mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.subErrors[0].field").value("items[0].quantity"));
+    }
+
+    @Test
     void shouldReturn400WhenInvalidOrder() throws Exception {
         var request = new CreateOrderRequest("", "", null, DeliveryMethod.DELIVERY, null, List.of());
 

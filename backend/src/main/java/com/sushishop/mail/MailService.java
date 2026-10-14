@@ -9,8 +9,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -77,6 +80,13 @@ public class MailService {
                         + ". If this wasn't you, please contact support immediately."));
     }
 
+    public void sendOrderConfirmation(String to, OrderConfirmationEmail order) {
+        String subject = order.paidOnline()
+                ? "Payment received for your Sushi Bas Shop order #" + order.orderId()
+                : "Your Sushi Bas Shop order #" + order.orderId() + " is confirmed";
+        dispatch(() -> deliver(to, subject, orderConfirmationHtml(order)));
+    }
+
     private void dispatch(Runnable send) {
         TransactionCallbacks.afterCommit(() -> taskExecutor.execute(send));
     }
@@ -113,6 +123,45 @@ public class MailService {
                 """.formatted(title, body);
 
         deliver(to, subject, html);
+    }
+
+    private String orderConfirmationHtml(OrderConfirmationEmail order) {
+        String rows = order.lines().stream()
+                .map(line -> """
+                        <tr>
+                          <td style="padding:8px 0;border-bottom:1px solid #e5e7eb">%s × %d</td>
+                          <td style="padding:8px 0;border-bottom:1px solid #e5e7eb;text-align:right;white-space:nowrap">%s</td>
+                        </tr>
+                        """.formatted(HtmlUtils.htmlEscape(line.productName()), line.quantity(), formatAmount(line.subtotal())))
+                .collect(Collectors.joining());
+        String title = order.paidOnline() ? "Payment Received" : "Order Confirmed";
+        String payment = order.paidOnline() ? "Paid online" : "Pay on delivery";
+
+        return """
+                <div style="max-width:480px;margin:0 auto;font-family:Arial,sans-serif;color:#1a1a1a">
+                  <div style="background:#F97316;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+                    <h1 style="color:#fff;margin:0;font-size:24px">Sushi Bas Shop</h1>
+                  </div>
+                  <div style="background:#fff;padding:32px 24px;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 12px 12px">
+                    <h2 style="margin:0 0 12px;font-size:20px">%s</h2>
+                    <p style="margin:0 0 16px;color:#6b7280;font-size:15px;line-height:1.5">Thanks, %s! We've received order #%d and started preparing it.</p>
+                    <table style="width:100%%;border-collapse:collapse;font-size:15px">%s
+                      <tr>
+                        <td style="padding:12px 0 0;font-weight:600">Total</td>
+                        <td style="padding:12px 0 0;font-weight:600;text-align:right;white-space:nowrap">%s</td>
+                      </tr>
+                    </table>
+                    <p style="margin:16px 0 0;color:#6b7280;font-size:14px;line-height:1.5">%s<br>%s</p>
+                    <a href="%s" style="display:block;margin-top:24px;background:#F97316;color:#fff;text-align:center;padding:14px;border-radius:8px;text-decoration:none;font-weight:600;font-size:16px">View Order</a>
+                  </div>
+                </div>
+                """.formatted(title, HtmlUtils.htmlEscape(order.customerName()), order.orderId(), rows,
+                formatAmount(order.totalAmount()), HtmlUtils.htmlEscape(order.deliveryDetails()), payment,
+                baseUrl + "/profile/orders");
+    }
+
+    private String formatAmount(BigDecimal amount) {
+        return amount.setScale(2, RoundingMode.HALF_UP).toPlainString() + " ₴";
     }
 
     private void deliver(String to, String subject, String html) {

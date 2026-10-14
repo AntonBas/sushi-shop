@@ -32,6 +32,7 @@ const AdminOrdersPage = lazy(() => import("./pages/Admin/Orders/AdminOrdersPage"
 const AdminPromotionsPage = lazy(() => import("./pages/Admin/Promotions/AdminPromotionsPage/AdminPromotionsPage"));
 const AdminPromotionForm = lazy(() => import("./pages/Admin/Promotions/AdminPromotionForm/AdminPromotionForm"));
 const AdminAuditPage = lazy(() => import("./pages/Admin/Audit/AdminAuditPage"));
+const AdminUsersPage = lazy(() => import("./pages/Admin/Users/AdminUsersPage"));
 
 function App() {
   const { loading } = useAuth();
@@ -110,6 +111,7 @@ function App() {
         <Route path="promotions" element={<ProtectedRoute adminOnly><AdminPromotionsPage /></ProtectedRoute>} />
         <Route path="promotions/new" element={<ProtectedRoute adminOnly><AdminPromotionForm /></ProtectedRoute>} />
         <Route path="promotions/:id/edit" element={<ProtectedRoute adminOnly><AdminPromotionForm /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute adminOnly><AdminUsersPage /></ProtectedRoute>} />
         <Route path="audit" element={<ProtectedRoute adminOnly><AdminAuditPage /></ProtectedRoute>} />
       </Route>
     </Routes>

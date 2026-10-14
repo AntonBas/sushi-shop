@@ -11,7 +11,10 @@ public record ChangeEmailRequest(
         @Email(message = "Invalid email format")
         @NotBlank(message = "Email is required")
         @Size(max = 100, message = "Email must be less than 100 characters")
-        String newEmail
+        String newEmail,
+        @Schema(description = "Current password, required for accounts that have one")
+        @Size(max = 64, message = "Password must be at most 64 characters")
+        String currentPassword
 ) {
 
     public ChangeEmailRequest {

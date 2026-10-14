@@ -3,8 +3,10 @@ package com.sushishop.audit;
 import com.sushishop.shared.service.TransactionCallbacks;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
@@ -21,13 +23,29 @@ public class AuditAspect {
     private final AuditLogService auditLogService;
     private final AuditorAware<String> auditorAware;
 
-    @AfterReturning(pointcut = "@annotation(auditable)", returning = "result", argNames = "auditable,result")
-    public void audit(Auditable auditable, Object result) {
+    @AfterReturning(pointcut = "@annotation(auditable)", returning = "result",
+            argNames = "joinPoint,auditable,result")
+    public void audit(JoinPoint joinPoint, Auditable auditable, Object result) {
         String user = auditorAware.getCurrentAuditor().orElse("system");
-        Long entityId = extractId(result);
-        String details = auditable.action() + " " + auditable.entity() + (entityId != null ? " #" + entityId : "");
+        Long entityId = auditable.idParam().isEmpty()
+                ? extractId(result)
+                : extractIdFromArgument(joinPoint, auditable.idParam());
+        String details = auditable.action() + " " + auditable.entity() + (entityId != null ? " #" + entityId : "")
+                + (auditable.description().isEmpty() ? "" : ": " + auditable.description());
         TransactionCallbacks.afterCommit(
                 () -> auditLogService.log(auditable.action(), auditable.entity(), entityId, details, user));
+    }
+
+    private Long extractIdFromArgument(JoinPoint joinPoint, String paramName) {
+        var parameterNames = ((MethodSignature) joinPoint.getSignature()).getParameterNames();
+        var args = joinPoint.getArgs();
+        for (int i = 0; i < parameterNames.length; i++) {
+            if (parameterNames[i].equals(paramName)) {
+                return args[i] instanceof Number number ? number.longValue() : null;
+            }
+        }
+        log.warn("Auditable parameter '{}' not found on {}", paramName, joinPoint.getSignature().toShortString());
+        return null;
     }
 
     private Long extractId(Object result) {

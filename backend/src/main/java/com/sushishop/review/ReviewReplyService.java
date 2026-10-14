@@ -52,7 +52,7 @@ public class ReviewReplyService {
         return reviewMapper.toReplyResponse(reviewReplyRepository.save(reply));
     }
 
-    @Auditable(action = AuditAction.DELETE, entity = "ReviewReply")
+    @Auditable(action = AuditAction.DELETE, entity = "ReviewReply", idParam = "replyId")
     @Transactional
     public void deleteReply(Long replyId, String email) {
         var reply = reviewReplyRepository.findById(replyId)

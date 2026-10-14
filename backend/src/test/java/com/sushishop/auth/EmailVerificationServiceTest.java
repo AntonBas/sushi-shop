@@ -1,6 +1,5 @@
 package com.sushishop.auth;
 
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;
@@ -13,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -30,6 +30,9 @@ class EmailVerificationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ResendCooldownService resendCooldownService;
 
     @InjectMocks
     private EmailVerificationService emailVerificationService;
@@ -77,7 +80,7 @@ class EmailVerificationServiceTest {
     }
 
     @Test
-    void shouldRejectResendWhenAlreadyVerified() {
+    void shouldSilentlyIgnoreResendWhenAlreadyVerifiedLikeUnknownEmail() {
         var user = User.builder()
                 .id(1L)
                 .email("anton@example.com")
@@ -86,10 +89,10 @@ class EmailVerificationServiceTest {
 
         when(userRepository.findByEmailForUpdate("anton@example.com")).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> emailVerificationService.resendVerification("anton@example.com"))
-                .isInstanceOf(BadRequestException.class);
+        int cooldownSeconds = emailVerificationService.resendVerification("anton@example.com");
 
         verify(tokenService, never()).createVerificationToken(user);
+        assertThat(cooldownSeconds).isEqualTo(60);
     }
 
     @Test
@@ -128,6 +131,36 @@ class EmailVerificationServiceTest {
     }
 
     @Test
+    void shouldSendVerificationSilentlyWhenCooldownElapsed() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(61))
+                .build();
+
+        emailVerificationService.resendIfCooldownElapsed(user);
+
+        verify(tokenService).createVerificationToken(user);
+        verify(userRepository).save(user);
+        assertThat(user.getLastVerificationEmailSentAt()).isAfter(LocalDateTime.now().minusSeconds(5));
+    }
+
+    @Test
+    void shouldSkipSilentVerificationWithinCooldown() {
+        var user = User.builder()
+                .id(1L)
+                .email("anton@example.com")
+                .emailVerified(false)
+                .lastVerificationEmailSentAt(LocalDateTime.now().minusSeconds(30))
+                .build();
+
+        emailVerificationService.resendIfCooldownElapsed(user);
+
+        verify(tokenService, never()).createVerificationToken(user);
+    }
+
+    @Test
     void shouldSilentlyIgnoreResendForUnknownEmailButReportSameCooldown() {
         when(userRepository.findByEmailForUpdate("unknown@example.com")).thenReturn(Optional.empty());
 
@@ -135,6 +168,23 @@ class EmailVerificationServiceTest {
 
         verify(tokenService, never()).createVerificationToken(org.mockito.ArgumentMatchers.any());
         assertThat(cooldownSeconds).isEqualTo(60);
+    }
+
+    @Test
+    void shouldRateLimitRepeatedResendForUnknownEmailLikeExistingAccount() {
+        when(userRepository.findByEmailForUpdate("unknown@example.com")).thenReturn(Optional.empty());
+        when(resendCooldownService.acquire("unknown@example.com", Duration.ofSeconds(60))).thenReturn(42L);
+
+        assertThatThrownBy(() -> emailVerificationService.resendVerification("unknown@example.com"))
+                .isInstanceOf(RateLimitExceededException.class);
+    }
+
+    @Test
+    void shouldReportRemainingCooldownForUnknownEmail() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+        when(resendCooldownService.remaining("unknown@example.com")).thenReturn(42L);
+
+        assertThat(emailVerificationService.getResendCooldownStatus("unknown@example.com")).isEqualTo(42);
     }
 
     @Test

@@ -1,9 +1,22 @@
 {
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://sushi-shop-backend.onrender.com/api/$1"
-    },
+      "src": "/api/(.*)",
+      "dest": "https://sushi-shop-backend.onrender.com/api/$1",
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "X-Proxy-Secret"
+          },
+          "args": "$PROXY_SECRET",
+          "env": ["PROXY_SECRET"]
+        }
+      ]
+    }
+  ],
+  "rewrites": [
     {
       "source": "/(.*)",
       "destination": "/index.html"

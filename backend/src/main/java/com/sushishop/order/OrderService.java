@@ -28,6 +28,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final ApplicationEventPublisher eventPublisher;
+    private final OrderConfirmationNotifier orderConfirmationNotifier;
 
     @Transactional(readOnly = true)
     public OrderResponse getById(Long id, String requesterEmail, boolean isStaff) {
@@ -95,6 +96,7 @@ public class OrderService {
         var updated = orderRepository.save(order);
         publishStatusUpdate(updated);
         notifyStaff(updated);
+        orderConfirmationNotifier.notifyCustomer(updated);
         log.info("Order {} confirmed after payment", orderId);
     }
 

@@ -1,10 +1,16 @@
 package com.sushishop;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sushishop.audit.AuditLogRepository;
+import com.sushishop.mail.MailService;
+import com.sushishop.order.OrderRepository;
+import com.sushishop.order.OrderStatus;
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.Promotion;
 import com.sushishop.promotion.PromotionRepository;
+import com.sushishop.shared.enums.AuditAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -31,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -63,6 +71,17 @@ class ApiIntegrationTest {
     @Autowired
     private PromotionRepository promotionRepository;
 
+    @Autowired
+    private AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @MockitoBean
+    private MailService mailService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -71,8 +90,17 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void shouldCapRequestedPageSizeAndSerializePageViaDto() throws Exception {
+        mockMvc.perform(get("/api/products").param("size", "1000"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.size").value(100))
+                .andExpect(jsonPath("$.pageable").doesNotExist());
+    }
+
+    @Test
     void shouldStoreReviewCommentUpToApiLimit() throws Exception {
         var product = saveProduct();
+        deliverToCustomer(product);
         var comment = "a".repeat(250);
 
         mockMvc.perform(asCustomer(post("/api/reviews"))
@@ -84,12 +112,37 @@ class ApiIntegrationTest {
     @Test
     void shouldRejectSecondReviewForSameProductWithConflict() throws Exception {
         var product = saveProduct();
+        deliverToCustomer(product);
         var body = "{\"productId\":" + product.getId() + ",\"rating\":4,\"comment\":\"Tasty\"}";
 
         mockMvc.perform(asCustomer(post("/api/reviews")).content(body))
                 .andExpect(status().isCreated());
         mockMvc.perform(asCustomer(post("/api/reviews")).content(body))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void shouldRejectReviewWithoutDeliveredOrder() throws Exception {
+        var product = saveProduct();
+
+        mockMvc.perform(asCustomer(post("/api/reviews"))
+                        .content("{\"productId\":" + product.getId() + ",\"rating\":5}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("REVIEW_REQUIRES_PURCHASE"));
+    }
+
+    @Test
+    void shouldListUsersWithOrderStatisticsSortedByAggregates() throws Exception {
+        deliverToCustomer(saveProduct());
+
+        for (String sort : new String[]{"totalSpent,desc", "ordersCount,desc", "name,asc", "createdAt,desc"}) {
+            mockMvc.perform(asAdmin(get("/api/admin/users"))
+                            .param("search", "user@test")
+                            .param("sort", sort))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].email").value(CUSTOMER))
+                    .andExpect(jsonPath("$.content[0].ordersCount").isNumber());
+        }
     }
 
     @Test
@@ -106,6 +159,19 @@ class ApiIntegrationTest {
                 .andExpect(status().isConflict());
 
         assertThat(productRepository.findById(product.getId())).isPresent();
+    }
+
+    @Test
+    void shouldAuditDeletedProductWithItsId() throws Exception {
+        var product = saveProduct();
+
+        mockMvc.perform(asAdmin(delete("/api/products/" + product.getId())))
+                .andExpect(status().isNoContent());
+
+        assertThat(auditLogRepository.findAll())
+                .anyMatch(entry -> entry.getAction() == AuditAction.DELETE
+                        && "Product".equals(entry.getEntityName())
+                        && product.getId().equals(entry.getEntityId()));
     }
 
     @Test
@@ -136,6 +202,19 @@ class ApiIntegrationTest {
                 .weight(250)
                 .available(true)
                 .build());
+    }
+
+    private void deliverToCustomer(Product product) throws Exception {
+        var response = mockMvc.perform(asCustomer(post("/api/orders"))
+                        .content("""
+                                {"customerName":"Test User","phone":"+380991234567","paymentMethod":"ON_DELIVERY",
+                                 "deliveryMethod":"PICKUP","items":[{"productId":%d,"quantity":1}]}
+                                """.formatted(product.getId())))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        var order = orderRepository.findById(objectMapper.readTree(response).get("id").asLong()).orElseThrow();
+        order.setStatus(OrderStatus.DELIVERED);
+        orderRepository.save(order);
     }
 
     private MockHttpServletRequestBuilder asCustomer(MockHttpServletRequestBuilder request) {

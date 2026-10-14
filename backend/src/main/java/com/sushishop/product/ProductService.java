@@ -98,7 +98,7 @@ public class ProductService {
         return toResponse(updated);
     }
 
-    @Auditable(action = AuditAction.UPDATE, entity = "Product")
+    @Auditable(action = AuditAction.UPDATE, entity = "Product", idParam = "id", description = "Availability toggled")
     @Transactional
     public void toggleAvailability(Long id) {
         var product = productRepository.findById(id)
@@ -110,7 +110,7 @@ public class ProductService {
         log.info("Product {} is now {}", id, product.isAvailable() ? "available" : "unavailable");
     }
 
-    @Auditable(action = AuditAction.DELETE, entity = "Product")
+    @Auditable(action = AuditAction.DELETE, entity = "Product", idParam = "id")
     @Transactional
     public void delete(Long id) {
         var product = productRepository.findById(id)

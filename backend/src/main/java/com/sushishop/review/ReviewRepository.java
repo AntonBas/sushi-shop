@@ -13,6 +13,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     boolean existsByUserIdAndProductId(Long userId, Long productId);
 
+    boolean existsByUserEmailAndProductId(String email, Long productId);
+
     long countByProductId(Long productId);
 
     @Query("SELECT r.id FROM Review r WHERE r.product.id = :productId")

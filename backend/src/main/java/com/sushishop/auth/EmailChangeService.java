@@ -1,10 +1,12 @@
 package com.sushishop.auth;
 
+import com.sushishop.audit.Auditable;
 import com.sushishop.mail.MailService;
+import com.sushishop.shared.enums.AuditAction;
+import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
 import com.sushishop.user.UserMapper;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,14 +32,21 @@ public class EmailChangeService {
     private final MailService mailService;
     private final CacheManager cacheManager;
     private final ApplicationEventPublisher eventPublisher;
+    private final PasswordEncoder passwordEncoder;
 
+    @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Email change requested")
     @Transactional
-    public void requestEmailChange(String email, ChangeEmailRequest request) {
+    public Long requestEmailChange(String email, ChangeEmailRequest request) {
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found: " + email));
 
         if (!user.isEmailVerified()) {
             throw new BadRequestException("Please verify your current email first");
+        }
+
+        if (user.getPassword() != null && (request.currentPassword() == null
+                || !passwordEncoder.matches(request.currentPassword(), user.getPassword()))) {
+            throw new BadRequestException("Current password does not match!");
         }
 
         if (request.newEmail().equals(email)) {
@@ -54,8 +64,10 @@ public class EmailChangeService {
         tokenService.createEmailChangeToken(user, request.newEmail());
         mailService.sendEmailChangeRequestedNotification(email, request.newEmail());
         log.info("Email change requested for {} -> {}", email, request.newEmail());
+        return user.getId();
     }
 
+    @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Email changed")
     @Transactional
     public UserResponse confirmEmailChange(String token) {
         var tokenEntity = tokenService.validateAndGetToken(token, TokenType.EMAIL_CHANGE);

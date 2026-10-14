@@ -52,4 +52,10 @@ public interface PromotionRepository extends JpaRepository<Promotion, Long> {
     @Query("SELECT p FROM Promotion p WHERE (p.startDate > :from AND p.startDate <= :to)"
             + " OR (p.endDate > :from AND p.endDate <= :to)")
     List<Promotion> findStartingOrEndingBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("SELECT MIN(p.startDate) FROM Promotion p WHERE p.startDate > :after")
+    LocalDateTime findNextStartAfter(@Param("after") LocalDateTime after);
+
+    @Query("SELECT MIN(p.endDate) FROM Promotion p WHERE p.endDate > :after")
+    LocalDateTime findNextEndAfter(@Param("after") LocalDateTime after);
 }

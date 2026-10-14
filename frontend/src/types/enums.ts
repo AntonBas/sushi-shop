@@ -56,3 +56,11 @@ export const DELIVERY_METHODS: readonly DeliveryMethod[] = ['DELIVERY', 'PICKUP'
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ['ONLINE', 'ON_DELIVERY']
 
 export const AUDIT_ACTIONS: readonly AuditAction[] = ['CREATE', 'UPDATE', 'DELETE']
+
+export const USER_ROLE_LABELS: Record<UserRole, string> = {
+  CUSTOMER: 'Customer',
+  COURIER: 'Courier',
+  ADMIN: 'Admin',
+}
+
+export const USER_ROLES = Object.keys(USER_ROLE_LABELS) as UserRole[]

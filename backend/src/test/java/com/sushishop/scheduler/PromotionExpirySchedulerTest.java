@@ -3,6 +3,7 @@ package com.sushishop.scheduler;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductCacheService;
 import com.sushishop.promotion.Promotion;
+import com.sushishop.promotion.PromotionBoundaryTracker;
 import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.promotion.PromotionRepository;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
@@ -34,6 +36,9 @@ class PromotionExpirySchedulerTest {
 
     @Mock
     private PromotionCacheService promotionCacheService;
+
+    @Spy
+    private PromotionBoundaryTracker boundaryTracker = new PromotionBoundaryTracker();
 
     @InjectMocks
     private PromotionExpiryScheduler scheduler;
@@ -70,10 +75,45 @@ class PromotionExpirySchedulerTest {
         verify(promotionRepository).findStartingOrEndingBetween(any(), toCaptor.capture());
         var firstRunEnd = toCaptor.getValue();
 
+        boundaryTracker.reset();
         scheduler.evictCacheOnPromotionBoundaries();
 
         var fromCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
         verify(promotionRepository, times(2)).findStartingOrEndingBetween(fromCaptor.capture(), any());
         assertThat(fromCaptor.getAllValues().get(1)).isEqualTo(firstRunEnd);
+    }
+
+    @Test
+    void shouldSkipDatabaseUntilNextBoundary() {
+        when(promotionRepository.findStartingOrEndingBetween(any(), any())).thenReturn(List.of());
+        when(promotionRepository.findNextStartAfter(any())).thenReturn(LocalDateTime.now().plusDays(1));
+
+        scheduler.evictCacheOnPromotionBoundaries();
+        scheduler.evictCacheOnPromotionBoundaries();
+
+        verify(promotionRepository, times(1)).findStartingOrEndingBetween(any(), any());
+    }
+
+    @Test
+    void shouldQueryAgainAfterReset() {
+        when(promotionRepository.findStartingOrEndingBetween(any(), any())).thenReturn(List.of());
+
+        scheduler.evictCacheOnPromotionBoundaries();
+        scheduler.evictCacheOnPromotionBoundaries();
+        boundaryTracker.reset();
+        scheduler.evictCacheOnPromotionBoundaries();
+
+        verify(promotionRepository, times(2)).findStartingOrEndingBetween(any(), any());
+    }
+
+    @Test
+    void shouldQueryWhenBoundaryReached() {
+        when(promotionRepository.findStartingOrEndingBetween(any(), any())).thenReturn(List.of());
+        when(promotionRepository.findNextEndAfter(any())).thenReturn(LocalDateTime.now().minusSeconds(1));
+
+        scheduler.evictCacheOnPromotionBoundaries();
+        scheduler.evictCacheOnPromotionBoundaries();
+
+        verify(promotionRepository, times(2)).findStartingOrEndingBetween(any(), any());
     }
 }

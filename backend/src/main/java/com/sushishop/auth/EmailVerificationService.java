@@ -1,5 +1,7 @@
 package com.sushishop.auth;
 
+import com.sushishop.audit.Auditable;
+import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.token.TokenService;
@@ -23,9 +25,15 @@ public class EmailVerificationService {
 
     private final TokenService tokenService;
     private final UserRepository userRepository;
+    private final ResendCooldownService resendCooldownService;
 
+    @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Email verified")
     @Transactional
-    public void verifyEmail(String verificationToken) {
+    public Long verifyEmail(String verificationToken) {
+        if (tokenService.findTokenOwner(verificationToken, TokenType.EMAIL_VERIFICATION)
+                .filter(User::isEmailVerified).isPresent()) {
+            throw new BadRequestException("Email already verified", "EMAIL_ALREADY_VERIFIED");
+        }
         var tokenEntity = tokenService.validateAndGetToken(verificationToken, TokenType.EMAIL_VERIFICATION);
 
         var user = tokenEntity.getUser();
@@ -34,20 +42,22 @@ public class EmailVerificationService {
 
         tokenService.invalidateAllByUserAndType(user.getId(), TokenType.EMAIL_VERIFICATION);
         log.info("Email verified for {}", user.getEmail());
+        return user.getId();
     }
 
     @Transactional
     public int resendVerification(String email) {
         var userOpt = userRepository.findByEmailForUpdate(email);
-        if (userOpt.isEmpty()) {
-            log.info("Resend verification requested for unknown email {}", email);
+        if (userOpt.isEmpty() || userOpt.get().isEmailVerified()) {
+            log.info("Resend verification requested for unknown or already verified email {}", email);
+            long remaining = resendCooldownService.acquire(email, RESEND_COOLDOWN);
+            if (remaining > 0) {
+                throw new RateLimitExceededException(remaining);
+            }
             return (int) RESEND_COOLDOWN.toSeconds();
         }
 
         var user = userOpt.get();
-        if (user.isEmailVerified()) {
-            throw new BadRequestException("Email already verified");
-        }
 
         var lastSentAt = user.getLastVerificationEmailSentAt();
         if (lastSentAt != null) {
@@ -57,20 +67,36 @@ public class EmailVerificationService {
             }
         }
 
-        tokenService.createVerificationToken(user);
-        user.setLastVerificationEmailSentAt(LocalDateTime.now());
-        userRepository.save(user);
+        sendVerification(user);
         log.info("Verification email resent to {}", email);
         return (int) RESEND_COOLDOWN.toSeconds();
     }
 
+    @Transactional
+    public void resendIfCooldownElapsed(User user) {
+        var lastSentAt = user.getLastVerificationEmailSentAt();
+        if (lastSentAt != null && remainingCooldownSeconds(lastSentAt) > 0) {
+            log.info("Verification email for {} within cooldown, skipping", user.getEmail());
+            return;
+        }
+        sendVerification(user);
+        log.info("Verification email sent to {} instead of password reset", user.getEmail());
+    }
+
+    private void sendVerification(User user) {
+        tokenService.createVerificationToken(user);
+        user.setLastVerificationEmailSentAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
     @Transactional(readOnly = true)
     public int getResendCooldownStatus(String email) {
-        return userRepository.findByEmail(email)
-                .filter(user -> !user.isEmailVerified())
-                .map(User::getLastVerificationEmailSentAt)
+        var user = userRepository.findByEmail(email).filter(found -> !found.isEmailVerified());
+        if (user.isEmpty()) {
+            return (int) resendCooldownService.remaining(email);
+        }
+        return user.map(User::getLastVerificationEmailSentAt)
                 .map(this::remainingCooldownSeconds)
-                .filter(remaining -> remaining > 0)
                 .map(Long::intValue)
                 .orElse(0);
     }

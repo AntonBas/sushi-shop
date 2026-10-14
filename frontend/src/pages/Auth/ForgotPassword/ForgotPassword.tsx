@@ -55,7 +55,7 @@ export default function ForgotPassword() {
         <div className={styles.successModal}>
           <Mail size={48} className={styles.successIcon} />
           <h2>Check your email</h2>
-          <p>We've sent password reset instructions to <strong>{email}</strong></p>
+          <p>If an account exists for <strong>{email}</strong>, we've sent instructions there. Unverified accounts receive a verification link first.</p>
           <p className={styles.hint}>Check your spam folder if you don't see the email</p>
           <Button onClick={() => setShowSuccess(false)} style={{ width: '100%', marginTop: 16 }}>
             Got It

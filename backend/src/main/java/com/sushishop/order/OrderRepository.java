@@ -32,4 +32,10 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     @Query("SELECT o.user.email FROM Order o WHERE o.id = :id")
     Optional<String> findOwnerEmailById(@Param("id") Long id);
+
+    @Query("SELECT CASE WHEN COUNT(oi) > 0 THEN true ELSE false END FROM OrderItem oi"
+            + " WHERE oi.order.user.email = :email AND oi.product.id = :productId AND oi.order.status = :status")
+    boolean existsItemByUserEmailAndProductIdAndStatus(@Param("email") String email,
+                                                       @Param("productId") Long productId,
+                                                       @Param("status") OrderStatus status);
 }

@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -56,12 +57,70 @@ class EmailChangeServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private EmailChangeService emailChangeService;
 
     @Test
+    void shouldRequestEmailChangeWithCorrectCurrentPassword() {
+        var request = new ChangeEmailRequest("new@example.com", "secret123");
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashed")
+                .emailVerified(true)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("secret123", "hashed")).thenReturn(true);
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(cacheManager.getCache("users")).thenReturn(usersCache);
+
+        emailChangeService.requestEmailChange("anton@example.com", request);
+
+        assertThat(user.getPendingEmail()).isEqualTo("new@example.com");
+        verify(tokenService).createEmailChangeToken(user, "new@example.com");
+    }
+
+    @Test
+    void shouldRejectEmailChangeWithWrongCurrentPassword() {
+        var request = new ChangeEmailRequest("new@example.com", "wrong");
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashed")
+                .emailVerified(true)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+
+        assertThatThrownBy(() -> emailChangeService.requestEmailChange("anton@example.com", request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Current password does not match!");
+        verify(tokenService, never()).createEmailChangeToken(any(), any());
+    }
+
+    @Test
+    void shouldRejectEmailChangeWithoutCurrentPasswordWhenAccountHasOne() {
+        var request = new ChangeEmailRequest("new@example.com", null);
+        var user = User.builder()
+                .email("anton@example.com")
+                .password("hashed")
+                .emailVerified(true)
+                .build();
+
+        when(userRepository.findByEmail("anton@example.com")).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> emailChangeService.requestEmailChange("anton@example.com", request))
+                .isInstanceOf(BadRequestException.class)
+                .hasMessageContaining("Current password does not match!");
+        verify(tokenService, never()).createEmailChangeToken(any(), any());
+    }
+
+    @Test
     void shouldRequestEmailChange() {
-        var request = new ChangeEmailRequest("new@example.com");
+        var request = new ChangeEmailRequest("new@example.com", null);
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(true)
@@ -82,7 +141,7 @@ class EmailChangeServiceTest {
 
     @Test
     void shouldThrowWhenRequestingEmailChangeForUnverifiedUser() {
-        var request = new ChangeEmailRequest("new@example.com");
+        var request = new ChangeEmailRequest("new@example.com", null);
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(false)
@@ -97,7 +156,7 @@ class EmailChangeServiceTest {
 
     @Test
     void shouldThrowWhenNewEmailSameAsCurrent() {
-        var request = new ChangeEmailRequest("anton@example.com");
+        var request = new ChangeEmailRequest("anton@example.com", null);
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(true)
@@ -112,7 +171,7 @@ class EmailChangeServiceTest {
 
     @Test
     void shouldThrowWhenNewEmailAlreadyTaken() {
-        var request = new ChangeEmailRequest("taken@example.com");
+        var request = new ChangeEmailRequest("taken@example.com", null);
         var user = User.builder()
                 .email("anton@example.com")
                 .emailVerified(true)

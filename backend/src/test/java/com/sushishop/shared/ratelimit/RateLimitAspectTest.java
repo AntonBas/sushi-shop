@@ -57,7 +57,7 @@ class RateLimitAspectTest {
 
     @BeforeEach
     void setUp() {
-        rateLimitAspect = new RateLimitAspect(rateLimitService, "");
+        rateLimitAspect = new RateLimitAspect(rateLimitService, new ClientIpResolver("", ""));
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.toShortString()).thenReturn("AuthController.login(..)");
     }
@@ -124,7 +124,7 @@ class RateLimitAspectTest {
 
     @Test
     void shouldUseConfiguredClientIpHeaderInsteadOfRemoteAddr() throws NoSuchMethodException {
-        var aspect = new RateLimitAspect(rateLimitService, "CF-Connecting-IP");
+        var aspect = new RateLimitAspect(rateLimitService, new ClientIpResolver("CF-Connecting-IP", ""));
         var request = new MockHttpServletRequest();
         request.setRemoteAddr("10.0.0.1");
         request.addHeader("X-Forwarded-For", "6.6.6.6, 203.0.113.9");
@@ -140,7 +140,7 @@ class RateLimitAspectTest {
 
     @Test
     void shouldFallBackToRemoteAddrWhenConfiguredHeaderMissing() throws NoSuchMethodException {
-        var aspect = new RateLimitAspect(rateLimitService, "CF-Connecting-IP");
+        var aspect = new RateLimitAspect(rateLimitService, new ClientIpResolver("CF-Connecting-IP", ""));
         var request = new MockHttpServletRequest();
         request.setRemoteAddr("10.0.0.1");
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
