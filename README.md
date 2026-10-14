@@ -23,7 +23,7 @@ payment, and real-time delivery tracking.
 
 The system supports three roles:
 - **User** — browsing, ordering, tracking
-- **Admin** — managing products, promotions, orders, audit logs
+- **Admin** — managing products, promotions, orders, users and roles, audit logs
 - **Courier** — order management and delivery status updates (shares the admin
   order view, without product/promotion access)
 
@@ -39,10 +39,12 @@ The system supports three roles:
 
 ### Storefront
 - Product catalog with categories, search, images, reviews, and ratings
+- Reviews limited to customers who received the product (delivered order)
 - Active promotions with automatic discount calculation
 - Shopping cart and checkout
 - Order tracking with real-time status updates via WebSocket
 - Stripe payment integration
+- Order confirmation emails (on checkout for pay-on-delivery, after payment for online orders)
 - User profile management
 - JWT authentication with email verification
 - Google OAuth2 login
@@ -53,6 +55,7 @@ The system supports three roles:
 - Promotion management with conflict prevention
 - Order management with status workflow
 - Real-time order updates via WebSocket
+- User management: search, role/verification filters, sorting by orders and total spent, role changes with confirmation
 - Audit logs with filtering
 
 ### Courier Access
@@ -68,16 +71,19 @@ The system supports three roles:
 - **Redis caching** — active promotions and popular products are cached and evicted when a promotion starts or ends; Redis also holds the JWT blacklist and Bucket4j rate-limit buckets shared across instances
 - **Feature-based architecture** — organized the monolith by business domains with clear separation of controllers, services, repositories, DTOs, and mappers
 - **Database optimization** — eliminated N+1 queries using `EntityGraph`, batch fetching, and targeted database indexes
+- **Aggregated admin user list** — one grouped query returns each user with order count and delivered spending, sortable by those aggregates, plus a separate count query for pagination
+- **Free-tier friendly scheduling** — the promotion cache scheduler queries the database only when the next promotion start/end is due, so the serverless PostgreSQL compute can auto-suspend between boundaries
 - **Dynamic filtering** — implemented composable filtering with Spring Data JPA Specifications for products, orders, and audit logs
 - **Promotion conflict prevention** — prevents a product from being in two active promotions whose periods overlap
 - **Real-time order tracking** — WebSocket/STOMP updates order status automatically across clients
 - **Cross-cutting audit logging** — implemented with a custom `@Auditable` annotation and AOP
+- **Session invalidation on sensitive changes** — password, email or role changes bump a per-user token version, so existing JWTs stop working and the auth cache is evicted
 - **Drag-and-drop image reordering** — admin can reorder product images
 - **Service layer separation** — split large services into focused services (OrderCreationService, OrderQueryService, ProductImageService, ReviewReplyService)
 - **Validation hierarchy** — custom exceptions for all HTTP error scenarios with centralized handling
 - **Token management** — separate TokenService for verification and password reset tokens
 - **Scheduled cleanup** — automated cleanup of expired tokens, stale unverified accounts, and product/promotion cache entries when a promotion starts or ends
-- **Email verification flow** — emails are sent asynchronously after the transaction commits, with styled HTML templates
+- **Transactional emails** — verification, password reset, email change and order confirmation emails are sent asynchronously after the transaction commits, with styled HTML templates
 - **Accessibility (WCAG AA)** — dedicated audit and fixes: color-contrast across
   light/dark themes, focus-visible styles, focus trap/restoration in modals,
   ARIA labels on icon-only controls, full keyboard navigation
@@ -88,7 +94,7 @@ The system supports three roles:
 
 ## Architecture
 
-**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`) is a self-contained package with its own `controller/service/repository/dto/mapper`, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/`, `file/`, and `scheduler/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
+**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`, `admin/`) is a self-contained package with its own `controller/service/repository/dto/mapper`, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/`, `file/`, and `scheduler/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
 
 ```mermaid
 flowchart TD
@@ -125,10 +131,11 @@ flowchart TD
 | `payment/`                   | Stripe payment processing                                          |
 | `review/`                    | Product reviews, ratings, admin replies                            |
 | `audit/`                     | `@Auditable` AOP change log across admin actions                   |
+| `admin/`                     | Admin user management: list with order statistics, role changes    |
 | `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
-| `mail/`                      | Email sending via Brevo HTTP API (verification, notifications)     |
+| `mail/`                      | Email sending via Brevo HTTP API (account and order emails)        |
 | `file/`                      | Product image storage                                              |
-| `scheduler/`                 | Expired-token, unverified-account, and promotion-cache cleanup     |
+| `scheduler/`                 | Expired-token and unverified-account cleanup, promotion-cache eviction |
 | `security/`                  | JWT filter, OAuth2, WebSocket auth, CSRF header filter             |
 | `shared/`                    | Cross-cutting config, exceptions, validation, rate limiting, events |
 
@@ -137,9 +144,11 @@ flowchart TD
 ## Security Highlights
 
 - **Role-Based Access Control (RBAC):** separate workflows and permissions for User, Admin, and Courier, enforced at both API and UI level.
-- **API rate limiting:** configurable per-endpoint throttling via Bucket4j backed by Redis, so limits are shared across instances; buckets expire via Redis TTL.
+- **API rate limiting:** configurable per-endpoint throttling via Bucket4j backed by Redis, so limits are shared across instances; buckets expire via Redis TTL. Behind the Vercel proxy the client IP comes from `X-Forwarded-For` only when the request carries a shared proxy secret, so it cannot be spoofed by calling the backend directly.
+- **No account enumeration:** login, password reset and resend-verification answer the same way (including rate limits) whether or not the account exists.
+- **Upload validation:** product images are checked by file signature (JPEG/PNG/WebP magic bytes), not only by the declared content type.
 - **Security hardening:** CSP/HSTS/X-Frame-Options headers (Nginx in Docker Compose, `vercel.json` on Vercel), Dependabot version updates across npm/Gradle/GitHub Actions/Docker, authenticated WebSocket subscriptions.
-- **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing.
+- **Auth:** JWT + Google OAuth2 login, email verification required before account access, BCrypt password hashing, current password required to change email.
 
 ---
 
@@ -262,9 +271,12 @@ Google OAuth login go to Render directly.
 Configuration:
 - **Render:** `SPRING_PROFILES_ACTIVE=prod` plus the "All profiles" and "prod"
   variables from [`.env.example`](.env.example)
-- **Vercel:** `VITE_API_URL` points to the Render backend
+- **Vercel:** `VITE_API_URL` points to the Render backend; `PROXY_SECRET` (same value as on
+  Render) is added to proxied `/api` requests by a transform rule in `vercel.json`
 - **Google OAuth:** `<Render URL>/login/oauth2/code/google` is an authorized redirect URI
 - **Stripe:** the webhook targets `<Render URL>/api/payments/webhook`
+- **Branches:** Render and Vercel both deploy production from `master`;
+  `develop` builds Vercel preview deployments
 
 Render's free tier sleeps after 15 minutes of inactivity, so the first
 request after a pause can take up to a minute.
@@ -307,9 +319,9 @@ and a no-comments rule, plus Knip for unused files, exports and dependencies.
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and PRs to `master`/`develop`: backend
 build + Checkstyle + tests (Gradle), frontend lint + unused-code check + tests + build (ESLint, Knip, Vitest,
-`tsc -b`, Vite), then builds both Docker images. There is no deployment step — this is CI only, deployment
-is manual: self-hosted via `docker compose up -d`, or to Render + Vercel +
-Neon + Upstash (see [Getting Started](#getting-started)).
+`tsc -b`, Vite), then builds both Docker images. The workflow itself does not deploy: Render and Vercel
+deploy `master` through their Git integrations, and the stack can also be self-hosted with
+`docker compose up -d` (see [Getting Started](#getting-started)).
 
 ---
 
