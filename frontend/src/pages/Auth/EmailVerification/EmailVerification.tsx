@@ -6,6 +6,7 @@ import Input from '../../../components/UI/Input/Input'
 import Loading from '../../../components/UI/Loading/Loading'
 import { useResendVerification } from '../../../hooks/common/useResendVerification'
 import * as authApi from '../../../api/auth'
+import { getErrorCode } from '../../../api/errorMessage'
 import styles from './EmailVerification.module.css'
 
 export default function EmailVerification() {
@@ -13,7 +14,7 @@ export default function EmailVerification() {
   const navigate = useNavigate()
   const token = searchParams.get('token')
   const initialEmail = searchParams.get('email')
-  const [tokenStatus, setTokenStatus] = useState<'loading' | 'success' | 'expired'>(token ? 'loading' : 'expired')
+  const [tokenStatus, setTokenStatus] = useState<'loading' | 'success' | 'verified' | 'expired'>(token ? 'loading' : 'expired')
   const [email, setEmail] = useState(initialEmail ?? '')
   const { resend, syncStatus, cooldown, sending, message, messageType } = useResendVerification(token ? 0 : 60)
 
@@ -22,7 +23,9 @@ export default function EmailVerification() {
     let cancelled = false
     authApi.verifyEmail(token)
       .then(() => { if (!cancelled) setTokenStatus('success') })
-      .catch(() => { if (!cancelled) setTokenStatus('expired') })
+      .catch((err: unknown) => {
+        if (!cancelled) setTokenStatus(getErrorCode(err) === 'EMAIL_ALREADY_VERIFIED' ? 'verified' : 'expired')
+      })
     return () => { cancelled = true }
   }, [token])
 
@@ -34,6 +37,19 @@ export default function EmailVerification() {
 
   if (tokenStatus === 'loading') {
     return <Loading text="Verifying your email..." />
+  }
+
+  if (tokenStatus === 'verified') {
+    return (
+      <div className={styles.container}>
+        <div className={`${styles.card} ${styles.success}`}>
+          <CheckCircle2 size={48} className={styles.icon} />
+          <h2>Email Already Verified</h2>
+          <p>This link was already used. You can log in.</p>
+          <Button onClick={() => void navigate('/login')}>Go to Login</Button>
+        </div>
+      </div>
+    )
   }
 
   if (tokenStatus === 'success') {

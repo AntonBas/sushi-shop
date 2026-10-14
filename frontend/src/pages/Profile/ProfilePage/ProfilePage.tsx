@@ -68,12 +68,14 @@ export default function ProfilePage() {
 
   const handleUpdateAddress = async (e: React.SyntheticEvent) => {
     e.preventDefault();
+    if (!city.trim() || !street.trim() || !house.trim()) {
+      showNotification("City, street and house are required", "error");
+      return;
+    }
     try {
       await updateApi.execute(() =>
         usersApi.updateProfile({
-          address: city
-            ? { city, street, house, apartment: apartment || undefined }
-            : undefined,
+          address: { city, street, house, apartment: apartment || undefined },
         }),
       );
       await refreshUser();

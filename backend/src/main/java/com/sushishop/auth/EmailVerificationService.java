@@ -2,6 +2,7 @@ package com.sushishop.auth;
 
 import com.sushishop.audit.Auditable;
 import com.sushishop.shared.enums.AuditAction;
+import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.token.TokenService;
 import com.sushishop.token.TokenType;
@@ -28,6 +29,10 @@ public class EmailVerificationService {
     @Auditable(action = AuditAction.UPDATE, entity = "User", description = "Email verified")
     @Transactional
     public Long verifyEmail(String verificationToken) {
+        if (tokenService.findTokenOwner(verificationToken, TokenType.EMAIL_VERIFICATION)
+                .filter(User::isEmailVerified).isPresent()) {
+            throw new BadRequestException("Email already verified", "EMAIL_ALREADY_VERIFIED");
+        }
         var tokenEntity = tokenService.validateAndGetToken(verificationToken, TokenType.EMAIL_VERIFICATION);
 
         var user = tokenEntity.getUser();
