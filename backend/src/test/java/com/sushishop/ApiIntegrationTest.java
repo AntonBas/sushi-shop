@@ -127,6 +127,20 @@ class ApiIntegrationTest {
     }
 
     @Test
+    void shouldListUsersWithOrderStatisticsSortedByAggregates() throws Exception {
+        deliverToCustomer(saveProduct());
+
+        for (String sort : new String[]{"totalSpent,desc", "ordersCount,desc", "name,asc", "createdAt,desc"}) {
+            mockMvc.perform(asAdmin(get("/api/admin/users"))
+                            .param("search", "user@test")
+                            .param("sort", sort))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content[0].email").value(CUSTOMER))
+                    .andExpect(jsonPath("$.content[0].ordersCount").isNumber());
+        }
+    }
+
+    @Test
     void shouldRejectDeletingOrderedProductAndKeepIt() throws Exception {
         var product = saveProduct();
         mockMvc.perform(asCustomer(post("/api/orders"))

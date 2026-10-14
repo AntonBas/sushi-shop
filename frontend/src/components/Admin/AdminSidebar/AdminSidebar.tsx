@@ -5,6 +5,7 @@ import {
   Package,
   Tag,
   ScrollText,
+  Users,
   ArrowLeft,
 } from "lucide-react";
 import clsx from "clsx";
@@ -38,6 +39,12 @@ export default function AdminSidebar({
       path: "/admin/promotions",
       label: "Promotions",
       icon: Tag,
+      adminOnly: true,
+    },
+    {
+      path: "/admin/users",
+      label: "Users",
+      icon: Users,
       adminOnly: true,
     },
     {
