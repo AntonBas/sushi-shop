@@ -24,6 +24,7 @@ import MenuPage from "./pages/Menu/MenuPage";
 import OrderSuccessPage from "./pages/Order/Success/SuccessPage";
 import OrderCancelPage from "./pages/Order/Cancel/CancelPage";
 import NotFoundPage from "./pages/NotFound/NotFoundPage";
+import PrivacyPolicyPage from "./pages/Privacy/PrivacyPolicyPage";
 
 const AdminLayout = lazy(() => import("./components/Admin/AdminLayout/AdminLayout"));
 const AdminProductsPage = lazy(() => import("./pages/Admin/Products/AdminProductsPage/AdminProductsPage"));
@@ -47,6 +48,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/products/:slug" element={<ProductPage />} />
         <Route path="/promotions/:slug" element={<PromotionPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
         <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
         <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
