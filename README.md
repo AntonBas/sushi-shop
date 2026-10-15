@@ -1,6 +1,6 @@
 # Sushi Shop
 
-Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 500+ unit, controller and Testcontainers integration tests (~89% line coverage), zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
+Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 550+ unit, controller and Testcontainers integration tests (~90% line coverage), zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-green)
@@ -301,7 +301,7 @@ and a no-comments rule, plus Knip for unused files, exports and dependencies.
 - **Integration tests:** Testcontainers with real PostgreSQL and Redis — Flyway migrations, repository queries, full HTTP → service → database scenarios
 - **Controller tests:** MockMvc — REST API endpoints
 - **Rate limiting tests:** Bucket4j token bucket behavior
-- **500+ tests, ~89% line / 75% branch coverage** (JaCoCo). Run `./gradlew jacocoTestReport`
+- **550+ tests, ~90% line / 76% branch coverage** (JaCoCo). Run `./gradlew jacocoTestReport`
   and open `backend/build/reports/jacoco/test/html/index.html`.
 
 ### Frontend
