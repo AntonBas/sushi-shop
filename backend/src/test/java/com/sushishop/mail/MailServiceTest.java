@@ -12,6 +12,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,8 +22,11 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withTooManyRequests;
 
 class MailServiceTest {
 
@@ -120,6 +124,40 @@ class MailServiceTest {
     void shouldSendSuccessfullyAfterATransientFailure() {
         mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
                 .andRespond(withServerError());
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendVerificationEmail("anton@example.com", "token123");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldNotRetryWhenBrevoRejectsTheRequest() {
+        mockServer.expect(ExpectedCount.once(), requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withBadRequest());
+
+        mailService.sendVerificationEmail("anton@example.com", "token123");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldRetryWhenRateLimited() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withTooManyRequests());
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
+
+        mailService.sendVerificationEmail("anton@example.com", "token123");
+
+        mockServer.verify();
+    }
+
+    @Test
+    void shouldRetryAfterTimeout() {
+        mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
+                .andRespond(withException(new SocketTimeoutException("Read timed out")));
         mockServer.expect(requestTo("https://api.brevo.com/v3/smtp/email"))
                 .andRespond(withSuccess("{\"messageId\":\"abc\"}", MediaType.APPLICATION_JSON));
 
