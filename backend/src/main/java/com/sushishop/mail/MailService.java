@@ -5,12 +5,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.HtmlUtils;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -20,7 +24,8 @@ import java.util.stream.Collectors;
 public class MailService {
 
     private static final int MAX_ATTEMPTS = 3;
-    private static final long RETRY_DELAY_MS = 200;
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(10);
 
     private final RestClient restClient;
     private final TaskExecutor taskExecutor;
@@ -30,6 +35,9 @@ public class MailService {
     @Value("${app.frontend-url}")
     private String baseUrl;
 
+    @Value("${app.mail.retry-base-delay-ms:500}")
+    private long retryBaseDelayMillis;
+
     public MailService(@Value("${app.mail.api-key}") String apiKey,
                         @Value("${app.mail.from-email}") String fromEmail,
                         @Value("${app.mail.from-name}") String fromName,
@@ -37,7 +45,11 @@ public class MailService {
         this.taskExecutor = taskExecutor;
         this.fromEmail = fromEmail;
         this.fromName = fromName;
+        var requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(CONNECT_TIMEOUT);
+        requestFactory.setReadTimeout(READ_TIMEOUT);
         this.restClient = RestClient.builder()
+                .requestFactory(requestFactory)
                 .baseUrl("https://api.brevo.com/v3/smtp/email")
                 .defaultHeader("api-key", apiKey)
                 .build();
@@ -181,19 +193,31 @@ public class MailService {
                 log.info("{} email sent to {}", subject, to);
                 return;
             } catch (Exception e) {
+                if (!isRetryable(e)) {
+                    log.error("Brevo rejected {} email to {}, not retrying", subject, to, e);
+                    return;
+                }
                 if (attempt == MAX_ATTEMPTS) {
                     log.error("Failed to send {} email to {} after {} attempts", subject, to, MAX_ATTEMPTS, e);
                     return;
                 }
                 log.warn("Attempt {}/{} failed to send {} email to {}, retrying", attempt, MAX_ATTEMPTS, subject, to, e);
-                sleepBeforeRetry();
+                sleepBeforeRetry(attempt);
             }
         }
     }
 
-    private void sleepBeforeRetry() {
+    private static boolean isRetryable(Exception exception) {
+        if (exception instanceof RestClientResponseException responseException) {
+            var status = responseException.getStatusCode();
+            return status.is5xxServerError() || status.value() == HttpStatus.TOO_MANY_REQUESTS.value();
+        }
+        return true;
+    }
+
+    private void sleepBeforeRetry(int attempt) {
         try {
-            Thread.sleep(RETRY_DELAY_MS);
+            Thread.sleep(retryBaseDelayMillis << (attempt - 1));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

@@ -1,12 +1,10 @@
 package com.sushishop.payment;
 
-import com.sushishop.order.OrderService;
 import com.sushishop.shared.ratelimit.RateLimit;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,17 +17,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 @Tag(name = "Payments", description = "Payment endpoints")
 public class PaymentController {
 
-    private final StripeService stripeService;
-    private final PaymentService paymentService;
-    private final WebhookIdempotencyService webhookIdempotencyService;
-    private final OrderService orderService;
+    private final CheckoutService checkoutService;
+    private final StripeWebhookService stripeWebhookService;
 
     @RateLimit(key = "user")
     @PostMapping("/order/{orderId}")
@@ -37,47 +32,14 @@ public class PaymentController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, String>> createCheckout(@PathVariable Long orderId,
                                                               @AuthenticationPrincipal UserDetails userDetails) {
-        var order = orderService.getOwnedOrder(orderId, userDetails.getUsername(), false);
-        paymentService.ensurePayable(order);
-        paymentService.expirePendingPayments(orderId).forEach(stripeService::expireCheckoutSession);
-        var amountInCents = order.getTotalAmount().movePointRight(2).longValueExact();
-        var info = stripeService.createCheckoutSession(orderId, amountInCents, userDetails.getUsername());
-        runWithCompensation(
-                () -> paymentService.create(orderId, info.id(), order.getTotalAmount()),
-                () -> stripeService.expireCheckoutSession(info.id())
-        );
-        log.info("Checkout session created for order: {}", orderId);
-        return ResponseEntity.ok(Map.of("url", info.url()));
+        return ResponseEntity.ok(Map.of("url", checkoutService.createCheckout(orderId, userDetails.getUsername())));
     }
 
     @PostMapping("/webhook")
     @Operation(summary = "Stripe webhook endpoint")
     public ResponseEntity<Void> handleWebhook(@RequestBody String payload,
                                               @RequestHeader("Stripe-Signature") String sigHeader) {
-        var event = stripeService.parseCheckoutCompletedEvent(payload, sigHeader);
-
-        if (!webhookIdempotencyService.markProcessed(event.eventId())) {
-            log.info("Duplicate Stripe webhook event ignored: {}", event.eventId());
-            return ResponseEntity.ok().build();
-        }
-
-        runWithCompensation(
-                () -> {
-                    if (event.sessionId() != null) {
-                        paymentService.confirmPayment(event.sessionId());
-                    }
-                },
-                () -> webhookIdempotencyService.unmark(event.eventId())
-        );
+        stripeWebhookService.handle(payload, sigHeader);
         return ResponseEntity.ok().build();
-    }
-
-    private void runWithCompensation(Runnable action, Runnable compensation) {
-        try {
-            action.run();
-        } catch (RuntimeException e) {
-            compensation.run();
-            throw e;
-        }
     }
 }

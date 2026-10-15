@@ -17,6 +17,7 @@ export default function Footer() {
           <Link to="/">Home</Link>
           <Link to="/menu">Menu</Link>
           <Link to="/cart">Cart</Link>
+          <Link to="/privacy">Privacy Policy</Link>
         </div>
         <div className={styles.contact}>
           <h4>Contact</h4>

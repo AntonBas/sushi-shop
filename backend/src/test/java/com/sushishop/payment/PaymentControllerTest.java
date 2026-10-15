@@ -1,8 +1,5 @@
 package com.sushishop.payment;
 
-import com.sushishop.order.Order;
-import com.sushishop.order.OrderService;
-import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,14 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -39,16 +29,10 @@ class PaymentControllerTest {
     private WebApplicationContext context;
 
     @MockitoBean
-    private StripeService stripeService;
+    private CheckoutService checkoutService;
 
     @MockitoBean
-    private PaymentService paymentService;
-
-    @MockitoBean
-    private WebhookIdempotencyService webhookIdempotencyService;
-
-    @MockitoBean
-    private OrderService orderService;
+    private StripeWebhookService stripeWebhookService;
 
     @BeforeEach
     void setUp() {
@@ -57,12 +41,9 @@ class PaymentControllerTest {
 
     @Test
     @WithMockUser(username = "test@example.com")
-    void shouldCreateCheckoutSession() throws Exception {
-        var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
-        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
-        var info = new StripeService.CheckoutSessionInfo("sess_123", "https://checkout.stripe.com/session_123");
-        when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
-                .thenReturn(info);
+    void shouldReturnCheckoutUrl() throws Exception {
+        when(checkoutService.createCheckout(1L, "test@example.com"))
+                .thenReturn("https://checkout.stripe.com/session_123");
 
         mockMvc.perform(post("/api/payments/order/1"))
                 .andExpect(status().isOk())
@@ -71,90 +52,31 @@ class PaymentControllerTest {
 
     @Test
     @WithMockUser(username = "test@example.com")
-    void shouldExpirePreviousPendingSessionsBeforeCreatingNewOne() throws Exception {
-        var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
-        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
-        when(paymentService.expirePendingPayments(1L)).thenReturn(List.of("sess_old"));
-        when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
-                .thenReturn(new StripeService.CheckoutSessionInfo("sess_new", "https://checkout.stripe.com/new"));
-
-        mockMvc.perform(post("/api/payments/order/1"))
-                .andExpect(status().isOk());
-
-        verify(stripeService).expireCheckoutSession("sess_old");
-    }
-
-    @Test
-    @WithMockUser(username = "test@example.com")
-    void shouldNotCreateStripeSessionForNonPayableOrder() throws Exception {
-        var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
-        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
-        doThrow(new ConflictException("Order is already paid")).when(paymentService).ensurePayable(order);
+    void shouldReturnConflictForNonPayableOrder() throws Exception {
+        when(checkoutService.createCheckout(1L, "test@example.com"))
+                .thenThrow(new ConflictException("Order is already paid"));
 
         mockMvc.perform(post("/api/payments/order/1"))
                 .andExpect(status().isConflict());
-
-        verify(stripeService, never()).createCheckoutSession(any(), any(), any());
     }
 
     @Test
-    @WithMockUser(username = "test@example.com")
-    void shouldExpireStripeSessionWhenPaymentCreationFails() throws Exception {
-        var order = Order.builder().id(1L).totalAmount(new BigDecimal("500.00")).build();
-        when(orderService.getOwnedOrder(1L, "test@example.com", false)).thenReturn(order);
-        var info = new StripeService.CheckoutSessionInfo("sess_123", "https://checkout.stripe.com/session_123");
-        when(stripeService.createCheckoutSession(eq(1L), eq(50000L), eq("test@example.com")))
-                .thenReturn(info);
-        doThrow(new BadRequestException("Order not found"))
-                .when(paymentService).create(eq(1L), eq("sess_123"), any());
-
-        mockMvc.perform(post("/api/payments/order/1"))
-                .andExpect(status().isBadRequest());
-
-        verify(stripeService).expireCheckoutSession("sess_123");
-    }
-
-    @Test
-    void shouldHandleWebhook() throws Exception {
-        when(stripeService.parseCheckoutCompletedEvent(anyString(), anyString()))
-                .thenReturn(new StripeService.WebhookEvent("evt_123", "sess_123"));
-        when(webhookIdempotencyService.markProcessed("evt_123")).thenReturn(true);
-
+    void shouldPassWebhookPayloadAndSignatureToService() throws Exception {
         mockMvc.perform(post("/api/payments/webhook")
                         .content("{}")
                         .header("Stripe-Signature", "sig_123"))
                 .andExpect(status().isOk());
 
-        verify(paymentService).confirmPayment("sess_123");
+        verify(stripeWebhookService).handle("{}", "sig_123");
     }
 
     @Test
-    void shouldSkipDuplicateWebhookEvent() throws Exception {
-        when(stripeService.parseCheckoutCompletedEvent(anyString(), anyString()))
-                .thenReturn(new StripeService.WebhookEvent("evt_123", "sess_123"));
-        when(webhookIdempotencyService.markProcessed("evt_123")).thenReturn(false);
-
-        mockMvc.perform(post("/api/payments/webhook")
-                        .content("{}")
-                        .header("Stripe-Signature", "sig_123"))
-                .andExpect(status().isOk());
-
-        verify(paymentService, never()).confirmPayment(anyString());
-    }
-
-    @Test
-    void shouldUnmarkIdempotencyKeyWhenConfirmPaymentFails() throws Exception {
-        when(stripeService.parseCheckoutCompletedEvent(anyString(), anyString()))
-                .thenReturn(new StripeService.WebhookEvent("evt_123", "sess_123"));
-        when(webhookIdempotencyService.markProcessed("evt_123")).thenReturn(true);
-        doThrow(new RuntimeException("transient DB error"))
-                .when(paymentService).confirmPayment("sess_123");
+    void shouldReturnServerErrorWhenWebhookProcessingFails() throws Exception {
+        doThrow(new RuntimeException("transient DB error")).when(stripeWebhookService).handle("{}", "sig_123");
 
         mockMvc.perform(post("/api/payments/webhook")
                         .content("{}")
                         .header("Stripe-Signature", "sig_123"))
                 .andExpect(status().isInternalServerError());
-
-        verify(webhookIdempotencyService).unmark("evt_123");
     }
 }
