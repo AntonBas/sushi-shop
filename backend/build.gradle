@@ -96,6 +96,7 @@ tasks.named('bootJar') {
 }
 
 tasks.named('bootRun') {
+    workingDir = rootProject.projectDir.parentFile
     systemProperty 'spring.profiles.active', System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
 }
 
