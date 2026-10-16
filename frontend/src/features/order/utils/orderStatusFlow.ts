@@ -1,4 +1,5 @@
-import type { OrderResponse, OrderStatus } from "../../../types";
+import type { OrderResponse } from '@/features/order/types/order'
+import type { OrderStatus } from '@/types/enums';
 
 export const getStatusFlow = (
   order: Pick<OrderResponse, "status" | "deliveryMethod" | "paymentMethod" | "paymentStatus">,

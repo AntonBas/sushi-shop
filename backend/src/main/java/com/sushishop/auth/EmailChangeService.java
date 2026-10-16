@@ -3,7 +3,7 @@ package com.sushishop.auth;
 import com.sushishop.audit.Auditable;
 import com.sushishop.mail.MailService;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;

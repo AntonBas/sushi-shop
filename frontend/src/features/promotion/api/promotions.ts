@@ -1,6 +1,6 @@
-import api from '../../../api/client'
-import type { CreatePromotionRequest, UpdatePromotionRequest, PromotionResponse } from '../../../types'
-import type { Page } from '../../../types/common'
+import api from '@/api/client'
+import type { CreatePromotionRequest, UpdatePromotionRequest, PromotionResponse } from '@/features/promotion/types/promotion'
+import type { Page } from '@/types/common'
 
 export const getActivePromotions = async (): Promise<PromotionResponse[]> => {
   const { data } = await api.get<PromotionResponse[]>('/promotions/active')

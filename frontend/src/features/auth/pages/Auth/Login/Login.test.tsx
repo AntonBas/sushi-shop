@@ -3,11 +3,11 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { AxiosError, AxiosHeaders } from 'axios'
 import Login from './Login'
-import { useAuth } from '../../../../../context/useAuth'
-import { useResendVerification } from '../../../hooks/useResendVerification'
+import { useAuth } from '@/context/useAuth'
+import { useResendVerification } from '@/features/auth/hooks/useResendVerification'
 
-vi.mock('../../../../../context/useAuth')
-vi.mock('../../../hooks/useResendVerification')
+vi.mock('@/context/useAuth')
+vi.mock('@/features/auth/hooks/useResendVerification')
 
 const OAUTH_NO_PASSWORD_ERROR = 'This account uses Google sign-in and has no password set. Sign in with Google, or use "Forgot password?" to set one.'
 

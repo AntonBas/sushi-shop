@@ -1,4 +1,4 @@
-package com.sushishop.product;
+package com.sushishop.product.image;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

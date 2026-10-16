@@ -1,4 +1,4 @@
-import type { AuditAction } from '../../../types/enums'
+import type { AuditAction } from '@/types/enums'
 
 
 export interface AuditLogResponse {

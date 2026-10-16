@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { useProducts } from "./useProducts";
-import { NotificationProvider } from "../../../context/NotificationContext";
-import * as productsApi from "../api/products";
-import type { ProductListResponse } from "../../../types";
-import type { Page } from "../../../types/common";
+import { NotificationProvider } from "@/context/NotificationContext";
+import * as productsApi from "@/features/product/api/products";
+import type { ProductListResponse } from '@/features/product/types/product';
+import type { Page } from "@/types/common";
 
-vi.mock("../api/products");
+vi.mock("@/features/product/api/products");
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <NotificationProvider>{children}</NotificationProvider>

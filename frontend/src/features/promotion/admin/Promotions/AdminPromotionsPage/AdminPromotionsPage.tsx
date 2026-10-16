@@ -1,18 +1,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Search } from "lucide-react";
-import { useApi } from "../../../../../hooks/common/useApi";
-import { useNotification } from "../../../../../context/useNotification";
-import * as promotionsApi from "../../../api/promotions";
-import { getErrorMessage } from "../../../../../api/errorMessage";
-import Button from "../../../../../components/UI/Button/Button";
-import Loading from "../../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../../components/UI/Pagination/Pagination";
-import Modal from "../../../../../components/UI/Modal/Modal";
-import type { PromotionResponse } from "../../../../../types";
-import type { Page } from "../../../../../types/common";
-import { useDebouncedParamInput, useListSearchParams } from "../../../../../hooks/common/useListSearchParams";
-import { useReturnToState } from "../../../../../hooks/common/useReturnTo";
+import { useApi } from "@/hooks/common/useApi";
+import { useNotification } from "@/context/useNotification";
+import * as promotionsApi from "@/features/promotion/api/promotions";
+import { getErrorMessage } from "@/api/errorMessage";
+import Button from "@/components/UI/Button/Button";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import Modal from "@/components/UI/Modal/Modal";
+import type { PromotionResponse } from '@/features/promotion/types/promotion';
+import type { Page } from "@/types/common";
+import { useDebouncedParamInput, useListSearchParams } from "@/hooks/common/useListSearchParams";
+import { useReturnToState } from "@/hooks/common/useReturnTo";
 import styles from "./AdminPromotionsPage.module.css";
 
 export default function AdminPromotionsPage() {

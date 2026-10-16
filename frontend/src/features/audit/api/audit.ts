@@ -1,6 +1,6 @@
-import api from '../../../api/client'
-import type { Page } from '../../../types/common'
-import type { AuditLogResponse, AuditLogFilters } from '../types/audit'
+import api from '@/api/client'
+import type { Page } from '@/types/common'
+import type { AuditLogResponse, AuditLogFilters } from '@/features/audit/types/audit'
 
 export const getAuditLogs = async (
   page = 0,

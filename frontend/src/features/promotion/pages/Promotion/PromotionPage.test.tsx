@@ -3,12 +3,12 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { AxiosError, type AxiosResponse } from 'axios'
 import PromotionPage from './PromotionPage'
-import { useNotification } from '../../../../context/useNotification'
-import { getPromotionBySlug } from '../../api/promotions'
-import type { PromotionResponse } from '../../../../types'
+import { useNotification } from '@/context/useNotification'
+import { getPromotionBySlug } from '@/features/promotion/api/promotions'
+import type { PromotionResponse } from '@/features/promotion/types/promotion'
 
-vi.mock('../../../../context/useNotification')
-vi.mock('../../api/promotions')
+vi.mock('@/context/useNotification')
+vi.mock('@/features/promotion/api/promotions')
 
 const DAY = 24 * 60 * 60 * 1000
 const showNotification = vi.fn()

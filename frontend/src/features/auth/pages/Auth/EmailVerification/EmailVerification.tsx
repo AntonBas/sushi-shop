@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { CheckCircle2, XCircle, Mail } from 'lucide-react'
-import Button from '../../../../../components/UI/Button/Button'
-import Input from '../../../../../components/UI/Input/Input'
-import Loading from '../../../../../components/UI/Loading/Loading'
-import { useResendVerification } from '../../../hooks/useResendVerification'
-import * as authApi from '../../../api/auth'
-import { getErrorCode } from '../../../../../api/errorMessage'
+import Button from '@/components/UI/Button/Button'
+import Input from '@/components/UI/Input/Input'
+import Loading from '@/components/UI/Loading/Loading'
+import { useResendVerification } from '@/features/auth/hooks/useResendVerification'
+import * as authApi from '@/features/auth/api/auth'
+import { getErrorCode } from '@/api/errorMessage'
 import styles from './EmailVerification.module.css'
 
 export default function EmailVerification() {

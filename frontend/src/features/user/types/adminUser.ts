@@ -1,4 +1,4 @@
-import type { UserRole } from '../../../types/enums'
+import type { UserRole } from '@/types/enums'
 
 export interface AdminUserResponse {
   id: number

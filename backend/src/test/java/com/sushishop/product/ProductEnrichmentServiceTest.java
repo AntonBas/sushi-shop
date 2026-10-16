@@ -1,5 +1,6 @@
 package com.sushishop.product;
 
+import com.sushishop.product.image.ProductImage;
 import com.sushishop.promotion.Promotion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

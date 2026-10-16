@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Compass } from "lucide-react";
-import Button from "../../components/UI/Button/Button";
+import Button from "@/components/UI/Button/Button";
 import styles from "./NotFoundPage.module.css";
 
 export default function NotFoundPage() {

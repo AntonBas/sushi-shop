@@ -2,15 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ReviewSection from './ReviewSection'
-import { useAuth } from '../../../../context/useAuth'
-import { useNotification } from '../../../../context/useNotification'
-import { getReviews } from '../../api/reviews'
-import type { ReviewResponse } from '../../../../types'
-import type { Page } from '../../../../types/common'
+import { useAuth } from '@/context/useAuth'
+import { useNotification } from '@/context/useNotification'
+import { getReviews } from '@/features/review/api/reviews'
+import type { ReviewResponse } from '@/features/review/types/review'
+import type { Page } from '@/types/common'
 
-vi.mock('../../../../context/useAuth')
-vi.mock('../../../../context/useNotification')
-vi.mock('../../api/reviews')
+vi.mock('@/context/useAuth')
+vi.mock('@/context/useNotification')
+vi.mock('@/features/review/api/reviews')
 
 function review(id: number): ReviewResponse {
   return { id, userId: id, userName: `User ${id}`, rating: 5, comment: `Comment ${id}`, createdAt: new Date().toISOString() }

@@ -1,4 +1,4 @@
-package com.sushishop.product;
+package com.sushishop.product.image;
 
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;

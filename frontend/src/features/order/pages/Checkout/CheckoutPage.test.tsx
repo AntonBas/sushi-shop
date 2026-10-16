@@ -2,20 +2,20 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import CheckoutPage from './CheckoutPage'
-import { useAuth } from '../../../../context/useAuth'
-import { useCart } from '../../../../context/useCart'
-import { useOrders } from '../../hooks/useOrders'
-import { useNotification } from '../../../../context/useNotification'
-import * as paymentsApi from '../../../../api/payments'
-import * as productsApi from '../../../product/api/products'
-import type { UserResponse } from '../../../../types'
+import { useAuth } from '@/context/useAuth'
+import { useCart } from '@/context/useCart'
+import { useOrders } from '@/features/order/hooks/useOrders'
+import { useNotification } from '@/context/useNotification'
+import * as paymentsApi from '@/api/payments'
+import * as productsApi from '@/features/product/api/products'
+import type { UserResponse } from '@/features/user/types/user'
 
-vi.mock('../../../../context/useAuth')
-vi.mock('../../../../context/useCart')
-vi.mock('../../hooks/useOrders')
-vi.mock('../../../../context/useNotification')
-vi.mock('../../../../api/payments')
-vi.mock('../../../product/api/products')
+vi.mock('@/context/useAuth')
+vi.mock('@/context/useCart')
+vi.mock('@/features/order/hooks/useOrders')
+vi.mock('@/context/useNotification')
+vi.mock('@/api/payments')
+vi.mock('@/features/product/api/products')
 
 const createOrder = vi.fn()
 const clearCart = vi.fn()

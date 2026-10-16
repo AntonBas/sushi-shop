@@ -1,5 +1,5 @@
-import api from '../../../api/client'
-import type { LoginRequest, RegisterRequest, ForgotPasswordRequest, ResetPasswordRequest, AuthResponse, ResendVerificationResponse } from '../../../types'
+import api from '@/api/client'
+import type { LoginRequest, RegisterRequest, ForgotPasswordRequest, ResetPasswordRequest, AuthResponse, ResendVerificationResponse } from '@/features/auth/types/auth'
 
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
   const { data: res } = await api.post<AuthResponse>('/auth/login', data)

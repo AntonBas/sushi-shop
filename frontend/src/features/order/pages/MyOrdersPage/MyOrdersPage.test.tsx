@@ -3,14 +3,14 @@ import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import type { Client, IMessage } from '@stomp/stompjs'
 import MyOrdersPage from './MyOrdersPage'
-import { useNotification } from '../../../../context/useNotification'
-import { useOrderSocket } from '../../hooks/useOrderSocket'
-import { getMyOrders } from '../../api/orders'
-import type { UserOrderResponse } from '../../../../types'
+import { useNotification } from '@/context/useNotification'
+import { useOrderSocket } from '@/features/order/hooks/useOrderSocket'
+import { getMyOrders } from '@/features/order/api/orders'
+import type { UserOrderResponse } from '@/features/order/types/order'
 
-vi.mock('../../../../context/useNotification')
-vi.mock('../../hooks/useOrderSocket')
-vi.mock('../../api/orders')
+vi.mock('@/context/useNotification')
+vi.mock('@/features/order/hooks/useOrderSocket')
+vi.mock('@/features/order/api/orders')
 
 const order: UserOrderResponse = {
   id: 7,

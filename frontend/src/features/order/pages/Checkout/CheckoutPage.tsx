@@ -1,17 +1,17 @@
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../../../../context/useAuth";
-import { useCart } from "../../../../context/useCart";
-import { useOrders } from "../../hooks/useOrders";
-import { useApi } from "../../../../hooks/common/useApi";
-import { useNotification } from "../../../../context/useNotification";
-import * as paymentsApi from "../../../../api/payments";
-import * as productsApi from "../../../product/api/products";
-import { formatPrice } from "../../../../utils/formatPrice";
-import Button from "../../../../components/UI/Button/Button";
-import Input from "../../../../components/UI/Input/Input";
-import Loading from "../../../../components/UI/Loading/Loading";
-import type { DeliveryMethod, PaymentMethod } from "../../../../types";
+import { useAuth } from "@/context/useAuth";
+import { useCart } from "@/context/useCart";
+import { useOrders } from "@/features/order/hooks/useOrders";
+import { useApi } from "@/hooks/common/useApi";
+import { useNotification } from "@/context/useNotification";
+import * as paymentsApi from "@/api/payments";
+import * as productsApi from "@/features/product/api/products";
+import { formatPrice } from "@/utils/formatPrice";
+import Button from "@/components/UI/Button/Button";
+import Input from "@/components/UI/Input/Input";
+import Loading from "@/components/UI/Loading/Loading";
+import type { DeliveryMethod, PaymentMethod } from '@/types/enums';
 import styles from "./CheckoutPage.module.css";
 
 export default function CheckoutPage() {

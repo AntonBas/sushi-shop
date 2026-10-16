@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Search, X } from "lucide-react";
-import { useApi } from "../../../../../hooks/common/useApi";
-import { useProducts } from "../../../../product/hooks/useProducts";
-import { useNotification } from "../../../../../context/useNotification";
-import * as promotionsApi from "../../../api/promotions";
-import Button from "../../../../../components/UI/Button/Button";
-import Input from "../../../../../components/UI/Input/Input";
-import Loading from "../../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../../components/UI/Pagination/Pagination";
-import type { PromotionResponse } from "../../../../../types";
-import { toDateTimeLocalValue } from "../../../../../utils/dateTimeLocal";
-import { formatPrice } from "../../../../../utils/formatPrice";
-import { useReturnTo } from "../../../../../hooks/common/useReturnTo";
+import { useApi } from "@/hooks/common/useApi";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { useNotification } from "@/context/useNotification";
+import * as promotionsApi from "@/features/promotion/api/promotions";
+import Button from "@/components/UI/Button/Button";
+import Input from "@/components/UI/Input/Input";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import type { PromotionResponse } from '@/features/promotion/types/promotion';
+import { toDateTimeLocalValue } from "@/utils/dateTimeLocal";
+import { formatPrice } from "@/utils/formatPrice";
+import { useReturnTo } from "@/hooks/common/useReturnTo";
 import styles from "./AdminPromotionForm.module.css";
 
 export default function AdminPromotionForm() {

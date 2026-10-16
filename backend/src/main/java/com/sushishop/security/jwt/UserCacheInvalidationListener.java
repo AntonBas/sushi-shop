@@ -1,6 +1,6 @@
 package com.sushishop.security.jwt;
 
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;

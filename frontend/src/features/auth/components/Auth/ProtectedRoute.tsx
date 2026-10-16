@@ -1,6 +1,6 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../../../../context/useAuth";
-import Loading from "../../../../components/UI/Loading/Loading";
+import { useAuth } from "@/context/useAuth";
+import Loading from "@/components/UI/Loading/Loading";
 
 interface Props {
   children: React.ReactNode;

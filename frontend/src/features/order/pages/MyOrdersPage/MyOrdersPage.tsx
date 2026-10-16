@@ -1,22 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useApi } from "../../../../hooks/common/useApi";
-import { useNotification } from "../../../../context/useNotification";
-import { getErrorMessage } from "../../../../api/errorMessage";
-import { useOrderSocket } from "../../hooks/useOrderSocket";
-import * as ordersApi from "../../api/orders";
-import * as paymentsApi from "../../../../api/payments";
-import { formatPrice } from "../../../../utils/formatPrice";
-import Loading from "../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../components/UI/Pagination/Pagination";
-import type { OrderStatusUpdateResponse, UserOrderResponse } from "../../../../types";
-import type { Page } from "../../../../types/common";
+import { useApi } from "@/hooks/common/useApi";
+import { useNotification } from "@/context/useNotification";
+import { getErrorMessage } from "@/api/errorMessage";
+import { useOrderSocket } from "@/features/order/hooks/useOrderSocket";
+import * as ordersApi from "@/features/order/api/orders";
+import * as paymentsApi from "@/api/payments";
+import { formatPrice } from "@/utils/formatPrice";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import type { OrderStatusUpdateResponse, UserOrderResponse } from '@/features/order/types/order';
+import type { Page } from "@/types/common";
 import {
   ORDER_STATUS_COLORS,
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
-} from "../../../../types/enums";
+} from "@/types/enums";
 import type { Client, StompSubscription } from "@stomp/stompjs";
-import { useListSearchParams } from "../../../../hooks/common/useListSearchParams";
+import { useListSearchParams } from "@/hooks/common/useListSearchParams";
 import styles from "./MyOrdersPage.module.css";
 
 export default function MyOrdersPage() {

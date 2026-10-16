@@ -1,8 +1,8 @@
 package com.sushishop.shared.config;
 
 import com.sushishop.product.Category;
-import com.sushishop.product.ProductCacheConfig;
-import com.sushishop.product.dto.ProductImageResponse;
+import com.sushishop.product.cache.ProductCacheConfig;
+import com.sushishop.product.image.dto.ProductImageResponse;
 import com.sushishop.product.dto.ProductListResponse;
 import com.sushishop.product.dto.ProductResponse;
 import com.sushishop.promotion.PromotionCacheConfig;

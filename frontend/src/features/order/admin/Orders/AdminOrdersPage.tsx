@@ -1,18 +1,18 @@
 import { Fragment, useState, useEffect, useRef } from "react";
-import { useAdminOrders } from "../../hooks/useAdminOrders";
-import { useOrderSocket } from "../../hooks/useOrderSocket";
-import { useNotification } from "../../../../context/useNotification";
-import * as ordersApi from "../../api/orders";
-import { getErrorMessage } from "../../../../api/errorMessage";
-import { formatPrice } from "../../../../utils/formatPrice";
-import { getStatusFlow } from "../../utils/orderStatusFlow";
-import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
-import Loading from "../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../components/UI/Pagination/Pagination";
-import Button from "../../../../components/UI/Button/Button";
-import Modal from "../../../../components/UI/Modal/Modal";
+import { useAdminOrders } from "@/features/order/hooks/useAdminOrders";
+import { useOrderSocket } from "@/features/order/hooks/useOrderSocket";
+import { useNotification } from "@/context/useNotification";
+import * as ordersApi from "@/features/order/api/orders";
+import { getErrorMessage } from "@/api/errorMessage";
+import { formatPrice } from "@/utils/formatPrice";
+import { getStatusFlow } from "@/features/order/utils/orderStatusFlow";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "@/hooks/common/useListSearchParams";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import Button from "@/components/UI/Button/Button";
+import Modal from "@/components/UI/Modal/Modal";
 import { Search } from "lucide-react";
-import type { OrderStatus } from "../../../../types";
+import type { OrderStatus } from '@/types/enums';
 import {
   DELIVERY_METHODS,
   ORDER_STATUS_COLORS,
@@ -20,7 +20,7 @@ import {
   ORDER_STATUSES,
   PAYMENT_METHODS,
   PAYMENT_STATUS_LABELS,
-} from "../../../../types/enums";
+} from "@/types/enums";
 import type { Client } from "@stomp/stompjs";
 import styles from "./AdminOrdersPage.module.css";
 

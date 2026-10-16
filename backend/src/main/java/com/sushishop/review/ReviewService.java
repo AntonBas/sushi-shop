@@ -3,7 +3,7 @@ package com.sushishop.review;
 import com.sushishop.audit.Auditable;
 import com.sushishop.order.OrderRepository;
 import com.sushishop.order.OrderStatus;
-import com.sushishop.product.ProductCacheService;
+import com.sushishop.product.cache.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.review.dto.CreateReviewRequest;
 import com.sushishop.review.dto.ReviewResponse;

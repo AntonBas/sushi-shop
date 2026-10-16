@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../../../../context/useAuth";
-import { useNotification } from "../../../../context/useNotification";
-import { useApi } from "../../../../hooks/common/useApi";
-import * as usersApi from "../../api/user";
-import Button from "../../../../components/UI/Button/Button";
-import Input from "../../../../components/UI/Input/Input";
-import type { UserResponse } from "../../../../types";
+import { useAuth } from "@/context/useAuth";
+import { useNotification } from "@/context/useNotification";
+import { useApi } from "@/hooks/common/useApi";
+import * as usersApi from "@/features/user/api/user";
+import Button from "@/components/UI/Button/Button";
+import Input from "@/components/UI/Input/Input";
+import type { UserResponse } from '@/features/user/types/user';
 import styles from "./ProfilePage.module.css";
 
 type Tab = "profile" | "address" | "security";

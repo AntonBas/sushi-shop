@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as auditApi from '../api/audit'
-import type { AuditLogResponse, AuditLogFilters } from '../types/audit'
-import type { Page } from '../../../types/common'
+import { useApi } from '@/hooks/common/useApi'
+import * as auditApi from '@/features/audit/api/audit'
+import type { AuditLogResponse, AuditLogFilters } from '@/features/audit/types/audit'
+import type { Page } from '@/types/common'
 
 export function useAuditLogs() {
   const { data, loading, error, run } = useApi<Page<AuditLogResponse>>()

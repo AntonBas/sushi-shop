@@ -124,7 +124,7 @@ flowchart TD
 
 | Package                     | Responsibility                                                    |
 | ---------------------------- | ------------------------------------------------------------------ |
-| `product/`                   | Catalog, categories, images                                        |
+| `product/`                   | Catalog, categories; `cache/` and `image/` sub-packages            |
 | `promotion/`                 | Promotions, discount rules, conflict prevention, promotion-cache eviction job |
 | `order/`                     | Order lifecycle, checkout, real-time status via WebSocket/STOMP    |
 | `payment/`                   | Stripe payment processing                                          |
@@ -137,7 +137,7 @@ flowchart TD
 | `security/`                  | JWT filter, OAuth2, WebSocket auth, CSRF header filter             |
 | `shared/`                    | Cross-cutting config, exceptions, validation, rate limiting, events |
 
-The frontend follows the same split: `frontend/src/features/<domain>/` (`product`, `review`, `promotion`, `order`, `auth`, `user`, `audit`) holds that domain's `api/`, `types/`, `hooks/`, `components/`, `pages/` and `admin/` pages; shared UI, layout, contexts and utilities stay in `components/`, `context/`, `hooks/common/` and `utils/`.
+The frontend follows the same split: `frontend/src/features/<domain>/` (`product`, `review`, `promotion`, `order`, `auth`, `user`, `audit`) holds that domain's `api/`, `types/`, `hooks/`, `components/`, `pages/` and `admin/` pages; shared UI, layout, contexts and utilities stay in `components/`, `context/`, `hooks/common/` and `utils/`. Imports use the `@/` alias for `src/`; domain types live in each feature's `types/` and only truly shared types (`address`, `common`, `enums`) stay in `src/types/`.
 
 ---
 

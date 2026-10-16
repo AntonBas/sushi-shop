@@ -1,5 +1,5 @@
-import type { AddressRequest } from "../../../types/address"
-import type { UserResponse } from "../../user/types/user"
+import type { AddressRequest } from "@/types/address"
+import type { UserResponse } from "@/features/user/types/user"
 
 export interface LoginRequest {
   email: string

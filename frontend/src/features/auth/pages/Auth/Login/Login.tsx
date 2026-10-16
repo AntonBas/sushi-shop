@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuth } from '../../../../../context/useAuth'
-import { API_BASE_URL } from '../../../../../config/env'
-import { getErrorCode, getErrorMessage } from '../../../../../api/errorMessage'
-import Button from '../../../../../components/UI/Button/Button'
-import Input from '../../../../../components/UI/Input/Input'
-import { useResendVerification } from '../../../hooks/useResendVerification'
+import { useAuth } from '@/context/useAuth'
+import { API_BASE_URL } from '@/config/env'
+import { getErrorCode, getErrorMessage } from '@/api/errorMessage'
+import Button from '@/components/UI/Button/Button'
+import Input from '@/components/UI/Input/Input'
+import { useResendVerification } from '@/features/auth/hooks/useResendVerification'
 import styles from './Login.module.css'
 
 const OAUTH2_ERROR_MESSAGES: Record<string, string> = {

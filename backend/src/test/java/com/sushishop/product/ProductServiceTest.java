@@ -1,9 +1,12 @@
 package com.sushishop.product;
 
 import com.sushishop.file.FileStorageService;
+import com.sushishop.product.cache.ProductCacheService;
 import com.sushishop.product.dto.CreateProductRequest;
-import com.sushishop.product.dto.UpdateProductRequest;
 import com.sushishop.product.dto.ProductResponse;
+import com.sushishop.product.dto.UpdateProductRequest;
+import com.sushishop.product.image.ProductImage;
+import com.sushishop.product.image.ProductImageService;
 import com.sushishop.promotion.Promotion;
 import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.review.ReviewRepository;

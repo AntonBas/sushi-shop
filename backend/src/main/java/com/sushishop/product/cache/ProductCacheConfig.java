@@ -1,4 +1,4 @@
-package com.sushishop.product;
+package com.sushishop.product.cache;
 
 import com.sushishop.product.dto.ProductListResponse;
 import com.sushishop.shared.config.RedisConfig;

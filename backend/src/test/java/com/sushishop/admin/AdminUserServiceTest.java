@@ -1,6 +1,6 @@
 package com.sushishop.admin;
 
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.User;

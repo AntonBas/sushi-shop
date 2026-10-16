@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useProducts } from "../../hooks/useProducts";
-import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
-import { CATEGORIES, CATEGORY_DISPLAY } from "../../../../types/enums";
-import type { Category } from "../../../../types";
-import ProductCard from "../ProductCard/ProductCard";
-import Pagination from "../../../../components/UI/Pagination/Pagination";
-import Loading from "../../../../components/UI/Loading/Loading";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "@/hooks/common/useListSearchParams";
+import { CATEGORIES, CATEGORY_DISPLAY } from "@/types/enums";
+import type { Category } from '@/types/enums';
+import ProductCard from "@/features/product/components/ProductCard/ProductCard";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import Loading from "@/components/UI/Loading/Loading";
 import { Search } from "lucide-react";
 import styles from "./MenuSection.module.css";
 

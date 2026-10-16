@@ -1,18 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
-import { useProducts } from "../../../hooks/useProducts";
-import { useNotification } from "../../../../../context/useNotification";
-import * as productsApi from "../../../api/products";
-import { getErrorMessage } from "../../../../../api/errorMessage";
-import { formatPrice } from "../../../../../utils/formatPrice";
-import Button from "../../../../../components/UI/Button/Button";
-import Loading from "../../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../../components/UI/Pagination/Pagination";
-import Modal from "../../../../../components/UI/Modal/Modal";
-import { CATEGORIES, CATEGORY_DISPLAY } from "../../../../../types/enums";
-import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../../../hooks/common/useListSearchParams";
-import { useReturnToState } from "../../../../../hooks/common/useReturnTo";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { useNotification } from "@/context/useNotification";
+import * as productsApi from "@/features/product/api/products";
+import { getErrorMessage } from "@/api/errorMessage";
+import { formatPrice } from "@/utils/formatPrice";
+import Button from "@/components/UI/Button/Button";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import Modal from "@/components/UI/Modal/Modal";
+import { CATEGORIES, CATEGORY_DISPLAY } from "@/types/enums";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "@/hooks/common/useListSearchParams";
+import { useReturnToState } from "@/hooks/common/useReturnTo";
 import styles from "./AdminProductsPage.module.css";
 
 export default function AdminProductsPage() {

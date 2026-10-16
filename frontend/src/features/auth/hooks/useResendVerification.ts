@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { isAxiosError } from 'axios'
-import * as authApi from '../api/auth'
-import { getErrorMessage } from '../../../api/errorMessage'
+import * as authApi from '@/features/auth/api/auth'
+import { getErrorMessage } from '@/api/errorMessage'
 
 const FALLBACK_COOLDOWN_SECONDS = 60
 

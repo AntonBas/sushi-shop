@@ -1,5 +1,5 @@
-import api from '../../../api/client'
-import type { UserResponse, UpdateUserRequest, ChangePasswordRequest, ChangeEmailRequest } from '../../../types'
+import api from '@/api/client'
+import type { UserResponse, UpdateUserRequest, ChangePasswordRequest, ChangeEmailRequest } from '@/features/user/types/user'
 
 export const getMe = async (): Promise<UserResponse> => {
   const { data } = await api.get<UserResponse>('/users/me', { skipAuthRedirect: true })

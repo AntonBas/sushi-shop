@@ -1,7 +1,7 @@
 package com.sushishop.promotion;
 
 import com.sushishop.product.Product;
-import com.sushishop.product.ProductCacheService;
+import com.sushishop.product.cache.ProductCacheService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

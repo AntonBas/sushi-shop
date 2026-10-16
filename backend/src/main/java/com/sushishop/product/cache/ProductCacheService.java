@@ -1,4 +1,4 @@
-package com.sushishop.product;
+package com.sushishop.product.cache;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.CacheManager;

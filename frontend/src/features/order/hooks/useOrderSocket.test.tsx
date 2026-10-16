@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import type { Client, IFrame, StompConfig } from '@stomp/stompjs'
 import { useOrderSocket } from './useOrderSocket'
-import { issueWsTicket } from '../../auth/api/auth'
-import { useNotification } from '../../../context/useNotification'
+import { issueWsTicket } from '@/features/auth/api/auth'
+import { useNotification } from '@/context/useNotification'
 
 const { clients, FakeClient } = vi.hoisted(() => {
   const clients: InstanceType<typeof FakeClient>[] = []
@@ -27,8 +27,8 @@ type FakeClient = InstanceType<typeof FakeClient>
 
 vi.mock('@stomp/stompjs', () => ({ Client: FakeClient }))
 vi.mock('sockjs-client', () => ({ default: vi.fn() }))
-vi.mock('../../auth/api/auth')
-vi.mock('../../../context/useNotification')
+vi.mock('@/features/auth/api/auth')
+vi.mock('@/context/useNotification')
 
 const showNotification = vi.fn()
 const RECONNECT_WARNING = 'Live order updates unavailable, reconnecting...'

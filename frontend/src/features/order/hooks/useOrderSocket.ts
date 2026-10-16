@@ -1,9 +1,9 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-import { issueWsTicket } from "../../auth/api/auth";
-import { API_BASE_URL } from "../../../config/env";
-import { useNotification } from "../../../context/useNotification";
+import { issueWsTicket } from "@/features/auth/api/auth";
+import { API_BASE_URL } from "@/config/env";
+import { useNotification } from "@/context/useNotification";
 
 const WATCHDOG_TIMEOUT_MS = 15000;
 const RECONNECT_DELAY_MS = 5000;

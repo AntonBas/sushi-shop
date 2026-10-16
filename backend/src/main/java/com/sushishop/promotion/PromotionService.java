@@ -2,7 +2,7 @@ package com.sushishop.promotion;
 
 import com.sushishop.audit.Auditable;
 import com.sushishop.product.Product;
-import com.sushishop.product.ProductCacheService;
+import com.sushishop.product.cache.ProductCacheService;
 import com.sushishop.product.ProductRepository;
 import com.sushishop.promotion.dto.CreatePromotionRequest;
 import com.sushishop.promotion.dto.UpdatePromotionRequest;

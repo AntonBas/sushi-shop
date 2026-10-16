@@ -9,17 +9,17 @@ import {
 } from "lucide-react";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
-import { useProducts } from "../../hooks/useProducts";
-import { useCart } from "../../../../context/useCart";
-import { MAX_CART_QUANTITY } from "../../../../context/cart-context";
-import { useNotification } from "../../../../context/useNotification";
-import { CATEGORY_DISPLAY } from "../../../../types/enums";
-import { formatPrice } from "../../../../utils/formatPrice";
-import ProductSkeleton from "../../components/ProductSkeleton/ProductSkeleton";
-import Button from "../../../../components/UI/Button/Button";
-import ReviewSection from "../../../review/components/ReviewSection/ReviewSection";
-import RelatedProducts from "../../components/RelatedProducts/RelatedProducts";
-import NotFoundPage from "../../../../pages/NotFound/NotFoundPage";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { useCart } from "@/context/useCart";
+import { MAX_CART_QUANTITY } from "@/context/cart-context";
+import { useNotification } from "@/context/useNotification";
+import { CATEGORY_DISPLAY } from "@/types/enums";
+import { formatPrice } from "@/utils/formatPrice";
+import ProductSkeleton from "@/features/product/components/ProductSkeleton/ProductSkeleton";
+import Button from "@/components/UI/Button/Button";
+import ReviewSection from "@/features/review/components/ReviewSection/ReviewSection";
+import RelatedProducts from "@/features/product/components/RelatedProducts/RelatedProducts";
+import NotFoundPage from "@/pages/NotFound/NotFoundPage";
 import styles from "./ProductPage.module.css";
 
 export default function ProductPage() {

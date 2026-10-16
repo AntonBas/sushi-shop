@@ -1,5 +1,6 @@
 package com.sushishop.product;
 
+import com.sushishop.product.image.ProductImage;
 import com.sushishop.promotion.Promotion;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

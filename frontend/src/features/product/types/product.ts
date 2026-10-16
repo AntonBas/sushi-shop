@@ -1,4 +1,4 @@
-import type { Category } from "../../../types/enums"
+import type { Category } from "@/types/enums"
 
 export interface CreateProductRequest {
   name: string

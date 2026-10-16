@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useProducts } from '../../hooks/useProducts'
-import ProductCard from '../ProductCard/ProductCard'
+import { useProducts } from '@/features/product/hooks/useProducts'
+import ProductCard from '@/features/product/components/ProductCard/ProductCard'
 import styles from './RelatedProducts.module.css'
 
 interface Props {

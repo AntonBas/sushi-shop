@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { Star, Pencil, Trash2 } from "lucide-react";
-import { useAuth } from "../../../../context/useAuth";
-import { useApi } from "../../../../hooks/common/useApi";
-import * as reviewsApi from "../../api/reviews";
-import { useNotification } from "../../../../context/useNotification";
-import { getErrorMessage } from "../../../../api/errorMessage";
-import Button from "../../../../components/UI/Button/Button";
-import Pagination from "../../../../components/UI/Pagination/Pagination";
-import Modal from "../../../../components/UI/Modal/Modal";
-import type { ReviewResponse, ReviewReplyResponse, ReviewStatusResponse } from "../../../../types";
+import { useAuth } from "@/context/useAuth";
+import { useApi } from "@/hooks/common/useApi";
+import * as reviewsApi from "@/features/review/api/reviews";
+import { useNotification } from "@/context/useNotification";
+import { getErrorMessage } from "@/api/errorMessage";
+import Button from "@/components/UI/Button/Button";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import Modal from "@/components/UI/Modal/Modal";
+import type { ReviewResponse, ReviewReplyResponse, ReviewStatusResponse } from '@/features/review/types/review';
 import styles from "./ReviewSection.module.css";
 
 interface Props {

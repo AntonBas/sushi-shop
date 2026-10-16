@@ -1,7 +1,8 @@
-import api from '../../../api/client'
-import type { CreateOrderRequest, OrderResponse, UserOrderResponse, OrderStatus } from '../../../types'
-import type { OrderFilters } from '../types/order'
-import type { Page } from '../../../types/common'
+import api from '@/api/client'
+import type { CreateOrderRequest, OrderResponse, UserOrderResponse } from '@/features/order/types/order'
+import type { OrderStatus } from '@/types/enums'
+import type { OrderFilters } from '@/features/order/types/order'
+import type { Page } from '@/types/common'
 
 export const createOrder = async (data: CreateOrderRequest): Promise<OrderResponse> => {
   const { data: res } = await api.post<OrderResponse>('/orders', data)

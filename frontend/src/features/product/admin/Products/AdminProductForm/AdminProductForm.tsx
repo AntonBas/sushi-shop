@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X, GripVertical } from "lucide-react";
-import { useProducts } from "../../../hooks/useProducts";
-import { useNotification } from "../../../../../context/useNotification";
-import * as productsApi from "../../../api/products";
-import { getErrorMessage } from "../../../../../api/errorMessage";
-import Button from "../../../../../components/UI/Button/Button";
-import Input from "../../../../../components/UI/Input/Input";
-import Loading from "../../../../../components/UI/Loading/Loading";
-import {
-  CATEGORY_DISPLAY,
-  type Category,
-  type ProductImageResponse,
-} from "../../../../../types";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { useNotification } from "@/context/useNotification";
+import * as productsApi from "@/features/product/api/products";
+import { getErrorMessage } from "@/api/errorMessage";
+import Button from "@/components/UI/Button/Button";
+import Input from "@/components/UI/Input/Input";
+import Loading from "@/components/UI/Loading/Loading";
+import { type ProductImageResponse } from '@/features/product/types/product'
+import { CATEGORY_DISPLAY, type Category } from '@/types/enums';
 import {
   DndContext,
   closestCenter,
@@ -29,7 +26,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useReturnTo } from "../../../../../hooks/common/useReturnTo";
+import { useReturnTo } from "@/hooks/common/useReturnTo";
 import styles from "./AdminProductForm.module.css";
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;

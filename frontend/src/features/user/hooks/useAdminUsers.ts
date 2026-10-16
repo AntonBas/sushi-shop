@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as adminUsersApi from '../api/adminUsers'
-import type { AdminUserFilters, AdminUserResponse } from '../../../types'
-import type { Page } from '../../../types/common'
+import { useApi } from '@/hooks/common/useApi'
+import * as adminUsersApi from '@/features/user/api/adminUsers'
+import type { AdminUserFilters, AdminUserResponse } from '@/features/user/types/adminUser'
+import type { Page } from '@/types/common'
 
 export function useAdminUsers() {
   const { data, loading, run } = useApi<Page<AdminUserResponse>>()

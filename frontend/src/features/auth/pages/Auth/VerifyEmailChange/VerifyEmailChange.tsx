@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { CheckCircle2, XCircle } from 'lucide-react'
-import Button from '../../../../../components/UI/Button/Button'
-import Loading from '../../../../../components/UI/Loading/Loading'
-import * as usersApi from '../../../../user/api/user'
-import { getErrorMessage } from '../../../../../api/errorMessage'
-import styles from '../EmailVerification/EmailVerification.module.css'
+import Button from '@/components/UI/Button/Button'
+import Loading from '@/components/UI/Loading/Loading'
+import * as usersApi from '@/features/user/api/user'
+import { getErrorMessage } from '@/api/errorMessage'
+import styles from '@/features/auth/pages/Auth/EmailVerification/EmailVerification.module.css'
 
 export default function VerifyEmailChange() {
   const [searchParams] = useSearchParams()

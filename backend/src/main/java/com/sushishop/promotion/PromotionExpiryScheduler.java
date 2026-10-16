@@ -1,6 +1,6 @@
 package com.sushishop.promotion;
 
-import com.sushishop.product.ProductCacheService;
+import com.sushishop.product.cache.ProductCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

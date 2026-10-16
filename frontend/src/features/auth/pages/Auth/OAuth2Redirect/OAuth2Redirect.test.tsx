@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import OAuth2Redirect from './OAuth2Redirect'
-import { useAuth } from '../../../../../context/useAuth'
-import { exchangeOAuth2Code } from '../../../api/auth'
+import { useAuth } from '@/context/useAuth'
+import { exchangeOAuth2Code } from '@/features/auth/api/auth'
 
-vi.mock('../../../../../context/useAuth')
-vi.mock('../../../api/auth')
+vi.mock('@/context/useAuth')
+vi.mock('@/features/auth/api/auth')
 
 function LocationProbe() {
   const location = useLocation()

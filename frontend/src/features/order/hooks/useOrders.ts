@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as ordersApi from '../api/orders'
-import type { CreateOrderRequest, OrderResponse } from '../../../types'
+import { useApi } from '@/hooks/common/useApi'
+import * as ordersApi from '@/features/order/api/orders'
+import type { CreateOrderRequest, OrderResponse } from '@/features/order/types/order'
 
 export function useOrders() {
   const { data, loading, error, execute } = useApi<OrderResponse>()

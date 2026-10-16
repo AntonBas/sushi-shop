@@ -1,7 +1,6 @@
 package com.sushishop.user;
 
 import com.sushishop.mail.MailService;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.user.dto.ChangePasswordRequest;

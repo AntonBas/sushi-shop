@@ -3,7 +3,7 @@ package com.sushishop.admin;
 import com.sushishop.admin.dto.AdminUserResponse;
 import com.sushishop.audit.Auditable;
 import com.sushishop.shared.enums.AuditAction;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.UserRepository;

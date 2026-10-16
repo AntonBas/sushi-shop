@@ -1,4 +1,4 @@
-import type { ProductListResponse } from "../../product/types/product"
+import type { ProductListResponse } from "@/features/product/types/product"
 
 export interface CreatePromotionRequest {
   title: string

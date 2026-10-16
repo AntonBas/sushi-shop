@@ -1,7 +1,7 @@
-import api from '../../../api/client'
-import type { CreateProductRequest, UpdateProductRequest, ProductListResponse, ProductResponse } from '../../../types'
-import type { ProductFilters } from '../types/product'
-import type { Page } from '../../../types/common'
+import api from '@/api/client'
+import type { CreateProductRequest, UpdateProductRequest, ProductListResponse, ProductResponse } from '@/features/product/types/product'
+import type { ProductFilters } from '@/features/product/types/product'
+import type { Page } from '@/types/common'
 
 export const getProducts = async (
   page = 0,

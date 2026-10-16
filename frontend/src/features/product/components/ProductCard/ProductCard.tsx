@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
-import { CATEGORY_DISPLAY } from "../../../../types/enums";
-import type { ProductListResponse } from "../../../../types";
-import { formatPrice } from "../../../../utils/formatPrice";
+import { CATEGORY_DISPLAY } from "@/types/enums";
+import type { ProductListResponse } from '@/features/product/types/product';
+import { formatPrice } from "@/utils/formatPrice";
 import styles from "./ProductCard.module.css";
 
 interface Props {

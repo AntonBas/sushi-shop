@@ -4,13 +4,13 @@ import { AxiosError, AxiosHeaders } from "axios";
 import type { ReactNode } from "react";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
-import * as usersApi from "../features/user/api/user";
-import * as authApi from "../features/auth/api/auth";
-import { handleResponseError } from "../api/client";
-import type { UserResponse } from "../types";
+import * as usersApi from "@/features/user/api/user";
+import * as authApi from "@/features/auth/api/auth";
+import { handleResponseError } from "@/api/client";
+import type { UserResponse } from '@/features/user/types/user';
 
-vi.mock("../features/user/api/user");
-vi.mock("../features/auth/api/auth");
+vi.mock("@/features/user/api/user");
+vi.mock("@/features/auth/api/auth");
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <AuthProvider>{children}</AuthProvider>

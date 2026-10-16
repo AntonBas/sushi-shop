@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Tag, Clock } from "lucide-react";
-import { usePromotions } from "../../hooks/usePromotions";
+import { usePromotions } from "@/features/promotion/hooks/usePromotions";
 import styles from "./PromotionsSection.module.css";
 
 export default function PromotionsSection() {

@@ -6,7 +6,6 @@ import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.shared.exception.core.NotFoundException;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.user.dto.ChangePasswordRequest;
 import com.sushishop.user.dto.RegisterRequest;
 import com.sushishop.user.dto.UpdateUserRequest;

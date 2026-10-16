@@ -1,4 +1,4 @@
-package com.sushishop.shared.event;
+package com.sushishop.user;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;

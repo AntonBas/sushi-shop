@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../../../../context/useAuth";
-import { exchangeOAuth2Code } from "../../../api/auth";
-import Loading from "../../../../../components/UI/Loading/Loading";
+import { useAuth } from "@/context/useAuth";
+import { exchangeOAuth2Code } from "@/features/auth/api/auth";
+import Loading from "@/components/UI/Loading/Loading";
 
 export default function OAuth2Redirect() {
   const navigate = useNavigate();

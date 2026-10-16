@@ -1,6 +1,9 @@
-package com.sushishop.product;
+package com.sushishop.product.image;
 
 import com.sushishop.file.FileStorageService;
+import com.sushishop.product.Product;
+import com.sushishop.product.ProductRepository;
+import com.sushishop.product.cache.ProductCacheService;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.shared.service.TransactionCallbacks;

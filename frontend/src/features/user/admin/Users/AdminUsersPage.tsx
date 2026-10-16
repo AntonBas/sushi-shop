@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
-import { useAdminUsers } from "../../hooks/useAdminUsers";
-import { useAuth } from "../../../../context/useAuth";
-import { useNotification } from "../../../../context/useNotification";
-import * as adminUsersApi from "../../api/adminUsers";
-import { getErrorMessage } from "../../../../api/errorMessage";
-import { formatPrice } from "../../../../utils/formatPrice";
-import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
-import Loading from "../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../components/UI/Pagination/Pagination";
-import Button from "../../../../components/UI/Button/Button";
-import Modal from "../../../../components/UI/Modal/Modal";
-import { USER_ROLE_LABELS, USER_ROLES } from "../../../../types/enums";
-import type { AdminUserResponse, UserRole } from "../../../../types";
+import { useAdminUsers } from "@/features/user/hooks/useAdminUsers";
+import { useAuth } from "@/context/useAuth";
+import { useNotification } from "@/context/useNotification";
+import * as adminUsersApi from "@/features/user/api/adminUsers";
+import { getErrorMessage } from "@/api/errorMessage";
+import { formatPrice } from "@/utils/formatPrice";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "@/hooks/common/useListSearchParams";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import Button from "@/components/UI/Button/Button";
+import Modal from "@/components/UI/Modal/Modal";
+import { USER_ROLE_LABELS, USER_ROLES } from "@/types/enums";
+import type { AdminUserResponse } from '@/features/user/types/adminUser'
+import type { UserRole } from '@/types/enums';
 import styles from "./AdminUsersPage.module.css";
 
 const SORT_OPTIONS = [

@@ -1,5 +1,5 @@
-import type { AddressRequest, AddressResponse } from "../../../types/address"
-import type { UserRole } from "../../../types/enums"
+import type { AddressRequest, AddressResponse } from "@/types/address"
+import type { UserRole } from "@/types/enums"
 
 export interface UpdateUserRequest {
   name?: string

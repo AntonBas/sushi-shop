@@ -1,4 +1,4 @@
-package com.sushishop.product.dto;
+package com.sushishop.product.image.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

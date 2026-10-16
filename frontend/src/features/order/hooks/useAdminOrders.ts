@@ -1,8 +1,8 @@
 import { useCallback } from 'react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as ordersApi from '../api/orders'
-import type { OrderResponse, OrderFilters } from '../../../types'
-import type { Page } from '../../../types/common'
+import { useApi } from '@/hooks/common/useApi'
+import * as ordersApi from '@/features/order/api/orders'
+import type { OrderResponse, OrderFilters } from '@/features/order/types/order'
+import type { Page } from '@/types/common'
 
 export function useAdminOrders() {
   const { data, loading, error, run } = useApi<Page<OrderResponse>>()

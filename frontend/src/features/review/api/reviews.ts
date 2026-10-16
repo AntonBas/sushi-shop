@@ -1,6 +1,6 @@
-import api from '../../../api/client'
-import type { CreateReviewRequest, CreateReviewReplyRequest, ReviewResponse, ReviewReplyResponse, ReviewStatusResponse } from '../../../types'
-import type { Page } from '../../../types/common'
+import api from '@/api/client'
+import type { CreateReviewRequest, CreateReviewReplyRequest, ReviewResponse, ReviewReplyResponse, ReviewStatusResponse } from '@/features/review/types/review'
+import type { Page } from '@/types/common'
 
 export const createReview = async (data: CreateReviewRequest): Promise<ReviewResponse> => {
   const { data: res } = await api.post<ReviewResponse>('/reviews', data)

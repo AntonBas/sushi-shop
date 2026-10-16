@@ -1,4 +1,6 @@
-package com.sushishop.product;
+package com.sushishop.product.image;
+
+import com.sushishop.product.Product;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

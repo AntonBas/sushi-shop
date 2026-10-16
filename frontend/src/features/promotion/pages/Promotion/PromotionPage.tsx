@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Tag, Clock, Menu as MenuIcon } from "lucide-react";
-import { useApi } from "../../../../hooks/common/useApi";
-import * as promotionsApi from "../../api/promotions";
-import ProductCard from "../../../product/components/ProductCard/ProductCard";
-import Loading from "../../../../components/UI/Loading/Loading";
-import NotFoundPage from "../../../../pages/NotFound/NotFoundPage";
-import type { PromotionResponse } from "../../../../types";
+import { useApi } from "@/hooks/common/useApi";
+import * as promotionsApi from "@/features/promotion/api/promotions";
+import ProductCard from "@/features/product/components/ProductCard/ProductCard";
+import Loading from "@/components/UI/Loading/Loading";
+import NotFoundPage from "@/pages/NotFound/NotFoundPage";
+import type { PromotionResponse } from '@/features/promotion/types/promotion';
 import styles from "./PromotionPage.module.css";
 
 export default function PromotionPage() {

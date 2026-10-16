@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useProducts } from '../../../features/product/hooks/useProducts'
-import ProductCard from '../../../features/product/components/ProductCard/ProductCard'
+import { useProducts } from '@/features/product/hooks/useProducts'
+import ProductCard from '@/features/product/components/ProductCard/ProductCard'
 import styles from './PopularSection.module.css'
 
 export default function PopularSection() {

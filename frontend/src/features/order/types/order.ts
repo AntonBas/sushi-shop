@@ -1,5 +1,5 @@
-import type { AddressRequest, AddressResponse } from "../../../types/address"
-import type { DeliveryMethod, OrderStatus, PaymentMethod } from "../../../types/enums"
+import type { AddressRequest, AddressResponse } from "@/types/address"
+import type { DeliveryMethod, OrderStatus, PaymentMethod } from "@/types/enums"
 
 export interface CreateOrderRequest {
   customerName: string

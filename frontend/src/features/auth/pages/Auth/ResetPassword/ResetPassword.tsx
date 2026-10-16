@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { CheckCircle2 } from 'lucide-react'
-import * as authApi from '../../../api/auth'
-import { getErrorMessage } from '../../../../../api/errorMessage'
-import Button from '../../../../../components/UI/Button/Button'
-import Input from '../../../../../components/UI/Input/Input'
-import Modal from '../../../../../components/UI/Modal/Modal'
+import * as authApi from '@/features/auth/api/auth'
+import { getErrorMessage } from '@/api/errorMessage'
+import Button from '@/components/UI/Button/Button'
+import Input from '@/components/UI/Input/Input'
+import Modal from '@/components/UI/Modal/Modal'
 import styles from './ResetPassword.module.css'
 
 export default function ResetPassword() {

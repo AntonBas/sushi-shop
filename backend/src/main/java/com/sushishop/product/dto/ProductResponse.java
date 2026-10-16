@@ -1,6 +1,7 @@
 package com.sushishop.product.dto;
 
 import com.sushishop.product.Category;
+import com.sushishop.product.image.dto.ProductImageResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;

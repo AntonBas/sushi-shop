@@ -1,4 +1,4 @@
-package com.sushishop.product;
+package com.sushishop.product.cache;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.cache.Cache;

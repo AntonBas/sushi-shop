@@ -1,8 +1,8 @@
 import { useState, useEffect, Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
-import AdminSidebar from '../AdminSidebar/AdminSidebar'
-import AdminHeader from '../AdminHeader/AdminHeader'
-import Loading from '../../UI/Loading/Loading'
+import AdminSidebar from '@/components/Admin/AdminSidebar/AdminSidebar'
+import AdminHeader from '@/components/Admin/AdminHeader/AdminHeader'
+import Loading from '@/components/UI/Loading/Loading'
 import styles from './AdminLayout.module.css'
 
 const MOBILE_QUERY = '(max-width: 768px)'

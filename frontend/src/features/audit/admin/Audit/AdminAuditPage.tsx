@@ -1,9 +1,9 @@
 import { useEffect } from "react";
-import { useAuditLogs } from "../../hooks/useAudit";
-import Loading from "../../../../components/UI/Loading/Loading";
-import Pagination from "../../../../components/UI/Pagination/Pagination";
-import { AUDIT_ACTIONS } from "../../../../types/enums";
-import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "../../../../hooks/common/useListSearchParams";
+import { useAuditLogs } from "@/features/audit/hooks/useAudit";
+import Loading from "@/components/UI/Loading/Loading";
+import Pagination from "@/components/UI/Pagination/Pagination";
+import { AUDIT_ACTIONS } from "@/types/enums";
+import { pickAllowed, useDebouncedParamInput, useListSearchParams } from "@/hooks/common/useListSearchParams";
 import styles from "./AdminAuditPage.module.css";
 
 const DATE_TIME_LOCAL = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;

@@ -1,9 +1,9 @@
 import { useState, useCallback, useRef } from 'react'
-import { useApi } from '../../../hooks/common/useApi'
-import * as productsApi from '../api/products'
-import type { ProductListResponse, ProductResponse } from '../../../types'
-import type { ProductFilters } from '../types/product'
-import type { Page } from '../../../types/common'
+import { useApi } from '@/hooks/common/useApi'
+import * as productsApi from '@/features/product/api/products'
+import type { ProductListResponse, ProductResponse } from '@/features/product/types/product'
+import type { ProductFilters } from '@/features/product/types/product'
+import type { Page } from '@/types/common'
 
 export function useProducts() {
   const { data: listData, loading: listLoading, error: listError, run: listRun } = useApi<Page<ProductListResponse>>()

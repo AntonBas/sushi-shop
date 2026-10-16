@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
-import { useAuth } from '../../../../context/useAuth'
+import { useAuth } from '@/context/useAuth'
 
-vi.mock('../../../../context/useAuth')
+vi.mock('@/context/useAuth')
 
 function mockAuth(overrides: Partial<ReturnType<typeof useAuth>>) {
   vi.mocked(useAuth).mockReturnValue({

@@ -1,6 +1,7 @@
-import api from '../../../api/client'
-import type { Page } from '../../../types/common'
-import type { AdminUserFilters, AdminUserResponse, UserRole } from '../../../types'
+import api from '@/api/client'
+import type { Page } from '@/types/common'
+import type { AdminUserFilters, AdminUserResponse } from '@/features/user/types/adminUser'
+import type { UserRole } from '@/types/enums'
 
 export const getAdminUsers = async (
   page = 0,
