@@ -1,6 +1,6 @@
 package com.sushishop.auth;
 
-import com.sushishop.auth.dto.request.LoginRequest;
+import com.sushishop.auth.dto.LoginRequest;
 import com.sushishop.security.jwt.JwtBlacklistService;
 import com.sushishop.security.jwt.JwtUtil;
 import com.sushishop.security.oauth2.OAuth2ExchangeCodeService;
@@ -11,8 +11,8 @@ import com.sushishop.user.UserMapper;
 import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserRole;
 import com.sushishop.user.UserService;
-import com.sushishop.user.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.RegisterRequest;
+import com.sushishop.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

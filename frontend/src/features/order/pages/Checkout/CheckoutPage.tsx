@@ -1,0 +1,298 @@
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "@/context/useAuth";
+import { useCart } from "@/context/useCart";
+import { useOrders } from "@/features/order/hooks/useOrders";
+import { useApi } from "@/hooks/common/useApi";
+import { useNotification } from "@/context/useNotification";
+import * as paymentsApi from "@/api/payments";
+import * as productsApi from "@/features/product/api/products";
+import { formatPrice } from "@/utils/formatPrice";
+import Button from "@/components/UI/Button/Button";
+import Input from "@/components/UI/Input/Input";
+import Loading from "@/components/UI/Loading/Loading";
+import type { DeliveryMethod, PaymentMethod } from '@/types/enums';
+import styles from "./CheckoutPage.module.css";
+
+export default function CheckoutPage() {
+  const { user } = useAuth();
+  const { items, total, clearCart, updatePrices } = useCart();
+  const { createOrder, loading } = useOrders();
+  const paymentApi = useApi<string>();
+  const { showNotification } = useNotification();
+  const navigate = useNavigate();
+  const submittingRef = useRef(false);
+  const [redirectingToPayment, setRedirectingToPayment] = useState(false);
+
+  const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [deliveryMethod, setDeliveryMethod] =
+    useState<DeliveryMethod>("PICKUP");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("ON_DELIVERY");
+  const [city, setCity] = useState("");
+  const [street, setStreet] = useState("");
+  const [house, setHouse] = useState("");
+  const [apartment, setApartment] = useState("");
+  const [comment, setComment] = useState("");
+
+  const [prefilledFrom, setPrefilledFrom] = useState<typeof user>(null);
+  const productIdsKey = items.map((i) => i.productId).join(",");
+
+  const applyCurrentPrices = useEffectEvent((currentPrices: Record<number, number>) => {
+    const changed = items.some(
+      (i) => currentPrices[i.productId] !== undefined && currentPrices[i.productId] !== i.price,
+    );
+    if (!changed) return;
+    updatePrices(currentPrices);
+    showNotification("Prices in your cart were updated to current prices", "warning");
+  });
+
+  useEffect(() => {
+    if (!productIdsKey) return;
+    let cancelled = false;
+    const ids = productIdsKey.split(",").map(Number);
+    void Promise.allSettled(ids.map((id) => productsApi.getProduct(id))).then((results) => {
+      if (cancelled) return;
+      const currentPrices: Record<number, number> = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          const product = result.value;
+          currentPrices[product.id] = product.discountedPrice ?? product.price;
+        }
+      });
+      applyCurrentPrices(currentPrices);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [productIdsKey]);
+
+  useEffect(() => {
+    if (!redirectingToPayment) return;
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) void navigate("/profile/orders", { replace: true });
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [redirectingToPayment, navigate]);
+
+  if (user && user !== prefilledFrom) {
+    setPrefilledFrom(user);
+    setCustomerName(user.name);
+    setPhone(user.phone);
+    if (user.address) {
+      setCity(user.address.city);
+      setStreet(user.address.street);
+      setHouse(user.address.house);
+      setApartment(user.address.apartment || "");
+      setDeliveryMethod("DELIVERY");
+    }
+  }
+
+  const handleSubmit = async (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    try {
+      const order = await createOrder({
+        customerName,
+        phone,
+        paymentMethod,
+        deliveryMethod,
+        address:
+          deliveryMethod === "DELIVERY"
+            ? {
+                city,
+                street,
+                house,
+                apartment: apartment || undefined,
+                comment: comment || undefined,
+              }
+            : undefined,
+        items: items.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+        })),
+      });
+      if (paymentMethod === "ONLINE") {
+        setRedirectingToPayment(true);
+        clearCart();
+        const url = await paymentApi.run(() => paymentsApi.createCheckout(order.id));
+        if (url) {
+          window.location.assign(url);
+          return;
+        }
+        setRedirectingToPayment(false);
+        void navigate("/profile/orders");
+      } else {
+        clearCart();
+        showNotification("Order placed successfully!", "success");
+        void navigate("/profile/orders");
+      }
+    } catch {
+      return;
+    } finally {
+      submittingRef.current = false;
+    }
+  };
+
+  if (redirectingToPayment) {
+    return <Loading text="Redirecting to payment..." />;
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className={styles.page}>
+        <h1 className={styles.title}>Checkout</h1>
+        <div className={styles.empty}>
+          <p>Your cart is empty</p>
+          <Link to="/">
+            <Button>Browse Menu</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.page}>
+      <h1 className={styles.title}>Checkout</h1>
+      <form onSubmit={(e) => void handleSubmit(e)} className={styles.form}>
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Contact Info</h2>
+          <Input
+            label="Name"
+            name="name"
+            autoComplete="name"
+            value={customerName}
+            onChange={setCustomerName}
+            placeholder="Your name"
+          />
+          <Input
+            label="Phone"
+            name="phone"
+            autoComplete="tel"
+            value={phone}
+            onChange={setPhone}
+            placeholder="+380991234567"
+          />
+        </div>
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Delivery Method</h2>
+          <div className={styles.methodButtons}>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${deliveryMethod === "PICKUP" ? styles.activeMethod : ""}`}
+              aria-pressed={deliveryMethod === "PICKUP"}
+              onClick={() => setDeliveryMethod("PICKUP")}
+            >
+              Pickup
+            </button>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${deliveryMethod === "DELIVERY" ? styles.activeMethod : ""}`}
+              aria-pressed={deliveryMethod === "DELIVERY"}
+              onClick={() => setDeliveryMethod("DELIVERY")}
+            >
+              Delivery
+            </button>
+          </div>
+        </div>
+        {deliveryMethod === "DELIVERY" && (
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>Delivery Address</h2>
+            <div className={styles.addressGrid}>
+              <Input
+                label="City"
+                name="city"
+                autoComplete="address-level2"
+                value={city}
+                onChange={setCity}
+                placeholder="City"
+              />
+              <Input
+                label="Street"
+                name="street"
+                autoComplete="address-line1"
+                value={street}
+                onChange={setStreet}
+                placeholder="Street"
+              />
+              <Input
+                label="House"
+                name="house"
+                value={house}
+                onChange={setHouse}
+                placeholder="House"
+              />
+              <Input
+                label="Apartment"
+                name="apartment"
+                value={apartment}
+                onChange={setApartment}
+                placeholder="Apt"
+              />
+            </div>
+            <Input
+              label="Comment"
+              name="comment"
+              value={comment}
+              onChange={setComment}
+              placeholder="Floor, intercom code, etc."
+            />
+          </div>
+        )}
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Payment Method</h2>
+          <div className={styles.methodButtons}>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${paymentMethod === "ON_DELIVERY" ? styles.activeMethod : ""}`}
+              aria-pressed={paymentMethod === "ON_DELIVERY"}
+              onClick={() => setPaymentMethod("ON_DELIVERY")}
+            >
+              Pay on {deliveryMethod === "PICKUP" ? "Pickup" : "Delivery"}
+            </button>
+            <button
+              type="button"
+              className={`${styles.methodBtn} ${paymentMethod === "ONLINE" ? styles.activeMethod : ""}`}
+              aria-pressed={paymentMethod === "ONLINE"}
+              onClick={() => setPaymentMethod("ONLINE")}
+            >
+              Pay Online
+            </button>
+          </div>
+        </div>
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Order Summary</h2>
+          <div className={styles.items}>
+            {items.map((item) => (
+              <div key={item.productId} className={styles.item}>
+                <span>
+                  {item.name} × {item.quantity}
+                </span>
+                <span>{formatPrice(item.price * item.quantity)}₴</span>
+              </div>
+            ))}
+          </div>
+          <div className={styles.total}>
+            <span>Total</span>
+            <span className={styles.totalPrice}>{formatPrice(total)}₴</span>
+          </div>
+        </div>
+        <Button
+          type="submit"
+          loading={loading || paymentApi.loading}
+          style={{ width: "100%" }}
+        >
+          {paymentApi.loading
+            ? "Redirecting to payment..."
+            : paymentMethod === "ONLINE"
+              ? "Proceed to Payment"
+              : "Place Order"}
+        </Button>
+      </form>
+    </div>
+  );
+}

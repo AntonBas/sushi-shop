@@ -1,6 +1,6 @@
 package com.sushishop.admin;
 
-import com.sushishop.admin.dto.response.AdminUserResponse;
+import com.sushishop.admin.dto.AdminUserResponse;
 import com.sushishop.order.OrderStatus;
 import com.sushishop.shared.service.LikePattern;
 import com.sushishop.user.UserRole;

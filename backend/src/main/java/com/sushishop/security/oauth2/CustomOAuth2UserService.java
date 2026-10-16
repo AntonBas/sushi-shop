@@ -1,6 +1,6 @@
 package com.sushishop.security.oauth2;
 
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.service.EmailNormalizer;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;

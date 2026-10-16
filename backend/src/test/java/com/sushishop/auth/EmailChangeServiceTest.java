@@ -1,7 +1,7 @@
 package com.sushishop.auth;
 
 import com.sushishop.mail.MailService;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
 import com.sushishop.token.Token;
@@ -11,8 +11,8 @@ import com.sushishop.user.User;
 import com.sushishop.user.UserMapper;
 import com.sushishop.user.UserRepository;
 import com.sushishop.user.UserRole;
-import com.sushishop.user.dto.request.ChangeEmailRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.ChangeEmailRequest;
+import com.sushishop.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

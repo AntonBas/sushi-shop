@@ -2,8 +2,8 @@ package com.sushishop.user;
 
 import com.sushishop.shared.address.AddressConverter;
 import com.sushishop.shared.address.AddressRequest;
-import com.sushishop.user.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.RegisterRequest;
+import com.sushishop.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;

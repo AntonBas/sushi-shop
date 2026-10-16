@@ -1,6 +1,6 @@
 package com.sushishop.admin;
 
-import com.sushishop.admin.dto.response.AdminUserResponse;
+import com.sushishop.admin.dto.AdminUserResponse;
 import com.sushishop.user.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

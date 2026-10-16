@@ -1,12 +1,11 @@
 package com.sushishop.user;
 
 import com.sushishop.mail.MailService;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.ConflictException;
-import com.sushishop.user.dto.request.ChangePasswordRequest;
-import com.sushishop.user.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.ChangePasswordRequest;
+import com.sushishop.user.dto.RegisterRequest;
+import com.sushishop.user.dto.UserResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -127,7 +126,7 @@ class UserServiceTest {
                 .phone("+380961791111")
                 .build();
 
-        var request = new com.sushishop.user.dto.request.UpdateUserRequest(
+        var request = new com.sushishop.user.dto.UpdateUserRequest(
                 "New Name",
                 "+380999999999",
                 null

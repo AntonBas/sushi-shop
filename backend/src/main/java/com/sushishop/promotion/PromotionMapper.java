@@ -1,6 +1,6 @@
 package com.sushishop.promotion;
 
-import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.promotion.dto.PromotionResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

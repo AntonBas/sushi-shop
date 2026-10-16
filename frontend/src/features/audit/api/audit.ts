@@ -1,0 +1,20 @@
+import api from '@/api/client'
+import type { Page } from '@/types/common'
+import type { AuditLogResponse, AuditLogFilters } from '@/features/audit/types/audit'
+
+export const getAuditLogs = async (
+  page = 0,
+  size = 20,
+  sort = 'performedAt,desc',
+  filters?: AuditLogFilters
+): Promise<Page<AuditLogResponse>> => {
+  const { data } = await api.get<Page<AuditLogResponse>>('/admin/audit', {
+    params: {
+      page,
+      size,
+      sort,
+      ...filters,
+    },
+  })
+  return data
+}

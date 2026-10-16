@@ -1,7 +1,7 @@
 package com.sushishop.order;
 
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.UserOrderResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

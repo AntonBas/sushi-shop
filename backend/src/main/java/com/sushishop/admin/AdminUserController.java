@@ -1,7 +1,7 @@
 package com.sushishop.admin;
 
-import com.sushishop.admin.dto.request.ChangeUserRoleRequest;
-import com.sushishop.admin.dto.response.AdminUserResponse;
+import com.sushishop.admin.dto.ChangeUserRoleRequest;
+import com.sushishop.admin.dto.AdminUserResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.shared.web.SortableFields;
 import com.sushishop.user.UserRole;

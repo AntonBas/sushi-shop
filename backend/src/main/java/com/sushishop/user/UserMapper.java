@@ -1,8 +1,8 @@
 package com.sushishop.user;
 
 import com.sushishop.shared.address.AddressConverter;
-import com.sushishop.user.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.RegisterRequest;
+import com.sushishop.user.dto.UserResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;

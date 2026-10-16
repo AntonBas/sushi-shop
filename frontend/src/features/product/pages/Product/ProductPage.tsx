@@ -1,0 +1,275 @@
+import { useState, useEffect, useRef } from "react";
+import { useParams, Link } from "react-router-dom";
+import {
+  Star,
+  ShoppingCart,
+  Menu as MenuIcon,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
+import { useProducts } from "@/features/product/hooks/useProducts";
+import { useCart } from "@/context/useCart";
+import { MAX_CART_QUANTITY } from "@/context/cart-context";
+import { useNotification } from "@/context/useNotification";
+import { CATEGORY_DISPLAY } from "@/types/enums";
+import { formatPrice } from "@/utils/formatPrice";
+import ProductSkeleton from "@/features/product/components/ProductSkeleton/ProductSkeleton";
+import Button from "@/components/UI/Button/Button";
+import ReviewSection from "@/features/review/components/ReviewSection/ReviewSection";
+import RelatedProducts from "@/features/product/components/RelatedProducts/RelatedProducts";
+import NotFoundPage from "@/pages/NotFound/NotFoundPage";
+import styles from "./ProductPage.module.css";
+
+export default function ProductPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const { product, productLoading, productNotFound, getProductBySlug } = useProducts();
+  const { addItem } = useCart();
+  const { showNotification } = useNotification();
+  const [quantity, setQuantity] = useState(1);
+  const [activeImage, setActiveImage] = useState(0);
+  const touchStartRef = useRef<{
+    x: number | null;
+    y: number | null;
+    swiped: boolean;
+  }>({ x: null, y: null, swiped: false });
+
+  const [shownSlug, setShownSlug] = useState(slug);
+
+  if (slug !== shownSlug) {
+    setShownSlug(slug);
+    setQuantity(1);
+    setActiveImage(0);
+  }
+
+  useEffect(() => {
+    if (slug) void getProductBySlug(slug);
+  }, [slug, getProductBySlug]);
+
+  if (productLoading) return <ProductSkeleton />;
+  if (productNotFound) return <NotFoundPage />;
+  if (!product) return null;
+
+  const handleAddToCart = () => {
+    if (!product.available) return;
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.discountedPrice || product.price,
+      quantity,
+      mainImage: product.images[0]?.url || null,
+    });
+    showNotification(`${product.name} added to cart`, "success");
+  };
+
+  const discounted =
+    product.discountedPrice && product.discountedPrice < product.price;
+
+  const prevImage = () => {
+    setActiveImage((prev) =>
+      prev === 0 ? product.images.length - 1 : prev - 1,
+    );
+  };
+
+  const nextImage = () => {
+    setActiveImage((prev) =>
+      prev === product.images.length - 1 ? 0 : prev + 1,
+    );
+  };
+
+  const touchStart = touchStartRef.current;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStart.x = e.touches[0].clientX;
+    touchStart.y = e.touches[0].clientY;
+    touchStart.swiped = false;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStart.x === null || touchStart.y === null) return;
+    const dx = e.touches[0].clientX - touchStart.x;
+    const dy = e.touches[0].clientY - touchStart.y;
+    if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+      touchStart.swiped = true;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart.x === null || touchStart.y === null) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    touchStart.x = null;
+    touchStart.y = null;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx > 0) prevImage();
+      else nextImage();
+    }
+  };
+
+  const handleImageClickCapture = (e: React.MouseEvent) => {
+    if (touchStart.swiped) {
+      e.preventDefault();
+      e.stopPropagation();
+      touchStart.swiped = false;
+    }
+  };
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.breadcrumbs}>
+        <Link to="/menu" className={styles.breadcrumbLink}>
+          <MenuIcon size={14} /> Menu
+        </Link>
+        <span className={styles.separator}>/</span>
+        <Link
+          to={`/menu?category=${product.category}`}
+          className={styles.breadcrumbLink}
+        >
+          {CATEGORY_DISPLAY[product.category]}
+        </Link>
+        <span className={styles.separator}>/</span>
+        <span className={styles.breadcrumb}>{product.name}</span>
+      </div>
+
+      <div className={styles.layout}>
+        <div className={styles.images}>
+          <div
+            className={styles.mainImageWrapper}
+            onTouchStart={product.images.length > 1 ? handleTouchStart : undefined}
+            onTouchMove={product.images.length > 1 ? handleTouchMove : undefined}
+            onTouchEnd={product.images.length > 1 ? handleTouchEnd : undefined}
+            onClickCapture={product.images.length > 1 ? handleImageClickCapture : undefined}
+          >
+            <Zoom>
+              <img
+                src={product.images[activeImage]?.url || "/placeholder.svg"}
+                alt={product.name}
+                className={styles.mainImage}
+              />
+            </Zoom>
+            {product.images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={prevImage}
+                  className={`${styles.arrow} ${styles.arrowLeft}`}
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  type="button"
+                  onClick={nextImage}
+                  className={`${styles.arrow} ${styles.arrowRight}`}
+                  aria-label="Next image"
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+          </div>
+          {product.images.length > 1 && (
+            <div className={styles.thumbnails}>
+              {product.images.map((img, i) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setActiveImage(i)}
+                  className={`${styles.thumb} ${i === activeImage ? styles.activeThumb : ""}`}
+                  aria-label={`View image ${i + 1}`}
+                >
+                  <img src={img.url} alt="" loading="lazy" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className={styles.info}>
+          <span className={styles.category}>
+            {CATEGORY_DISPLAY[product.category]}
+          </span>
+          <h1 className={styles.name}>{product.name}</h1>
+
+          {product.averageRating && (
+            <div className={styles.rating}>
+              <Star size={16} fill="#fbbf24" stroke="#fbbf24" />
+              <span>{product.averageRating.toFixed(1)}</span>
+              <span className={styles.reviewCount}>
+                ({product.reviewCount} reviews)
+              </span>
+            </div>
+          )}
+
+          <div className={styles.priceRow}>
+            {discounted && (
+              <>
+                <span className={styles.oldPrice}>{formatPrice(product.price)}₴</span>
+                <span className={styles.discount}>
+                  -{product.discountPercent}%
+                </span>
+              </>
+            )}
+            <span className={styles.price}>
+              {formatPrice(product.discountedPrice || product.price)}₴
+            </span>
+          </div>
+
+          <div className={styles.details}>
+            {product.weight && (
+              <span className={styles.detail}>
+                {product.weight}
+                {product.category === "DRINK" ? "ml" : "g"}
+              </span>
+            )}
+            {product.pieces && (
+              <span className={styles.detail}>{product.pieces} pieces</span>
+            )}
+          </div>
+
+          {product.promotionTitle && (
+            <div className={styles.promo}>{product.promotionTitle}</div>
+          )}
+
+          {product.description && (
+            <p className={styles.description}>{product.description}</p>
+          )}
+
+          <div className={styles.actions}>
+            <div className={styles.quantity}>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                aria-label="Decrease quantity"
+              >
+                −
+              </button>
+              <span>{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.min(MAX_CART_QUANTITY, q + 1))}
+                disabled={quantity >= MAX_CART_QUANTITY}
+                aria-label="Increase quantity"
+              >
+                +
+              </button>
+            </div>
+            <Button onClick={handleAddToCart} className={styles.addBtn} disabled={!product.available}>
+              {product.available ? (
+                <>
+                  <ShoppingCart size={18} /> Add to Cart —{" "}
+                  {formatPrice((product.discountedPrice || product.price) * quantity)}₴
+                </>
+              ) : (
+                "Currently unavailable"
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <RelatedProducts productId={product.id} />
+      <ReviewSection key={product.id} productId={product.id} />
+    </div>
+  );
+}

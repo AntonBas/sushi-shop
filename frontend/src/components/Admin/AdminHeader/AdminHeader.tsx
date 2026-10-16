@@ -1,5 +1,5 @@
-import { useAuth } from '../../../context/useAuth'
-import { useTheme } from '../../../hooks/common/useTheme'
+import { useAuth } from '@/context/useAuth'
+import { useTheme } from '@/hooks/common/useTheme'
 import { Sun, Moon } from 'lucide-react'
 import styles from './AdminHeader.module.css'
 

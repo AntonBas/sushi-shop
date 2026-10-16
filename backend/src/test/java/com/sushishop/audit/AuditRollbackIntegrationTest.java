@@ -1,7 +1,7 @@
 package com.sushishop.audit;
 
 import com.sushishop.user.UserService;
-import com.sushishop.user.dto.request.UpdateUserRequest;
+import com.sushishop.user.dto.UpdateUserRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

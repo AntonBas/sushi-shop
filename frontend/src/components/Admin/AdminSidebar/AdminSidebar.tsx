@@ -9,7 +9,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import clsx from "clsx";
-import { useAuth } from "../../../context/useAuth";
+import { useAuth } from "@/context/useAuth";
 import styles from "./AdminSidebar.module.css";
 
 interface AdminSidebarProps {

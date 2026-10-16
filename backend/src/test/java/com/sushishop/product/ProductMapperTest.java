@@ -1,9 +1,10 @@
 package com.sushishop.product;
 
-import com.sushishop.product.dto.request.CreateProductRequest;
-import com.sushishop.product.dto.request.UpdateProductRequest;
-import com.sushishop.product.dto.response.ProductListResponse;
-import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.product.dto.CreateProductRequest;
+import com.sushishop.product.dto.ProductListResponse;
+import com.sushishop.product.dto.ProductResponse;
+import com.sushishop.product.dto.UpdateProductRequest;
+import com.sushishop.product.image.ProductImageMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;

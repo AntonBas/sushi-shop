@@ -1,7 +1,7 @@
 package com.sushishop.auth;
 
 import com.sushishop.mail.MailService;
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.token.Token;
 import com.sushishop.token.TokenService;

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
-import * as authApi from "../api/auth";
-import * as usersApi from "../api/user";
-import { setUnauthorizedHandler } from "../api/client";
-import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
+import * as authApi from "@/features/auth/api/auth";
+import * as usersApi from "@/features/user/api/user";
+import { setUnauthorizedHandler } from "@/api/client";
+import type { LoginRequest, RegisterRequest } from '@/features/auth/types/auth'
+import type { UserResponse } from '@/features/user/types/user';
 import { AuthContext } from "./auth-context";
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({

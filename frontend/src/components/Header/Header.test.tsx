@@ -2,11 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Header from './Header'
-import { useAuth } from '../../context/useAuth'
-import { useCart } from '../../context/useCart'
+import { useAuth } from '@/context/useAuth'
+import { useCart } from '@/context/useCart'
 
-vi.mock('../../context/useAuth')
-vi.mock('../../context/useCart')
+vi.mock('@/context/useAuth')
+vi.mock('@/context/useCart')
 
 function clickLikeUser(element: Element) {
   fireEvent.mouseDown(element)

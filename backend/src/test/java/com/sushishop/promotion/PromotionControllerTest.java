@@ -2,9 +2,9 @@ package com.sushishop.promotion;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.sushishop.promotion.dto.request.CreatePromotionRequest;
-import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
-import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.promotion.dto.CreatePromotionRequest;
+import com.sushishop.promotion.dto.UpdatePromotionRequest;
+import com.sushishop.promotion.dto.PromotionResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

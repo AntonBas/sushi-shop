@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import type { ApiErrorResponse } from "../types/common";
+import type { ApiErrorResponse } from "@/types/common";
 
 export function getErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof AxiosError) {

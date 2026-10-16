@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/useAuth";
-import { useTheme } from "../../hooks/common/useTheme";
-import { useCart } from "../../context/useCart";
+import { useAuth } from "@/context/useAuth";
+import { useTheme } from "@/hooks/common/useTheme";
+import { useCart } from "@/context/useCart";
 import {
   ShoppingCart,
   Sun,

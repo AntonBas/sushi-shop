@@ -1,12 +1,12 @@
 package com.sushishop.shared.config;
 
 import com.sushishop.product.Category;
-import com.sushishop.product.ProductCacheConfig;
-import com.sushishop.product.dto.response.ProductImageResponse;
-import com.sushishop.product.dto.response.ProductListResponse;
-import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.product.cache.ProductCacheConfig;
+import com.sushishop.product.image.dto.ProductImageResponse;
+import com.sushishop.product.dto.ProductListResponse;
+import com.sushishop.product.dto.ProductResponse;
 import com.sushishop.promotion.PromotionCacheConfig;
-import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.promotion.dto.PromotionResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;

@@ -1,6 +1,6 @@
 package com.sushishop.security.oauth2;
 
-import com.sushishop.shared.event.UserSessionsInvalidatedEvent;
+import com.sushishop.user.UserSessionsInvalidatedEvent;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;
 import org.junit.jupiter.api.Test;

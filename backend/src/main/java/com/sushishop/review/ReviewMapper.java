@@ -1,7 +1,7 @@
 package com.sushishop.review;
 
-import com.sushishop.review.dto.response.ReviewReplyResponse;
-import com.sushishop.review.dto.response.ReviewResponse;
+import com.sushishop.review.dto.ReviewReplyResponse;
+import com.sushishop.review.dto.ReviewResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

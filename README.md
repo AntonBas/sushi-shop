@@ -3,7 +3,7 @@
 Full-stack sushi delivery platform: catalog, promotions, Stripe checkout, and real-time order tracking, built with idempotent payment webhooks, N+1-free queries, and AOP-based audit logging. **Java 21 / Spring Boot 4 / PostgreSQL / Redis / React 19 + TypeScript.** 550+ unit, controller and Testcontainers integration tests (~90% line coverage), zero-warning CI (ESLint + Java compiler with `-Werror`), WCAG AA accessibility audit, RBAC across 3 roles.
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4-green)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1.1-green)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue)
 ![React](https://img.shields.io/badge/React-19-61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue)
@@ -75,7 +75,6 @@ The system supports three roles:
 - **Free-tier friendly scheduling** — the promotion cache scheduler queries the database only when the next promotion start/end is due, so the serverless PostgreSQL compute can auto-suspend between boundaries
 - **Dynamic filtering** — implemented composable filtering with Spring Data JPA Specifications for products, orders, and audit logs
 - **Promotion conflict prevention** — prevents a product from being in two active promotions whose periods overlap
-- **Real-time order tracking** — WebSocket/STOMP updates order status automatically across clients
 - **Cross-cutting audit logging** — implemented with a custom `@Auditable` annotation and AOP
 - **Session invalidation on sensitive changes** — password, email or role changes bump a per-user token version, so existing JWTs stop working and the auth cache is evicted
 - **Drag-and-drop image reordering** — admin can reorder product images
@@ -94,7 +93,7 @@ The system supports three roles:
 
 ## Architecture
 
-**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`, `admin/`) is a self-contained package with its own `controller/service/repository/dto/mapper`, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/`, `file/`, and `scheduler/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
+**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`, `admin/`) is a self-contained package that keeps its entity, repository, service, mapper, controller, scheduled jobs and `dto/` together, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/` and `file/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
 
 ```mermaid
 flowchart TD
@@ -118,26 +117,27 @@ flowchart TD
     OR --> WS[WebSocket / STOMP]
     WS --> A
 
-    S["Scheduled token cleanup"] --> DB
+    S["Schedulers: token cleanup, promotion cache"] --> DB
 ```
 
 **Domain packages:**
 
 | Package                     | Responsibility                                                    |
 | ---------------------------- | ------------------------------------------------------------------ |
-| `product/`                   | Catalog, categories, images                                        |
-| `promotion/`                 | Promotions, discount rules, conflict prevention                    |
+| `product/`                   | Catalog, categories; `cache/` and `image/` sub-packages            |
+| `promotion/`                 | Promotions, discount rules, conflict prevention, promotion-cache eviction job |
 | `order/`                     | Order lifecycle, checkout, real-time status via WebSocket/STOMP    |
 | `payment/`                   | Stripe payment processing                                          |
 | `review/`                    | Product reviews, ratings, admin replies                            |
 | `audit/`                     | `@Auditable` AOP change log across admin actions                   |
 | `admin/`                     | Admin user management: list with order statistics, role changes    |
-| `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
+| `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens; token and unverified-account cleanup jobs |
 | `mail/`                      | Email sending via Brevo HTTP API (account and order emails)        |
 | `file/`                      | Product image storage                                              |
-| `scheduler/`                 | Expired-token and unverified-account cleanup, promotion-cache eviction |
 | `security/`                  | JWT filter, OAuth2, WebSocket auth, CSRF header filter             |
 | `shared/`                    | Cross-cutting config, exceptions, validation, rate limiting, events |
+
+The frontend follows the same split: `frontend/src/features/<domain>/` (`product`, `review`, `promotion`, `order`, `auth`, `user`, `audit`) holds that domain's `api/`, `types/`, `hooks/`, `components/`, `pages/` and `admin/` pages; shared UI, layout, contexts and utilities stay in `components/`, `context/`, `hooks/common/` and `utils/`. Imports use the `@/` alias for `src/`; domain types live in each feature's `types/` and only truly shared types (`address`, `common`, `enums`) stay in `src/types/`.
 
 ---
 
@@ -237,11 +237,13 @@ cp .env.example .env
 ```bash
 docker compose up -d postgres redis
 cd backend
-cp ../.env .env
 ./gradlew bootRun
 ```
 
-`bootRun` uses the `local` Spring profile. Backend: http://localhost:8080.
+`bootRun` uses the `local` Spring profile and runs from the repository root, so the
+backend reads the root `.env` directly. In IntelliJ, set the run configuration's
+working directory to the repository root and the active profile to `local`.
+Backend: http://localhost:8080.
 
 **Frontend**
 
@@ -310,7 +312,7 @@ and a no-comments rule, plus Knip for unused files, exports and dependencies.
 - **Covered flows:** authentication and route guards, cart and checkout,
   live order updates over WebSocket, admin order status rules, reviews,
   list state in the URL
-- **Coverage:** `npm run test:coverage` (v8 provider), report at
+- **120+ tests**; coverage: `npm run test:coverage` (v8 provider), report at
   `frontend/coverage/index.html`
 
 ---

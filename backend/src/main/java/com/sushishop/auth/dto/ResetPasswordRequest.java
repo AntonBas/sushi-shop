@@ -1,0 +1,26 @@
+package com.sushishop.auth.dto;
+
+import com.sushishop.shared.validation.FieldsMatch;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+@Schema(description = "Reset password request")
+@FieldsMatch(first = "newPassword", second = "confirmPassword", message = "Passwords don't match!")
+public record ResetPasswordRequest(
+        @NotBlank(message = "Token is required")
+        @Schema(description = "Reset token")
+        String token,
+
+        @NotBlank(message = "New password is required")
+        @Size(min = 8, max = 64, message = "Password must be between 8 and 64 characters")
+        @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).+$", message = "Password must contain at least one letter and one number")
+        @Schema(description = "New password", example = "NewPassword123")
+        String newPassword,
+
+        @NotBlank(message = "Password confirmation is required")
+        @Schema(description = "Confirm new password", example = "NewPassword123")
+        String confirmPassword
+) {
+}

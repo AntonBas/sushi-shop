@@ -1,11 +1,11 @@
 package com.sushishop.review;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sushishop.review.dto.request.CreateReviewReplyRequest;
-import com.sushishop.review.dto.request.CreateReviewRequest;
-import com.sushishop.review.dto.response.ReviewReplyResponse;
-import com.sushishop.review.dto.response.ReviewResponse;
-import com.sushishop.review.dto.response.ReviewStatusResponse;
+import com.sushishop.review.dto.CreateReviewReplyRequest;
+import com.sushishop.review.dto.CreateReviewRequest;
+import com.sushishop.review.dto.ReviewReplyResponse;
+import com.sushishop.review.dto.ReviewResponse;
+import com.sushishop.review.dto.ReviewStatusResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

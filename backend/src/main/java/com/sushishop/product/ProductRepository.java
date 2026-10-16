@@ -1,5 +1,7 @@
 package com.sushishop.product;
 
+import com.sushishop.product.image.ProductImage;
+
 import jakarta.annotation.Nonnull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

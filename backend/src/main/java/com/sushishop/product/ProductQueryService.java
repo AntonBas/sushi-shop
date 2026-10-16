@@ -1,6 +1,6 @@
 package com.sushishop.product;
 
-import com.sushishop.product.dto.response.ProductListResponse;
+import com.sushishop.product.dto.ProductListResponse;
 import com.sushishop.shared.exception.core.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 import { AxiosError } from 'axios'
-import { useNotification } from '../../context/useNotification'
+import { useNotification } from '@/context/useNotification'
 import { useDelayedLoading } from './useDelayedLoading'
-import { getErrorMessage } from '../../api/errorMessage'
+import { getErrorMessage } from '@/api/errorMessage'
 
 interface ApiState<T> {
   data: T | null

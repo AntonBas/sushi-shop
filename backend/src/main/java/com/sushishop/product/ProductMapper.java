@@ -1,10 +1,12 @@
 package com.sushishop.product;
 
-import com.sushishop.product.dto.request.CreateProductRequest;
-import com.sushishop.product.dto.request.UpdateProductRequest;
-import com.sushishop.product.dto.response.ProductImageResponse;
-import com.sushishop.product.dto.response.ProductListResponse;
-import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.product.dto.CreateProductRequest;
+import com.sushishop.product.dto.ProductListResponse;
+import com.sushishop.product.dto.ProductResponse;
+import com.sushishop.product.dto.UpdateProductRequest;
+import com.sushishop.product.image.ProductImage;
+import com.sushishop.product.image.ProductImageMapper;
+import com.sushishop.product.image.dto.ProductImageResponse;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
