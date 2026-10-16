@@ -1,6 +1,6 @@
 import HeroSection from "../../components/Home/HeroSection/HeroSection";
 import PopularSection from "../../components/Home/PopularSection/PopularSection";
-import PromotionsSection from "../../components/Home/PromotionsSection/PromotionsSection";
+import PromotionsSection from "../../features/promotion/components/PromotionsSection/PromotionsSection";
 import styles from "./Home.module.css";
 
 export default function Home() {

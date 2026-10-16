@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { isAxiosError } from "axios";
-import * as authApi from "../api/auth";
-import * as usersApi from "../api/user";
+import * as authApi from "../features/auth/api/auth";
+import * as usersApi from "../features/user/api/user";
 import { setUnauthorizedHandler } from "../api/client";
 import type { UserResponse, LoginRequest, RegisterRequest } from "../types";
 import { AuthContext } from "./auth-context";

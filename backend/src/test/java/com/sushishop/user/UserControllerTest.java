@@ -1,6 +1,6 @@
 package com.sushishop.user;
 
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,7 @@
 package com.sushishop.order;
 
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.OrderStatusUpdateResponse;
 import com.sushishop.shared.event.OrderCancelledEvent;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.NotFoundException;

@@ -1,6 +1,6 @@
 package com.sushishop.promotion;
 
-import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.promotion.dto.PromotionResponse;
 import com.sushishop.shared.config.RedisConfig;
 import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;

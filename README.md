@@ -93,7 +93,7 @@ The system supports three roles:
 
 ## Architecture
 
-**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`, `admin/`) is a self-contained package with its own `controller/service/repository/dto/mapper`, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/`, `file/`, and `scheduler/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
+**Feature-based package structure:** each business domain (`product/`, `promotion/`, `order/`, `payment/`, `review/`, `audit/`, `admin/`) is a self-contained package that keeps its entity, repository, service, mapper, controller, scheduled jobs and `dto/` together, instead of one global layer shared by the whole app. `user/`, `auth/`, and `token/` cover identity and access together. `mail/` and `file/` are shared infrastructure called *by* a domain rather than making business decisions themselves. `security/` and `shared/` stay global — JWT/WebSocket auth, rate limiting, validation, exceptions, config.
 
 ```mermaid
 flowchart TD
@@ -125,18 +125,19 @@ flowchart TD
 | Package                     | Responsibility                                                    |
 | ---------------------------- | ------------------------------------------------------------------ |
 | `product/`                   | Catalog, categories, images                                        |
-| `promotion/`                 | Promotions, discount rules, conflict prevention                    |
+| `promotion/`                 | Promotions, discount rules, conflict prevention, promotion-cache eviction job |
 | `order/`                     | Order lifecycle, checkout, real-time status via WebSocket/STOMP    |
 | `payment/`                   | Stripe payment processing                                          |
 | `review/`                    | Product reviews, ratings, admin replies                            |
 | `audit/`                     | `@Auditable` AOP change log across admin actions                   |
 | `admin/`                     | Admin user management: list with order statistics, role changes    |
-| `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens |
+| `user/` · `auth/` · `token/` | Registration, JWT/OAuth2 login, email verification & reset tokens; token and unverified-account cleanup jobs |
 | `mail/`                      | Email sending via Brevo HTTP API (account and order emails)        |
 | `file/`                      | Product image storage                                              |
-| `scheduler/`                 | Expired-token and unverified-account cleanup, promotion-cache eviction |
 | `security/`                  | JWT filter, OAuth2, WebSocket auth, CSRF header filter             |
 | `shared/`                    | Cross-cutting config, exceptions, validation, rate limiting, events |
+
+The frontend follows the same split: `frontend/src/features/<domain>/` (`product`, `review`, `promotion`, `order`, `auth`, `user`, `audit`) holds that domain's `api/`, `types/`, `hooks/`, `components/`, `pages/` and `admin/` pages; shared UI, layout, contexts and utilities stay in `components/`, `context/`, `hooks/common/` and `utils/`.
 
 ---
 

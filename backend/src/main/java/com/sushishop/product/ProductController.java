@@ -1,10 +1,10 @@
 package com.sushishop.product;
 
-import com.sushishop.product.dto.request.CreateProductRequest;
-import com.sushishop.product.dto.request.UpdateProductRequest;
-import com.sushishop.product.dto.response.ProductListResponse;
+import com.sushishop.product.dto.CreateProductRequest;
+import com.sushishop.product.dto.UpdateProductRequest;
+import com.sushishop.product.dto.ProductListResponse;
 import com.sushishop.security.Roles;
-import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.product.dto.ProductResponse;
 import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;

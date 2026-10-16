@@ -1,8 +1,8 @@
 package com.sushishop.order;
 
-import com.sushishop.order.dto.request.CreateOrderRequest;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.order.dto.CreateOrderRequest;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.UserOrderResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.shared.service.LogSanitizer;

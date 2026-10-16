@@ -1,8 +1,8 @@
 package com.sushishop.promotion;
 
-import com.sushishop.promotion.dto.request.CreatePromotionRequest;
-import com.sushishop.promotion.dto.request.UpdatePromotionRequest;
-import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.promotion.dto.CreatePromotionRequest;
+import com.sushishop.promotion.dto.UpdatePromotionRequest;
+import com.sushishop.promotion.dto.PromotionResponse;
 import com.sushishop.security.Roles;
 import com.sushishop.shared.service.LogSanitizer;
 import com.sushishop.shared.web.SortableFields;

@@ -1,6 +1,6 @@
 package com.sushishop.admin;
 
-import com.sushishop.admin.dto.response.AdminUserResponse;
+import com.sushishop.admin.dto.AdminUserResponse;
 import com.sushishop.audit.Auditable;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.event.UserSessionsInvalidatedEvent;

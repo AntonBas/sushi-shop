@@ -1,7 +1,7 @@
 package com.sushishop.order;
 
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.UserOrderResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

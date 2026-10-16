@@ -1,17 +1,17 @@
 package com.sushishop.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sushishop.auth.dto.request.ForgotPasswordRequest;
-import com.sushishop.auth.dto.request.LoginRequest;
-import com.sushishop.auth.dto.request.OAuth2ExchangeRequest;
-import com.sushishop.auth.dto.request.ResendVerificationRequest;
-import com.sushishop.auth.dto.request.ResetPasswordRequest;
+import com.sushishop.auth.dto.ForgotPasswordRequest;
+import com.sushishop.auth.dto.LoginRequest;
+import com.sushishop.auth.dto.OAuth2ExchangeRequest;
+import com.sushishop.auth.dto.ResendVerificationRequest;
+import com.sushishop.auth.dto.ResetPasswordRequest;
 import com.sushishop.shared.exception.core.BadRequestException;
 import com.sushishop.shared.exception.core.RateLimitExceededException;
 import com.sushishop.user.UserRole;
-import com.sushishop.user.dto.request.ChangeEmailRequest;
-import com.sushishop.user.dto.request.RegisterRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.ChangeEmailRequest;
+import com.sushishop.user.dto.RegisterRequest;
+import com.sushishop.user.dto.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

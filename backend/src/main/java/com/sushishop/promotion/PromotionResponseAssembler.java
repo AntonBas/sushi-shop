@@ -3,8 +3,8 @@ package com.sushishop.promotion;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductEnrichmentService;
 import com.sushishop.product.ProductMapper;
-import com.sushishop.product.dto.response.ProductListResponse;
-import com.sushishop.promotion.dto.response.PromotionResponse;
+import com.sushishop.product.dto.ProductListResponse;
+import com.sushishop.promotion.dto.PromotionResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

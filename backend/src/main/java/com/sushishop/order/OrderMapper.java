@@ -1,8 +1,8 @@
 package com.sushishop.order;
 
-import com.sushishop.order.dto.response.OrderItemResponse;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.order.dto.OrderItemResponse;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.UserOrderResponse;
 import com.sushishop.product.ProductImageMapper;
 import com.sushishop.shared.address.AddressResponse;
 import org.mapstruct.Mapper;

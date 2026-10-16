@@ -1,9 +1,9 @@
 package com.sushishop.user;
 
 import com.sushishop.shared.ratelimit.RateLimit;
-import com.sushishop.user.dto.request.ChangePasswordRequest;
-import com.sushishop.user.dto.request.UpdateUserRequest;
-import com.sushishop.user.dto.response.UserResponse;
+import com.sushishop.user.dto.ChangePasswordRequest;
+import com.sushishop.user.dto.UpdateUserRequest;
+import com.sushishop.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

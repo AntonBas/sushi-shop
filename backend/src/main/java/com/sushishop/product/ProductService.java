@@ -2,9 +2,9 @@ package com.sushishop.product;
 
 import com.sushishop.audit.Auditable;
 import com.sushishop.file.FileStorageService;
-import com.sushishop.product.dto.request.CreateProductRequest;
-import com.sushishop.product.dto.request.UpdateProductRequest;
-import com.sushishop.product.dto.response.ProductResponse;
+import com.sushishop.product.dto.CreateProductRequest;
+import com.sushishop.product.dto.UpdateProductRequest;
+import com.sushishop.product.dto.ProductResponse;
 import com.sushishop.promotion.PromotionCacheService;
 import com.sushishop.review.ReviewRepository;
 import com.sushishop.shared.enums.AuditAction;

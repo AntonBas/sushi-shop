@@ -1,11 +1,11 @@
 package com.sushishop.review;
 
-import com.sushishop.review.dto.request.CreateReviewReplyRequest;
-import com.sushishop.review.dto.request.CreateReviewRequest;
-import com.sushishop.review.dto.response.ReviewReplyResponse;
+import com.sushishop.review.dto.CreateReviewReplyRequest;
+import com.sushishop.review.dto.CreateReviewRequest;
+import com.sushishop.review.dto.ReviewReplyResponse;
 import com.sushishop.security.Roles;
-import com.sushishop.review.dto.response.ReviewResponse;
-import com.sushishop.review.dto.response.ReviewStatusResponse;
+import com.sushishop.review.dto.ReviewResponse;
+import com.sushishop.review.dto.ReviewStatusResponse;
 import com.sushishop.shared.ratelimit.RateLimit;
 import com.sushishop.shared.web.SortableFields;
 import io.swagger.v3.oas.annotations.Operation;

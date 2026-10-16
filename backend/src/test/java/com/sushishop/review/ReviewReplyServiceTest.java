@@ -1,7 +1,7 @@
 package com.sushishop.review;
 
-import com.sushishop.review.dto.request.CreateReviewReplyRequest;
-import com.sushishop.review.dto.response.ReviewReplyResponse;
+import com.sushishop.review.dto.CreateReviewReplyRequest;
+import com.sushishop.review.dto.ReviewReplyResponse;
 import com.sushishop.shared.exception.core.NotFoundException;
 import com.sushishop.user.User;
 import com.sushishop.user.UserRepository;

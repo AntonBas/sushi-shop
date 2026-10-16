@@ -1,10 +1,10 @@
 package com.sushishop.order;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sushishop.order.dto.request.CreateOrderRequest;
-import com.sushishop.order.dto.request.OrderItemRequest;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.UserOrderResponse;
+import com.sushishop.order.dto.CreateOrderRequest;
+import com.sushishop.order.dto.OrderItemRequest;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.UserOrderResponse;
 import com.sushishop.shared.address.AddressRequest;
 import com.sushishop.shared.address.AddressResponse;
 import org.junit.jupiter.api.BeforeEach;

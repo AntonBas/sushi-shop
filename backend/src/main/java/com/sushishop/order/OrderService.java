@@ -1,8 +1,8 @@
 package com.sushishop.order;
 
 import com.sushishop.audit.Auditable;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.OrderStatusUpdateResponse;
 import com.sushishop.shared.enums.AuditAction;
 import com.sushishop.shared.event.OrderCancelledEvent;
 import com.sushishop.shared.event.PaymentConfirmedEvent;

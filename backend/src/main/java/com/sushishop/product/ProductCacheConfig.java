@@ -1,6 +1,6 @@
 package com.sushishop.product;
 
-import com.sushishop.product.dto.response.ProductListResponse;
+import com.sushishop.product.dto.ProductListResponse;
 import com.sushishop.shared.config.RedisConfig;
 import org.springframework.boot.cache.autoconfigure.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;

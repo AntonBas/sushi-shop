@@ -1,9 +1,9 @@
 package com.sushishop.order;
 
-import com.sushishop.order.dto.request.CreateOrderRequest;
-import com.sushishop.order.dto.request.OrderItemRequest;
-import com.sushishop.order.dto.response.OrderResponse;
-import com.sushishop.order.dto.response.OrderStatusUpdateResponse;
+import com.sushishop.order.dto.CreateOrderRequest;
+import com.sushishop.order.dto.OrderItemRequest;
+import com.sushishop.order.dto.OrderResponse;
+import com.sushishop.order.dto.OrderStatusUpdateResponse;
 import com.sushishop.product.Category;
 import com.sushishop.product.Product;
 import com.sushishop.product.ProductEnrichmentService;
