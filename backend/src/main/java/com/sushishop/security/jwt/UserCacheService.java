@@ -13,7 +13,6 @@ public class UserCacheService {
 
     private final UserRepository userRepository;
 
-    @SuppressWarnings("unused")
     @Cacheable(value = "userCache", key = "#email + ':' + #tokenVersion", unless = "#result == null")
     public CachedAuthUser getCachedUser(String email, Integer tokenVersion) {
         return userRepository.findByEmail(email)

@@ -64,9 +64,9 @@
 }
 
 .bottom {
-  max-width: 1200px;
+  width: min(1152px, 100% - 48px);
   margin: 30px auto 0;
-  padding: 20px 24px 0;
+  padding: 20px 0 0;
   border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
