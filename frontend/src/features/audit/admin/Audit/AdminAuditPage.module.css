@@ -138,9 +138,16 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     padding: 8px 0;
     border-top: none;
     font-size: 14px;
+  }
+
+  .details {
+    max-width: none;
+    white-space: normal;
+    text-align: right;
   }
 
   .table td:before {
