@@ -133,7 +133,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className={styles.page}>
+    <div>
       <h1 className={styles.title}>My Profile</h1>
       <div className={styles.tabs}>
         <Link
