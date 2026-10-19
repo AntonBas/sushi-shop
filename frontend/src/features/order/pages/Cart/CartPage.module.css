@@ -149,3 +149,24 @@
   font-weight: 700;
   color: var(--color-primary);
 }
+
+@media (max-width: 400px) {
+  .item {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .itemInfo {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .itemActions {
+    flex-basis: 100%;
+    justify-content: flex-end;
+  }
+
+  .quantity {
+    white-space: nowrap;
+  }
+}
