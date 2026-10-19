@@ -45,7 +45,6 @@ import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 @Slf4j
-@SuppressWarnings("unused")
 public class ApiErrorHandler extends ResponseEntityExceptionHandler {
 
     @Override
