@@ -18,13 +18,13 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@stomp/stompjs": "^7.5.0",
-    "axios": "^1.20.0",
+    "axios": "^1.21.0",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.61.0",
+    "lucide-react": "^1.66.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-medium-image-zoom": "^5.4.9",
-    "react-router-dom": "^7.18.4",
+    "react-router-dom": "^7.18.5",
     "sockjs-client": "^1.6.1"
   },
   "devDependencies": {
